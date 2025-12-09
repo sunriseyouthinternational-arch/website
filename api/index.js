@@ -1,148 +1,137 @@
-const express = require('express');
 const mongoose = require('mongoose');
-const cors = require('cors');
 const dotenv = require('dotenv');
 
 dotenv.config();
 
-// Connection promise - start immediately
-const connectionPromise = mongoose.connect(process.env.MONGODB_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-  serverSelectionTimeoutMS: 30000,
-  socketTimeoutMS: 45000,
-})
-.then(() => {
-  console.log('MongoDB connected successfully (serverless)');
-  return mongoose.connection;
-})
-.catch(error => {
-  console.error('MongoDB connection error:', error);
-  throw error;
-});
+// Cached app instance and initialization promise
+let app = null;
+let initPromise = null;
 
-const app = express();
-
-// Middleware
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-// Root route and /api route for debugging
-const apiInfo = {
-  message: 'Sunrise Youth International API',
-  availableRoutes: [
-    '/api/health',
-    '/api/test-db',
-    '/api/auth/admin/login',
-    '/api/auth/admin/create-default',
-    '/api/members',
-    '/api/classes',
-    '/api/activities',
-    '/api/admin'
-  ]
-};
-
-app.get('/', (req, res) => res.json(apiInfo));
-app.get('/api', (req, res) => res.json(apiInfo));
-
-// Health check endpoint
-app.get('/api/health', (req, res) => {
-  res.json({
-    status: 'ok',
-    message: '晨光國際少年團 API - Sunrise Youth International API',
-    timestamp: new Date().toISOString(),
-    dbState: mongoose.connection.readyState
-  });
-});
-
-// Database connection test endpoint
-app.get('/api/test-db', async (req, res) => {
-  try {
-    const mongoUri = process.env.MONGODB_URI;
-
-    if (!mongoUri) {
-      return res.status(500).json({
-        status: 'error',
-        message: 'MONGODB_URI environment variable is not set',
-        mongoUriExists: false
-      });
-    }
-
-    const maskedUri = mongoUri.replace(/:[^:@]+@/, ':****@');
-    const connectionState = mongoose.connection.readyState;
-    const states = ['disconnected', 'connected', 'connecting', 'disconnecting'];
-
-    res.json({
-      status: connectionState === 1 ? 'success' : 'warning',
-      message: connectionState === 1 ? 'Database is connected' : `Database state: ${states[connectionState]}`,
-      mongoUri: maskedUri,
-      connectionState: states[connectionState],
-      database: mongoose.connection.name || 'N/A',
-      host: mongoose.connection.host || 'N/A'
-    });
-
-  } catch (error) {
-    res.status(500).json({
-      status: 'error',
-      message: 'Database connection failed',
-      error: error.message,
-      errorType: error.name,
-      mongoUriMasked: process.env.MONGODB_URI ? process.env.MONGODB_URI.replace(/:[^:@]+@/, ':****@') : 'NOT SET'
-    });
+async function initializeApp() {
+  // Return cached promise if already initializing/initialized
+  if (initPromise) {
+    return initPromise;
   }
-});
 
-// Import routes - models will register during this
-const authRoutes = require('../server/routes/auth-serverless');
-const memberRoutes = require('../server/routes/members-serverless');
-const classRoutes = require('../server/routes/classes-serverless');
-const activityRoutes = require('../server/routes/activities-serverless');
-const adminRoutes = require('../server/routes/admin-serverless');
+  initPromise = (async () => {
+    console.log('Initializing app...');
 
-// Mount API routes
-app.use('/api/auth', authRoutes);
-app.use('/api/members', memberRoutes);
-app.use('/api/classes', classRoutes);
-app.use('/api/activities', activityRoutes);
-app.use('/api/admin', adminRoutes);
+    // Step 1: Connect to database FIRST
+    await mongoose.connect(process.env.MONGODB_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+      serverSelectionTimeoutMS: 30000,
+      socketTimeoutMS: 45000,
+    });
 
-// 404 handler
-app.use((req, res) => {
-  console.log('404 - Path not found:', req.method, req.path, req.url);
-  res.status(404).json({
-    message: 'API endpoint not found / API 端點未找到',
-    requestedPath: req.path,
-    requestedUrl: req.url
-  });
-});
+    console.log('MongoDB connected successfully (serverless)');
 
-// CRITICAL: Export a wrapper function that waits for connection before processing
-// This ensures the connection is COMPLETE before any route handler executes
+    // Step 2: NOW load Express and routes (which loads models)
+    // Models will register with connection already complete
+    const express = require('express');
+    const cors = require('cors');
+
+    const authRoutes = require('../server/routes/auth-serverless');
+    const memberRoutes = require('../server/routes/members-serverless');
+    const classRoutes = require('../server/routes/classes-serverless');
+    const activityRoutes = require('../server/routes/activities-serverless');
+    const adminRoutes = require('../server/routes/admin-serverless');
+
+    console.log('Routes loaded successfully');
+
+    // Step 3: Setup Express app
+    app = express();
+
+    app.use(cors());
+    app.use(express.json());
+    app.use(express.urlencoded({ extended: true }));
+
+    // Root routes
+    const apiInfo = {
+      message: 'Sunrise Youth International API',
+      availableRoutes: [
+        '/api/health',
+        '/api/test-db',
+        '/api/auth/admin/login',
+        '/api/auth/admin/create-default',
+        '/api/members',
+        '/api/classes',
+        '/api/activities',
+        '/api/admin'
+      ]
+    };
+
+    app.get('/', (req, res) => res.json(apiInfo));
+    app.get('/api', (req, res) => res.json(apiInfo));
+
+    app.get('/api/health', (req, res) => {
+      res.json({
+        status: 'ok',
+        message: '晨光國際少年團 API - Sunrise Youth International API',
+        timestamp: new Date().toISOString(),
+        dbState: mongoose.connection.readyState
+      });
+    });
+
+    app.get('/api/test-db', async (req, res) => {
+      try {
+        const mongoUri = process.env.MONGODB_URI;
+        const maskedUri = mongoUri ? mongoUri.replace(/:[^:@]+@/, ':****@') : 'NOT SET';
+        const states = ['disconnected', 'connected', 'connecting', 'disconnecting'];
+
+        res.json({
+          status: 'success',
+          message: 'Database is connected',
+          mongoUri: maskedUri,
+          connectionState: states[mongoose.connection.readyState],
+          database: mongoose.connection.name,
+          host: mongoose.connection.host
+        });
+      } catch (error) {
+        res.status(500).json({
+          status: 'error',
+          message: 'Database test failed',
+          error: error.message
+        });
+      }
+    });
+
+    // Mount API routes
+    app.use('/api/auth', authRoutes);
+    app.use('/api/members', memberRoutes);
+    app.use('/api/classes', classRoutes);
+    app.use('/api/activities', activityRoutes);
+    app.use('/api/admin', adminRoutes);
+
+    // 404 handler
+    app.use((req, res) => {
+      console.log('404 - Path not found:', req.method, req.path);
+      res.status(404).json({
+        message: 'API endpoint not found / API 端點未找到',
+        requestedPath: req.path
+      });
+    });
+
+    console.log('App initialized successfully');
+    return app;
+  })();
+
+  return initPromise;
+}
+
+// Export async handler that initializes on first request
 module.exports = async (req, res) => {
   try {
-    // Wait for connection to complete
-    await connectionPromise;
-
-    // Ensure connection is actually ready
-    if (mongoose.connection.readyState !== 1) {
-      console.error('Database not ready after connection promise resolved:', mongoose.connection.readyState);
-      return res.status(500).json({
-        message: '數據庫連接失敗 / Database connection failed',
-        readyState: mongoose.connection.readyState
-      });
-    }
-
-    // Connection is ready, process the request through Express
-    return app(req, res);
+    const appInstance = await initializeApp();
+    return appInstance(req, res);
   } catch (error) {
     console.error('Request handler error:', error);
     return res.status(500).json({
       message: '服務器錯誤 / Server error',
-      error: error.message
+      error: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 };
 
-// Also export as default for compatibility
 module.exports.default = module.exports;
