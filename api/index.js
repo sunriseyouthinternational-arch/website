@@ -56,21 +56,22 @@ app.use(async (req, res, next) => {
   }
 });
 
-// Root route for debugging
-app.get('/', (req, res) => {
-  res.json({
-    message: 'Sunrise Youth International API',
-    availableRoutes: [
-      '/api/health',
-      '/api/auth/admin/login',
-      '/api/auth/admin/create-default',
-      '/api/members',
-      '/api/classes',
-      '/api/activities',
-      '/api/admin'
-    ]
-  });
-});
+// Root route and /api route for debugging
+const apiInfo = {
+  message: 'Sunrise Youth International API',
+  availableRoutes: [
+    '/api/health',
+    '/api/auth/admin/login',
+    '/api/auth/admin/create-default',
+    '/api/members',
+    '/api/classes',
+    '/api/activities',
+    '/api/admin'
+  ]
+};
+
+app.get('/', (req, res) => res.json(apiInfo));
+app.get('/api', (req, res) => res.json(apiInfo));
 
 // API Routes - mount with /api prefix because Vercel preserves full path
 app.use('/api/auth', authRoutes);
