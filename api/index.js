@@ -12,18 +12,27 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Database connection cache for serverless
-let isConnected = false;
+// Database connection with caching for serverless
+let cachedDb = null;
 
 async function connectToDatabase() {
-  if (isConnected && mongoose.connection.readyState === 1) {
+  // Check if already connected
+  if (mongoose.connection.readyState === 1) {
     console.log('Using existing MongoDB connection');
-    return;
+    return mongoose.connection;
+  }
+
+  // If currently connecting, wait for it
+  if (mongoose.connection.readyState === 2) {
+    console.log('Waiting for existing connection attempt...');
+    await new Promise((resolve) => {
+      mongoose.connection.once('connected', resolve);
+    });
+    return mongoose.connection;
   }
 
   try {
     console.log('Creating new MongoDB connection...');
-
     await mongoose.connect(process.env.MONGODB_URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
@@ -31,44 +40,35 @@ async function connectToDatabase() {
       socketTimeoutMS: 45000,
     });
 
-    isConnected = true;
     console.log('MongoDB connected successfully (serverless)');
+    return mongoose.connection;
   } catch (error) {
     console.error('MongoDB connection error:', error);
-    isConnected = false;
     throw error;
   }
 }
 
-// CRITICAL: Connect to database BEFORE loading any routes
-// This ensures models are registered AFTER connection is established
-let routesInitialized = false;
-let authRoutes, memberRoutes, classRoutes, activityRoutes, adminRoutes;
+// Middleware to ensure database connection BEFORE any route processing
+// This must come BEFORE route mounting
+app.use(async (req, res, next) => {
+  try {
+    await connectToDatabase();
 
-async function initializeRoutes() {
-  if (routesInitialized) {
-    return;
+    // Double-check connection is ready
+    if (mongoose.connection.readyState !== 1) {
+      throw new Error(`Database not ready. ReadyState: ${mongoose.connection.readyState}`);
+    }
+
+    next();
+  } catch (error) {
+    console.error('Database middleware error:', error);
+    res.status(500).json({
+      message: '數據庫連接失敗 / Database connection failed',
+      error: error.message,
+      readyState: mongoose.connection.readyState
+    });
   }
-
-  console.log('Initializing routes...');
-
-  // Import routes (which will also load models) AFTER database connection
-  authRoutes = require('../server/routes/auth-serverless');
-  memberRoutes = require('../server/routes/members-serverless');
-  classRoutes = require('../server/routes/classes-serverless');
-  activityRoutes = require('../server/routes/activities-serverless');
-  adminRoutes = require('../server/routes/admin-serverless');
-
-  // Mount routes with /api prefix
-  app.use('/api/auth', authRoutes);
-  app.use('/api/members', memberRoutes);
-  app.use('/api/classes', classRoutes);
-  app.use('/api/activities', activityRoutes);
-  app.use('/api/admin', adminRoutes);
-
-  routesInitialized = true;
-  console.log('Routes initialized successfully');
-}
+});
 
 // Root route and /api route for debugging
 const apiInfo = {
@@ -111,9 +111,21 @@ app.get('/api/test-db', async (req, res) => {
     }
 
     const maskedUri = mongoUri.replace(/:[^:@]+@/, ':****@');
-    await connectToDatabase();
-
+    const connectionState = mongoose.connection.readyState;
     const states = ['disconnected', 'connected', 'connecting', 'disconnecting'];
+
+    if (connectionState === 1) {
+      return res.json({
+        status: 'connected',
+        message: 'Database is connected',
+        mongoUri: maskedUri,
+        connectionState: states[connectionState],
+        database: mongoose.connection.name,
+        host: mongoose.connection.host
+      });
+    }
+
+    await connectToDatabase();
 
     res.json({
       status: 'success',
@@ -123,6 +135,7 @@ app.get('/api/test-db', async (req, res) => {
       database: mongoose.connection.name,
       host: mongoose.connection.host
     });
+
   } catch (error) {
     res.status(500).json({
       status: 'error',
@@ -134,33 +147,19 @@ app.get('/api/test-db', async (req, res) => {
   }
 });
 
-// Middleware to ensure database connection and routes are initialized
-app.use(async (req, res, next) => {
-  // Skip for static routes
-  if (req.path === '/' || req.path === '/api' || req.path === '/api/health' || req.path === '/api/test-db') {
-    return next();
-  }
+// Import and mount routes AFTER database middleware
+// This ensures connection middleware runs first, then routes are available
+const authRoutes = require('../server/routes/auth-serverless');
+const memberRoutes = require('../server/routes/members-serverless');
+const classRoutes = require('../server/routes/classes-serverless');
+const activityRoutes = require('../server/routes/activities-serverless');
+const adminRoutes = require('../server/routes/admin-serverless');
 
-  try {
-    console.log(`Request: ${req.method} ${req.path}`);
-
-    // Step 1: Ensure database is connected
-    await connectToDatabase();
-
-    // Step 2: Initialize routes (loads models AFTER connection is ready)
-    await initializeRoutes();
-
-    console.log('Database and routes ready, proceeding with request...');
-    next();
-  } catch (error) {
-    console.error('Request initialization error:', error);
-    res.status(500).json({
-      message: '數據庫連接失敗 / Database connection failed',
-      error: error.message,
-      readyState: mongoose.connection.readyState
-    });
-  }
-});
+app.use('/api/auth', authRoutes);
+app.use('/api/members', memberRoutes);
+app.use('/api/classes', classRoutes);
+app.use('/api/activities', activityRoutes);
+app.use('/api/admin', adminRoutes);
 
 // 404 handler - log for debugging
 app.use((req, res) => {
