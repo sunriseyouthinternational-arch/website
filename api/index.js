@@ -23,7 +23,7 @@ const adminRoutes = require('../server/routes/admin');
 let cachedDb = null;
 
 async function connectToDatabase() {
-  if (cachedDb) {
+  if (cachedDb && mongoose.connection.readyState === 1) {
     return cachedDb;
   }
 
@@ -31,7 +31,10 @@ async function connectToDatabase() {
     const connection = await mongoose.connect(process.env.MONGODB_URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
-      serverSelectionTimeoutMS: 5000,
+      serverSelectionTimeoutMS: 30000, // Increased to 30 seconds
+      socketTimeoutMS: 30000,
+      connectTimeoutMS: 30000,
+      bufferCommands: false, // Disable buffering
     });
 
     cachedDb = connection;
@@ -47,11 +50,17 @@ async function connectToDatabase() {
 app.use(async (req, res, next) => {
   try {
     await connectToDatabase();
+    // Ensure connection is ready
+    if (mongoose.connection.readyState !== 1) {
+      throw new Error('Database not ready');
+    }
     next();
   } catch (error) {
+    console.error('Database middleware error:', error);
     res.status(500).json({
       message: '數據庫連接失敗 / Database connection failed',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      error: error.message,
+      readyState: mongoose.connection.readyState
     });
   }
 });
