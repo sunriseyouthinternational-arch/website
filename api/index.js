@@ -56,15 +56,15 @@ app.use(async (req, res, next) => {
   }
 });
 
-// API Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/members', memberRoutes);
-app.use('/api/classes', classRoutes);
-app.use('/api/activities', activityRoutes);
-app.use('/api/admin', adminRoutes);
+// API Routes (Vercel already adds /api prefix via rewrites)
+app.use('/auth', authRoutes);
+app.use('/members', memberRoutes);
+app.use('/classes', classRoutes);
+app.use('/activities', activityRoutes);
+app.use('/admin', adminRoutes);
 
 // Health check endpoint
-app.get('/api/health', (req, res) => {
+app.get('/health', (req, res) => {
   res.json({
     status: 'ok',
     message: '晨光國際少年團 API - Sunrise Youth International API',
