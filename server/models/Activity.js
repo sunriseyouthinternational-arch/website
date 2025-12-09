@@ -20,6 +20,11 @@ const activitySchema = new mongoose.Schema({
   status: { type: String, enum: ['active', 'completed', 'cancelled'], default: 'active' },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
+}, {
+  bufferCommands: false,
+  bufferTimeoutMS: 0,
+  autoCreate: false,
+  autoIndex: false
 });
 
 activitySchema.pre('save', function(next) {

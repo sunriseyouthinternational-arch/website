@@ -36,6 +36,11 @@ const memberSchema = new mongoose.Schema({
   enrollments: [enrollmentSchema],
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
+}, {
+  bufferCommands: false,
+  bufferTimeoutMS: 0,
+  autoCreate: false,
+  autoIndex: false
 });
 
 // Update the updatedAt field before saving

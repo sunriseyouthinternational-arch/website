@@ -5,6 +5,11 @@ const adminSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   createdAt: { type: Date, default: Date.now }
+}, {
+  bufferCommands: false,
+  bufferTimeoutMS: 0,
+  autoCreate: false,
+  autoIndex: false
 });
 
 // Hash password before saving
@@ -19,4 +24,6 @@ adminSchema.methods.comparePassword = async function(candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
 };
 
-module.exports = mongoose.model('Admin', adminSchema);
+const Admin = mongoose.model('Admin', adminSchema);
+
+module.exports = Admin;
