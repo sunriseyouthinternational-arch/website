@@ -7,10 +7,6 @@ dotenv.config();
 
 const app = express();
 
-// Disable Mongoose buffering globally for serverless
-mongoose.set('bufferCommands', false);
-mongoose.set('bufferTimeoutMS', 0);
-
 // Middleware
 app.use(cors());
 app.use(express.json());
@@ -48,8 +44,7 @@ async function connectToDatabase() {
       useNewUrlParser: true,
       useUnifiedTopology: true,
       serverSelectionTimeoutMS: 30000,
-      socketTimeoutMS: 30000,
-      connectTimeoutMS: 30000,
+      socketTimeoutMS: 45000,
     });
 
     console.log('MongoDB connected successfully (serverless)');
