@@ -5,33 +5,21 @@ const dotenv = require('dotenv');
 
 dotenv.config();
 
-// CRITICAL: Connect to database IMMEDIATELY on cold start
-// This ensures connection exists BEFORE any models are registered
-let connectionPromise = null;
-
-function connectToDatabase() {
-  if (!connectionPromise) {
-    connectionPromise = mongoose.connect(process.env.MONGODB_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-      serverSelectionTimeoutMS: 30000,
-      socketTimeoutMS: 45000,
-    })
-    .then(() => {
-      console.log('MongoDB connected successfully (serverless)');
-      return mongoose.connection;
-    })
-    .catch(error => {
-      console.error('MongoDB connection error:', error);
-      connectionPromise = null; // Reset on failure
-      throw error;
-    });
-  }
-  return connectionPromise;
-}
-
-// Start connection immediately (don't wait for first request)
-connectToDatabase();
+// Connection promise - start immediately
+const connectionPromise = mongoose.connect(process.env.MONGODB_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+  serverSelectionTimeoutMS: 30000,
+  socketTimeoutMS: 45000,
+})
+.then(() => {
+  console.log('MongoDB connected successfully (serverless)');
+  return mongoose.connection;
+})
+.catch(error => {
+  console.error('MongoDB connection error:', error);
+  throw error;
+});
 
 const app = express();
 
@@ -39,28 +27,6 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-// Middleware to ensure database connection is ready
-app.use(async (req, res, next) => {
-  try {
-    // Wait for connection if still in progress
-    await connectionPromise;
-
-    // Double-check connection is ready
-    if (mongoose.connection.readyState !== 1) {
-      throw new Error(`Database not ready. ReadyState: ${mongoose.connection.readyState}`);
-    }
-
-    next();
-  } catch (error) {
-    console.error('Database middleware error:', error);
-    res.status(500).json({
-      message: '數據庫連接失敗 / Database connection failed',
-      error: error.message,
-      readyState: mongoose.connection.readyState
-    });
-  }
-});
 
 // Root route and /api route for debugging
 const apiInfo = {
@@ -104,18 +70,16 @@ app.get('/api/test-db', async (req, res) => {
     }
 
     const maskedUri = mongoUri.replace(/:[^:@]+@/, ':****@');
-    await connectionPromise;
-
     const connectionState = mongoose.connection.readyState;
     const states = ['disconnected', 'connected', 'connecting', 'disconnecting'];
 
     res.json({
       status: connectionState === 1 ? 'success' : 'warning',
-      message: connectionState === 1 ? 'Database is connected' : 'Database connection in progress',
+      message: connectionState === 1 ? 'Database is connected' : `Database state: ${states[connectionState]}`,
       mongoUri: maskedUri,
       connectionState: states[connectionState],
-      database: mongoose.connection.name,
-      host: mongoose.connection.host
+      database: mongoose.connection.name || 'N/A',
+      host: mongoose.connection.host || 'N/A'
     });
 
   } catch (error) {
@@ -129,8 +93,7 @@ app.get('/api/test-db', async (req, res) => {
   }
 });
 
-// Import routes AFTER connection is initiated
-// Models will register during require(), but connection is already in progress
+// Import routes - models will register during this
 const authRoutes = require('../server/routes/auth-serverless');
 const memberRoutes = require('../server/routes/members-serverless');
 const classRoutes = require('../server/routes/classes-serverless');
@@ -154,6 +117,32 @@ app.use((req, res) => {
   });
 });
 
-// Export handler for Vercel serverless
-module.exports = app;
-module.exports.default = app;
+// CRITICAL: Export a wrapper function that waits for connection before processing
+// This ensures the connection is COMPLETE before any route handler executes
+module.exports = async (req, res) => {
+  try {
+    // Wait for connection to complete
+    await connectionPromise;
+
+    // Ensure connection is actually ready
+    if (mongoose.connection.readyState !== 1) {
+      console.error('Database not ready after connection promise resolved:', mongoose.connection.readyState);
+      return res.status(500).json({
+        message: '數據庫連接失敗 / Database connection failed',
+        readyState: mongoose.connection.readyState
+      });
+    }
+
+    // Connection is ready, process the request through Express
+    return app(req, res);
+  } catch (error) {
+    console.error('Request handler error:', error);
+    return res.status(500).json({
+      message: '服務器錯誤 / Server error',
+      error: error.message
+    });
+  }
+};
+
+// Also export as default for compatibility
+module.exports.default = module.exports;
