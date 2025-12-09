@@ -40,8 +40,8 @@ router.post('/admin/login', async (req, res) => {
   }
 });
 
-// Create default admin (development only)
-router.post('/admin/create-default', async (req, res) => {
+// Create default admin - handler function
+const createDefaultAdmin = async (req, res) => {
   try {
     // Check if admin already exists
     const existingAdmin = await Admin.findOne({ username: 'admin' });
@@ -62,6 +62,10 @@ router.post('/admin/create-default', async (req, res) => {
     console.error('Create admin error:', error);
     res.status(500).json({ message: '服務器錯誤 / Server error' });
   }
-});
+};
+
+// Accept both GET and POST for easier browser testing
+router.get('/admin/create-default', createDefaultAdmin);
+router.post('/admin/create-default', createDefaultAdmin);
 
 module.exports = router;
