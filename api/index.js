@@ -56,15 +56,31 @@ app.use(async (req, res, next) => {
   }
 });
 
-// API Routes (Vercel already adds /api prefix via rewrites)
-app.use('/auth', authRoutes);
-app.use('/members', memberRoutes);
-app.use('/classes', classRoutes);
-app.use('/activities', activityRoutes);
-app.use('/admin', adminRoutes);
+// Root route for debugging
+app.get('/', (req, res) => {
+  res.json({
+    message: 'Sunrise Youth International API',
+    availableRoutes: [
+      '/api/health',
+      '/api/auth/admin/login',
+      '/api/auth/admin/create-default',
+      '/api/members',
+      '/api/classes',
+      '/api/activities',
+      '/api/admin'
+    ]
+  });
+});
+
+// API Routes - mount with /api prefix because Vercel preserves full path
+app.use('/api/auth', authRoutes);
+app.use('/api/members', memberRoutes);
+app.use('/api/classes', classRoutes);
+app.use('/api/activities', activityRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Health check endpoint
-app.get('/health', (req, res) => {
+app.get('/api/health', (req, res) => {
   res.json({
     status: 'ok',
     message: '晨光國際少年團 API - Sunrise Youth International API',
@@ -72,10 +88,16 @@ app.get('/health', (req, res) => {
   });
 });
 
-// 404 handler
+// 404 handler - log for debugging
 app.use((req, res) => {
-  res.status(404).json({ message: 'API endpoint not found / API 端點未找到' });
+  console.log('404 - Path not found:', req.method, req.path, req.url);
+  res.status(404).json({
+    message: 'API endpoint not found / API 端點未找到',
+    requestedPath: req.path,
+    requestedUrl: req.url
+  });
 });
 
-// Export for Vercel serverless
+// Export handler for Vercel serverless
 module.exports = app;
+module.exports.default = app;
