@@ -61,6 +61,7 @@ const apiInfo = {
   message: 'Sunrise Youth International API',
   availableRoutes: [
     '/api/health',
+    '/api/test-db',
     '/api/auth/admin/login',
     '/api/auth/admin/create-default',
     '/api/members',
@@ -72,6 +73,61 @@ const apiInfo = {
 
 app.get('/', (req, res) => res.json(apiInfo));
 app.get('/api', (req, res) => res.json(apiInfo));
+
+// Database connection test endpoint
+app.get('/api/test-db', async (req, res) => {
+  try {
+    const mongoUri = process.env.MONGODB_URI;
+
+    // Check if URI exists
+    if (!mongoUri) {
+      return res.status(500).json({
+        status: 'error',
+        message: 'MONGODB_URI environment variable is not set',
+        mongoUriExists: false
+      });
+    }
+
+    // Mask password in URI for display
+    const maskedUri = mongoUri.replace(/:[^:@]+@/, ':****@');
+
+    // Try to connect
+    const connectionState = mongoose.connection.readyState;
+    const states = ['disconnected', 'connected', 'connecting', 'disconnecting'];
+
+    if (connectionState === 1) {
+      return res.json({
+        status: 'connected',
+        message: 'Database is connected',
+        mongoUri: maskedUri,
+        connectionState: states[connectionState],
+        database: mongoose.connection.name,
+        host: mongoose.connection.host
+      });
+    }
+
+    // Try to connect if not connected
+    await connectToDatabase();
+
+    res.json({
+      status: 'success',
+      message: 'Database connection successful',
+      mongoUri: maskedUri,
+      connectionState: states[mongoose.connection.readyState],
+      database: mongoose.connection.name,
+      host: mongoose.connection.host
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      status: 'error',
+      message: 'Database connection failed',
+      error: error.message,
+      errorType: error.name,
+      mongoUriMasked: process.env.MONGODB_URI ? process.env.MONGODB_URI.replace(/:[^:@]+@/, ':****@') : 'NOT SET'
+    });
+  }
+});
 
 // API Routes - mount with /api prefix because Vercel preserves full path
 app.use('/api/auth', authRoutes);
