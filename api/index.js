@@ -5,6 +5,34 @@ const dotenv = require('dotenv');
 
 dotenv.config();
 
+// CRITICAL: Connect to database IMMEDIATELY on cold start
+// This ensures connection exists BEFORE any models are registered
+let connectionPromise = null;
+
+function connectToDatabase() {
+  if (!connectionPromise) {
+    connectionPromise = mongoose.connect(process.env.MONGODB_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+      serverSelectionTimeoutMS: 30000,
+      socketTimeoutMS: 45000,
+    })
+    .then(() => {
+      console.log('MongoDB connected successfully (serverless)');
+      return mongoose.connection;
+    })
+    .catch(error => {
+      console.error('MongoDB connection error:', error);
+      connectionPromise = null; // Reset on failure
+      throw error;
+    });
+  }
+  return connectionPromise;
+}
+
+// Start connection immediately (don't wait for first request)
+connectToDatabase();
+
 const app = express();
 
 // Middleware
@@ -12,47 +40,11 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Database connection with caching for serverless
-let cachedDb = null;
-
-async function connectToDatabase() {
-  // Check if already connected
-  if (mongoose.connection.readyState === 1) {
-    console.log('Using existing MongoDB connection');
-    return mongoose.connection;
-  }
-
-  // If currently connecting, wait for it
-  if (mongoose.connection.readyState === 2) {
-    console.log('Waiting for existing connection attempt...');
-    await new Promise((resolve) => {
-      mongoose.connection.once('connected', resolve);
-    });
-    return mongoose.connection;
-  }
-
-  try {
-    console.log('Creating new MongoDB connection...');
-    await mongoose.connect(process.env.MONGODB_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-      serverSelectionTimeoutMS: 30000,
-      socketTimeoutMS: 45000,
-    });
-
-    console.log('MongoDB connected successfully (serverless)');
-    return mongoose.connection;
-  } catch (error) {
-    console.error('MongoDB connection error:', error);
-    throw error;
-  }
-}
-
-// Middleware to ensure database connection BEFORE any route processing
-// This must come BEFORE route mounting
+// Middleware to ensure database connection is ready
 app.use(async (req, res, next) => {
   try {
-    await connectToDatabase();
+    // Wait for connection if still in progress
+    await connectionPromise;
 
     // Double-check connection is ready
     if (mongoose.connection.readyState !== 1) {
@@ -93,7 +85,8 @@ app.get('/api/health', (req, res) => {
   res.json({
     status: 'ok',
     message: '晨光國際少年團 API - Sunrise Youth International API',
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    dbState: mongoose.connection.readyState
   });
 });
 
@@ -111,27 +104,16 @@ app.get('/api/test-db', async (req, res) => {
     }
 
     const maskedUri = mongoUri.replace(/:[^:@]+@/, ':****@');
+    await connectionPromise;
+
     const connectionState = mongoose.connection.readyState;
     const states = ['disconnected', 'connected', 'connecting', 'disconnecting'];
 
-    if (connectionState === 1) {
-      return res.json({
-        status: 'connected',
-        message: 'Database is connected',
-        mongoUri: maskedUri,
-        connectionState: states[connectionState],
-        database: mongoose.connection.name,
-        host: mongoose.connection.host
-      });
-    }
-
-    await connectToDatabase();
-
     res.json({
-      status: 'success',
-      message: 'Database connection successful',
+      status: connectionState === 1 ? 'success' : 'warning',
+      message: connectionState === 1 ? 'Database is connected' : 'Database connection in progress',
       mongoUri: maskedUri,
-      connectionState: states[mongoose.connection.readyState],
+      connectionState: states[connectionState],
       database: mongoose.connection.name,
       host: mongoose.connection.host
     });
@@ -147,21 +129,22 @@ app.get('/api/test-db', async (req, res) => {
   }
 });
 
-// Import and mount routes AFTER database middleware
-// This ensures connection middleware runs first, then routes are available
+// Import routes AFTER connection is initiated
+// Models will register during require(), but connection is already in progress
 const authRoutes = require('../server/routes/auth-serverless');
 const memberRoutes = require('../server/routes/members-serverless');
 const classRoutes = require('../server/routes/classes-serverless');
 const activityRoutes = require('../server/routes/activities-serverless');
 const adminRoutes = require('../server/routes/admin-serverless');
 
+// Mount API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/members', memberRoutes);
 app.use('/api/classes', classRoutes);
 app.use('/api/activities', activityRoutes);
 app.use('/api/admin', adminRoutes);
 
-// 404 handler - log for debugging
+// 404 handler
 app.use((req, res) => {
   console.log('404 - Path not found:', req.method, req.path, req.url);
   res.status(404).json({
