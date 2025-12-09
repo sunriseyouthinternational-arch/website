@@ -27,23 +27,33 @@ const adminRoutes = require('../server/routes/admin');
 let cachedDb = null;
 
 async function connectToDatabase() {
-  if (cachedDb && mongoose.connection.readyState === 1) {
-    return cachedDb;
+  // Check if already connected
+  if (mongoose.connection.readyState === 1) {
+    console.log('Using existing MongoDB connection');
+    return mongoose.connection;
+  }
+
+  // If currently connecting, wait for it
+  if (mongoose.connection.readyState === 2) {
+    console.log('Waiting for existing connection attempt...');
+    await new Promise((resolve) => {
+      mongoose.connection.once('connected', resolve);
+    });
+    return mongoose.connection;
   }
 
   try {
-    const connection = await mongoose.connect(process.env.MONGODB_URI, {
+    console.log('Creating new MongoDB connection...');
+    await mongoose.connect(process.env.MONGODB_URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
-      serverSelectionTimeoutMS: 30000, // Increased to 30 seconds
+      serverSelectionTimeoutMS: 30000,
       socketTimeoutMS: 30000,
       connectTimeoutMS: 30000,
-      bufferCommands: false, // Disable buffering
     });
 
-    cachedDb = connection;
-    console.log('MongoDB connected (serverless)');
-    return connection;
+    console.log('MongoDB connected successfully (serverless)');
+    return mongoose.connection;
   } catch (error) {
     console.error('MongoDB connection error:', error);
     throw error;
@@ -53,11 +63,15 @@ async function connectToDatabase() {
 // Connect to database before handling requests
 app.use(async (req, res, next) => {
   try {
+    console.log('Middleware - ensuring DB connection...');
     await connectToDatabase();
-    // Ensure connection is ready
+
+    // Double-check connection is ready
     if (mongoose.connection.readyState !== 1) {
-      throw new Error('Database not ready');
+      throw new Error(`Database not ready. ReadyState: ${mongoose.connection.readyState}`);
     }
+
+    console.log('Middleware - DB connection confirmed, proceeding...');
     next();
   } catch (error) {
     console.error('Database middleware error:', error);
