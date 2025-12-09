@@ -31,10 +31,34 @@ A comprehensive member management system with bilingual support (Chinese/English
 - **後端 / Backend**: Node.js, Express, MongoDB, Mongoose
 - **前端 / Frontend**: React, React Router
 - **認證 / Authentication**: JWT (JSON Web Tokens)
-- **文件上傳 / File Upload**: Multer
+- **文件上傳 / File Upload**: Multer (本地) / Base64 (Vercel)
 - **QR 碼生成 / QR Code**: qrcode library
+- **部署 / Deployment**: Vercel (serverless) + MongoDB Atlas
 
-## 安裝說明 / Installation
+## 🚀 快速部署到 Vercel / Quick Deploy to Vercel
+
+本專案已優化支持 Vercel 無伺服器部署！
+This project is optimized for Vercel serverless deployment!
+
+### 一鍵部署 / One-Click Deploy
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/sunriseyouthinternational-arch/website)
+
+### 完整部署指南 / Complete Deployment Guide
+
+📖 詳細的部署步驟請參閱：[VERCEL_DEPLOYMENT.md](./VERCEL_DEPLOYMENT.md)
+📖 For detailed deployment steps, see: [VERCEL_DEPLOYMENT.md](./VERCEL_DEPLOYMENT.md)
+
+**快速步驟 / Quick Steps**:
+1. 註冊 MongoDB Atlas 並創建免費集群
+2. 獲取 MongoDB 連接字符串
+3. 在 Vercel 中導入 GitHub 倉庫
+4. 配置環境變量（MONGODB_URI, JWT_SECRET 等）
+5. 部署完成！
+
+---
+
+## 💻 本地開發安裝 / Local Development Installation
 
 ### 前置需求 / Prerequisites
 

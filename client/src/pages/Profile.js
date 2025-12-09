@@ -13,6 +13,16 @@ function Profile() {
   const [message, setMessage] = useState({ type: '', text: '' });
   const [activeTab, setActiveTab] = useState('profile');
 
+  // Helper function to get image source (handles both base64 and file paths)
+  const getImageSrc = (imagePath) => {
+    if (!imagePath) return null;
+    // If it's already a base64 data URI, return as is
+    if (imagePath.startsWith('data:')) return imagePath;
+    // Otherwise, assume it's a file path and prepend API URL
+    const apiUrl = process.env.REACT_APP_API_URL || '';
+    return `${apiUrl}${imagePath}`;
+  };
+
   const fetchMember = async () => {
     if (!memberId) {
       setMessage({ type: 'error', text: t('language') === 'zh' ? '請輸入團員編號' : 'Please enter member ID' });
@@ -167,7 +177,7 @@ function Profile() {
               <div className="profile-header">
                 <div className="profile-picture-section">
                   {member.profilePicture ? (
-                    <img src={`http://localhost:5000${member.profilePicture}`} alt="Profile" className="profile-picture" />
+                    <img src={getImageSrc(member.profilePicture)} alt="Profile" className="profile-picture" />
                   ) : (
                     <div className="profile-picture-placeholder">
                       <span>{member.name[0]}</span>
@@ -254,7 +264,7 @@ function Profile() {
                   {classes.map((classItem) => (
                     <div key={classItem._id} className="item-card">
                       {classItem.banner && (
-                        <img src={`http://localhost:5000${classItem.banner}`} alt={classItem.name} className="item-banner" />
+                        <img src={getImageSrc(classItem.banner)} alt={classItem.name} className="item-banner" />
                       )}
                       <h4>{classItem.name}</h4>
                       <p className="item-description">{classItem.description}</p>
@@ -304,7 +314,7 @@ function Profile() {
                   {activities.map((activity) => (
                     <div key={activity._id} className="item-card">
                       {activity.banner && (
-                        <img src={`http://localhost:5000${activity.banner}`} alt={activity.name} className="item-banner" />
+                        <img src={getImageSrc(activity.banner)} alt={activity.name} className="item-banner" />
                       )}
                       <h4>{activity.name}</h4>
                       <p className="item-description">{activity.description}</p>
