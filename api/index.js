@@ -7,6 +7,10 @@ dotenv.config();
 
 const app = express();
 
+// Disable Mongoose buffering globally for serverless
+mongoose.set('bufferCommands', false);
+mongoose.set('bufferTimeoutMS', 0);
+
 // Middleware
 app.use(cors());
 app.use(express.json());
