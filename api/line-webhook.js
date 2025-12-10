@@ -37,17 +37,20 @@ module.exports = async (req, res) => {
       return res.status(401).json({ message: 'Invalid signature' });
     }
 
-    // Connect to database
-    await connectDB();
-
-    // Process events
+    // Get events
     const events = req.body.events || [];
 
-    for (const event of events) {
-      await handleEvent(event);
+    // IMPORTANT: Return 200 OK immediately to avoid timeout
+    // LINE expects response within 1-3 seconds
+    res.status(200).json({ message: 'OK' });
+
+    // Process events asynchronously (don't await)
+    if (events.length > 0) {
+      processEventsAsync(events).catch(error => {
+        console.error('Error processing events asynchronously:', error);
+      });
     }
 
-    return res.status(200).json({ message: 'OK' });
   } catch (error) {
     console.error('LINE webhook error:', error);
     return res.status(500).json({
@@ -56,6 +59,21 @@ module.exports = async (req, res) => {
     });
   }
 };
+
+// Process events asynchronously after responding to LINE
+async function processEventsAsync(events) {
+  try {
+    // Connect to database
+    await connectDB();
+
+    // Process each event
+    for (const event of events) {
+      await handleEvent(event);
+    }
+  } catch (error) {
+    console.error('Async event processing error:', error);
+  }
+}
 
 async function handleEvent(event) {
   console.log('LINE event:', event.type);
