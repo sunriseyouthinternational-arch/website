@@ -23,7 +23,12 @@ module.exports = async (req, res) => {
       await member.save();
 
       // Generate QR code with full profile URL
-      const profileUrl = `${process.env.FRONTEND_URL || 'https://website-five-chi-99.vercel.app'}/profile/${member.memberId}`;
+      // Automatically detect the domain from the request
+      const protocol = req.headers['x-forwarded-proto'] || 'https';
+      const host = req.headers['x-forwarded-host'] || req.headers.host || 'website-five-chi-99.vercel.app';
+      const baseUrl = process.env.FRONTEND_URL || `${protocol}://${host}`;
+      const profileUrl = `${baseUrl}/profile/${member.memberId}`;
+
       const qrCodeUrl = await QRCode.toDataURL(profileUrl);
       member.qrCode = qrCodeUrl;
       await member.save();
