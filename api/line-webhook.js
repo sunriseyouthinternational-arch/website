@@ -64,15 +64,24 @@ module.exports = async (req, res) => {
 // Process events asynchronously after responding to LINE
 async function processEventsAsync(events) {
   try {
+    console.log('[processEventsAsync] Starting...');
+
     // Connect to database
+    console.log('[processEventsAsync] Connecting to database...');
     await connectDB();
+    console.log('[processEventsAsync] Database connected!');
 
     // Process each event
     for (const event of events) {
+      console.log('[processEventsAsync] Processing event:', event.type);
       await handleEvent(event);
+      console.log('[processEventsAsync] Event processed:', event.type);
     }
+
+    console.log('[processEventsAsync] All events processed successfully!');
   } catch (error) {
-    console.error('Async event processing error:', error);
+    console.error('[processEventsAsync] ERROR:', error);
+    console.error('[processEventsAsync] Error stack:', error.stack);
   }
 }
 
@@ -97,14 +106,17 @@ async function handleEvent(event) {
 
 async function handleFollowEvent(event) {
   const lineUserId = event.source.userId;
+  console.log('[handleFollowEvent] START - User ID:', lineUserId);
 
   try {
     // Check if user already exists
+    console.log('[handleFollowEvent] Checking if user exists...');
     let member = await Member.findOne({ 'line.userId': lineUserId });
 
     if (member) {
-      console.log('Existing member re-followed:', member.memberId);
+      console.log('[handleFollowEvent] Existing member re-followed:', member.memberId);
       // Send welcome back message using push message (not reply)
+      console.log('[handleFollowEvent] Sending welcome back message...');
       await client.pushMessage({
         to: lineUserId,
         messages: [{
@@ -112,22 +124,28 @@ async function handleFollowEvent(event) {
           text: `歡迎回來！Welcome back!\n您的團員編號：${member.memberId}\nYour member ID: ${member.memberId}`
         }]
       });
+      console.log('[handleFollowEvent] Welcome back message sent!');
       return;
     }
 
     // Get LINE profile information
+    console.log('[handleFollowEvent] Getting LINE profile...');
     const profile = await client.getProfile(lineUserId);
+    console.log('[handleFollowEvent] Profile received:', profile.displayName);
 
     // Generate unique member ID
     const memberId = `M${Date.now().toString().slice(-6)}${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`;
+    console.log('[handleFollowEvent] Generated member ID:', memberId);
 
     // Determine domain from request
     const protocol = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split('://')[0] : 'https';
     const host = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split('://')[1] : 'website-five-chi-99.vercel.app';
     const baseUrl = `${protocol}://${host}`;
     const profileUrl = `${baseUrl}/profile/${memberId}`;
+    console.log('[handleFollowEvent] Profile URL:', profileUrl);
 
     // Create new member
+    console.log('[handleFollowEvent] Creating member object...');
     member = new Member({
       memberId,
       name: profile.displayName,
@@ -147,10 +165,12 @@ async function handleFollowEvent(event) {
     });
 
     // Save member first
+    console.log('[handleFollowEvent] Saving member to database...');
     await member.save();
-    console.log('New member created:', memberId, 'LINE ID:', lineUserId);
+    console.log('[handleFollowEvent] ✅ New member created:', memberId, 'LINE ID:', lineUserId);
 
     // Send welcome message FIRST using push message
+    console.log('[handleFollowEvent] Sending welcome message...');
     await client.pushMessage({
       to: lineUserId,
       messages: [
@@ -160,8 +180,10 @@ async function handleFollowEvent(event) {
         }
       ]
     });
+    console.log('[handleFollowEvent] ✅ Welcome message sent!');
 
     // Create personalized rich menu with QR code (this takes time)
+    console.log('[handleFollowEvent] Creating rich menu (this may take 10-30 seconds)...');
     const richMenuId = await createPersonalizedRichMenu(
       client,
       lineUserId,
@@ -169,14 +191,16 @@ async function handleFollowEvent(event) {
       profileUrl,
       profile.displayName
     );
+    console.log('[handleFollowEvent] ✅ Rich menu created:', richMenuId);
 
     // Save rich menu ID to member
+    console.log('[handleFollowEvent] Saving rich menu ID...');
     member.line.richMenuId = richMenuId;
     await member.save();
-
-    console.log('Rich menu created for member:', memberId);
+    console.log('[handleFollowEvent] ✅ Rich menu ID saved!');
 
     // Send confirmation that rich menu is ready
+    console.log('[handleFollowEvent] Sending confirmation message...');
     await client.pushMessage({
       to: lineUserId,
       messages: [{
@@ -184,6 +208,7 @@ async function handleFollowEvent(event) {
         text: '✅ 您的專屬 QR Code 已建立完成！\n點選下方選單查看 📱\n\nYour personalized QR code is ready!\nTap the menu below to view 📱'
       }]
     });
+    console.log('[handleFollowEvent] ✅ Confirmation message sent!');
 
   } catch (error) {
     console.error('Error handling follow event:', error);
