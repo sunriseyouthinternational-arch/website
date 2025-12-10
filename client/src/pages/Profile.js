@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useLanguage } from '../contexts/LanguageContext';
 import './Profile.css';
 
 function Profile() {
   const { t } = useLanguage();
-  const [memberId, setMemberId] = useState('');
+  const { memberId: urlMemberId } = useParams();
+  const navigate = useNavigate();
+  const [memberId, setMemberId] = useState(urlMemberId || '');
   const [member, setMember] = useState(null);
   const [classes, setClasses] = useState([]);
   const [activities, setActivities] = useState([]);
@@ -29,22 +32,9 @@ function Profile() {
       return;
     }
 
-    setLoading(true);
-    setMessage({ type: '', text: '' });
-
-    try {
-      const response = await axios.get(`/api/members?memberId=${memberId}`);
-      setMember(response.data.member);
-      setMessage({ type: 'success', text: t('language') === 'zh' ? '載入成功' : 'Loaded successfully' });
-    } catch (error) {
-      setMessage({
-        type: 'error',
-        text: error.response?.data?.message || t('error')
-      });
-      setMember(null);
-    } finally {
-      setLoading(false);
-    }
+    // Update URL when searching manually
+    navigate(`/profile/${memberId}`);
+    await fetchMemberById(memberId);
   };
 
   const fetchClassesAndActivities = async () => {
@@ -62,7 +52,32 @@ function Profile() {
 
   useEffect(() => {
     fetchClassesAndActivities();
-  }, []);
+
+    // If memberId is in URL, automatically fetch member profile
+    if (urlMemberId) {
+      fetchMemberById(urlMemberId);
+    }
+  }, [urlMemberId]);
+
+  const fetchMemberById = async (id) => {
+    setLoading(true);
+    setMessage({ type: '', text: '' });
+
+    try {
+      const response = await axios.get(`/api/members?memberId=${id}`);
+      setMember(response.data.member);
+      setMemberId(id);
+      setMessage({ type: 'success', text: t('language') === 'zh' ? '載入成功' : 'Loaded successfully' });
+    } catch (error) {
+      setMessage({
+        type: 'error',
+        text: error.response?.data?.message || t('error')
+      });
+      setMember(null);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleProfilePictureUpload = async (e) => {
     const file = e.target.files[0];

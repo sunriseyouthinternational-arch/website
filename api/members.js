@@ -22,8 +22,9 @@ module.exports = async (req, res) => {
 
       await member.save();
 
-      const qrCodeData = `SYI-${member.memberId}`;
-      const qrCodeUrl = await QRCode.toDataURL(qrCodeData);
+      // Generate QR code with full profile URL
+      const profileUrl = `${process.env.FRONTEND_URL || 'https://website-five-chi-99.vercel.app'}/profile/${member.memberId}`;
+      const qrCodeUrl = await QRCode.toDataURL(profileUrl);
       member.qrCode = qrCodeUrl;
       await member.save();
 
