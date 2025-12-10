@@ -37,8 +37,15 @@ const memberSchema = new mongoose.Schema({
   }],
   contact: {
     phone: { type: String },
-    mobile: { type: String, required: true },
+    mobile: { type: String },
     lineId: { type: String }
+  },
+  line: {
+    userId: { type: String, unique: true, sparse: true },
+    displayName: { type: String },
+    pictureUrl: { type: String },
+    richMenuId: { type: String },
+    linkedAt: { type: Date }
   },
   profilePicture: { type: String, default: '' },
   qrCode: { type: String },
