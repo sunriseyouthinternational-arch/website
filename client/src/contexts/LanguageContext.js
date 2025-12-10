@@ -30,6 +30,7 @@ export const translations = {
     // Registration
     memberRegistration: '團員資料',
     applicantName: '申請人姓名',
+    englishAlias: '英文別名',
     gender: '性別',
     male: '男',
     female: '女',
@@ -82,6 +83,7 @@ export const translations = {
     viewDetails: '查看詳情',
     addNew: '新增',
     name: '名稱',
+    fullName: '姓名',
     description: '描述',
     banner: '橫幅圖片',
     status: '狀態',
@@ -131,6 +133,7 @@ export const translations = {
     // Registration
     memberRegistration: 'Member Registration',
     applicantName: 'Applicant Name',
+    englishAlias: 'English Alias',
     gender: 'Gender',
     male: 'Male',
     female: 'Female',
@@ -183,6 +186,7 @@ export const translations = {
     viewDetails: 'View Details',
     addNew: 'Add New',
     name: 'Name',
+    fullName: 'Full Name',
     description: 'Description',
     banner: 'Banner Image',
     status: 'Status',

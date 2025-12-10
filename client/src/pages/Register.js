@@ -7,6 +7,7 @@ function Register() {
   const { t } = useLanguage();
   const [formData, setFormData] = useState({
     name: '',
+    englishAlias: '',
     gender: '男',
     birthDate: '',
     familyMembers: [],
@@ -40,7 +41,7 @@ function Register() {
   const addFamilyMember = () => {
     setFormData(prev => ({
       ...prev,
-      familyMembers: [...prev.familyMembers, { name: '', gender: '男', birthDate: '' }]
+      familyMembers: [...prev.familyMembers, { name: '', englishAlias: '', gender: '男', birthDate: '' }]
     }));
     setShowFamilyForm(true);
   };
@@ -73,6 +74,7 @@ function Register() {
       // Reset form
       setFormData({
         name: '',
+        englishAlias: '',
         gender: '男',
         birthDate: '',
         familyMembers: [],
@@ -128,6 +130,16 @@ function Register() {
               </div>
 
               <div className="form-group">
+                <label>{t('englishAlias')}</label>
+                <input
+                  type="text"
+                  name="englishAlias"
+                  value={formData.englishAlias}
+                  onChange={handleChange}
+                />
+              </div>
+
+              <div className="form-group">
                 <label>{t('gender')} *</label>
                 <select name="gender" value={formData.gender} onChange={handleChange} required>
                   <option value="男">{t('male')}</option>
@@ -159,12 +171,21 @@ function Register() {
                 <div key={index} className="family-member-form">
                   <div className="form-row">
                     <div className="form-group">
-                      <label>{t('name')}</label>
+                      <label>{t('fullName')}</label>
                       <input
                         type="text"
                         value={member.name}
                         onChange={(e) => updateFamilyMember(index, 'name', e.target.value)}
                         required
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label>{t('englishAlias')}</label>
+                      <input
+                        type="text"
+                        value={member.englishAlias}
+                        onChange={(e) => updateFamilyMember(index, 'englishAlias', e.target.value)}
                       />
                     </div>
 

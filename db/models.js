@@ -26,10 +26,12 @@ const memberSchema = new mongoose.Schema({
     default: () => `SY${Date.now()}${Math.floor(Math.random() * 1000)}`
   },
   name: { type: String, required: true },
+  englishAlias: { type: String },
   gender: { type: String, enum: ['男', '女'], required: true },
   birthDate: { type: Date, required: true },
   familyMembers: [{
     name: { type: String, required: true },
+    englishAlias: { type: String },
     gender: { type: String, enum: ['男', '女'], required: true },
     birthDate: { type: Date, required: true }
   }],

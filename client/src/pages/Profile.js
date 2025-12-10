@@ -211,6 +211,9 @@ function Profile() {
 
                 <div className="profile-info">
                   <h2>{member.name}</h2>
+                  {member.englishAlias && (
+                    <p><strong>{t('englishAlias')}:</strong> {member.englishAlias}</p>
+                  )}
                   <p><strong>{t('memberId')}:</strong> {member.memberId}</p>
                   <p><strong>{t('gender')}:</strong> {member.gender}</p>
                   <p><strong>{t('birthDate')}:</strong> {formatDate(member.birthDate)}</p>
@@ -236,7 +239,10 @@ function Profile() {
                   <h3>{t('familyMembers')}</h3>
                   {member.familyMembers.map((fm, index) => (
                     <div key={index} className="family-member-item">
-                      <p><strong>{t('name')}:</strong> {fm.name}</p>
+                      <p><strong>{t('fullName')}:</strong> {fm.name}</p>
+                      {fm.englishAlias && (
+                        <p><strong>{t('englishAlias')}:</strong> {fm.englishAlias}</p>
+                      )}
                       <p><strong>{t('gender')}:</strong> {fm.gender}</p>
                       <p><strong>{t('birthDate')}:</strong> {formatDate(fm.birthDate)}</p>
                     </div>
