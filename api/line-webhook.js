@@ -132,54 +132,58 @@ async function handleFollowEvent(event) {
     const profile = await client.getProfile(lineUserId);
     console.log('[handleFollowEvent] Profile received:', profile.displayName);
 
-    // Generate unique member ID
+    // Generate unique member ID and registration token
     const memberId = `M${Date.now().toString().slice(-6)}${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`;
+    const registrationToken = require('crypto').randomBytes(32).toString('hex');
     console.log('[handleFollowEvent] Generated member ID:', memberId);
 
     // Determine domain from request
     const protocol = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split('://')[0] : 'https';
     const host = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split('://')[1] : 'website-five-chi-99.vercel.app';
     const baseUrl = `${protocol}://${host}`;
-    const profileUrl = `${baseUrl}/profile/${memberId}`;
-    console.log('[handleFollowEvent] Profile URL:', profileUrl);
+    const registrationUrl = `${baseUrl}/register?token=${registrationToken}`;
+    console.log('[handleFollowEvent] Registration URL:', registrationUrl);
 
-    // Create new member
-    console.log('[handleFollowEvent] Creating member object...');
+    // Create incomplete member (pending registration)
+    console.log('[handleFollowEvent] Creating incomplete member object...');
     member = new Member({
       memberId,
-      name: profile.displayName,
+      name: profile.displayName, // Temporary, will be updated
       englishAlias: '',
-      gender: '男', // Default, can be updated later
-      birthDate: new Date('2000-01-01'), // Default, should be updated
+      gender: '男', // Default, must be updated
+      birthDate: new Date('2000-01-01'), // Default, must be updated
       familyMembers: [],
       contact: {
-        mobile: '', // Will be filled later
+        mobile: '', // Must be filled during registration
       },
       line: {
         userId: lineUserId,
         displayName: profile.displayName,
         pictureUrl: profile.pictureUrl,
         linkedAt: new Date()
-      }
+      },
+      registrationToken,
+      registrationTokenExpires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+      registrationCompleted: false
     });
 
-    // Save member first
-    console.log('[handleFollowEvent] Saving member to database...');
+    // Save incomplete member
+    console.log('[handleFollowEvent] Saving incomplete member to database...');
     await member.save();
-    console.log('[handleFollowEvent] ✅ New member created:', memberId, 'LINE ID:', lineUserId);
+    console.log('[handleFollowEvent] ✅ Incomplete member created:', memberId, 'LINE ID:', lineUserId);
 
-    // Send welcome message with instructions
-    console.log('[handleFollowEvent] Sending welcome message...');
+    // Send welcome message with registration link
+    console.log('[handleFollowEvent] Sending welcome message with registration link...');
     await client.pushMessage({
       to: lineUserId,
       messages: [
         {
           type: 'text',
-          text: `🎉 歡迎加入晨光國際少年團！\nWelcome to Sunrise Youth International!\n\n您的團員編號 Your Member ID:\n${memberId}\n\n📱 個人檔案連結 Profile link:\n${profileUrl}\n\n⚠️ 請訪問個人檔案頁面查看您的專屬 QR Code\nPlease visit your profile page to view your QR code`
+          text: `🎉 歡迎加入晨光國際少年團！\nWelcome to Sunrise Youth International!\n\n您的團員編號 Your Member ID:\n${memberId}\n\n⚠️ 請點擊以下連結完成註冊\nPlease click the link below to complete registration:\n\n${registrationUrl}\n\n此連結將在 7 天後失效\nThis link will expire in 7 days`
         }
       ]
     });
-    console.log('[handleFollowEvent] ✅ Welcome message sent!');
+    console.log('[handleFollowEvent] ✅ Welcome message with registration link sent!');
 
   } catch (error) {
     console.error('Error handling follow event:', error);

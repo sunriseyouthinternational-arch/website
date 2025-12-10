@@ -25,10 +25,10 @@ const memberSchema = new mongoose.Schema({
     unique: true,
     default: () => `SY${Date.now()}${Math.floor(Math.random() * 1000)}`
   },
-  name: { type: String, required: true },
+  name: { type: String }, // Optional until registration is completed
   englishAlias: { type: String },
-  gender: { type: String, enum: ['男', '女'], required: true },
-  birthDate: { type: Date, required: true },
+  gender: { type: String, enum: ['男', '女'] }, // Optional until registration is completed
+  birthDate: { type: Date }, // Optional until registration is completed
   familyMembers: [{
     name: { type: String, required: true },
     englishAlias: { type: String },
@@ -47,6 +47,9 @@ const memberSchema = new mongoose.Schema({
     richMenuId: { type: String },
     linkedAt: { type: Date }
   },
+  registrationToken: { type: String, unique: true, sparse: true },
+  registrationTokenExpires: { type: Date },
+  registrationCompleted: { type: Boolean, default: false },
   profilePicture: { type: String, default: '' },
   qrCode: { type: String },
   enrollments: [{
