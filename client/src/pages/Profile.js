@@ -15,6 +15,15 @@ function Profile() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
   const [activeTab, setActiveTab] = useState('profile');
+  const [editMode, setEditMode] = useState(false);
+  const [editFormData, setEditFormData] = useState({
+    name: '',
+    englishAlias: '',
+    gender: '男',
+    birthDate: '',
+    familyMembers: [],
+    contact: { phone: '', mobile: '', lineId: '' }
+  });
 
   // Helper function to get image source (handles both base64 and file paths)
   const getImageSrc = (imagePath) => {
@@ -74,6 +83,84 @@ function Profile() {
         text: error.response?.data?.message || t('error')
       });
       setMember(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const startEdit = () => {
+    setEditFormData({
+      name: member.name || '',
+      englishAlias: member.englishAlias || '',
+      gender: member.gender || '男',
+      birthDate: member.birthDate ? member.birthDate.split('T')[0] : '',
+      familyMembers: member.familyMembers || [],
+      contact: {
+        phone: member.contact?.phone || '',
+        mobile: member.contact?.mobile || '',
+        lineId: member.contact?.lineId || ''
+      }
+    });
+    setEditMode(true);
+    setMessage({ type: '', text: '' });
+  };
+
+  const cancelEdit = () => {
+    setEditMode(false);
+    setMessage({ type: '', text: '' });
+  };
+
+  const handleEditChange = (e) => {
+    const { name, value } = e.target;
+
+    if (name.startsWith('contact.')) {
+      const contactField = name.split('.')[1];
+      setEditFormData(prev => ({
+        ...prev,
+        contact: { ...prev.contact, [contactField]: value }
+      }));
+    } else {
+      setEditFormData(prev => ({ ...prev, [name]: value }));
+    }
+  };
+
+  const handleFamilyMemberChange = (index, field, value) => {
+    setEditFormData(prev => {
+      const newFamilyMembers = [...prev.familyMembers];
+      newFamilyMembers[index] = { ...newFamilyMembers[index], [field]: value };
+      return { ...prev, familyMembers: newFamilyMembers };
+    });
+  };
+
+  const addFamilyMember = () => {
+    setEditFormData(prev => ({
+      ...prev,
+      familyMembers: [...prev.familyMembers, { name: '', englishAlias: '', gender: '男', birthDate: '' }]
+    }));
+  };
+
+  const removeFamilyMember = (index) => {
+    setEditFormData(prev => ({
+      ...prev,
+      familyMembers: prev.familyMembers.filter((_, i) => i !== index)
+    }));
+  };
+
+  const saveEdit = async () => {
+    setLoading(true);
+    try {
+      const response = await axios.put(`/api/members?memberId=${member.memberId}`, editFormData);
+      setMember(response.data.member);
+      setEditMode(false);
+      setMessage({
+        type: 'success',
+        text: response.data.message || (t('language') === 'zh' ? '更新成功' : 'Update successful')
+      });
+    } catch (error) {
+      setMessage({
+        type: 'error',
+        text: error.response?.data?.message || (t('language') === 'zh' ? '更新失敗' : 'Update failed')
+      });
     } finally {
       setLoading(false);
     }
@@ -189,73 +276,224 @@ function Profile() {
 
           {activeTab === 'profile' && (
             <div className="card profile-card">
-              <div className="profile-header">
-                <div className="profile-picture-section">
-                  {member.profilePicture ? (
-                    <img src={getImageSrc(member.profilePicture)} alt="Profile" className="profile-picture" />
-                  ) : (
-                    <div className="profile-picture-placeholder">
-                      <span>{member.name[0]}</span>
+              {!editMode ? (
+                <>
+                  <div className="profile-header">
+                    <div className="profile-picture-section">
+                      {member.profilePicture ? (
+                        <img src={getImageSrc(member.profilePicture)} alt="Profile" className="profile-picture" />
+                      ) : (
+                        <div className="profile-picture-placeholder">
+                          <span>{member.name[0]}</span>
+                        </div>
+                      )}
+                      <label className="upload-button">
+                        {t('uploadPicture')}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleProfilePictureUpload}
+                          style={{ display: 'none' }}
+                        />
+                      </label>
+                    </div>
+
+                    <div className="profile-info">
+                      <h2>{member.name}</h2>
+                      {member.englishAlias && (
+                        <p><strong>{t('englishAlias')}:</strong> {member.englishAlias}</p>
+                      )}
+                      <p><strong>{t('memberId')}:</strong> {member.memberId}</p>
+                      <p><strong>{t('gender')}:</strong> {member.gender}</p>
+                      <p><strong>{t('birthDate')}:</strong> {formatDate(member.birthDate)}</p>
+                    </div>
+
+                    <div className="qr-code-section">
+                      <h3>{t('qrCode')}</h3>
+                      {member.qrCode && (
+                        <img src={member.qrCode} alt="QR Code" className="qr-code" />
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="contact-info">
+                    <h3>{t('contactInfo')}</h3>
+                    <p><strong>{t('mobile')}:</strong> {member.contact?.mobile}</p>
+                    {member.contact?.phone && <p><strong>{t('phone')}:</strong> {member.contact.phone}</p>}
+                    {member.contact?.lineId && <p><strong>{t('lineId')}:</strong> {member.contact.lineId}</p>}
+                  </div>
+
+                  {member.familyMembers && member.familyMembers.length > 0 && (
+                    <div className="family-members">
+                      <h3>{t('familyMembers')}</h3>
+                      {member.familyMembers.map((fm, index) => (
+                        <div key={index} className="family-member-item">
+                          <p><strong>{t('fullName')}:</strong> {fm.name}</p>
+                          {fm.englishAlias && (
+                            <p><strong>{t('englishAlias')}:</strong> {fm.englishAlias}</p>
+                          )}
+                          <p><strong>{t('gender')}:</strong> {fm.gender}</p>
+                          <p><strong>{t('birthDate')}:</strong> {formatDate(fm.birthDate)}</p>
+                        </div>
+                      ))}
                     </div>
                   )}
-                  <label className="upload-button">
-                    {t('uploadPicture')}
+
+                  <div className="profile-actions">
+                    <button onClick={startEdit} className="btn btn-primary">
+                      {t('language') === 'zh' ? '編輯資料' : 'Edit Profile'}
+                    </button>
+                    <button onClick={() => setMember(null)} className="btn btn-secondary">
+                      {t('logout')}
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <div className="edit-profile-form">
+                  <h3>{t('language') === 'zh' ? '編輯個人資料' : 'Edit Profile'}</h3>
+
+                  <div className="form-group">
+                    <label>{t('fullName')} *</label>
                     <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleProfilePictureUpload}
-                      style={{ display: 'none' }}
+                      type="text"
+                      name="name"
+                      value={editFormData.name}
+                      onChange={handleEditChange}
+                      required
                     />
-                  </label>
-                </div>
+                  </div>
 
-                <div className="profile-info">
-                  <h2>{member.name}</h2>
-                  {member.englishAlias && (
-                    <p><strong>{t('englishAlias')}:</strong> {member.englishAlias}</p>
-                  )}
-                  <p><strong>{t('memberId')}:</strong> {member.memberId}</p>
-                  <p><strong>{t('gender')}:</strong> {member.gender}</p>
-                  <p><strong>{t('birthDate')}:</strong> {formatDate(member.birthDate)}</p>
-                </div>
+                  <div className="form-group">
+                    <label>{t('englishAlias')}</label>
+                    <input
+                      type="text"
+                      name="englishAlias"
+                      value={editFormData.englishAlias}
+                      onChange={handleEditChange}
+                    />
+                  </div>
 
-                <div className="qr-code-section">
-                  <h3>{t('qrCode')}</h3>
-                  {member.qrCode && (
-                    <img src={member.qrCode} alt="QR Code" className="qr-code" />
-                  )}
-                </div>
-              </div>
+                  <div className="form-group">
+                    <label>{t('gender')} *</label>
+                    <select name="gender" value={editFormData.gender} onChange={handleEditChange}>
+                      <option value="男">{t('language') === 'zh' ? '男' : 'Male'}</option>
+                      <option value="女">{t('language') === 'zh' ? '女' : 'Female'}</option>
+                    </select>
+                  </div>
 
-              <div className="contact-info">
-                <h3>{t('contactInfo')}</h3>
-                <p><strong>{t('mobile')}:</strong> {member.contact?.mobile}</p>
-                {member.contact?.phone && <p><strong>{t('phone')}:</strong> {member.contact.phone}</p>}
-                {member.contact?.lineId && <p><strong>{t('lineId')}:</strong> {member.contact.lineId}</p>}
-              </div>
+                  <div className="form-group">
+                    <label>{t('birthDate')} *</label>
+                    <input
+                      type="date"
+                      name="birthDate"
+                      value={editFormData.birthDate}
+                      onChange={handleEditChange}
+                      required
+                    />
+                  </div>
 
-              {member.familyMembers && member.familyMembers.length > 0 && (
-                <div className="family-members">
-                  <h3>{t('familyMembers')}</h3>
-                  {member.familyMembers.map((fm, index) => (
-                    <div key={index} className="family-member-item">
-                      <p><strong>{t('fullName')}:</strong> {fm.name}</p>
-                      {fm.englishAlias && (
-                        <p><strong>{t('englishAlias')}:</strong> {fm.englishAlias}</p>
-                      )}
-                      <p><strong>{t('gender')}:</strong> {fm.gender}</p>
-                      <p><strong>{t('birthDate')}:</strong> {formatDate(fm.birthDate)}</p>
+                  <h4>{t('contactInfo')}</h4>
+
+                  <div className="form-group">
+                    <label>{t('mobile')} *</label>
+                    <input
+                      type="tel"
+                      name="contact.mobile"
+                      value={editFormData.contact.mobile}
+                      onChange={handleEditChange}
+                      required
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>{t('phone')}</label>
+                    <input
+                      type="tel"
+                      name="contact.phone"
+                      value={editFormData.contact.phone}
+                      onChange={handleEditChange}
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>{t('lineId')}</label>
+                    <input
+                      type="text"
+                      name="contact.lineId"
+                      value={editFormData.contact.lineId}
+                      onChange={handleEditChange}
+                    />
+                  </div>
+
+                  <h4>{t('familyMembers')}</h4>
+                  {editFormData.familyMembers.map((fm, index) => (
+                    <div key={index} className="family-member-form">
+                      <div className="form-group">
+                        <label>{t('fullName')} *</label>
+                        <input
+                          type="text"
+                          value={fm.name}
+                          onChange={(e) => handleFamilyMemberChange(index, 'name', e.target.value)}
+                          required
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label>{t('englishAlias')}</label>
+                        <input
+                          type="text"
+                          value={fm.englishAlias}
+                          onChange={(e) => handleFamilyMemberChange(index, 'englishAlias', e.target.value)}
+                        />
+                      </div>
+
+                      <div className="form-row">
+                        <div className="form-group">
+                          <label>{t('gender')} *</label>
+                          <select
+                            value={fm.gender}
+                            onChange={(e) => handleFamilyMemberChange(index, 'gender', e.target.value)}
+                          >
+                            <option value="男">{t('language') === 'zh' ? '男' : 'Male'}</option>
+                            <option value="女">{t('language') === 'zh' ? '女' : 'Female'}</option>
+                          </select>
+                        </div>
+
+                        <div className="form-group">
+                          <label>{t('birthDate')} *</label>
+                          <input
+                            type="date"
+                            value={fm.birthDate ? fm.birthDate.split('T')[0] : ''}
+                            onChange={(e) => handleFamilyMemberChange(index, 'birthDate', e.target.value)}
+                            required
+                          />
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => removeFamilyMember(index)}
+                          className="btn btn-danger btn-small"
+                        >
+                          {t('language') === 'zh' ? '移除' : 'Remove'}
+                        </button>
+                      </div>
                     </div>
                   ))}
+
+                  <button type="button" onClick={addFamilyMember} className="btn btn-secondary">
+                    {t('language') === 'zh' ? '+ 新增家庭成員' : '+ Add Family Member'}
+                  </button>
+
+                  <div className="profile-actions">
+                    <button onClick={saveEdit} className="btn btn-primary" disabled={loading}>
+                      {loading ? (t('language') === 'zh' ? '儲存中...' : 'Saving...') : (t('language') === 'zh' ? '儲存' : 'Save')}
+                    </button>
+                    <button onClick={cancelEdit} className="btn btn-secondary" disabled={loading}>
+                      {t('language') === 'zh' ? '取消' : 'Cancel'}
+                    </button>
+                  </div>
                 </div>
               )}
-
-              <button
-                onClick={() => setMember(null)}
-                className="btn btn-secondary"
-              >
-                {t('logout')}
-              </button>
             </div>
           )}
 

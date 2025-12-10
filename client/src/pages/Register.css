@@ -97,6 +97,36 @@
   color: #c92a2a;
 }
 
+.info-banner {
+  background: #e7f5ff;
+  border: 2px solid #339af0;
+  border-radius: 8px;
+  padding: 20px;
+  margin: 20px 0;
+}
+
+.info-banner h3 {
+  color: #1971c2;
+  margin-bottom: 15px;
+  font-size: 20px;
+}
+
+.info-banner p {
+  color: #364fc7;
+  margin-bottom: 15px;
+  line-height: 1.6;
+}
+
+.info-banner ol {
+  color: #364fc7;
+  margin-left: 25px;
+  line-height: 2;
+}
+
+.info-banner li {
+  margin-bottom: 8px;
+}
+
 @media (max-width: 768px) {
   .form-row {
     grid-template-columns: 1fr;
