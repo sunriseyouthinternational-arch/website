@@ -169,46 +169,18 @@ async function handleFollowEvent(event) {
     await member.save();
     console.log('[handleFollowEvent] ✅ New member created:', memberId, 'LINE ID:', lineUserId);
 
-    // Send welcome message FIRST using push message
+    // Send welcome message with instructions
     console.log('[handleFollowEvent] Sending welcome message...');
     await client.pushMessage({
       to: lineUserId,
       messages: [
         {
           type: 'text',
-          text: `🎉 歡迎加入晨光國際少年團！\nWelcome to Sunrise Youth International!\n\n您的團員編號 Your Member ID:\n${memberId}\n\n請稍等，正在為您建立專屬 QR Code...\nPlease wait, creating your personalized QR code...\n\n個人檔案連結 Profile link:\n${profileUrl}`
+          text: `🎉 歡迎加入晨光國際少年團！\nWelcome to Sunrise Youth International!\n\n您的團員編號 Your Member ID:\n${memberId}\n\n📱 個人檔案連結 Profile link:\n${profileUrl}\n\n⚠️ 請訪問個人檔案頁面查看您的專屬 QR Code\nPlease visit your profile page to view your QR code`
         }
       ]
     });
     console.log('[handleFollowEvent] ✅ Welcome message sent!');
-
-    // Create personalized rich menu with QR code (this takes time)
-    console.log('[handleFollowEvent] Creating rich menu (this may take 10-30 seconds)...');
-    const richMenuId = await createPersonalizedRichMenu(
-      client,
-      lineUserId,
-      memberId,
-      profileUrl,
-      profile.displayName
-    );
-    console.log('[handleFollowEvent] ✅ Rich menu created:', richMenuId);
-
-    // Save rich menu ID to member
-    console.log('[handleFollowEvent] Saving rich menu ID...');
-    member.line.richMenuId = richMenuId;
-    await member.save();
-    console.log('[handleFollowEvent] ✅ Rich menu ID saved!');
-
-    // Send confirmation that rich menu is ready
-    console.log('[handleFollowEvent] Sending confirmation message...');
-    await client.pushMessage({
-      to: lineUserId,
-      messages: [{
-        type: 'text',
-        text: '✅ 您的專屬 QR Code 已建立完成！\n點選下方選單查看 📱\n\nYour personalized QR code is ready!\nTap the menu below to view 📱'
-      }]
-    });
-    console.log('[handleFollowEvent] ✅ Confirmation message sent!');
 
   } catch (error) {
     console.error('Error handling follow event:', error);
