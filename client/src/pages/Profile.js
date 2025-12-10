@@ -33,7 +33,7 @@ function Profile() {
     setMessage({ type: '', text: '' });
 
     try {
-      const response = await axios.get(`/api/members/${memberId}`);
+      const response = await axios.get(`/api/members?memberId=${memberId}`);
       setMember(response.data.member);
       setMessage({ type: 'success', text: t('language') === 'zh' ? '載入成功' : 'Loaded successfully' });
     } catch (error) {
@@ -103,7 +103,7 @@ function Profile() {
       setMessage({ type: 'success', text: response.data.message });
 
       // Refresh member data
-      const memberResponse = await axios.get(`/api/members/${member.memberId}`);
+      const memberResponse = await axios.get(`/api/members?memberId=${member.memberId}`);
       setMember(memberResponse.data.member);
     } catch (error) {
       setMessage({
