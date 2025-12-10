@@ -103,9 +103,9 @@ async function handleFollowEvent(event) {
 
     if (member) {
       console.log('Existing member re-followed:', member.memberId);
-      // Reactivate if needed, send welcome back message
-      await client.replyMessage({
-        replyToken: event.replyToken,
+      // Send welcome back message using push message (not reply)
+      await client.pushMessage({
+        to: lineUserId,
         messages: [{
           type: 'text',
           text: `歡迎回來！Welcome back!\n您的團員編號：${member.memberId}\nYour member ID: ${member.memberId}`
@@ -145,7 +145,22 @@ async function handleFollowEvent(event) {
       }
     });
 
-    // Create personalized rich menu with QR code
+    // Save member first
+    await member.save();
+    console.log('New member created:', memberId, 'LINE ID:', lineUserId);
+
+    // Send welcome message FIRST using push message
+    await client.pushMessage({
+      to: lineUserId,
+      messages: [
+        {
+          type: 'text',
+          text: `🎉 歡迎加入晨光國際少年團！\nWelcome to Sunrise Youth International!\n\n您的團員編號 Your Member ID:\n${memberId}\n\n請稍等，正在為您建立專屬 QR Code...\nPlease wait, creating your personalized QR code...\n\n個人檔案連結 Profile link:\n${profileUrl}`
+        }
+      ]
+    });
+
+    // Create personalized rich menu with QR code (this takes time)
     const richMenuId = await createPersonalizedRichMenu(
       client,
       lineUserId,
@@ -158,33 +173,31 @@ async function handleFollowEvent(event) {
     member.line.richMenuId = richMenuId;
     await member.save();
 
-    console.log('New member created:', memberId, 'LINE ID:', lineUserId);
+    console.log('Rich menu created for member:', memberId);
 
-    // Send welcome message with instructions
-    await client.replyMessage({
-      replyToken: event.replyToken,
-      messages: [
-        {
-          type: 'text',
-          text: `🎉 歡迎加入晨光國際少年團！\nWelcome to Sunrise Youth International!\n\n您的團員編號 Your Member ID:\n${memberId}\n\n請查看下方選單中的專屬 QR Code\nPlease check your personalized QR code in the menu below\n\n⚠️ 重要：請更新您的個人資料\nImportant: Please update your profile\n${profileUrl}`
-        }
-      ]
+    // Send confirmation that rich menu is ready
+    await client.pushMessage({
+      to: lineUserId,
+      messages: [{
+        type: 'text',
+        text: '✅ 您的專屬 QR Code 已建立完成！\n點選下方選單查看 📱\n\nYour personalized QR code is ready!\nTap the menu below to view 📱'
+      }]
     });
 
   } catch (error) {
     console.error('Error handling follow event:', error);
 
-    // Send error message to user
+    // Send error message to user using push message
     try {
-      await client.replyMessage({
-        replyToken: event.replyToken,
+      await client.pushMessage({
+        to: lineUserId,
         messages: [{
           type: 'text',
           text: '抱歉，註冊過程中發生錯誤。請稍後再試。\nSorry, an error occurred during registration. Please try again later.'
         }]
       });
-    } catch (replyError) {
-      console.error('Error sending error message:', replyError);
+    } catch (pushError) {
+      console.error('Error sending error message:', pushError);
     }
   }
 }
@@ -217,8 +230,8 @@ async function handleMessageEvent(event) {
 
     if (!member) {
       // User not registered yet (shouldn't happen if they followed)
-      await client.replyMessage({
-        replyToken: event.replyToken,
+      await client.pushMessage({
+        to: lineUserId,
         messages: [{
           type: 'text',
           text: '請先完成註冊。\nPlease complete registration first.'
@@ -229,8 +242,8 @@ async function handleMessageEvent(event) {
 
     // Echo member ID if user asks
     if (messageText && (messageText.includes('編號') || messageText.toLowerCase().includes('id'))) {
-      await client.replyMessage({
-        replyToken: event.replyToken,
+      await client.pushMessage({
+        to: lineUserId,
         messages: [{
           type: 'text',
           text: `您的團員編號：${member.memberId}\nYour member ID: ${member.memberId}\n\n個人檔案連結：\nProfile link:\n${process.env.FRONTEND_URL || 'https://website-five-chi-99.vercel.app'}/profile/${member.memberId}`
