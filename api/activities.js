@@ -125,6 +125,11 @@ module.exports = async (req, res) => {
     res.status(405).json({ message: 'Method not allowed' });
   } catch (error) {
     console.error('Activity operation error:', error);
-    res.status(500).json({ message: '服務器錯誤 / Server error' });
+    console.error('Error details:', error.message);
+    console.error('Error stack:', error.stack);
+    res.status(500).json({
+      message: '服務器錯誤 / Server error',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 };

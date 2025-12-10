@@ -43,7 +43,7 @@
 
 .profile-header {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: auto 1fr;
   gap: 30px;
   padding-bottom: 30px;
   border-bottom: 2px solid #f0f0f0;

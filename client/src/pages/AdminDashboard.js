@@ -72,17 +72,15 @@ function AdminDashboard() {
   const handleAddClass = async (e) => {
     e.preventDefault();
     try {
-      const formData = new FormData();
-      Object.keys(newClass).forEach(key => {
-        if (newClass[key]) formData.append(key, newClass[key]);
+      await axios.post('/api/classes', newClass, {
+        headers: { 'Content-Type': 'application/json' }
       });
-
-      await axios.post('/api/classes', formData);
       setMessage({ type: 'success', text: t('language') === 'zh' ? '課程添加成功' : 'Class added successfully' });
       setShowClassForm(false);
       setNewClass({ name: '', description: '', time: '', cost: '', teacher: '', maxParticipants: '' });
       fetchData();
     } catch (error) {
+      console.error('Error adding class:', error);
       setMessage({ type: 'error', text: error.response?.data?.message || t('error') });
     }
   };
@@ -90,17 +88,15 @@ function AdminDashboard() {
   const handleAddActivity = async (e) => {
     e.preventDefault();
     try {
-      const formData = new FormData();
-      Object.keys(newActivity).forEach(key => {
-        if (newActivity[key]) formData.append(key, newActivity[key]);
+      await axios.post('/api/activities', newActivity, {
+        headers: { 'Content-Type': 'application/json' }
       });
-
-      await axios.post('/api/activities', formData);
       setMessage({ type: 'success', text: t('language') === 'zh' ? '活動添加成功' : 'Activity added successfully' });
       setShowActivityForm(false);
       setNewActivity({ name: '', description: '', time: '', cost: '', teacher: '', maxParticipants: '' });
       fetchData();
     } catch (error) {
+      console.error('Error adding activity:', error);
       setMessage({ type: 'error', text: error.response?.data?.message || t('error') });
     }
   };

@@ -104,7 +104,43 @@ export const translations = {
 
     // Form validation
     required: '此欄位為必填',
-    invalidFormat: '格式不正確'
+    invalidFormat: '格式不正確',
+
+    // Registration flow
+    lineRegistrationRequired: '⚠️ 請先加入 LINE 官方帳號以開始註冊',
+    registrationSteps: '註冊步驟',
+    step1: '加入 LINE 官方帳號',
+    step2: '收到註冊連結',
+    step3: '點擊連結完成註冊',
+    referrer: '推薦人 (選填)',
+    referrerPlaceholder: '誰推薦您加入？',
+    referrerHelp: '如果有人推薦您加入，請填寫他們的姓名',
+    fillInformation: '請填寫您的個人資料以完成註冊',
+    accessProfileViaLine: '您可以隨時透過 LINE 官方帳號選單中的「登入」按鈕來存取您的個人檔案。',
+    applicantInfo: '申請人資料',
+    completeRegistration: '完成註冊',
+
+    // Profile editing
+    editProfile: '編輯資料',
+    editProfileTitle: '編輯個人資料',
+    saving: '儲存中...',
+    updateSuccess: '更新成功',
+    updateFailed: '更新失敗',
+    addFamilyMemberButton: '+ 新增家庭成員',
+    remove: '移除',
+    enterMemberId: '請輸入團員編號',
+    loadSuccess: '載入成功',
+    search: '查詢',
+    noEnrolledClasses: '尚無報名課程',
+    noEnrolledActivities: '尚無報名活動',
+
+    // Admin
+    classAddSuccess: '課程添加成功',
+    activityAddSuccess: '活動添加成功',
+    paymentStatusUpdated: '付款狀態已更新',
+    enrolledCount: '已報名數',
+    registeredDate: '註冊日期',
+    exampleTime: '例如：每週六 10:00-12:00'
   },
   en: {
     // Common
@@ -207,7 +243,43 @@ export const translations = {
 
     // Form validation
     required: 'This field is required',
-    invalidFormat: 'Invalid format'
+    invalidFormat: 'Invalid format',
+
+    // Registration flow
+    lineRegistrationRequired: '⚠️ Please add our LINE Official Account first to start registration',
+    registrationSteps: 'Registration Steps',
+    step1: 'Add LINE Official Account',
+    step2: 'Receive registration link',
+    step3: 'Click link to complete registration',
+    referrer: 'Referrer (Optional)',
+    referrerPlaceholder: 'Who referred you?',
+    referrerHelp: 'If someone referred you, please enter their name',
+    fillInformation: 'Please fill in your information to complete registration',
+    accessProfileViaLine: 'You can access your profile anytime using the "Login" button in the LINE Official Account menu.',
+    applicantInfo: 'Applicant Information',
+    completeRegistration: 'Complete Registration',
+
+    // Profile editing
+    editProfile: 'Edit Profile',
+    editProfileTitle: 'Edit Profile',
+    saving: 'Saving...',
+    updateSuccess: 'Update successful',
+    updateFailed: 'Update failed',
+    addFamilyMemberButton: '+ Add Family Member',
+    remove: 'Remove',
+    enterMemberId: 'Please enter member ID',
+    loadSuccess: 'Loaded successfully',
+    search: 'Search',
+    noEnrolledClasses: 'No enrolled classes',
+    noEnrolledActivities: 'No enrolled activities',
+
+    // Admin
+    classAddSuccess: 'Class added successfully',
+    activityAddSuccess: 'Activity added successfully',
+    paymentStatusUpdated: 'Payment status updated',
+    enrolledCount: 'Enrollments',
+    registeredDate: 'Registered Date',
+    exampleTime: 'e.g., Every Saturday 10:00-12:00'
   }
 };
 

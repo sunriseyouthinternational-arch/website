@@ -34,9 +34,7 @@ function Register() {
       setLoading(false);
       setMessage({
         type: 'error',
-        text: t('language') === 'zh'
-          ? '⚠️ 請先加入 LINE 官方帳號以開始註冊\n請掃描 QR Code 或搜尋官方帳號'
-          : '⚠️ Please add our LINE Official Account first to start registration\nScan the QR code or search for our official account'
+        text: t('lineRegistrationRequired')
       });
       return;
     }
@@ -157,11 +155,11 @@ function Register() {
             {message.text}
           </div>
           <div style={{ marginTop: '20px', textAlign: 'center' }}>
-            <p>{t('language') === 'zh' ? '註冊流程：' : 'Registration Process:'}</p>
+            <p>{t('registrationSteps')}:</p>
             <ol style={{ textAlign: 'left', display: 'inline-block' }}>
-              <li>{t('language') === 'zh' ? '加入 LINE 官方帳號' : 'Add LINE Official Account'}</li>
-              <li>{t('language') === 'zh' ? '收到註冊連結' : 'Receive registration link'}</li>
-              <li>{t('language') === 'zh' ? '點擊連結完成註冊' : 'Click link to complete registration'}</li>
+              <li>{t('step1')}</li>
+              <li>{t('step2')}</li>
+              <li>{t('step3')}</li>
             </ol>
           </div>
         </div>
@@ -181,18 +179,15 @@ function Register() {
           <div className="success-details">
             <p><strong>{t('memberId')}:</strong> {registeredMember.memberId}</p>
             <p><strong>{t('name')}:</strong> {registeredMember.name}</p>
-            {registeredMember.qrCode && (
-              <div className="qr-code-display">
-                <img src={registeredMember.qrCode} alt="QR Code" />
-                <p>{t('language') === 'zh' ? '請保存此 QR 碼' : 'Please save this QR code'}</p>
-              </div>
-            )}
+            <p style={{ marginTop: '20px', fontSize: '0.95em', color: '#666' }}>
+              {t('accessProfileViaLine')}
+            </p>
           </div>
           <button
             onClick={() => navigate(`/profile/${registeredMember.memberId}`)}
             className="btn btn-primary"
           >
-            {t('language') === 'zh' ? '查看個人檔案' : 'View Profile'}
+            {t('profile')}
           </button>
         </div>
       </div>
@@ -212,15 +207,13 @@ function Register() {
             <strong>{t('memberId')}:</strong> {memberId}
           </p>
           <p style={{ fontSize: '0.9em', color: '#666' }}>
-            {t('language') === 'zh'
-              ? '請填寫您的個人資料以完成註冊'
-              : 'Please fill in your information to complete registration'}
+            {t('fillInformation')}
           </p>
         </div>
 
         <form onSubmit={handleSubmit}>
           <div className="form-section">
-            <h3>{t('language') === 'zh' ? '申請人資料' : 'Applicant Information'}</h3>
+            <h3>{t('applicantInfo')}</h3>
 
             <div className="form-group">
               <label>{t('applicantName')} *</label>
@@ -263,18 +256,16 @@ function Register() {
             </div>
 
             <div className="form-group">
-              <label>{t('language') === 'zh' ? '推薦人 (選填)' : 'Referrer (Optional)'}</label>
+              <label>{t('referrer')}</label>
               <input
                 type="text"
                 name="referrer"
                 value={formData.referrer}
                 onChange={handleChange}
-                placeholder={t('language') === 'zh' ? '誰推薦您加入？' : 'Who referred you?'}
+                placeholder={t('referrerPlaceholder')}
               />
               <small style={{ color: '#666' }}>
-                {t('language') === 'zh'
-                  ? '如果有人推薦您加入，請填寫他們的姓名'
-                  : 'If someone referred you, please enter their name'}
+                {t('referrerHelp')}
               </small>
             </div>
           </div>
@@ -385,7 +376,7 @@ function Register() {
           )}
 
           <button type="submit" className="btn btn-primary btn-large">
-            {t('language') === 'zh' ? '完成註冊' : 'Complete Registration'}
+            {t('completeRegistration')}
           </button>
         </form>
       </div>

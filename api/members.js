@@ -1,6 +1,5 @@
 const connectDB = require('../lib/mongodb');
 const { Member } = require('../db/models');
-const QRCode = require('qrcode');
 
 module.exports = async (req, res) => {
   const { memberId, token } = req.query;
@@ -86,22 +85,11 @@ module.exports = async (req, res) => {
 
       await member.save();
 
-      // Generate QR code with full profile URL
-      const protocol = req.headers['x-forwarded-proto'] || 'https';
-      const host = req.headers['x-forwarded-host'] || req.headers.host || 'website-five-chi-99.vercel.app';
-      const baseUrl = process.env.FRONTEND_URL || `${protocol}://${host}`;
-      const profileUrl = `${baseUrl}/profile/${member.memberId}`;
-
-      const qrCodeUrl = await QRCode.toDataURL(profileUrl);
-      member.qrCode = qrCodeUrl;
-      await member.save();
-
       return res.status(200).json({
         message: '註冊完成 / Registration completed successfully',
         member: {
           memberId: member.memberId,
-          name: member.name,
-          qrCode: member.qrCode
+          name: member.name
         }
       });
     }

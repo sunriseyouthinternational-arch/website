@@ -307,13 +307,6 @@ function Profile() {
                       <p><strong>{t('gender')}:</strong> {member.gender}</p>
                       <p><strong>{t('birthDate')}:</strong> {formatDate(member.birthDate)}</p>
                     </div>
-
-                    <div className="qr-code-section">
-                      <h3>{t('qrCode')}</h3>
-                      {member.qrCode && (
-                        <img src={member.qrCode} alt="QR Code" className="qr-code" />
-                      )}
-                    </div>
                   </div>
 
                   <div className="contact-info">
