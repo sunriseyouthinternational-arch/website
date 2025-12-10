@@ -40,16 +40,17 @@ module.exports = async (req, res) => {
     // Get events
     const events = req.body.events || [];
 
-    // IMPORTANT: Return 200 OK immediately to avoid timeout
-    // LINE expects response within 1-3 seconds
+    // IMPORTANT: Send 200 OK immediately to LINE to avoid timeout
+    // But DON'T return - keep processing
     res.status(200).json({ message: 'OK' });
 
-    // Process events asynchronously (don't await)
+    // Process events (must await even after sending response, or function will terminate)
     if (events.length > 0) {
-      processEventsAsync(events).catch(error => {
-        console.error('Error processing events asynchronously:', error);
-      });
+      console.log('Processing', events.length, 'events...');
+      await processEventsAsync(events);
     }
+
+    // Function ends here, but response was already sent
 
   } catch (error) {
     console.error('LINE webhook error:', error);
