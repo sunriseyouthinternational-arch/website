@@ -66,7 +66,7 @@ function Register() {
     setMessage({ type: '', text: '' });
 
     try {
-      const response = await axios.post('/api/members/register', formData);
+      const response = await axios.post('/api/members', formData);
       setMessage({ type: 'success', text: response.data.message });
       setRegisteredMember(response.data.member);
 

@@ -42,10 +42,10 @@ function AdminDashboard() {
     setLoading(true);
     try {
       const [membersRes, classesRes, activitiesRes, statsRes] = await Promise.all([
-        axios.get('/api/admin/members'),
-        axios.get('/api/admin/classes'),
-        axios.get('/api/admin/activities'),
-        axios.get('/api/admin/dashboard/stats')
+        axios.get('/api/admin?resource=members'),
+        axios.get('/api/classes'),
+        axios.get('/api/activities'),
+        axios.get('/api/admin?resource=stats')
       ]);
 
       setMembers(membersRes.data.members);
@@ -107,9 +107,9 @@ function AdminDashboard() {
 
   const updatePaymentStatus = async (type, itemId, participantId, paid) => {
     try {
-      const endpoint = type === 'class'
-        ? `/api/admin/classes/${itemId}/participants/${participantId}/payment`
-        : `/api/admin/activities/${itemId}/participants/${participantId}/payment`;
+      const resource = type === 'class' ? 'class-payment' : 'activity-payment';
+      const idParam = type === 'class' ? 'classId' : 'activityId';
+      const endpoint = `/api/admin?resource=${resource}&${idParam}=${itemId}&participantId=${participantId}`;
 
       await axios.put(endpoint, { paid });
       setMessage({ type: 'success', text: t('language') === 'zh' ? '付款狀態已更新' : 'Payment status updated' });

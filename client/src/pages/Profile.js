@@ -97,7 +97,7 @@ function Profile() {
     }
 
     try {
-      const endpoint = type === 'class' ? `/api/classes/${id}/enroll` : `/api/activities/${id}/enroll`;
+      const endpoint = type === 'class' ? `/api/classes?id=${id}&action=enroll` : `/api/activities?id=${id}&action=enroll`;
       const response = await axios.post(endpoint, { memberId: member.memberId });
 
       setMessage({ type: 'success', text: response.data.message });

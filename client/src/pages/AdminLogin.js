@@ -24,7 +24,7 @@ function AdminLogin() {
     setMessage({ type: '', text: '' });
 
     try {
-      const response = await axios.post('/api/auth/admin/login', credentials);
+      const response = await axios.post('/api/auth', credentials);
       localStorage.setItem('adminToken', response.data.token);
       setMessage({ type: 'success', text: response.data.message });
 
