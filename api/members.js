@@ -3,27 +3,90 @@ const { Member } = require('../db/models');
 const QRCode = require('qrcode');
 
 module.exports = async (req, res) => {
-  const { memberId } = req.query;
+  const { memberId, token } = req.query;
 
   try {
     await connectDB();
 
-    // Register new member
-    if (req.method === 'POST' && !memberId) {
-      const { name, gender, birthDate, familyMembers, contact } = req.body;
+    // Get member by registration token (for completing registration)
+    if (req.method === 'GET' && token && !memberId) {
+      const member = await Member.findOne({ registrationToken: token });
 
-      const member = new Member({
-        name,
-        gender,
-        birthDate,
-        familyMembers: familyMembers || [],
-        contact
+      if (!member) {
+        return res.status(404).json({
+          message: '無效的註冊連結 / Invalid registration link'
+        });
+      }
+
+      // Check if token is expired
+      if (member.registrationTokenExpires && member.registrationTokenExpires < new Date()) {
+        return res.status(400).json({
+          message: '註冊連結已過期 / Registration link has expired'
+        });
+      }
+
+      // Check if already completed
+      if (member.registrationCompleted) {
+        return res.status(400).json({
+          message: '此團員已完成註冊 / This member has already completed registration',
+          redirectTo: `/profile/${member.memberId}`
+        });
+      }
+
+      return res.status(200).json({
+        member: {
+          memberId: member.memberId,
+          name: member.name,
+          englishAlias: member.englishAlias,
+          gender: member.gender,
+          birthDate: member.birthDate,
+          familyMembers: member.familyMembers,
+          contact: member.contact
+        }
       });
+    }
+
+    // Complete registration with token
+    if (req.method === 'POST' && token) {
+      const { name, englishAlias, gender, birthDate, familyMembers, contact, referrer } = req.body;
+
+      const member = await Member.findOne({ registrationToken: token });
+
+      if (!member) {
+        return res.status(404).json({
+          message: '無效的註冊連結 / Invalid registration link'
+        });
+      }
+
+      // Check if token is expired
+      if (member.registrationTokenExpires && member.registrationTokenExpires < new Date()) {
+        return res.status(400).json({
+          message: '註冊連結已過期 / Registration link has expired'
+        });
+      }
+
+      // Check if already completed
+      if (member.registrationCompleted) {
+        return res.status(400).json({
+          message: '此團員已完成註冊 / This member has already completed registration'
+        });
+      }
+
+      // Update member with complete information
+      member.name = name;
+      member.englishAlias = englishAlias || '';
+      member.gender = gender;
+      member.birthDate = birthDate;
+      member.familyMembers = familyMembers || [];
+      member.contact = contact;
+      member.referrer = referrer || '';
+      member.registrationCompleted = true;
+      member.registrationToken = undefined; // Remove token after use
+      member.registrationTokenExpires = undefined;
 
       await member.save();
 
       // Generate QR code with full profile URL
-      // Automatically detect the domain from the request
       const protocol = req.headers['x-forwarded-proto'] || 'https';
       const host = req.headers['x-forwarded-host'] || req.headers.host || 'website-five-chi-99.vercel.app';
       const baseUrl = process.env.FRONTEND_URL || `${protocol}://${host}`;
@@ -33,8 +96,8 @@ module.exports = async (req, res) => {
       member.qrCode = qrCodeUrl;
       await member.save();
 
-      return res.status(201).json({
-        message: '註冊成功 / Registration successful',
+      return res.status(200).json({
+        message: '註冊完成 / Registration completed successfully',
         member: {
           memberId: member.memberId,
           name: member.name,
@@ -56,9 +119,9 @@ module.exports = async (req, res) => {
       return res.status(200).json({ member });
     }
 
-    // Update member
+    // Update member profile
     if (req.method === 'PUT' && memberId) {
-      const { name, gender, birthDate, familyMembers, contact } = req.body;
+      const { name, englishAlias, gender, birthDate, familyMembers, contact } = req.body;
 
       const member = await Member.findOne({ memberId });
 
@@ -68,10 +131,18 @@ module.exports = async (req, res) => {
         });
       }
 
+      // Only allow updates if registration is completed
+      if (!member.registrationCompleted) {
+        return res.status(400).json({
+          message: '請先完成註冊 / Please complete registration first'
+        });
+      }
+
       if (name) member.name = name;
+      if (englishAlias !== undefined) member.englishAlias = englishAlias;
       if (gender) member.gender = gender;
       if (birthDate) member.birthDate = birthDate;
-      if (familyMembers) member.familyMembers = familyMembers;
+      if (familyMembers !== undefined) member.familyMembers = familyMembers;
       if (contact) member.contact = { ...member.contact, ...contact };
 
       await member.save();

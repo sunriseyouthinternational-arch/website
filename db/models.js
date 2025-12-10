@@ -50,6 +50,7 @@ const memberSchema = new mongoose.Schema({
   registrationToken: { type: String, unique: true, sparse: true },
   registrationTokenExpires: { type: Date },
   registrationCompleted: { type: Boolean, default: false },
+  referrer: { type: String }, // Who referred this member
   profilePicture: { type: String, default: '' },
   qrCode: { type: String },
   enrollments: [{
