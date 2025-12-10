@@ -40,17 +40,16 @@ module.exports = async (req, res) => {
     // Get events
     const events = req.body.events || [];
 
-    // IMPORTANT: Send 200 OK immediately to LINE to avoid timeout
-    // But DON'T return - keep processing
-    res.status(200).json({ message: 'OK' });
-
-    // Process events (must await even after sending response, or function will terminate)
+    // Process events FIRST before sending response
+    // This ensures Vercel won't terminate the function early
     if (events.length > 0) {
       console.log('Processing', events.length, 'events...');
       await processEventsAsync(events);
     }
 
-    // Function ends here, but response was already sent
+    // Send 200 OK AFTER processing is complete
+    // LINE may see this as slow, but at least events get processed
+    return res.status(200).json({ message: 'OK' });
 
   } catch (error) {
     console.error('LINE webhook error:', error);
