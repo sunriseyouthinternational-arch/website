@@ -1,5 +1,7 @@
 const connectDB = require('../lib/mongodb');
 const { Member } = require('../db/models');
+const { createPersonalizedRichMenu } = require('../lib/lineRichMenu');
+const line = require('@line/bot-sdk');
 
 module.exports = async (req, res) => {
   const { memberId, token, sessionToken } = req.query;
@@ -118,6 +120,52 @@ module.exports = async (req, res) => {
       member.registrationTokenExpires = undefined;
 
       await member.save();
+
+      // Create personalized rich menu if user has LINE account
+      if (member.line && member.line.userId) {
+        try {
+          console.log(`[Registration] Creating rich menu for ${member.memberId}`);
+
+          // Determine base URL
+          const protocol = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split('://')[0] : 'https';
+          const host = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split('://')[1] : 'www.sunriseyouth.org';
+          const baseUrl = `${protocol}://${host}`;
+          const profileUrl = `${baseUrl}/profile/${member.memberId}`;
+
+          // Create LINE client
+          const client = new line.messagingApi.MessagingApiClient({
+            channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN
+          });
+
+          // Delete old rich menu if exists
+          if (member.line.richMenuId) {
+            try {
+              await client.unlinkRichMenuFromUser(member.line.userId);
+              await client.deleteRichMenu(member.line.richMenuId);
+            } catch (deleteError) {
+              console.log(`[Registration] Could not delete old rich menu: ${deleteError.message}`);
+            }
+          }
+
+          // Create new personalized rich menu
+          const richMenuId = await createPersonalizedRichMenu(
+            client,
+            member.line.userId,
+            member.memberId,
+            profileUrl,
+            member.line.displayName || member.name
+          );
+
+          // Save rich menu ID
+          member.line.richMenuId = richMenuId;
+          await member.save();
+
+          console.log(`[Registration] Rich menu created successfully: ${richMenuId}`);
+        } catch (richMenuError) {
+          console.error(`[Registration] Error creating rich menu:`, richMenuError);
+          // Don't fail registration if rich menu creation fails
+        }
+      }
 
       return res.status(200).json({
         message: '註冊完成 / Registration completed successfully',
