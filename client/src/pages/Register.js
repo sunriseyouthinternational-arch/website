@@ -23,7 +23,7 @@ function Register() {
       mobile: '',
       lineId: ''
     },
-    referrer: ''
+    referralCode: ''
   });
 
   const [message, setMessage] = useState({ type: '', text: '' });
@@ -56,7 +56,7 @@ function Register() {
         birthDate: member.birthDate ? member.birthDate.split('T')[0] : '',
         familyMembers: member.familyMembers || [],
         contact: member.contact || { phone: '', mobile: '', lineId: '' },
-        referrer: ''
+        referralCode: ''
       });
       setLoading(false);
     } catch (error) {
@@ -179,6 +179,17 @@ function Register() {
           <div className="success-details">
             <p><strong>{t('memberId')}:</strong> {registeredMember.memberId}</p>
             <p><strong>{t('name')}:</strong> {registeredMember.name}</p>
+            {registeredMember.referralCode && (
+              <div style={{ marginTop: '25px', padding: '20px', background: '#e7f5ff', borderRadius: '8px', border: '2px solid #339af0' }}>
+                <p style={{ fontSize: '1.1em', marginBottom: '10px' }}><strong>{t('yourReferralCode')}:</strong></p>
+                <p style={{ fontSize: '2em', fontWeight: 'bold', color: '#1971c2', letterSpacing: '0.2em', margin: '15px 0' }}>
+                  {registeredMember.referralCode}
+                </p>
+                <p style={{ fontSize: '0.9em', color: '#364fc7' }}>
+                  {t('shareReferralCode')}
+                </p>
+              </div>
+            )}
             <p style={{ marginTop: '20px', fontSize: '0.95em', color: '#666' }}>
               {t('accessProfileViaLine')}
             </p>
@@ -256,16 +267,21 @@ function Register() {
             </div>
 
             <div className="form-group">
-              <label>{t('referrer')}</label>
+              <label>{t('referralCode')}</label>
               <input
                 type="text"
-                name="referrer"
-                value={formData.referrer}
-                onChange={handleChange}
-                placeholder={t('referrerPlaceholder')}
+                name="referralCode"
+                value={formData.referralCode}
+                onChange={(e) => {
+                  const { name, value } = e.target;
+                  setFormData(prev => ({ ...prev, [name]: value.toUpperCase() }));
+                }}
+                placeholder={t('referralCodePlaceholder')}
+                maxLength="6"
+                style={{ textTransform: 'uppercase' }}
               />
               <small style={{ color: '#666' }}>
-                {t('referrerHelp')}
+                {t('referralCodeHelp')}
               </small>
             </div>
           </div>

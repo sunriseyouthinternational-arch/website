@@ -50,7 +50,8 @@ const memberSchema = new mongoose.Schema({
   registrationToken: { type: String, unique: true, sparse: true },
   registrationTokenExpires: { type: Date },
   registrationCompleted: { type: Boolean, default: false },
-  referrer: { type: String }, // Who referred this member
+  referralCode: { type: String, unique: true, sparse: true }, // This member's unique referral code
+  referredBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Member' }, // Member who referred this person
   profilePicture: { type: String, default: '' },
   qrCode: { type: String },
   enrollments: [{

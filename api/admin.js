@@ -20,6 +20,38 @@ module.exports = async (req, res) => {
       });
     }
 
+    // Referral leaderboard
+    if (resource === 'referral-leaderboard') {
+      // Get all members with their referral counts
+      const members = await Member.find({ registrationCompleted: true })
+        .select('memberId name referralCode')
+        .lean();
+
+      // Count referrals for each member
+      const leaderboard = await Promise.all(
+        members.map(async (member) => {
+          const referralCount = await Member.countDocuments({
+            referredBy: member._id,
+            registrationCompleted: true
+          });
+
+          return {
+            memberId: member.memberId,
+            name: member.name,
+            referralCode: member.referralCode,
+            referralCount
+          };
+        })
+      );
+
+      // Filter out members with 0 referrals and sort by count (highest first)
+      const rankedLeaderboard = leaderboard
+        .filter(m => m.referralCount > 0)
+        .sort((a, b) => b.referralCount - a.referralCount);
+
+      return res.status(200).json({ leaderboard: rankedLeaderboard });
+    }
+
     // List all members
     if (resource === 'members' && !action) {
       const members = await Member.find().sort({ createdAt: -1 });

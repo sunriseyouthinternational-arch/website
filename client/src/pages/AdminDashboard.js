@@ -12,6 +12,7 @@ function AdminDashboard() {
   const [classes, setClasses] = useState([]);
   const [activities, setActivities] = useState([]);
   const [stats, setStats] = useState({});
+  const [referralLeaderboard, setReferralLeaderboard] = useState([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
 
@@ -41,17 +42,19 @@ function AdminDashboard() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [membersRes, classesRes, activitiesRes, statsRes] = await Promise.all([
+      const [membersRes, classesRes, activitiesRes, statsRes, leaderboardRes] = await Promise.all([
         axios.get('/api/admin?resource=members'),
         axios.get('/api/classes'),
         axios.get('/api/activities'),
-        axios.get('/api/admin?resource=stats')
+        axios.get('/api/admin?resource=stats'),
+        axios.get('/api/admin?resource=referral-leaderboard')
       ]);
 
       setMembers(membersRes.data.members);
       setClasses(classesRes.data.classes);
       setActivities(activitiesRes.data.activities);
       setStats(statsRes.data);
+      setReferralLeaderboard(leaderboardRes.data.leaderboard);
     } catch (error) {
       if (error.response?.status === 401) {
         localStorage.removeItem('adminToken');
@@ -159,6 +162,12 @@ function AdminDashboard() {
           onClick={() => setActiveTab('activities')}
         >
           {t('activityManagement')}
+        </button>
+        <button
+          className={`tab-button ${activeTab === 'referrals' ? 'active' : ''}`}
+          onClick={() => setActiveTab('referrals')}
+        >
+          {t('referralLeaderboard')}
         </button>
       </div>
 
@@ -503,6 +512,67 @@ function AdminDashboard() {
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {activeTab === 'referrals' && (
+        <div className="card">
+          <h3>{t('referralLeaderboard')}</h3>
+          {referralLeaderboard.length > 0 ? (
+            <div className="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>{t('rank')}</th>
+                    <th>{t('memberId')}</th>
+                    <th>{t('name')}</th>
+                    <th>{t('yourReferralCode')}</th>
+                    <th>{t('referrals')}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {referralLeaderboard.map((entry, index) => (
+                    <tr key={entry.memberId}>
+                      <td style={{ fontWeight: 'bold', fontSize: '1.2em' }}>
+                        {index === 0 && '🥇'}
+                        {index === 1 && '🥈'}
+                        {index === 2 && '🥉'}
+                        {index > 2 && `#${index + 1}`}
+                      </td>
+                      <td>{entry.memberId}</td>
+                      <td>{entry.name}</td>
+                      <td>
+                        <span style={{
+                          background: '#e7f5ff',
+                          padding: '8px 16px',
+                          borderRadius: '6px',
+                          fontWeight: 'bold',
+                          fontSize: '1.1em',
+                          color: '#1971c2',
+                          letterSpacing: '0.1em'
+                        }}>
+                          {entry.referralCode}
+                        </span>
+                      </td>
+                      <td>
+                        <span style={{
+                          background: '#d3f9d8',
+                          padding: '6px 12px',
+                          borderRadius: '6px',
+                          fontWeight: 'bold',
+                          color: '#2b8a3e'
+                        }}>
+                          {entry.referralCount}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="empty-message">{t('noReferrals')}</p>
+          )}
         </div>
       )}
     </div>

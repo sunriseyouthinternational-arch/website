@@ -47,7 +47,7 @@ module.exports = async (req, res) => {
 
     // Complete registration with token
     if (req.method === 'POST' && token) {
-      const { name, englishAlias, gender, birthDate, familyMembers, contact, referrer } = req.body;
+      const { name, englishAlias, gender, birthDate, familyMembers, contact, referralCode } = req.body;
 
       const member = await Member.findOne({ registrationToken: token });
 
@@ -71,6 +71,40 @@ module.exports = async (req, res) => {
         });
       }
 
+      // If referral code provided, validate and link to referrer
+      if (referralCode) {
+        const referrer = await Member.findOne({
+          referralCode: referralCode.trim().toUpperCase(),
+          registrationCompleted: true
+        });
+
+        if (referrer) {
+          member.referredBy = referrer._id;
+        }
+        // If invalid code, just ignore it (don't block registration)
+      }
+
+      // Generate unique referral code for this member (6 chars: 3 letters + 3 numbers)
+      let uniqueCode = false;
+      let generatedCode = '';
+      while (!uniqueCode) {
+        const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        const numbers = '0123456789';
+        generatedCode = '';
+        for (let i = 0; i < 3; i++) {
+          generatedCode += letters.charAt(Math.floor(Math.random() * letters.length));
+        }
+        for (let i = 0; i < 3; i++) {
+          generatedCode += numbers.charAt(Math.floor(Math.random() * numbers.length));
+        }
+
+        // Check if code already exists
+        const existing = await Member.findOne({ referralCode: generatedCode });
+        if (!existing) {
+          uniqueCode = true;
+        }
+      }
+
       // Update member with complete information
       member.name = name;
       member.englishAlias = englishAlias || '';
@@ -78,7 +112,7 @@ module.exports = async (req, res) => {
       member.birthDate = birthDate;
       member.familyMembers = familyMembers || [];
       member.contact = contact;
-      member.referrer = referrer || '';
+      member.referralCode = generatedCode;
       member.registrationCompleted = true;
       member.registrationToken = undefined; // Remove token after use
       member.registrationTokenExpires = undefined;
@@ -89,7 +123,8 @@ module.exports = async (req, res) => {
         message: '註冊完成 / Registration completed successfully',
         member: {
           memberId: member.memberId,
-          name: member.name
+          name: member.name,
+          referralCode: member.referralCode
         }
       });
     }

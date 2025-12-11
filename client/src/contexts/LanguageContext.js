@@ -112,9 +112,11 @@ export const translations = {
     step1: '加入 LINE 官方帳號',
     step2: '收到註冊連結',
     step3: '點擊連結完成註冊',
-    referrer: '推薦人 (選填)',
-    referrerPlaceholder: '誰推薦您加入？',
-    referrerHelp: '如果有人推薦您加入，請填寫他們的姓名',
+    referralCode: '推薦碼 (選填)',
+    referralCodePlaceholder: '輸入推薦碼',
+    referralCodeHelp: '如果有人推薦您加入，請輸入他們的推薦碼',
+    yourReferralCode: '您的推薦碼',
+    shareReferralCode: '分享此推薦碼邀請朋友加入',
     fillInformation: '請填寫您的個人資料以完成註冊',
     accessProfileViaLine: '您可以隨時透過 LINE 官方帳號選單中的「登入」按鈕來存取您的個人檔案。',
     applicantInfo: '申請人資料',
@@ -140,7 +142,11 @@ export const translations = {
     paymentStatusUpdated: '付款狀態已更新',
     enrolledCount: '已報名數',
     registeredDate: '註冊日期',
-    exampleTime: '例如：每週六 10:00-12:00'
+    exampleTime: '例如：每週六 10:00-12:00',
+    referralLeaderboard: '推薦排行榜',
+    referrals: '推薦人數',
+    noReferrals: '目前沒有推薦記錄',
+    rank: '排名'
   },
   en: {
     // Common
@@ -251,9 +257,11 @@ export const translations = {
     step1: 'Add LINE Official Account',
     step2: 'Receive registration link',
     step3: 'Click link to complete registration',
-    referrer: 'Referrer (Optional)',
-    referrerPlaceholder: 'Who referred you?',
-    referrerHelp: 'If someone referred you, please enter their name',
+    referralCode: 'Referral Code (Optional)',
+    referralCodePlaceholder: 'Enter referral code',
+    referralCodeHelp: 'If someone referred you, please enter their referral code',
+    yourReferralCode: 'Your Referral Code',
+    shareReferralCode: 'Share this code to invite friends',
     fillInformation: 'Please fill in your information to complete registration',
     accessProfileViaLine: 'You can access your profile anytime using the "Login" button in the LINE Official Account menu.',
     applicantInfo: 'Applicant Information',
@@ -279,7 +287,11 @@ export const translations = {
     paymentStatusUpdated: 'Payment status updated',
     enrolledCount: 'Enrollments',
     registeredDate: 'Registered Date',
-    exampleTime: 'e.g., Every Saturday 10:00-12:00'
+    exampleTime: 'e.g., Every Saturday 10:00-12:00',
+    referralLeaderboard: 'Referral Leaderboard',
+    referrals: 'Referrals',
+    noReferrals: 'No referrals yet',
+    rank: 'Rank'
   }
 };
 
