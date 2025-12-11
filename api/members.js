@@ -2,7 +2,7 @@ const connectDB = require('../lib/mongodb');
 const { Member } = require('../db/models');
 
 module.exports = async (req, res) => {
-  const { memberId, token } = req.query;
+  const { memberId, token, sessionToken } = req.query;
 
   try {
     await connectDB();
@@ -131,6 +131,31 @@ module.exports = async (req, res) => {
 
     // Get member by ID
     if (req.method === 'GET' && memberId) {
+      const query = { memberId };
+
+      // If session token provided, validate it
+      if (sessionToken) {
+        query.sessionToken = sessionToken;
+
+        const member = await Member.findOne(query);
+
+        if (!member) {
+          return res.status(401).json({
+            message: '無效的登入憑證 / Invalid session credentials'
+          });
+        }
+
+        // Check if session token expired
+        if (member.sessionTokenExpires && member.sessionTokenExpires < new Date()) {
+          return res.status(401).json({
+            message: '登入已過期 / Session expired'
+          });
+        }
+
+        return res.status(200).json({ member });
+      }
+
+      // No session token, normal member lookup
       const member = await Member.findOne({ memberId });
 
       if (!member) {

@@ -50,6 +50,8 @@ const memberSchema = new mongoose.Schema({
   registrationToken: { type: String, unique: true, sparse: true },
   registrationTokenExpires: { type: Date },
   registrationCompleted: { type: Boolean, default: false },
+  sessionToken: { type: String, unique: true, sparse: true },
+  sessionTokenExpires: { type: Date },
   referralCode: { type: String, unique: true, sparse: true }, // This member's unique referral code
   referredBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Member' }, // Member who referred this person
   points: { type: Number, default: 0 }, // Membership points for gift redemption

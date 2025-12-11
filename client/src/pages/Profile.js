@@ -22,11 +22,34 @@ function Profile() {
 
   // Check for tab parameter in URL
   const tabFromUrl = searchParams.get('tab');
+  const sessionFromUrl = searchParams.get('session');
   const [activeTab, setActiveTab] = useState(
     tabFromUrl === 'courses' ? 'courses' :
     tabFromUrl === 'points' ? 'points' :
     'profile'
   );
+
+  // Cookie helper functions
+  const setCookie = (name, value, days) => {
+    const expires = new Date();
+    expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000);
+    document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/`;
+  };
+
+  const getCookie = (name) => {
+    const nameEQ = name + "=";
+    const ca = document.cookie.split(';');
+    for (let i = 0; i < ca.length; i++) {
+      let c = ca[i];
+      while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+      if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+    }
+    return null;
+  };
+
+  const deleteCookie = (name) => {
+    document.cookie = name + '=;expires=Thu, 01 Jan 1970 00:00:01 GMT;path=/';
+  };
 
   const [editMode, setEditMode] = useState(false);
   const [editFormData, setEditFormData] = useState({
@@ -46,6 +69,43 @@ function Profile() {
     // Otherwise, assume it's a file path and prepend API URL
     const apiUrl = process.env.REACT_APP_API_URL || '';
     return `${apiUrl}${imagePath}`;
+  };
+
+  const validateAndSaveSession = async (sessionToken, id) => {
+    setLoading(true);
+    setMessage({ type: '', text: '' });
+
+    try {
+      const response = await axios.get(`/api/members?memberId=${id}&sessionToken=${sessionToken}`);
+      if (response.data.member) {
+        setMember(response.data.member);
+        setMemberId(id);
+
+        // Save session to cookies (7 days)
+        setCookie('memberSession', sessionToken, 7);
+        setCookie('memberId', id, 7);
+
+        setMessage({ type: 'success', text: t('language') === 'zh' ? '自動登入成功' : 'Auto-login successful' });
+
+        // Clean up URL by removing session parameter
+        if (sessionFromUrl) {
+          const newUrl = `/profile/${id}${tabFromUrl ? `?tab=${tabFromUrl}` : ''}`;
+          navigate(newUrl, { replace: true });
+        }
+      } else {
+        throw new Error('Invalid session');
+      }
+    } catch (error) {
+      console.error('Session validation failed:', error);
+      deleteCookie('memberSession');
+      deleteCookie('memberId');
+      setMessage({
+        type: 'error',
+        text: t('language') === 'zh' ? '登入失效，請重新登入' : 'Session expired, please login again'
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const fetchMember = async () => {
@@ -88,11 +148,24 @@ function Profile() {
   useEffect(() => {
     fetchClassesAndActivities();
 
-    // If memberId is in URL, automatically fetch member profile
-    if (urlMemberId) {
+    // Handle session token from URL
+    if (sessionFromUrl && urlMemberId) {
+      console.log('Session token found in URL, validating...');
+      validateAndSaveSession(sessionFromUrl, urlMemberId);
+    } else if (urlMemberId) {
+      // If memberId is in URL, automatically fetch member profile
       fetchMemberById(urlMemberId);
+    } else {
+      // Check for stored session in cookies
+      const storedSession = getCookie('memberSession');
+      const storedMemberId = getCookie('memberId');
+
+      if (storedSession && storedMemberId) {
+        console.log('Found session in cookies, auto-logging in...');
+        validateAndSaveSession(storedSession, storedMemberId);
+      }
     }
-  }, [urlMemberId]);
+  }, [urlMemberId, sessionFromUrl]);
 
   // Update active tab when URL parameter changes
   useEffect(() => {

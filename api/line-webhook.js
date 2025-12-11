@@ -272,11 +272,23 @@ async function handleMessageEvent(event) {
     // Handle points request
     if (messageText && (messageText.includes('點數') || messageText.toLowerCase().includes('point'))) {
       const points = member.points || 0;
+
+      // Generate a session token for auto-login
+      const sessionToken = require('crypto').randomBytes(32).toString('hex');
+      const sessionExpires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+
+      // Save session token to member
+      member.sessionToken = sessionToken;
+      member.sessionTokenExpires = sessionExpires;
+      await member.save();
+
+      const profileUrl = `${baseUrl}/profile/${member.memberId}?tab=points&session=${sessionToken}`;
+
       await client.pushMessage({
         to: lineUserId,
         messages: [{
           type: 'text',
-          text: `🎁 您的會員點數 Your Points:\n${points} 點 points\n\n點擊以下連結兌換禮物：\nClick below to redeem gifts:\n${baseUrl}/redeem-gifts`
+          text: `💎 您的會員點數 Your Points:\n\n${points} 點 points\n\n點擊下方連結查看可兌換的禮物：\nClick below to view redeemable gifts:\n\n${profileUrl}`
         }]
       });
       return;
