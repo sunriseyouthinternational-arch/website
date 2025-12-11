@@ -357,6 +357,56 @@ function Profile() {
                     </div>
                   </div>
 
+                  {/* Statistics Section */}
+                  <div className="statistics-section">
+                    <h3>{t('language') === 'zh' ? '會員統計' : 'Member Statistics'}</h3>
+                    <div className="stats-grid">
+                      <div className="stat-card">
+                        <div className="stat-icon">💎</div>
+                        <div className="stat-value">{member.points || 0}</div>
+                        <div className="stat-label">{t('language') === 'zh' ? '會員點數' : 'Points'}</div>
+                      </div>
+
+                      <div className="stat-card">
+                        <div className="stat-icon">📚</div>
+                        <div className="stat-value">
+                          {member.enrollments ? member.enrollments.filter(e => e.type === 'class' && e.status === 'active').length : 0}
+                        </div>
+                        <div className="stat-label">{t('language') === 'zh' ? '已報名課程' : 'Classes'}</div>
+                      </div>
+
+                      <div className="stat-card">
+                        <div className="stat-icon">🎯</div>
+                        <div className="stat-value">
+                          {member.enrollments ? member.enrollments.filter(e => e.type === 'activity' && e.status === 'active').length : 0}
+                        </div>
+                        <div className="stat-label">{t('language') === 'zh' ? '參加活動' : 'Activities'}</div>
+                      </div>
+
+                      <div className="stat-card">
+                        <div className="stat-icon">📅</div>
+                        <div className="stat-value">
+                          {Math.floor((new Date() - new Date(member.createdAt)) / (1000 * 60 * 60 * 24))}
+                        </div>
+                        <div className="stat-label">{t('language') === 'zh' ? '會員天數' : 'Days'}</div>
+                      </div>
+
+                      <div className="stat-card">
+                        <div className="stat-icon">👥</div>
+                        <div className="stat-value">{member.referralCount || 0}</div>
+                        <div className="stat-label">{t('language') === 'zh' ? '推薦人數' : 'Referrals'}</div>
+                      </div>
+
+                      <div className="stat-card">
+                        <div className="stat-icon">⭐</div>
+                        <div className="stat-value">
+                          {member.enrollments ? member.enrollments.filter(e => e.status === 'active').length : 0}
+                        </div>
+                        <div className="stat-label">{t('language') === 'zh' ? '總報名數' : 'Total'}</div>
+                      </div>
+                    </div>
+                  </div>
+
                   <div className="contact-info">
                     <h3>{t('contactInfo')}</h3>
                     <p><strong>{t('mobile')}:</strong> {member.contact?.mobile}</p>

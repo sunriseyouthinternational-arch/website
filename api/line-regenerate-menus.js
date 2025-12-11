@@ -15,13 +15,14 @@ const client = new line.messagingApi.MessagingApiClient({
 /**
  * Endpoint to regenerate rich menus for members with LINE accounts
  * Usage:
- *   GET /api/line-regenerate-menus - Regenerate for ALL members
+ *   GET /api/line-regenerate-menus - Regenerate for ALL members with completed registration
  *   GET /api/line-regenerate-menus?memberId=M123456 - Regenerate for specific member
  *   GET /api/line-regenerate-menus?lineUserId=U1234567890abcdef - Regenerate by LINE user ID
+ *   GET /api/line-regenerate-menus?force=true - Regenerate even for members without completed registration
  */
 module.exports = async (req, res) => {
   try {
-    const { memberId, lineUserId } = req.query;
+    const { memberId, lineUserId, force } = req.query;
 
     await connectDB();
 
@@ -49,18 +50,42 @@ module.exports = async (req, res) => {
       }
       members = [member];
     } else {
-      // Find all members with LINE accounts and completed registration
-      members = await Member.find({
-        'line.userId': { $exists: true, $ne: null },
-        'registrationCompleted': true
-      });
+      // Find all members with LINE accounts
+      const query = {
+        'line.userId': { $exists: true, $ne: null }
+      };
+
+      // Only require completed registration if force is not set
+      if (force !== 'true') {
+        query.registrationCompleted = true;
+      }
+
+      members = await Member.find(query);
     }
 
     if (members.length === 0) {
+      // Provide helpful debug information
+      const allMembers = await Member.find({}).select('memberId registrationCompleted line.userId').lean();
+      const debugInfo = {
+        total: allMembers.length,
+        withLineAccounts: allMembers.filter(m => m.line?.userId).length,
+        registrationCompleted: allMembers.filter(m => m.registrationCompleted).length,
+        withLineAndCompleted: allMembers.filter(m => m.line?.userId && m.registrationCompleted).length,
+        withLineButNotCompleted: allMembers.filter(m => m.line?.userId && !m.registrationCompleted).length
+      };
+
       return res.status(200).json({
         success: true,
-        message: 'No members with LINE accounts found',
-        processed: 0
+        message: force === 'true'
+          ? 'No members with LINE accounts found (force mode)'
+          : 'No members with LINE accounts and completed registration found',
+        processed: 0,
+        debugInfo,
+        hint: debugInfo.withLineButNotCompleted > 0 && force !== 'true'
+          ? 'Some members have LINE accounts but have not completed registration. Use ?force=true to regenerate their menus anyway, or ask them to complete the registration form.'
+          : debugInfo.withLineAccounts > 0
+            ? 'Some members have LINE accounts. Check if they have completed registration.'
+            : 'No members have LINE accounts yet. Members need to follow the official account first.'
       });
     }
 
