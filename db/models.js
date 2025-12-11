@@ -52,6 +52,7 @@ const memberSchema = new mongoose.Schema({
   registrationCompleted: { type: Boolean, default: false },
   referralCode: { type: String, unique: true, sparse: true }, // This member's unique referral code
   referredBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Member' }, // Member who referred this person
+  points: { type: Number, default: 0 }, // Membership points for gift redemption
   profilePicture: { type: String, default: '' },
   qrCode: { type: String },
   enrollments: [{
@@ -77,6 +78,10 @@ const classSchema = new mongoose.Schema({
   description: { type: String, required: true },
   banner: { type: String },
   time: { type: String, required: true },
+  daysOfWeek: [{
+    type: String,
+    enum: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+  }],
   cost: { type: Number, required: true },
   teacher: { type: String, required: true },
   maxParticipants: { type: Number, required: true },

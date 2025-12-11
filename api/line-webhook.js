@@ -255,15 +255,44 @@ async function handleMessageEvent(event) {
       return;
     }
 
-    // Echo member ID if user asks
+    const baseUrl = process.env.FRONTEND_URL || 'https://website-five-chi-99.vercel.app';
+
+    // Handle member ID request
     if (messageText && (messageText.includes('編號') || messageText.toLowerCase().includes('id'))) {
       await client.pushMessage({
         to: lineUserId,
         messages: [{
           type: 'text',
-          text: `您的團員編號：${member.memberId}\nYour member ID: ${member.memberId}\n\n個人檔案連結：\nProfile link:\n${process.env.FRONTEND_URL || 'https://website-five-chi-99.vercel.app'}/profile/${member.memberId}`
+          text: `您的團員編號：${member.memberId}\nYour member ID: ${member.memberId}\n\n個人檔案連結：\nProfile link:\n${baseUrl}/profile/${member.memberId}`
         }]
       });
+      return;
+    }
+
+    // Handle points request
+    if (messageText && (messageText.includes('點數') || messageText.toLowerCase().includes('point'))) {
+      const points = member.points || 0;
+      await client.pushMessage({
+        to: lineUserId,
+        messages: [{
+          type: 'text',
+          text: `🎁 您的會員點數 Your Points:\n${points} 點 points\n\n點擊以下連結兌換禮物：\nClick below to redeem gifts:\n${baseUrl}/redeem-gifts`
+        }]
+      });
+      return;
+    }
+
+    // Handle referral code request
+    if (messageText && (messageText.includes('邀請') || messageText.toLowerCase().includes('referral'))) {
+      const referralCode = member.referralCode || 'N/A';
+      await client.pushMessage({
+        to: lineUserId,
+        messages: [{
+          type: 'text',
+          text: `🎯 您的推薦碼 Your Referral Code:\n\n${referralCode}\n\n分享此推薦碼邀請朋友加入！\nShare this code to invite friends!`
+        }]
+      });
+      return;
     }
 
   } catch (error) {

@@ -20,7 +20,7 @@ function AdminDashboard() {
   const [showClassForm, setShowClassForm] = useState(false);
   const [showActivityForm, setShowActivityForm] = useState(false);
   const [newClass, setNewClass] = useState({
-    name: '', description: '', time: '', cost: '', teacher: '', maxParticipants: ''
+    name: '', description: '', time: '', cost: '', teacher: '', maxParticipants: '', daysOfWeek: []
   });
   const [newActivity, setNewActivity] = useState({
     name: '', description: '', time: '', cost: '', teacher: '', maxParticipants: ''
@@ -80,7 +80,7 @@ function AdminDashboard() {
       });
       setMessage({ type: 'success', text: t('language') === 'zh' ? '課程添加成功' : 'Class added successfully' });
       setShowClassForm(false);
-      setNewClass({ name: '', description: '', time: '', cost: '', teacher: '', maxParticipants: '' });
+      setNewClass({ name: '', description: '', time: '', cost: '', teacher: '', maxParticipants: '', daysOfWeek: [] });
       fetchData();
     } catch (error) {
       console.error('Error adding class:', error);
@@ -272,6 +272,28 @@ function AdminDashboard() {
                   required
                   rows="3"
                 />
+              </div>
+
+              <div className="form-group">
+                <label>{t('language') === 'zh' ? '上課日期 *' : 'Days of Week *'}</label>
+                <div className="checkbox-group">
+                  {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map(day => (
+                    <label key={day} className="checkbox-label">
+                      <input
+                        type="checkbox"
+                        checked={newClass.daysOfWeek.includes(day)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setNewClass({ ...newClass, daysOfWeek: [...newClass.daysOfWeek, day] });
+                          } else {
+                            setNewClass({ ...newClass, daysOfWeek: newClass.daysOfWeek.filter(d => d !== day) });
+                          }
+                        }}
+                      />
+                      <span>{day}</span>
+                    </label>
+                  ))}
+                </div>
               </div>
 
               <div className="form-row">
