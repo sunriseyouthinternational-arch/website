@@ -56,7 +56,7 @@ module.exports = async (req, res) => {
 
     // Get profile URL
     const protocol = req.headers['x-forwarded-proto'] || 'https';
-    const host = req.headers['x-forwarded-host'] || req.headers.host || 'website-five-chi-99.vercel.app';
+    const host = req.headers['x-forwarded-host'] || req.headers.host || 'www.sunriseyouth.org';
     const baseUrl = process.env.FRONTEND_URL || `${protocol}://${host}`;
     const profileUrl = `${baseUrl}/profile/${member.memberId}`;
 

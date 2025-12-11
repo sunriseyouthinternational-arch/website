@@ -13,12 +13,20 @@ function Profile() {
   const [member, setMember] = useState(null);
   const [classes, setClasses] = useState([]);
   const [activities, setActivities] = useState([]);
+  const [filteredClasses, setFilteredClasses] = useState([]);
+  const [selectedDay, setSelectedDay] = useState('All');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
 
+  const days = ['All', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
   // Check for tab parameter in URL
   const tabFromUrl = searchParams.get('tab');
-  const [activeTab, setActiveTab] = useState(tabFromUrl === 'courses' ? 'courses' : 'profile');
+  const [activeTab, setActiveTab] = useState(
+    tabFromUrl === 'courses' ? 'courses' :
+    tabFromUrl === 'points' ? 'points' :
+    'profile'
+  );
 
   const [editMode, setEditMode] = useState(false);
   const [editFormData, setEditFormData] = useState({
@@ -57,10 +65,23 @@ function Profile() {
         axios.get('/api/classes'),
         axios.get('/api/activities')
       ]);
-      setClasses(classesRes.data.classes);
-      setActivities(activitiesRes.data.activities);
+      const activeClasses = classesRes.data.classes.filter(c => c.status === 'active');
+      const activeActivities = activitiesRes.data.activities.filter(a => a.status === 'active');
+
+      setClasses(activeClasses);
+      setActivities(activeActivities);
     } catch (error) {
       console.error('Error fetching classes/activities:', error);
+    }
+  };
+
+  // Filter classes by selected day
+  const filterClasses = () => {
+    if (selectedDay === 'All') {
+      setFilteredClasses(classes);
+    } else {
+      const filtered = classes.filter(c => c.dayOfWeek === selectedDay);
+      setFilteredClasses(filtered);
     }
   };
 
@@ -77,10 +98,17 @@ function Profile() {
   useEffect(() => {
     if (tabFromUrl === 'courses') {
       setActiveTab('courses');
+    } else if (tabFromUrl === 'points') {
+      setActiveTab('points');
     } else if (tabFromUrl === 'profile') {
       setActiveTab('profile');
     }
   }, [tabFromUrl]);
+
+  // Filter classes when day or classes change
+  useEffect(() => {
+    filterClasses();
+  }, [selectedDay, classes]);
 
   const fetchMemberById = async (id) => {
     setLoading(true);
@@ -284,6 +312,12 @@ function Profile() {
             >
               {t('myCoursesActivities')}
             </button>
+            <button
+              className={`tab-button ${activeTab === 'points' ? 'active' : ''}`}
+              onClick={() => setActiveTab('points')}
+            >
+              {t('language') === 'zh' ? '點數與禮物' : 'Points & Gifts'}
+            </button>
           </div>
 
           {message.text && <div className={`message ${message.type}`}>{message.text}</div>}
@@ -328,23 +362,6 @@ function Profile() {
                     <p><strong>{t('mobile')}:</strong> {member.contact?.mobile}</p>
                     {member.contact?.phone && <p><strong>{t('phone')}:</strong> {member.contact.phone}</p>}
                     {member.contact?.lineId && <p><strong>{t('lineId')}:</strong> {member.contact.lineId}</p>}
-                  </div>
-
-                  {/* Member Points & Redemption */}
-                  <div className="points-section">
-                    <h3>{t('language') === 'zh' ? '會員點數' : 'Member Points'}</h3>
-                    <div className="points-display">
-                      <div className="points-value">
-                        <span className="points-number">{member.points || 0}</span>
-                        <span className="points-label">{t('language') === 'zh' ? '點' : 'points'}</span>
-                      </div>
-                      <button
-                        className="btn btn-primary"
-                        onClick={() => navigate('/redeem-gifts')}
-                      >
-                        🎁 {t('language') === 'zh' ? '兌換禮物' : 'Redeem Gifts'}
-                      </button>
-                    </div>
                   </div>
 
                   {member.familyMembers && member.familyMembers.length > 0 && (
@@ -543,8 +560,22 @@ function Profile() {
                 </div>
 
                 <h4 className="section-subtitle">{t('availableClasses')}</h4>
+
+                {/* Day Filter */}
+                <div className="day-filter">
+                  {days.map(day => (
+                    <button
+                      key={day}
+                      className={`filter-button ${selectedDay === day ? 'active' : ''}`}
+                      onClick={() => setSelectedDay(day)}
+                    >
+                      {day === 'All' ? t('language') === 'zh' ? '全部' : 'All' : day}
+                    </button>
+                  ))}
+                </div>
+
                 <div className="grid">
-                  {classes.map((classItem) => (
+                  {filteredClasses.map((classItem) => (
                     <div key={classItem._id} className="item-card">
                       {classItem.banner && (
                         <img src={getImageSrc(classItem.banner)} alt={classItem.name} className="item-banner" />
@@ -620,6 +651,33 @@ function Profile() {
                       )}
                     </div>
                   ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'points' && (
+            <div className="card">
+              <div className="points-gifts-section">
+                <div className="points-display-large">
+                  <h3>{t('language') === 'zh' ? '您的會員點數' : 'Your Member Points'}</h3>
+                  <div className="points-value-large">
+                    <span className="points-number-large">{member.points || 0}</span>
+                    <span className="points-label-large">{t('language') === 'zh' ? '點' : 'points'}</span>
+                  </div>
+                </div>
+
+                <div className="gifts-under-construction">
+                  <div className="construction-icon">🚧</div>
+                  <h3>{t('language') === 'zh' ? '禮物兌換' : 'Gift Redemption'}</h3>
+                  <p className="construction-message">
+                    {t('language') === 'zh' ? '施工中' : 'Under Construction'}
+                  </p>
+                  <p className="construction-description">
+                    {t('language') === 'zh'
+                      ? '此功能正在開發中，敬請期待！'
+                      : 'This feature is currently under development. Stay tuned!'}
+                  </p>
                 </div>
               </div>
             </div>

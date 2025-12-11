@@ -9,8 +9,6 @@ import Register from './pages/Register';
 import Profile from './pages/Profile';
 import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
-import ClassesActivities from './pages/ClassesActivities';
-import RedeemGifts from './pages/RedeemGifts';
 
 function AppContent() {
   const { language, toggleLanguage, t } = useLanguage();
@@ -46,8 +44,6 @@ function AppContent() {
             <Route path="/register" element={<Register />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/profile/:memberId" element={<Profile />} />
-            <Route path="/classes-activities" element={<ClassesActivities />} />
-            <Route path="/redeem-gifts" element={<RedeemGifts />} />
             <Route path="/admin" element={<AdminLogin />} />
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
           </Routes>

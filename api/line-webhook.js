@@ -152,7 +152,7 @@ async function handleFollowEvent(event) {
 
     // Determine domain from request
     const protocol = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split('://')[0] : 'https';
-    const host = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split('://')[1] : 'website-five-chi-99.vercel.app';
+    const host = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split('://')[1] : 'www.sunriseyouth.org';
     const baseUrl = `${protocol}://${host}`;
     const registrationUrl = `${baseUrl}/register?token=${registrationToken}`;
     console.log('[handleFollowEvent] Registration URL:', registrationUrl);
@@ -255,7 +255,7 @@ async function handleMessageEvent(event) {
       return;
     }
 
-    const baseUrl = process.env.FRONTEND_URL || 'https://website-five-chi-99.vercel.app';
+    const baseUrl = process.env.FRONTEND_URL || 'https://www.sunriseyouth.org';
 
     // Handle member ID request
     if (messageText && (messageText.includes('編號') || messageText.toLowerCase().includes('id'))) {
