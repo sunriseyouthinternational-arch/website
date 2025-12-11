@@ -60,14 +60,29 @@ module.exports = async (req, res) => {
     const baseUrl = process.env.FRONTEND_URL || `${protocol}://${host}`;
     const profileUrl = `${baseUrl}/profile/${member.memberId}`;
 
-    // Delete old rich menu if exists
-    if (member.line.richMenuId) {
-      try {
+    // Delete/unlink ANY existing rich menu (handles both new and old rich menus)
+    try {
+      const existingRichMenuId = await client.getRichMenuIdOfUser(member.line.userId);
+
+      if (existingRichMenuId) {
+        console.log(`Found existing rich menu: ${existingRichMenuId}`);
         await client.unlinkRichMenuFromUser(member.line.userId);
-        await client.deleteRichMenu(member.line.richMenuId);
-        console.log('Old rich menu deleted:', member.line.richMenuId);
-      } catch (error) {
-        console.log('Could not delete old rich menu (may not exist):', error.message);
+        console.log(`Unlinked rich menu from user`);
+
+        try {
+          await client.deleteRichMenu(existingRichMenuId);
+          console.log(`Deleted rich menu: ${existingRichMenuId}`);
+        } catch (deleteError) {
+          console.log(`Could not delete rich menu (might be default): ${deleteError.message}`);
+        }
+      } else {
+        console.log(`No existing rich menu found`);
+      }
+    } catch (error) {
+      if (error.message && error.message.includes('404')) {
+        console.log(`No rich menu currently linked`);
+      } else {
+        console.log(`Error checking for existing rich menu:`, error.message);
       }
     }
 

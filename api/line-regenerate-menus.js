@@ -107,14 +107,38 @@ module.exports = async (req, res) => {
       try {
         const profileUrl = `${baseUrl}/profile/${member.memberId}`;
 
-        // Delete old rich menu if exists
-        if (member.line.richMenuId) {
-          try {
+        // IMPORTANT: Delete/unlink ANY existing rich menu
+        // This handles both:
+        // 1. Rich menus in our database (new system)
+        // 2. Old rich menus from before system was implemented (not in database)
+        try {
+          // First, check if user has ANY rich menu linked (via LINE API)
+          const existingRichMenuId = await client.getRichMenuIdOfUser(member.line.userId);
+
+          if (existingRichMenuId) {
+            console.log(`[${member.memberId}] Found existing rich menu: ${existingRichMenuId}`);
+
+            // Unlink the rich menu from user
             await client.unlinkRichMenuFromUser(member.line.userId);
-            await client.deleteRichMenu(member.line.richMenuId);
-            console.log(`Deleted old rich menu for ${member.memberId}:`, member.line.richMenuId);
-          } catch (error) {
-            console.log(`Could not delete old rich menu for ${member.memberId}:`, error.message);
+            console.log(`[${member.memberId}] Unlinked rich menu from user`);
+
+            // Try to delete the rich menu (only works if we own it)
+            // Old default rich menus might fail here, but that's okay - unlinking is what matters
+            try {
+              await client.deleteRichMenu(existingRichMenuId);
+              console.log(`[${member.memberId}] Deleted rich menu: ${existingRichMenuId}`);
+            } catch (deleteError) {
+              console.log(`[${member.memberId}] Could not delete rich menu (might be default): ${deleteError.message}`);
+            }
+          } else {
+            console.log(`[${member.memberId}] No existing rich menu found`);
+          }
+        } catch (error) {
+          // Error getting rich menu ID means user doesn't have one, which is fine
+          if (error.message && error.message.includes('404')) {
+            console.log(`[${member.memberId}] No rich menu currently linked`);
+          } else {
+            console.log(`[${member.memberId}] Error checking for existing rich menu:`, error.message);
           }
         }
 
