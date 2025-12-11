@@ -284,7 +284,28 @@ async function handleMessageEvent(event) {
 
     // Handle referral code request
     if (messageText && (messageText.includes('邀請') || messageText.toLowerCase().includes('referral'))) {
-      const referralCode = member.referralCode || 'N/A';
+      // Generate referral code if member doesn't have one
+      if (!member.referralCode) {
+        console.log(`[handleMessageEvent] Generating referral code for ${member.memberId}`);
+
+        // Generate unique 6-character referral code
+        let uniqueCode = false;
+        let generatedCode = '';
+
+        while (!uniqueCode) {
+          generatedCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+          const existing = await Member.findOne({ referralCode: generatedCode });
+          if (!existing) {
+            uniqueCode = true;
+          }
+        }
+
+        member.referralCode = generatedCode;
+        await member.save();
+        console.log(`[handleMessageEvent] Generated referral code ${generatedCode} for ${member.memberId}`);
+      }
+
+      const referralCode = member.referralCode;
       await client.pushMessage({
         to: lineUserId,
         messages: [{
