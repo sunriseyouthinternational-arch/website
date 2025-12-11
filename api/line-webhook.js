@@ -132,8 +132,21 @@ async function handleFollowEvent(event) {
     const profile = await client.getProfile(lineUserId);
     console.log('[handleFollowEvent] Profile received:', profile.displayName);
 
-    // Generate unique member ID and registration token
-    const memberId = `M${Date.now().toString().slice(-6)}${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`;
+    // Generate sequential member ID (M0001, M0002, etc.)
+    console.log('[handleFollowEvent] Generating sequential member ID...');
+    const lastMember = await Member.findOne().sort({ createdAt: -1 }).select('memberId');
+    let nextNumber = 1;
+
+    if (lastMember && lastMember.memberId) {
+      // Extract number from last member ID (e.g., "M0001" -> 1)
+      const lastNumber = parseInt(lastMember.memberId.substring(1));
+      if (!isNaN(lastNumber)) {
+        nextNumber = lastNumber + 1;
+      }
+    }
+
+    // Format as M0001, M0002, etc. (4 digits)
+    const memberId = `M${nextNumber.toString().padStart(4, '0')}`;
     const registrationToken = require('crypto').randomBytes(32).toString('hex');
     console.log('[handleFollowEvent] Generated member ID:', memberId);
 

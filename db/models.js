@@ -23,7 +23,7 @@ const memberSchema = new mongoose.Schema({
   memberId: {
     type: String,
     unique: true,
-    default: () => `SY${Date.now()}${Math.floor(Math.random() * 1000)}`
+    required: true
   },
   name: { type: String }, // Optional until registration is completed
   englishAlias: { type: String },
