@@ -40,11 +40,11 @@ function Home() {
 
         <div className="feature-card">
           <div className="feature-icon">📱</div>
-          <h3>{t('qrCode')}</h3>
+          <h3>LINE {t('login')}</h3>
           <p>
             {t('language') === 'zh'
-              ? '每位團員都有專屬的 QR 碼和會員編號'
-              : 'Each member has a unique QR code and member ID'}
+              ? '透過 LINE 官方帳號隨時登入查看您的專屬會員檔案'
+              : 'Access your member profile anytime through our LINE Official Account'}
           </p>
         </div>
 
