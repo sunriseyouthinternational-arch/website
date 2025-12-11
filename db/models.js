@@ -78,10 +78,10 @@ const classSchema = new mongoose.Schema({
   description: { type: String, required: true },
   banner: { type: String },
   time: { type: String, required: true },
-  daysOfWeek: [{
+  dayOfWeek: {
     type: String,
     enum: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-  }],
+  },
   cost: { type: Number, required: true },
   teacher: { type: String, required: true },
   maxParticipants: { type: Number, required: true },

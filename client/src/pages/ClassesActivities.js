@@ -47,7 +47,7 @@ function ClassesActivities() {
       setFilteredClasses(classes);
     } else {
       const filtered = classes.filter(c =>
-        c.daysOfWeek && c.daysOfWeek.includes(selectedDay)
+        c.dayOfWeek === selectedDay
       );
       setFilteredClasses(filtered);
     }
@@ -121,8 +121,8 @@ function ClassesActivities() {
                 <p className="item-description">{classItem.description}</p>
                 <div className="item-details">
                   <p><strong>{t('time')}:</strong> {classItem.time}</p>
-                  {classItem.daysOfWeek && classItem.daysOfWeek.length > 0 && (
-                    <p><strong>{t('language') === 'zh' ? '上課日期' : 'Days'}:</strong> {classItem.daysOfWeek.join(', ')}</p>
+                  {classItem.dayOfWeek && (
+                    <p><strong>{t('language') === 'zh' ? '上課日期' : 'Day'}:</strong> {classItem.dayOfWeek}</p>
                   )}
                   <p><strong>{t('teacher')}:</strong> {classItem.teacher}</p>
                   <p><strong>{t('cost')}:</strong> ${classItem.cost}</p>

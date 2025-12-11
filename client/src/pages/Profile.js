@@ -316,6 +316,23 @@ function Profile() {
                     {member.contact?.lineId && <p><strong>{t('lineId')}:</strong> {member.contact.lineId}</p>}
                   </div>
 
+                  {/* Member Points & Redemption */}
+                  <div className="points-section">
+                    <h3>{t('language') === 'zh' ? '會員點數' : 'Member Points'}</h3>
+                    <div className="points-display">
+                      <div className="points-value">
+                        <span className="points-number">{member.points || 0}</span>
+                        <span className="points-label">{t('language') === 'zh' ? '點' : 'points'}</span>
+                      </div>
+                      <button
+                        className="btn btn-primary"
+                        onClick={() => navigate('/redeem-gifts')}
+                      >
+                        🎁 {t('language') === 'zh' ? '兌換禮物' : 'Redeem Gifts'}
+                      </button>
+                    </div>
+                  </div>
+
                   {member.familyMembers && member.familyMembers.length > 0 && (
                     <div className="family-members">
                       <h3>{t('familyMembers')}</h3>

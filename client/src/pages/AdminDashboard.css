@@ -254,6 +254,201 @@
   font-weight: 500;
 }
 
+/* Referral Box */
+.referral-box {
+  margin-top: 30px;
+  padding: 25px;
+  background: linear-gradient(135deg, #f8f9ff 0%, #e7f0ff 100%);
+  border-radius: 12px;
+  border: 2px solid #d3e0ff;
+}
+
+.referral-box h4 {
+  color: #667eea;
+  margin-bottom: 15px;
+  font-size: 20px;
+}
+
+.referral-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.referral-item {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 15px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.referral-rank {
+  font-size: 24px;
+  min-width: 40px;
+  text-align: center;
+}
+
+.referral-name {
+  flex: 1;
+  font-weight: 500;
+  color: #333;
+}
+
+.referral-count {
+  background: #d3f9d8;
+  padding: 6px 15px;
+  border-radius: 20px;
+  font-weight: bold;
+  color: #2b8a3e;
+}
+
+/* Detail Header */
+.detail-header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+.detail-header h3 {
+  color: #667eea;
+  margin: 0;
+}
+
+/* Member Detail Grid */
+.member-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 25px;
+  margin-bottom: 20px;
+}
+
+/* Detail Section */
+.detail-section {
+  background: #f8f9ff;
+  padding: 20px;
+  border-radius: 10px;
+}
+
+.detail-section h4 {
+  color: #667eea;
+  margin-bottom: 15px;
+  font-size: 18px;
+  border-bottom: 2px solid #d3e0ff;
+  padding-bottom: 10px;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.detail-row:last-child {
+  border-bottom: none;
+}
+
+.detail-row strong {
+  color: #555;
+  font-size: 14px;
+}
+
+.detail-row span {
+  color: #333;
+  font-size: 15px;
+  text-align: right;
+}
+
+/* Item Summary Card */
+.items-section {
+  margin-top: 40px;
+}
+
+.item-summary-card {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 20px;
+  background: #f8f9ff;
+  border-radius: 10px;
+  margin-bottom: 15px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.item-summary-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.item-summary-banner {
+  width: 120px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.item-summary-content {
+  flex: 1;
+}
+
+.item-summary-content h5 {
+  color: #667eea;
+  margin-bottom: 8px;
+  font-size: 18px;
+}
+
+.item-summary-meta {
+  color: #666;
+  font-size: 14px;
+  margin-bottom: 5px;
+}
+
+.item-summary-participants {
+  color: #2b8a3e;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+/* Item Detail Grid */
+.item-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+}
+
+/* Btn Small */
+.btn-small {
+  padding: 8px 16px;
+  font-size: 14px;
+}
+
+/* Payment Status Badges */
+.status-badge.paid {
+  background: #d3f9d8;
+  color: #2b8a3e;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.status-badge.unpaid {
+  background: #ffe0b2;
+  color: #f57c00;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
 @media (max-width: 768px) {
   .admin-header {
     flex-direction: column;
