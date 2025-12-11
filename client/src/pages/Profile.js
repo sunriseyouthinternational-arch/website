@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { useLanguage } from '../contexts/LanguageContext';
 import './Profile.css';
@@ -8,13 +8,18 @@ function Profile() {
   const { t } = useLanguage();
   const { memberId: urlMemberId } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [memberId, setMemberId] = useState(urlMemberId || '');
   const [member, setMember] = useState(null);
   const [classes, setClasses] = useState([]);
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
-  const [activeTab, setActiveTab] = useState('profile');
+
+  // Check for tab parameter in URL
+  const tabFromUrl = searchParams.get('tab');
+  const [activeTab, setActiveTab] = useState(tabFromUrl === 'courses' ? 'courses' : 'profile');
+
   const [editMode, setEditMode] = useState(false);
   const [editFormData, setEditFormData] = useState({
     name: '',
@@ -67,6 +72,15 @@ function Profile() {
       fetchMemberById(urlMemberId);
     }
   }, [urlMemberId]);
+
+  // Update active tab when URL parameter changes
+  useEffect(() => {
+    if (tabFromUrl === 'courses') {
+      setActiveTab('courses');
+    } else if (tabFromUrl === 'profile') {
+      setActiveTab('profile');
+    }
+  }, [tabFromUrl]);
 
   const fetchMemberById = async (id) => {
     setLoading(true);
