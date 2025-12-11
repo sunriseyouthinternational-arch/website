@@ -78,6 +78,46 @@ function AdminDashboard() {
     navigate('/admin');
   };
 
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Check file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      setMessage({
+        type: 'error',
+        text: t('language') === 'zh' ? '圖片大小不能超過 2MB' : 'Image size must be less than 2MB'
+      });
+      return;
+    }
+
+    // Check file type
+    if (!file.type.startsWith('image/')) {
+      setMessage({
+        type: 'error',
+        text: t('language') === 'zh' ? '請上傳圖片檔案' : 'Please upload an image file'
+      });
+      return;
+    }
+
+    // Convert to base64
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setNewItem({ ...newItem, banner: reader.result });
+      setMessage({
+        type: 'success',
+        text: t('language') === 'zh' ? '圖片上傳成功' : 'Image uploaded successfully'
+      });
+    };
+    reader.onerror = () => {
+      setMessage({
+        type: 'error',
+        text: t('language') === 'zh' ? '圖片上傳失敗' : 'Failed to upload image'
+      });
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleAddItem = async (e) => {
     e.preventDefault();
     try {
@@ -262,9 +302,9 @@ function AdminDashboard() {
           </div>
 
           {/* Referral Leaderboard Box */}
-          {referralLeaderboard.length > 0 && (
-            <div className="referral-box">
-              <h4>{t('language') === 'zh' ? '推薦排行' : 'Top Referrers'}</h4>
+          <div className="referral-box">
+            <h4>{t('language') === 'zh' ? '推薦排行' : 'Top Referrers'}</h4>
+            {referralLeaderboard.length > 0 ? (
               <div className="referral-list">
                 {referralLeaderboard.slice(0, 5).map((entry, index) => (
                   <div key={entry.memberId} className="referral-item">
@@ -279,8 +319,12 @@ function AdminDashboard() {
                   </div>
                 ))}
               </div>
-            </div>
-          )}
+            ) : (
+              <p style={{ textAlign: 'center', color: '#666', padding: '20px' }}>
+                {t('language') === 'zh' ? '目前沒有推薦記錄' : 'No referrals yet'}
+              </p>
+            )}
+          </div>
         </div>
       )}
 
@@ -508,20 +552,52 @@ function AdminDashboard() {
                 </div>
               </div>
 
-              {/* Banner Image URL */}
+              {/* Banner Image Upload */}
               <div className="form-group">
-                <label>{t('language') === 'zh' ? '宣傳圖片網址 (選填)' : 'Banner Image URL (Optional)'}</label>
+                <label>{t('language') === 'zh' ? '宣傳圖片 (選填)' : 'Banner Image (Optional)'}</label>
                 <input
-                  type="url"
-                  value={newItem.banner}
-                  onChange={(e) => setNewItem({ ...newItem, banner: e.target.value })}
-                  placeholder="https://example.com/image.jpg"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  style={{
+                    padding: '10px',
+                    border: '2px dashed #667eea',
+                    borderRadius: '8px',
+                    width: '100%',
+                    cursor: 'pointer'
+                  }}
                 />
                 <small style={{ color: '#666', display: 'block', marginTop: '5px' }}>
                   {t('language') === 'zh'
-                    ? '請輸入圖片的完整網址。建議尺寸：800x400px'
-                    : 'Enter the full URL of the image. Recommended size: 800x400px'}
+                    ? '上傳圖片（最大 2MB，建議尺寸：800x400px）'
+                    : 'Upload image (max 2MB, recommended size: 800x400px)'}
                 </small>
+                {newItem.banner && (
+                  <div style={{ marginTop: '15px' }}>
+                    <p style={{ fontWeight: 'bold', marginBottom: '10px' }}>
+                      {t('language') === 'zh' ? '預覽：' : 'Preview:'}
+                    </p>
+                    <img
+                      src={newItem.banner}
+                      alt="Banner preview"
+                      style={{
+                        width: '100%',
+                        maxHeight: '200px',
+                        objectFit: 'cover',
+                        borderRadius: '8px',
+                        border: '2px solid #e0e0e0'
+                      }}
+                    />
+                    <button
+                      type="button"
+                      className="btn btn-secondary btn-small"
+                      onClick={() => setNewItem({ ...newItem, banner: '' })}
+                      style={{ marginTop: '10px' }}
+                    >
+                      {t('language') === 'zh' ? '移除圖片' : 'Remove Image'}
+                    </button>
+                  </div>
+                )}
               </div>
 
               <button type="submit" className="btn btn-primary">
