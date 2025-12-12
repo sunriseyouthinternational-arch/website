@@ -108,11 +108,11 @@ classSchema.pre('save', function(next) {
 // Teacher Schema
 const teacherSchema = new mongoose.Schema({
   name: { type: String, required: true },
-  englishName: { type: String },
   bio: { type: String },
   specialties: { type: String },
-  email: { type: String },
+  education: { type: String },
   phone: { type: String },
+  lineId: { type: String },
   photo: { type: String },
   status: { type: String, enum: ['active', 'inactive'], default: 'active' },
   createdAt: { type: Date, default: Date.now },

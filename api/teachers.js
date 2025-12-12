@@ -15,15 +15,15 @@ module.exports = async (req, res) => {
       }
 
       if (req.method === 'POST') {
-        const { name, englishName, bio, specialties, email, phone, photo } = req.body;
+        const { name, bio, specialties, education, phone, lineId, photo } = req.body;
 
         const teacher = new Teacher({
           name,
-          englishName: englishName || '',
           bio: bio || '',
           specialties: specialties || '',
-          email: email || '',
+          education: education || '',
           phone: phone || '',
+          lineId: lineId || '',
           photo: photo || ''
         });
 

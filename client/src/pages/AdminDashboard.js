@@ -39,11 +39,11 @@ function AdminDashboard() {
   const [showAddTeacherForm, setShowAddTeacherForm] = useState(false);
   const [newTeacher, setNewTeacher] = useState({
     name: '',
-    englishName: '',
     bio: '',
     specialties: '',
-    email: '',
+    education: '',
     phone: '',
+    lineId: '',
     photo: ''
   });
 
@@ -208,6 +208,46 @@ function AdminDashboard() {
     }
   };
 
+  const handleTeacherPhotoUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Check file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      setMessage({
+        type: 'error',
+        text: t('language') === 'zh' ? '圖片大小不能超過 2MB' : 'Image size must be less than 2MB'
+      });
+      return;
+    }
+
+    // Check file type
+    if (!file.type.startsWith('image/')) {
+      setMessage({
+        type: 'error',
+        text: t('language') === 'zh' ? '請上傳圖片檔案' : 'Please upload an image file'
+      });
+      return;
+    }
+
+    // Convert to base64
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setNewTeacher({ ...newTeacher, photo: reader.result });
+      setMessage({
+        type: 'success',
+        text: t('language') === 'zh' ? '圖片上傳成功' : 'Image uploaded successfully'
+      });
+    };
+    reader.onerror = () => {
+      setMessage({
+        type: 'error',
+        text: t('language') === 'zh' ? '圖片上傳失敗' : 'Failed to upload image'
+      });
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleAddTeacher = async (e) => {
     e.preventDefault();
     try {
@@ -222,11 +262,11 @@ function AdminDashboard() {
       setShowAddTeacherForm(false);
       setNewTeacher({
         name: '',
-        englishName: '',
         bio: '',
         specialties: '',
-        email: '',
+        education: '',
         phone: '',
+        lineId: '',
         photo: ''
       });
       fetchData();
@@ -535,6 +575,7 @@ function AdminDashboard() {
                       <th>{t('language') === 'zh' ? '類型' : 'Type'}</th>
                       <th>{t('name')}</th>
                       <th>{t('language') === 'zh' ? '報名日期' : 'Enrolled'}</th>
+                      <th>{t('language') === 'zh' ? '付款狀態' : 'Payment'}</th>
                       <th>{t('language') === 'zh' ? '狀態' : 'Status'}</th>
                     </tr>
                   </thead>
@@ -544,6 +585,13 @@ function AdminDashboard() {
                         <td>{enrollment.type === 'class' ? t('classes') : t('activities')}</td>
                         <td>{enrollment.itemName}</td>
                         <td>{formatDate(enrollment.enrolledAt)}</td>
+                        <td>
+                          <span className={`status-badge ${enrollment.paid ? 'paid' : 'unpaid'}`}>
+                            {enrollment.paid
+                              ? (t('language') === 'zh' ? '已付款' : 'Paid')
+                              : (t('language') === 'zh' ? '未付款' : 'Unpaid')}
+                          </span>
+                        </td>
                         <td>
                           <span className={`status-badge ${enrollment.status}`}>
                             {t(enrollment.status)}
@@ -606,7 +654,7 @@ function AdminDashboard() {
                     <option value="">{t('language') === 'zh' ? '選擇教師' : 'Select Teacher'}</option>
                     {teachers.map(teacher => (
                       <option key={teacher._id} value={teacher.name}>
-                        {teacher.name} {teacher.englishName ? `(${teacher.englishName})` : ''}
+                        {teacher.name}
                       </option>
                     ))}
                   </select>
@@ -957,24 +1005,14 @@ function AdminDashboard() {
 
           {showAddTeacherForm && (
             <form onSubmit={handleAddTeacher} className="add-form">
-              <div className="form-row">
-                <div className="form-group">
-                  <label>{t('language') === 'zh' ? '姓名 *' : 'Name *'}</label>
-                  <input
-                    type="text"
-                    value={newTeacher.name}
-                    onChange={(e) => setNewTeacher({ ...newTeacher, name: e.target.value })}
-                    required
-                  />
-                </div>
-                <div className="form-group">
-                  <label>{t('language') === 'zh' ? '英文名稱' : 'English Name'}</label>
-                  <input
-                    type="text"
-                    value={newTeacher.englishName}
-                    onChange={(e) => setNewTeacher({ ...newTeacher, englishName: e.target.value })}
-                  />
-                </div>
+              <div className="form-group">
+                <label>{t('language') === 'zh' ? '姓名 *' : 'Name *'}</label>
+                <input
+                  type="text"
+                  value={newTeacher.name}
+                  onChange={(e) => setNewTeacher({ ...newTeacher, name: e.target.value })}
+                  required
+                />
               </div>
 
               <div className="form-group">
@@ -986,25 +1024,28 @@ function AdminDashboard() {
                 />
               </div>
 
-              <div className="form-group">
-                <label>{t('language') === 'zh' ? '專長' : 'Specialties'}</label>
-                <input
-                  type="text"
-                  value={newTeacher.specialties}
-                  onChange={(e) => setNewTeacher({ ...newTeacher, specialties: e.target.value })}
-                  placeholder={t('language') === 'zh' ? '例如：鋼琴、聲樂' : 'e.g., Piano, Vocal'}
-                />
+              <div className="form-row">
+                <div className="form-group">
+                  <label>{t('language') === 'zh' ? '專長' : 'Specialties'}</label>
+                  <input
+                    type="text"
+                    value={newTeacher.specialties}
+                    onChange={(e) => setNewTeacher({ ...newTeacher, specialties: e.target.value })}
+                    placeholder={t('language') === 'zh' ? '例如：鋼琴、聲樂' : 'e.g., Piano, Vocal'}
+                  />
+                </div>
+                <div className="form-group">
+                  <label>{t('language') === 'zh' ? '學歷' : 'Education'}</label>
+                  <input
+                    type="text"
+                    value={newTeacher.education}
+                    onChange={(e) => setNewTeacher({ ...newTeacher, education: e.target.value })}
+                    placeholder={t('language') === 'zh' ? '例如：台灣大學音樂系' : 'e.g., NTU Music Dept.'}
+                  />
+                </div>
               </div>
 
               <div className="form-row">
-                <div className="form-group">
-                  <label>{t('language') === 'zh' ? '電子郵件' : 'Email'}</label>
-                  <input
-                    type="email"
-                    value={newTeacher.email}
-                    onChange={(e) => setNewTeacher({ ...newTeacher, email: e.target.value })}
-                  />
-                </div>
                 <div className="form-group">
                   <label>{t('language') === 'zh' ? '電話' : 'Phone'}</label>
                   <input
@@ -1013,6 +1054,62 @@ function AdminDashboard() {
                     onChange={(e) => setNewTeacher({ ...newTeacher, phone: e.target.value })}
                   />
                 </div>
+                <div className="form-group">
+                  <label>LINE ID</label>
+                  <input
+                    type="text"
+                    value={newTeacher.lineId}
+                    onChange={(e) => setNewTeacher({ ...newTeacher, lineId: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              {/* Profile Picture Upload */}
+              <div className="form-group">
+                <label>{t('language') === 'zh' ? '個人照片' : 'Profile Picture'}</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleTeacherPhotoUpload}
+                  style={{
+                    padding: '10px',
+                    border: '2px dashed #667eea',
+                    borderRadius: '8px',
+                    width: '100%',
+                    cursor: 'pointer'
+                  }}
+                />
+                <small style={{ color: '#666', display: 'block', marginTop: '5px' }}>
+                  {t('language') === 'zh'
+                    ? '上傳圖片（最大 2MB）'
+                    : 'Upload image (max 2MB)'}
+                </small>
+                {newTeacher.photo && (
+                  <div style={{ marginTop: '15px' }}>
+                    <p style={{ fontWeight: 'bold', marginBottom: '10px' }}>
+                      {t('language') === 'zh' ? '預覽：' : 'Preview:'}
+                    </p>
+                    <img
+                      src={newTeacher.photo}
+                      alt="Teacher preview"
+                      style={{
+                        width: '150px',
+                        height: '150px',
+                        objectFit: 'cover',
+                        borderRadius: '50%',
+                        border: '2px solid #e0e0e0'
+                      }}
+                    />
+                    <button
+                      type="button"
+                      className="btn btn-secondary btn-small"
+                      onClick={() => setNewTeacher({ ...newTeacher, photo: '' })}
+                      style={{ marginTop: '10px', display: 'block' }}
+                    >
+                      {t('language') === 'zh' ? '移除圖片' : 'Remove Image'}
+                    </button>
+                  </div>
+                )}
               </div>
 
               <button type="submit" className="btn btn-primary">
@@ -1027,8 +1124,8 @@ function AdminDashboard() {
               <thead>
                 <tr>
                   <th>{t('language') === 'zh' ? '姓名' : 'Name'}</th>
-                  <th>{t('language') === 'zh' ? '英文名稱' : 'English Name'}</th>
                   <th>{t('language') === 'zh' ? '專長' : 'Specialties'}</th>
+                  <th>{t('language') === 'zh' ? '學歷' : 'Education'}</th>
                   <th>{t('language') === 'zh' ? '操作' : 'Actions'}</th>
                 </tr>
               </thead>
@@ -1036,8 +1133,8 @@ function AdminDashboard() {
                 {teachers.map(teacher => (
                   <tr key={teacher._id}>
                     <td>{teacher.name}</td>
-                    <td>{teacher.englishName || 'N/A'}</td>
                     <td>{teacher.specialties || 'N/A'}</td>
+                    <td>{teacher.education || 'N/A'}</td>
                     <td>
                       <button
                         className="btn btn-small btn-primary"
@@ -1080,6 +1177,22 @@ function AdminDashboard() {
             </button>
           </div>
 
+          {selectedTeacher.photo && (
+            <div style={{ textAlign: 'center', margin: '20px 0' }}>
+              <img
+                src={selectedTeacher.photo}
+                alt={selectedTeacher.name}
+                style={{
+                  width: '150px',
+                  height: '150px',
+                  objectFit: 'cover',
+                  borderRadius: '50%',
+                  border: '3px solid #667eea'
+                }}
+              />
+            </div>
+          )}
+
           <div className="member-detail-grid">
             <div className="detail-section">
               <h4>{t('language') === 'zh' ? '基本資料' : 'Basic Information'}</h4>
@@ -1088,12 +1201,12 @@ function AdminDashboard() {
                 <span>{selectedTeacher.name}</span>
               </div>
               <div className="detail-row">
-                <strong>{t('language') === 'zh' ? '英文名稱' : 'English Name'}:</strong>
-                <span>{selectedTeacher.englishName || 'N/A'}</span>
-              </div>
-              <div className="detail-row">
                 <strong>{t('language') === 'zh' ? '專長' : 'Specialties'}:</strong>
                 <span>{selectedTeacher.specialties || 'N/A'}</span>
+              </div>
+              <div className="detail-row">
+                <strong>{t('language') === 'zh' ? '學歷' : 'Education'}:</strong>
+                <span>{selectedTeacher.education || 'N/A'}</span>
               </div>
               <div className="detail-row">
                 <strong>{t('language') === 'zh' ? '簡介' : 'Bio'}:</strong>
@@ -1104,12 +1217,12 @@ function AdminDashboard() {
             <div className="detail-section">
               <h4>{t('language') === 'zh' ? '聯絡資料' : 'Contact Information'}</h4>
               <div className="detail-row">
-                <strong>{t('language') === 'zh' ? '電子郵件' : 'Email'}:</strong>
-                <span>{selectedTeacher.email || 'N/A'}</span>
-              </div>
-              <div className="detail-row">
                 <strong>{t('language') === 'zh' ? '電話' : 'Phone'}:</strong>
                 <span>{selectedTeacher.phone || 'N/A'}</span>
+              </div>
+              <div className="detail-row">
+                <strong>LINE ID:</strong>
+                <span>{selectedTeacher.lineId || 'N/A'}</span>
               </div>
             </div>
           </div>
