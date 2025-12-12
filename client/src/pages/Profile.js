@@ -13,12 +13,8 @@ function Profile() {
   const [member, setMember] = useState(null);
   const [classes, setClasses] = useState([]);
   const [activities, setActivities] = useState([]);
-  const [filteredClasses, setFilteredClasses] = useState([]);
-  const [selectedDay, setSelectedDay] = useState('All');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
-
-  const days = ['All', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
   // Check for tab parameter in URL
   const tabFromUrl = searchParams.get('tab');
@@ -107,16 +103,6 @@ function Profile() {
     }
   };
 
-  // Filter classes by selected day
-  const filterClasses = () => {
-    if (selectedDay === 'All') {
-      setFilteredClasses(classes);
-    } else {
-      const filtered = classes.filter(c => c.dayOfWeek === selectedDay);
-      setFilteredClasses(filtered);
-    }
-  };
-
   useEffect(() => {
     fetchClassesAndActivities();
 
@@ -140,11 +126,6 @@ function Profile() {
       setActiveTab('profile');
     }
   }, [tabFromUrl]);
-
-  // Filter classes when day or classes change
-  useEffect(() => {
-    filterClasses();
-  }, [selectedDay, classes]);
 
   const fetchMemberById = async (id) => {
     setLoading(true);
@@ -647,42 +628,47 @@ function Profile() {
 
                 <h4 className="section-subtitle">{t('availableClasses')}</h4>
 
-                {/* Day Filter */}
-                <div className="day-filter">
-                  {days.map(day => (
-                    <button
-                      key={day}
-                      className={`filter-button ${selectedDay === day ? 'active' : ''}`}
-                      onClick={() => setSelectedDay(day)}
-                    >
-                      {day === 'All' ? t('language') === 'zh' ? '全部' : 'All' : day}
-                    </button>
-                  ))}
-                </div>
-
                 <div className="grid">
-                  {filteredClasses.map((classItem) => (
+                  {classes.map((classItem) => (
                     <div key={classItem._id} className="item-card">
-                      {classItem.banner && (
-                        <img src={getImageSrc(classItem.banner)} alt={classItem.name} className="item-banner" />
+                      {classItem.classInfoId?.banner && (
+                        <img src={getImageSrc(classItem.classInfoId.banner)} alt={classItem.classInfoId?.name} className="item-banner" />
                       )}
-                      <h4>{classItem.name}</h4>
-                      <p className="item-description">{classItem.description}</p>
+                      <h4>{classItem.classInfoId?.name || 'N/A'}</h4>
+                      <p className="item-description">{classItem.classInfoId?.description || ''}</p>
                       <div className="item-details">
+                        <p><strong>{t('language') === 'zh' ? '星期' : 'Day'}:</strong> {classItem.dayOfWeek}</p>
                         <p><strong>{t('teacher')}:</strong> {classItem.teacher}</p>
                         <p><strong>{t('time')}:</strong> {classItem.time}</p>
-                        <p><strong>{t('cost')}:</strong> NT$ {classItem.cost}</p>
-                        <p><strong>{t('participants')}:</strong> {classItem.currentParticipants} / {classItem.maxParticipants}</p>
+                        {classItem.location && (
+                          <p><strong>{t('language') === 'zh' ? '地點' : 'Location'}:</strong> 📍 {classItem.location}</p>
+                        )}
+                        <p><strong>{t('cost')}:</strong> NT$ {classItem.classInfoId?.cost || 0}</p>
+                        <p><strong>{t('participants')}:</strong> {classItem.currentParticipants} / {classItem.classInfoId?.maxParticipants || 0}</p>
                       </div>
+                      {classItem.location && (
+                        <div style={{ marginTop: '10px', marginBottom: '10px' }}>
+                          <iframe
+                            src={`https://maps.google.com/maps?q=${encodeURIComponent(classItem.location)}&output=embed`}
+                            width="100%"
+                            height="200"
+                            style={{ border: '1px solid #ddd', borderRadius: '8px' }}
+                            allowFullScreen=""
+                            loading="lazy"
+                            referrerPolicy="no-referrer-when-downgrade"
+                            title="Class Location Map"
+                          />
+                        </div>
+                      )}
                       {isEnrolled('class', classItem._id) ? (
                         <button className="btn btn-secondary" disabled>{t('enrolled')}</button>
                       ) : (
                         <button
-                          onClick={() => handleEnroll('class', classItem._id, classItem.name)}
+                          onClick={() => handleEnroll('class', classItem._id, classItem.classInfoId?.name)}
                           className="btn btn-primary"
-                          disabled={classItem.currentParticipants >= classItem.maxParticipants}
+                          disabled={classItem.currentParticipants >= (classItem.classInfoId?.maxParticipants || 0)}
                         >
-                          {classItem.currentParticipants >= classItem.maxParticipants ? t('classFull') : t('enroll')}
+                          {classItem.currentParticipants >= (classItem.classInfoId?.maxParticipants || 0) ? t('classFull') : t('enroll')}
                         </button>
                       )}
                     </div>
@@ -721,9 +707,26 @@ function Profile() {
                       <div className="item-details">
                         <p><strong>{t('teacher')}:</strong> {activity.teacher}</p>
                         <p><strong>{t('time')}:</strong> {activity.time}</p>
+                        {activity.location && (
+                          <p><strong>{t('language') === 'zh' ? '地點' : 'Location'}:</strong> 📍 {activity.location}</p>
+                        )}
                         <p><strong>{t('cost')}:</strong> NT$ {activity.cost}</p>
                         <p><strong>{t('participants')}:</strong> {activity.currentParticipants} / {activity.maxParticipants}</p>
                       </div>
+                      {activity.location && (
+                        <div style={{ marginTop: '10px', marginBottom: '10px' }}>
+                          <iframe
+                            src={`https://maps.google.com/maps?q=${encodeURIComponent(activity.location)}&output=embed`}
+                            width="100%"
+                            height="200"
+                            style={{ border: '1px solid #ddd', borderRadius: '8px' }}
+                            allowFullScreen=""
+                            loading="lazy"
+                            referrerPolicy="no-referrer-when-downgrade"
+                            title="Activity Location Map"
+                          />
+                        </div>
+                      )}
                       {isEnrolled('activity', activity._id) ? (
                         <button className="btn btn-secondary" disabled>{t('enrolled')}</button>
                       ) : (
