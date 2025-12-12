@@ -30,8 +30,6 @@ function AppContent() {
               </div>
             </div>
             <nav className="main-nav">
-              <Link to="/" className="nav-link">{t('home')}</Link>
-              <Link to="/register" className="nav-link">{t('register')}</Link>
               <Link to="/profile" className="nav-link">{t('profile')}</Link>
               <Link to="/admin" className="nav-link">{t('admin')}</Link>
             </nav>
