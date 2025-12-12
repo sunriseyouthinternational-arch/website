@@ -11,12 +11,14 @@ function AdminDashboard() {
   const [members, setMembers] = useState([]);
   const [classes, setClasses] = useState([]);
   const [activities, setActivities] = useState([]);
+  const [teachers, setTeachers] = useState([]);
   const [stats, setStats] = useState({});
   const [referralLeaderboard, setReferralLeaderboard] = useState([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
   const [selectedMember, setSelectedMember] = useState(null);
   const [selectedItem, setSelectedItem] = useState(null);
+  const [selectedTeacher, setSelectedTeacher] = useState(null);
 
   // Form states for adding new items
   const [showAddForm, setShowAddForm] = useState(false);
@@ -24,12 +26,25 @@ function AdminDashboard() {
     type: 'class', // 'class' or 'activity'
     name: '',
     description: '',
+    date: '', // For activities
     time: '',
     dayOfWeek: '',
     cost: '',
     teacher: '',
     maxParticipants: '',
     banner: ''
+  });
+
+  // Form states for adding new teacher
+  const [showAddTeacherForm, setShowAddTeacherForm] = useState(false);
+  const [newTeacher, setNewTeacher] = useState({
+    name: '',
+    englishName: '',
+    bio: '',
+    specialties: '',
+    email: '',
+    phone: '',
+    photo: ''
   });
 
   useEffect(() => {
@@ -48,10 +63,11 @@ function AdminDashboard() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [membersRes, classesRes, activitiesRes, statsRes, leaderboardRes] = await Promise.all([
+      const [membersRes, classesRes, activitiesRes, teachersRes, statsRes, leaderboardRes] = await Promise.all([
         axios.get('/api/admin?resource=members'),
         axios.get('/api/classes'),
         axios.get('/api/activities'),
+        axios.get('/api/teachers'),
         axios.get('/api/admin?resource=stats'),
         axios.get('/api/admin?resource=referral-leaderboard')
       ]);
@@ -59,6 +75,7 @@ function AdminDashboard() {
       setMembers(membersRes.data.members);
       setClasses(classesRes.data.classes);
       setActivities(activitiesRes.data.activities);
+      setTeachers(teachersRes.data.teachers);
       setStats(statsRes.data);
       setReferralLeaderboard(leaderboardRes.data.leaderboard);
     } catch (error) {
@@ -100,21 +117,38 @@ function AdminDashboard() {
       return;
     }
 
-    // Convert to base64
+    // Validate image dimensions (should be 500x300)
+    const img = new Image();
     const reader = new FileReader();
-    reader.onloadend = () => {
-      setNewItem({ ...newItem, banner: reader.result });
-      setMessage({
-        type: 'success',
-        text: t('language') === 'zh' ? '圖片上傳成功' : 'Image uploaded successfully'
-      });
+
+    reader.onload = (event) => {
+      img.onload = () => {
+        if (img.width !== 500 || img.height !== 300) {
+          setMessage({
+            type: 'error',
+            text: t('language') === 'zh'
+              ? `圖片尺寸必須為 500x300 像素（目前為 ${img.width}x${img.height}）`
+              : `Image dimensions must be 500x300 pixels (current: ${img.width}x${img.height})`
+          });
+          return;
+        }
+
+        setNewItem({ ...newItem, banner: event.target.result });
+        setMessage({
+          type: 'success',
+          text: t('language') === 'zh' ? '圖片上傳成功' : 'Image uploaded successfully'
+        });
+      };
+      img.src = event.target.result;
     };
+
     reader.onerror = () => {
       setMessage({
         type: 'error',
         text: t('language') === 'zh' ? '圖片上傳失敗' : 'Failed to upload image'
       });
     };
+
     reader.readAsDataURL(file);
   };
 
@@ -139,6 +173,11 @@ function AdminDashboard() {
         data.dayOfWeek = newItem.dayOfWeek;
       }
 
+      // Only add date for activities
+      if (newItem.type === 'activity' && newItem.date) {
+        data.date = newItem.date;
+      }
+
       await axios.post(endpoint, data, {
         headers: { 'Content-Type': 'application/json' }
       });
@@ -154,6 +193,7 @@ function AdminDashboard() {
         type: 'class',
         name: '',
         description: '',
+        date: '',
         time: '',
         dayOfWeek: '',
         cost: '',
@@ -164,6 +204,77 @@ function AdminDashboard() {
       fetchData();
     } catch (error) {
       console.error('Error adding item:', error);
+      setMessage({ type: 'error', text: error.response?.data?.message || t('error') });
+    }
+  };
+
+  const handleAddTeacher = async (e) => {
+    e.preventDefault();
+    try {
+      await axios.post('/api/teachers', newTeacher, {
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      setMessage({
+        type: 'success',
+        text: t('language') === 'zh' ? '教師添加成功' : 'Teacher added successfully'
+      });
+      setShowAddTeacherForm(false);
+      setNewTeacher({
+        name: '',
+        englishName: '',
+        bio: '',
+        specialties: '',
+        email: '',
+        phone: '',
+        photo: ''
+      });
+      fetchData();
+    } catch (error) {
+      console.error('Error adding teacher:', error);
+      setMessage({ type: 'error', text: error.response?.data?.message || t('error') });
+    }
+  };
+
+  const handleDeleteItem = async (type, id) => {
+    if (!window.confirm(t('language') === 'zh' ? '確定要刪除嗎？' : 'Are you sure you want to delete?')) {
+      return;
+    }
+
+    try {
+      const endpoint = type === 'class' ? `/api/classes?id=${id}` : `/api/activities?id=${id}`;
+      await axios.delete(endpoint);
+
+      setMessage({
+        type: 'success',
+        text: t('language') === 'zh'
+          ? `${type === 'class' ? '課程' : '活動'}刪除成功`
+          : `${type === 'class' ? 'Class' : 'Activity'} deleted successfully`
+      });
+      setSelectedItem(null);
+      fetchData();
+    } catch (error) {
+      console.error('Error deleting item:', error);
+      setMessage({ type: 'error', text: error.response?.data?.message || t('error') });
+    }
+  };
+
+  const handleDeleteTeacher = async (id) => {
+    if (!window.confirm(t('language') === 'zh' ? '確定要刪除嗎？' : 'Are you sure you want to delete?')) {
+      return;
+    }
+
+    try {
+      await axios.delete(`/api/teachers?id=${id}`);
+
+      setMessage({
+        type: 'success',
+        text: t('language') === 'zh' ? '教師刪除成功' : 'Teacher deleted successfully'
+      });
+      setSelectedTeacher(null);
+      fetchData();
+    } catch (error) {
+      console.error('Error deleting teacher:', error);
       setMessage({ type: 'error', text: error.response?.data?.message || t('error') });
     }
   };
@@ -225,6 +336,12 @@ function AdminDashboard() {
           onClick={() => setActiveTab('items')}
         >
           {t('language') === 'zh' ? '課程與活動' : 'Classes & Activities'}
+        </button>
+        <button
+          className={`tab-button ${activeTab === 'teachers' ? 'active' : ''}`}
+          onClick={() => setActiveTab('teachers')}
+        >
+          {t('language') === 'zh' ? '教師管理' : 'Teacher Management'}
         </button>
         <button
           className={`tab-button ${activeTab === 'memberDetail' ? 'active' : ''}`}
@@ -481,12 +598,18 @@ function AdminDashboard() {
                 </div>
                 <div className="form-group">
                   <label>{t('teacher')} *</label>
-                  <input
-                    type="text"
+                  <select
                     value={newItem.teacher}
                     onChange={(e) => setNewItem({ ...newItem, teacher: e.target.value })}
                     required
-                  />
+                  >
+                    <option value="">{t('language') === 'zh' ? '選擇教師' : 'Select Teacher'}</option>
+                    {teachers.map(teacher => (
+                      <option key={teacher._id} value={teacher.name}>
+                        {teacher.name} {teacher.englishName ? `(${teacher.englishName})` : ''}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
@@ -518,6 +641,18 @@ function AdminDashboard() {
                     <option value="Saturday">Saturday</option>
                     <option value="Sunday">Sunday</option>
                   </select>
+                </div>
+              )}
+
+              {/* Date - Only for Activities */}
+              {newItem.type === 'activity' && (
+                <div className="form-group">
+                  <label>{t('language') === 'zh' ? '活動日期' : 'Activity Date'}</label>
+                  <input
+                    type="date"
+                    value={newItem.date}
+                    onChange={(e) => setNewItem({ ...newItem, date: e.target.value })}
+                  />
                 </div>
               )}
 
@@ -569,8 +704,8 @@ function AdminDashboard() {
                 />
                 <small style={{ color: '#666', display: 'block', marginTop: '5px' }}>
                   {t('language') === 'zh'
-                    ? '上傳圖片（最大 2MB，建議尺寸：800x400px）'
-                    : 'Upload image (max 2MB, recommended size: 800x400px)'}
+                    ? '上傳圖片（最大 2MB，尺寸必須：500x300px）'
+                    : 'Upload image (max 2MB, dimensions must be: 500x300px)'}
                 </small>
                 {newItem.banner && (
                   <div style={{ marginTop: '15px' }}>
@@ -685,6 +820,13 @@ function AdminDashboard() {
             <h3>
               {selectedItem.type === 'class' ? t('classes') : t('activities')} - {selectedItem.name}
             </h3>
+            <button
+              className="btn btn-danger"
+              onClick={() => handleDeleteItem(selectedItem.type, selectedItem._id)}
+              style={{ marginLeft: 'auto' }}
+            >
+              {t('language') === 'zh' ? '刪除' : 'Delete'}
+            </button>
           </div>
 
           {selectedItem.banner && (
@@ -716,6 +858,12 @@ function AdminDashboard() {
                 <div className="detail-row">
                   <strong>{t('language') === 'zh' ? '上課日期' : 'Day'}:</strong>
                   <span>{selectedItem.dayOfWeek}</span>
+                </div>
+              )}
+              {selectedItem.date && (
+                <div className="detail-row">
+                  <strong>{t('language') === 'zh' ? '活動日期' : 'Activity Date'}:</strong>
+                  <span>{formatDate(selectedItem.date)}</span>
                 </div>
               )}
               <div className="detail-row">
@@ -792,6 +940,179 @@ function AdminDashboard() {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {activeTab === 'teachers' && !selectedTeacher && (
+        <div className="card">
+          <div className="section-header">
+            <h3>{t('language') === 'zh' ? '教師管理' : 'Teacher Management'}</h3>
+            <button
+              onClick={() => setShowAddTeacherForm(!showAddTeacherForm)}
+              className="btn btn-primary"
+            >
+              {showAddTeacherForm ? t('cancel') : t('addNew')}
+            </button>
+          </div>
+
+          {showAddTeacherForm && (
+            <form onSubmit={handleAddTeacher} className="add-form">
+              <div className="form-row">
+                <div className="form-group">
+                  <label>{t('language') === 'zh' ? '姓名 *' : 'Name *'}</label>
+                  <input
+                    type="text"
+                    value={newTeacher.name}
+                    onChange={(e) => setNewTeacher({ ...newTeacher, name: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label>{t('language') === 'zh' ? '英文名稱' : 'English Name'}</label>
+                  <input
+                    type="text"
+                    value={newTeacher.englishName}
+                    onChange={(e) => setNewTeacher({ ...newTeacher, englishName: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>{t('language') === 'zh' ? '簡介' : 'Bio'}</label>
+                <textarea
+                  value={newTeacher.bio}
+                  onChange={(e) => setNewTeacher({ ...newTeacher, bio: e.target.value })}
+                  rows="3"
+                />
+              </div>
+
+              <div className="form-group">
+                <label>{t('language') === 'zh' ? '專長' : 'Specialties'}</label>
+                <input
+                  type="text"
+                  value={newTeacher.specialties}
+                  onChange={(e) => setNewTeacher({ ...newTeacher, specialties: e.target.value })}
+                  placeholder={t('language') === 'zh' ? '例如：鋼琴、聲樂' : 'e.g., Piano, Vocal'}
+                />
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label>{t('language') === 'zh' ? '電子郵件' : 'Email'}</label>
+                  <input
+                    type="email"
+                    value={newTeacher.email}
+                    onChange={(e) => setNewTeacher({ ...newTeacher, email: e.target.value })}
+                  />
+                </div>
+                <div className="form-group">
+                  <label>{t('language') === 'zh' ? '電話' : 'Phone'}</label>
+                  <input
+                    type="tel"
+                    value={newTeacher.phone}
+                    onChange={(e) => setNewTeacher({ ...newTeacher, phone: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <button type="submit" className="btn btn-primary">
+                {t('language') === 'zh' ? '添加教師' : 'Add Teacher'}
+              </button>
+            </form>
+          )}
+
+          {/* Teachers List */}
+          <div className="table-container" style={{ marginTop: '30px' }}>
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>{t('language') === 'zh' ? '姓名' : 'Name'}</th>
+                  <th>{t('language') === 'zh' ? '英文名稱' : 'English Name'}</th>
+                  <th>{t('language') === 'zh' ? '專長' : 'Specialties'}</th>
+                  <th>{t('language') === 'zh' ? '操作' : 'Actions'}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {teachers.map(teacher => (
+                  <tr key={teacher._id}>
+                    <td>{teacher.name}</td>
+                    <td>{teacher.englishName || 'N/A'}</td>
+                    <td>{teacher.specialties || 'N/A'}</td>
+                    <td>
+                      <button
+                        className="btn btn-small btn-primary"
+                        onClick={() => setSelectedTeacher(teacher)}
+                        style={{ marginRight: '10px' }}
+                      >
+                        {t('language') === 'zh' ? '查看' : 'View'}
+                      </button>
+                      <button
+                        className="btn btn-small btn-danger"
+                        onClick={() => handleDeleteTeacher(teacher._id)}
+                      >
+                        {t('language') === 'zh' ? '刪除' : 'Delete'}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'teachers' && selectedTeacher && (
+        <div className="card">
+          <div className="detail-header">
+            <button
+              className="btn btn-secondary"
+              onClick={() => setSelectedTeacher(null)}
+            >
+              ← {t('language') === 'zh' ? '返回列表' : 'Back to List'}
+            </button>
+            <h3>{t('language') === 'zh' ? '教師詳情' : 'Teacher Details'}</h3>
+            <button
+              className="btn btn-danger"
+              onClick={() => handleDeleteTeacher(selectedTeacher._id)}
+              style={{ marginLeft: 'auto' }}
+            >
+              {t('language') === 'zh' ? '刪除' : 'Delete'}
+            </button>
+          </div>
+
+          <div className="member-detail-grid">
+            <div className="detail-section">
+              <h4>{t('language') === 'zh' ? '基本資料' : 'Basic Information'}</h4>
+              <div className="detail-row">
+                <strong>{t('language') === 'zh' ? '姓名' : 'Name'}:</strong>
+                <span>{selectedTeacher.name}</span>
+              </div>
+              <div className="detail-row">
+                <strong>{t('language') === 'zh' ? '英文名稱' : 'English Name'}:</strong>
+                <span>{selectedTeacher.englishName || 'N/A'}</span>
+              </div>
+              <div className="detail-row">
+                <strong>{t('language') === 'zh' ? '專長' : 'Specialties'}:</strong>
+                <span>{selectedTeacher.specialties || 'N/A'}</span>
+              </div>
+              <div className="detail-row">
+                <strong>{t('language') === 'zh' ? '簡介' : 'Bio'}:</strong>
+                <span>{selectedTeacher.bio || 'N/A'}</span>
+              </div>
+            </div>
+
+            <div className="detail-section">
+              <h4>{t('language') === 'zh' ? '聯絡資料' : 'Contact Information'}</h4>
+              <div className="detail-row">
+                <strong>{t('language') === 'zh' ? '電子郵件' : 'Email'}:</strong>
+                <span>{selectedTeacher.email || 'N/A'}</span>
+              </div>
+              <div className="detail-row">
+                <strong>{t('language') === 'zh' ? '電話' : 'Phone'}:</strong>
+                <span>{selectedTeacher.phone || 'N/A'}</span>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

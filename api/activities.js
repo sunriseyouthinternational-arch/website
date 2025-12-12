@@ -65,12 +65,13 @@ module.exports = async (req, res) => {
       }
 
       if (req.method === 'POST') {
-        const { name, description, banner, time, cost, teacher, maxParticipants } = req.body;
+        const { name, description, banner, date, time, cost, teacher, maxParticipants } = req.body;
 
         const activity = new Activity({
           name,
           description,
           banner: banner || '',
+          date: date || null,
           time,
           cost: parseFloat(cost),
           teacher,

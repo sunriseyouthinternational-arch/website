@@ -105,11 +105,31 @@ classSchema.pre('save', function(next) {
   next();
 });
 
+// Teacher Schema
+const teacherSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  englishName: { type: String },
+  bio: { type: String },
+  specialties: { type: String },
+  email: { type: String },
+  phone: { type: String },
+  photo: { type: String },
+  status: { type: String, enum: ['active', 'inactive'], default: 'active' },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+});
+
+teacherSchema.pre('save', function(next) {
+  this.updatedAt = Date.now();
+  next();
+});
+
 // Activity Schema
 const activitySchema = new mongoose.Schema({
   name: { type: String, required: true },
   description: { type: String, required: true },
   banner: { type: String },
+  date: { type: Date }, // Activity date
   time: { type: String, required: true },
   cost: { type: Number, required: true },
   teacher: { type: String, required: true },
@@ -137,5 +157,6 @@ module.exports = {
   Admin: mongoose.models.Admin || mongoose.model('Admin', adminSchema),
   Member: mongoose.models.Member || mongoose.model('Member', memberSchema),
   Class: mongoose.models.Class || mongoose.model('Class', classSchema),
-  Activity: mongoose.models.Activity || mongoose.model('Activity', activitySchema)
+  Activity: mongoose.models.Activity || mongoose.model('Activity', activitySchema),
+  Teacher: mongoose.models.Teacher || mongoose.model('Teacher', teacherSchema)
 };
