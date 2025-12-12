@@ -65,7 +65,7 @@ module.exports = async (req, res) => {
       }
 
       if (req.method === 'POST') {
-        const { name, description, banner, date, time, cost, teacher, maxParticipants } = req.body;
+        const { name, description, banner, date, time, location, cost, teacher, maxParticipants } = req.body;
 
         const activity = new Activity({
           name,
@@ -73,6 +73,7 @@ module.exports = async (req, res) => {
           banner: banner || '',
           date: date || null,
           time,
+          location: location || '',
           cost: parseFloat(cost),
           teacher,
           maxParticipants: parseInt(maxParticipants)

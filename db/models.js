@@ -101,6 +101,7 @@ const classSchema = new mongoose.Schema({
     enum: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
     required: true
   },
+  location: { type: String },
   currentParticipants: { type: Number, default: 0 },
   participants: [{
     memberId: { type: mongoose.Schema.Types.ObjectId, ref: 'Member', required: true },
@@ -145,6 +146,7 @@ const activitySchema = new mongoose.Schema({
   banner: { type: String },
   date: { type: Date }, // Activity date
   time: { type: String, required: true },
+  location: { type: String },
   cost: { type: Number, required: true },
   teacher: { type: String, required: true },
   maxParticipants: { type: Number, required: true },
