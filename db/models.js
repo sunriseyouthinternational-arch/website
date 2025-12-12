@@ -74,19 +74,33 @@ memberSchema.pre('save', function(next) {
   next();
 });
 
-// Class Schema
-const classSchema = new mongoose.Schema({
+// ClassInfo Schema - General information about a class type
+const classInfoSchema = new mongoose.Schema({
   name: { type: String, required: true },
   description: { type: String, required: true },
   banner: { type: String },
+  cost: { type: Number, required: true },
+  maxParticipants: { type: Number, required: true },
+  status: { type: String, enum: ['active', 'inactive'], default: 'active' },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+});
+
+classInfoSchema.pre('save', function(next) {
+  this.updatedAt = Date.now();
+  next();
+});
+
+// Class Schema (Host Class) - Actual class instance with teacher and schedule
+const classSchema = new mongoose.Schema({
+  classInfoId: { type: mongoose.Schema.Types.ObjectId, ref: 'ClassInfo', required: true },
+  teacher: { type: String, required: true },
   time: { type: String, required: true },
   dayOfWeek: {
     type: String,
-    enum: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+    enum: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
+    required: true
   },
-  cost: { type: Number, required: true },
-  teacher: { type: String, required: true },
-  maxParticipants: { type: Number, required: true },
   currentParticipants: { type: Number, default: 0 },
   participants: [{
     memberId: { type: mongoose.Schema.Types.ObjectId, ref: 'Member', required: true },
@@ -156,6 +170,7 @@ activitySchema.pre('save', function(next) {
 module.exports = {
   Admin: mongoose.models.Admin || mongoose.model('Admin', adminSchema),
   Member: mongoose.models.Member || mongoose.model('Member', memberSchema),
+  ClassInfo: mongoose.models.ClassInfo || mongoose.model('ClassInfo', classInfoSchema),
   Class: mongoose.models.Class || mongoose.model('Class', classSchema),
   Activity: mongoose.models.Activity || mongoose.model('Activity', activitySchema),
   Teacher: mongoose.models.Teacher || mongoose.model('Teacher', teacherSchema)

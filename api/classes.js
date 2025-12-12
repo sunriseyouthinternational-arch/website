@@ -1,5 +1,5 @@
 const connectDB = require('../lib/mongodb');
-const { Class, Member } = require('../db/models');
+const { Class, ClassInfo, Member } = require('../db/models');
 
 module.exports = async (req, res) => {
   const { id, action } = req.query;
@@ -11,7 +11,7 @@ module.exports = async (req, res) => {
     if (action === 'enroll' && req.method === 'POST') {
       const { memberId } = req.body;
 
-      const classItem = await Class.findById(id);
+      const classItem = await Class.findById(id).populate('classInfoId');
       const member = await Member.findOne({ memberId });
 
       if (!classItem) {
@@ -22,7 +22,7 @@ module.exports = async (req, res) => {
         return res.status(404).json({ message: '找不到團員 / Member not found' });
       }
 
-      if (classItem.currentParticipants >= classItem.maxParticipants) {
+      if (classItem.currentParticipants >= classItem.classInfoId.maxParticipants) {
         return res.status(400).json({ message: '課程已滿 / Class is full' });
       }
 
@@ -45,7 +45,7 @@ module.exports = async (req, res) => {
       member.enrollments.push({
         type: 'class',
         itemId: classItem._id,
-        itemName: classItem.name,
+        itemName: classItem.classInfoId.name,
         paid: false
       });
 
@@ -60,21 +60,26 @@ module.exports = async (req, res) => {
     // List all classes or create new
     if (!id) {
       if (req.method === 'GET') {
-        const classes = await Class.find({ status: 'active' }).sort({ createdAt: -1 });
+        const classes = await Class.find({ status: 'active' })
+          .populate('classInfoId')
+          .sort({ createdAt: -1 });
         return res.status(200).json({ classes });
       }
 
       if (req.method === 'POST') {
-        const { name, description, banner, time, cost, teacher, maxParticipants } = req.body;
+        const { classInfoId, teacher, time, dayOfWeek } = req.body;
+
+        // Verify classInfo exists
+        const classInfo = await ClassInfo.findById(classInfoId);
+        if (!classInfo) {
+          return res.status(404).json({ message: '找不到課程資訊 / Class info not found' });
+        }
 
         const classItem = new Class({
-          name,
-          description,
-          banner: banner || '',
-          time,
-          cost: parseFloat(cost),
+          classInfoId,
           teacher,
-          maxParticipants: parseInt(maxParticipants)
+          time,
+          dayOfWeek
         });
 
         await classItem.save();
@@ -89,7 +94,7 @@ module.exports = async (req, res) => {
     // Get/Update/Delete specific class
     if (id) {
       if (req.method === 'GET') {
-        const classItem = await Class.findById(id);
+        const classItem = await Class.findById(id).populate('classInfoId');
 
         if (!classItem) {
           return res.status(404).json({ message: '找不到課程 / Class not found' });

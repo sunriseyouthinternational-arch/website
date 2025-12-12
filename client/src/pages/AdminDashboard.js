@@ -1139,15 +1139,8 @@ function AdminDashboard() {
                       <button
                         className="btn btn-small btn-primary"
                         onClick={() => setSelectedTeacher(teacher)}
-                        style={{ marginRight: '10px' }}
                       >
                         {t('language') === 'zh' ? '查看' : 'View'}
-                      </button>
-                      <button
-                        className="btn btn-small btn-danger"
-                        onClick={() => handleDeleteTeacher(teacher._id)}
-                      >
-                        {t('language') === 'zh' ? '刪除' : 'Delete'}
                       </button>
                     </td>
                   </tr>
