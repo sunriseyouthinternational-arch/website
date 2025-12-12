@@ -1,11 +1,9 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-router-dom';
 import { LanguageProvider, useLanguage } from './contexts/LanguageContext';
 import './App.css';
 
 // Pages
-import Home from './pages/Home';
-import Register from './pages/Register';
 import Profile from './pages/Profile';
 import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
@@ -38,8 +36,7 @@ function AppContent() {
 
         <main className="main-content">
           <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/register" element={<Register />} />
+            <Route path="/" element={<Navigate to="/profile" replace />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/profile/:memberId" element={<Profile />} />
             <Route path="/admin" element={<AdminLogin />} />
