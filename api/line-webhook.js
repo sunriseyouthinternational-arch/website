@@ -168,7 +168,7 @@ async function handleFollowEvent(event) {
       familyMembers: [],
       contact: {
         mobile: '', // Must be filled during registration
-        lineId: profile.displayName // Pre-fill with LINE display name
+        lineId: '' // Cannot auto-fill - LINE API doesn't provide custom LINE ID
       },
       line: {
         userId: lineUserId,

@@ -114,9 +114,44 @@ function Register() {
     }));
   };
 
+  const validatePhoneNumber = (phone) => {
+    // Remove all non-digit characters
+    const cleaned = phone.replace(/\D/g, '');
+
+    // Must be 9 or 10 digits
+    if (cleaned.length < 9 || cleaned.length > 10) {
+      return false;
+    }
+
+    // Must be all numbers
+    return /^\d+$/.test(cleaned);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage({ type: '', text: '' });
+
+    // Validate phone number if provided
+    if (formData.contact.phone && !validatePhoneNumber(formData.contact.phone)) {
+      setMessage({
+        type: 'error',
+        text: t('language') === 'zh'
+          ? '電話號碼格式錯誤，請輸入9或10位數字'
+          : 'Invalid phone number format. Please enter 9 or 10 digits.'
+      });
+      return;
+    }
+
+    // Validate mobile number if provided
+    if (formData.contact.mobile && !validatePhoneNumber(formData.contact.mobile)) {
+      setMessage({
+        type: 'error',
+        text: t('language') === 'zh'
+          ? '手機號碼格式錯誤，請輸入9或10位數字'
+          : 'Invalid mobile number format. Please enter 9 or 10 digits.'
+      });
+      return;
+    }
 
     try {
       const response = await axios.post(`/api/members?token=${token}`, formData);
@@ -360,7 +395,12 @@ function Register() {
                 name="contact.phone"
                 value={formData.contact.phone}
                 onChange={handleChange}
+                pattern="\d{9,10}"
+                placeholder="0912345678"
               />
+              <small style={{ color: '#666' }}>
+                {t('language') === 'zh' ? '請輸入9或10位數字' : 'Please enter 9 or 10 digits'}
+              </small>
             </div>
 
             <div className="form-group">
@@ -370,8 +410,13 @@ function Register() {
                 name="contact.mobile"
                 value={formData.contact.mobile}
                 onChange={handleChange}
+                pattern="\d{9,10}"
+                placeholder="0912345678"
                 required
               />
+              <small style={{ color: '#666' }}>
+                {t('language') === 'zh' ? '請輸入9或10位數字（必填）' : 'Please enter 9 or 10 digits (required)'}
+              </small>
             </div>
 
             <div className="form-group">
