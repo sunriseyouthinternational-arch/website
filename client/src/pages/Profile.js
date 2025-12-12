@@ -29,28 +29,6 @@ function Profile() {
     'profile'
   );
 
-  // Cookie helper functions
-  const setCookie = (name, value, days) => {
-    const expires = new Date();
-    expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000);
-    document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/`;
-  };
-
-  const getCookie = (name) => {
-    const nameEQ = name + "=";
-    const ca = document.cookie.split(';');
-    for (let i = 0; i < ca.length; i++) {
-      let c = ca[i];
-      while (c.charAt(0) === ' ') c = c.substring(1, c.length);
-      if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
-    }
-    return null;
-  };
-
-  const deleteCookie = (name) => {
-    document.cookie = name + '=;expires=Thu, 01 Jan 1970 00:00:01 GMT;path=/';
-  };
-
   const [editMode, setEditMode] = useState(false);
   const [editFormData, setEditFormData] = useState({
     name: '',
@@ -81,11 +59,7 @@ function Profile() {
         setMember(response.data.member);
         setMemberId(id);
 
-        // Save session to cookies (7 days)
-        setCookie('memberSession', sessionToken, 7);
-        setCookie('memberId', id, 7);
-
-        setMessage({ type: 'success', text: t('language') === 'zh' ? '自動登入成功' : 'Auto-login successful' });
+        setMessage({ type: 'success', text: t('language') === 'zh' ? '登入成功' : 'Login successful' });
 
         // Clean up URL by removing session parameter
         if (sessionFromUrl) {
@@ -97,8 +71,6 @@ function Profile() {
       }
     } catch (error) {
       console.error('Session validation failed:', error);
-      deleteCookie('memberSession');
-      deleteCookie('memberId');
       setMessage({
         type: 'error',
         text: t('language') === 'zh' ? '登入失效，請重新登入' : 'Session expired, please login again'
@@ -155,15 +127,6 @@ function Profile() {
     } else if (urlMemberId) {
       // If memberId is in URL, automatically fetch member profile
       fetchMemberById(urlMemberId);
-    } else {
-      // Check for stored session in cookies
-      const storedSession = getCookie('memberSession');
-      const storedMemberId = getCookie('memberId');
-
-      if (storedSession && storedMemberId) {
-        console.log('Found session in cookies, auto-logging in...');
-        validateAndSaveSession(storedSession, storedMemberId);
-      }
     }
   }, [urlMemberId, sessionFromUrl]);
 
