@@ -10,6 +10,7 @@ function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [members, setMembers] = useState([]);
   const [classes, setClasses] = useState([]);
+  const [classInfos, setClassInfos] = useState([]);
   const [activities, setActivities] = useState([]);
   const [teachers, setTeachers] = useState([]);
   const [stats, setStats] = useState({});
@@ -20,15 +21,32 @@ function AdminDashboard() {
   const [selectedItem, setSelectedItem] = useState(null);
   const [selectedTeacher, setSelectedTeacher] = useState(null);
 
-  // Form states for adding new items
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [newItem, setNewItem] = useState({
-    type: 'class', // 'class' or 'activity'
+  // Form states for adding new class info
+  const [showAddClassInfoForm, setShowAddClassInfoForm] = useState(false);
+  const [newClassInfo, setNewClassInfo] = useState({
     name: '',
     description: '',
-    date: '', // For activities
+    cost: '',
+    maxParticipants: '',
+    banner: ''
+  });
+
+  // Form states for adding new host class
+  const [showAddClassForm, setShowAddClassForm] = useState(false);
+  const [newClass, setNewClass] = useState({
+    classInfoId: '',
+    teacher: '',
     time: '',
-    dayOfWeek: '',
+    dayOfWeek: ''
+  });
+
+  // Form states for adding new activity
+  const [showAddActivityForm, setShowAddActivityForm] = useState(false);
+  const [newActivity, setNewActivity] = useState({
+    name: '',
+    description: '',
+    date: '',
+    time: '',
     cost: '',
     teacher: '',
     maxParticipants: '',
@@ -63,9 +81,10 @@ function AdminDashboard() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [membersRes, classesRes, activitiesRes, teachersRes, statsRes, leaderboardRes] = await Promise.all([
+      const [membersRes, classesRes, classInfosRes, activitiesRes, teachersRes, statsRes, leaderboardRes] = await Promise.all([
         axios.get('/api/admin?resource=members'),
         axios.get('/api/classes'),
+        axios.get('/api/class-info'),
         axios.get('/api/activities'),
         axios.get('/api/teachers'),
         axios.get('/api/admin?resource=stats'),
@@ -74,6 +93,7 @@ function AdminDashboard() {
 
       setMembers(membersRes.data.members);
       setClasses(classesRes.data.classes);
+      setClassInfos(classInfosRes.data.classInfos);
       setActivities(activitiesRes.data.activities);
       setTeachers(teachersRes.data.teachers);
       setStats(statsRes.data);
