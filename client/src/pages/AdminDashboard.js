@@ -240,7 +240,7 @@ function AdminDashboard() {
 
       setMessage({
         type: 'success',
-        text: t('language') === 'zh' ? '課程資訊添加成功' : 'Class info added successfully'
+        text: t('classInfoAddSuccess')
       });
       setShowAddClassInfoForm(false);
       setNewClassInfo({
@@ -720,7 +720,7 @@ function AdminDashboard() {
           <div className="items-section" style={{ marginTop: '30px' }}>
             <div className="section-header">
               <h4 style={{ color: '#667eea' }}>
-                {t('language') === 'zh' ? '課程資訊' : 'Class Information'} ({classInfos.length})
+                {t('classInformation')} ({classInfos.length})
               </h4>
               <button
                 onClick={() => setShowAddClassInfoForm(!showAddClassInfoForm)}
@@ -822,7 +822,7 @@ function AdminDashboard() {
                 </div>
 
                 <button type="submit" className="btn btn-primary">
-                  {t('language') === 'zh' ? '添加課程資訊' : 'Add Class Info'}
+                  {t('addClassInfo')}
                 </button>
               </form>
             )}
@@ -837,7 +837,7 @@ function AdminDashboard() {
                   <div className="item-summary-content">
                     <h5>{classInfo.name}</h5>
                     <p className="item-summary-meta">
-                      NT$ {classInfo.cost} | {t('language') === 'zh' ? '最多' : 'Max'} {classInfo.maxParticipants} {t('participants')}
+                      NT$ {classInfo.cost} | {t('max')} {classInfo.maxParticipants} {t('participants')}
                     </p>
                   </div>
                 </div>
@@ -849,7 +849,7 @@ function AdminDashboard() {
           <div className="items-section" style={{ marginTop: '40px' }}>
             <div className="section-header">
               <h4 style={{ color: '#667eea' }}>
-                {t('language') === 'zh' ? '開課管理' : 'Host Classes'} ({classes.length})
+                {t('hostClasses')} ({classes.length})
               </h4>
               <button
                 onClick={() => setShowAddClassForm(!showAddClassForm)}
@@ -862,7 +862,7 @@ function AdminDashboard() {
             {showAddClassForm && (
               <form onSubmit={handleAddClass} className="add-form" style={{ marginTop: '20px' }}>
                 <div className="form-group">
-                  <label>{t('language') === 'zh' ? '課程資訊 *' : 'Class Info *'}</label>
+                  <label>{t('classInfo')} *</label>
                   <select
                     value={newClass.classInfoId}
                     onChange={(e) => setNewClass({ ...newClass, classInfoId: e.target.value })}
@@ -924,7 +924,7 @@ function AdminDashboard() {
                 </div>
 
                 <div className="form-group">
-                  <label>{t('language') === 'zh' ? '地點' : 'Location'}</label>
+                  <label>{t('location')}</label>
                   <input
                     type="text"
                     value={newClass.location}
@@ -935,7 +935,7 @@ function AdminDashboard() {
 
                 {newClass.location && (
                   <div className="form-group">
-                    <label>{t('language') === 'zh' ? '地圖預覽' : 'Map Preview'}</label>
+                    <label>{t('mapPreview')}</label>
                     <iframe
                       src={`https://maps.google.com/maps?q=${encodeURIComponent(newClass.location)}&output=embed`}
                       width="100%"
@@ -950,7 +950,7 @@ function AdminDashboard() {
                 )}
 
                 <button type="submit" className="btn btn-primary">
-                  {t('language') === 'zh' ? '開課' : 'Host Class'}
+                  {t('hostClass')}
                 </button>
               </form>
             )}
@@ -1082,7 +1082,7 @@ function AdminDashboard() {
                 </div>
 
                 <div className="form-group">
-                  <label>{t('language') === 'zh' ? '地點' : 'Location'}</label>
+                  <label>{t('location')}</label>
                   <input
                     type="text"
                     value={newActivity.location}
@@ -1093,7 +1093,7 @@ function AdminDashboard() {
 
                 {newActivity.location && (
                   <div className="form-group">
-                    <label>{t('language') === 'zh' ? '地圖預覽' : 'Map Preview'}</label>
+                    <label>{t('mapPreview')}</label>
                     <iframe
                       src={`https://maps.google.com/maps?q=${encodeURIComponent(newActivity.location)}&output=embed`}
                       width="100%"
@@ -1263,7 +1263,7 @@ function AdminDashboard() {
               </div>
               {selectedItem.location && (
                 <div className="detail-row">
-                  <strong>{t('language') === 'zh' ? '地點' : 'Location'}:</strong>
+                  <strong>{t('location')}:</strong>
                   <span>📍 {selectedItem.location}</span>
                 </div>
               )}
@@ -1282,7 +1282,7 @@ function AdminDashboard() {
 
           {selectedItem.location && (
             <div className="detail-section" style={{ marginTop: '30px' }}>
-              <h4>{t('language') === 'zh' ? '地點地圖' : 'Location Map'}</h4>
+              <h4>{t('locationMap')}</h4>
               <iframe
                 src={`https://maps.google.com/maps?q=${encodeURIComponent(selectedItem.location)}&output=embed`}
                 width="100%"

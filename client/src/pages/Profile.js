@@ -637,11 +637,11 @@ function Profile() {
                       <h4>{classItem.classInfoId?.name || 'N/A'}</h4>
                       <p className="item-description">{classItem.classInfoId?.description || ''}</p>
                       <div className="item-details">
-                        <p><strong>{t('language') === 'zh' ? '星期' : 'Day'}:</strong> {classItem.dayOfWeek}</p>
+                        <p><strong>{t('day')}:</strong> {classItem.dayOfWeek}</p>
                         <p><strong>{t('teacher')}:</strong> {classItem.teacher}</p>
                         <p><strong>{t('time')}:</strong> {classItem.time}</p>
                         {classItem.location && (
-                          <p><strong>{t('language') === 'zh' ? '地點' : 'Location'}:</strong> 📍 {classItem.location}</p>
+                          <p><strong>{t('location')}:</strong> 📍 {classItem.location}</p>
                         )}
                         <p><strong>{t('cost')}:</strong> NT$ {classItem.classInfoId?.cost || 0}</p>
                         <p><strong>{t('participants')}:</strong> {classItem.currentParticipants} / {classItem.classInfoId?.maxParticipants || 0}</p>
@@ -708,7 +708,7 @@ function Profile() {
                         <p><strong>{t('teacher')}:</strong> {activity.teacher}</p>
                         <p><strong>{t('time')}:</strong> {activity.time}</p>
                         {activity.location && (
-                          <p><strong>{t('language') === 'zh' ? '地點' : 'Location'}:</strong> 📍 {activity.location}</p>
+                          <p><strong>{t('location')}:</strong> 📍 {activity.location}</p>
                         )}
                         <p><strong>{t('cost')}:</strong> NT$ {activity.cost}</p>
                         <p><strong>{t('participants')}:</strong> {activity.currentParticipants} / {activity.maxParticipants}</p>

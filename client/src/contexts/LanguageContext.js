@@ -146,7 +146,20 @@ export const translations = {
     referralLeaderboard: '推薦排行榜',
     referrals: '推薦人數',
     noReferrals: '目前沒有推薦記錄',
-    rank: '排名'
+    rank: '排名',
+
+    // Class system
+    classInformation: '課程資訊',
+    hostClasses: '開課管理',
+    location: '地點',
+    mapPreview: '地圖預覽',
+    locationMap: '地點地圖',
+    max: '最多',
+    classInfoAddSuccess: '課程資訊添加成功',
+    addClassInfo: '添加課程資訊',
+    classInfo: '課程資訊',
+    hostClass: '開課',
+    day: '星期'
   },
   en: {
     // Common
@@ -291,7 +304,20 @@ export const translations = {
     referralLeaderboard: 'Referral Leaderboard',
     referrals: 'Referrals',
     noReferrals: 'No referrals yet',
-    rank: 'Rank'
+    rank: 'Rank',
+
+    // Class system
+    classInformation: 'Class Information',
+    hostClasses: 'Host Classes',
+    location: 'Location',
+    mapPreview: 'Map Preview',
+    locationMap: 'Location Map',
+    max: 'Max',
+    classInfoAddSuccess: 'Class info added successfully',
+    addClassInfo: 'Add Class Info',
+    classInfo: 'Class Info',
+    hostClass: 'Host Class',
+    day: 'Day'
   }
 };
 
