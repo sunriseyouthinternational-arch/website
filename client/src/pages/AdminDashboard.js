@@ -16,6 +16,7 @@ function AdminDashboard() {
   const [stats, setStats] = useState({});
   const [referralLeaderboard, setReferralLeaderboard] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [loadingStates, setLoadingStates] = useState({});
   const [message, setMessage] = useState({ type: '', text: '' });
   const [selectedMember, setSelectedMember] = useState(null);
   const [selectedItem, setSelectedItem] = useState(null);
@@ -37,7 +38,7 @@ function AdminDashboard() {
     classInfoId: '',
     teacher: '',
     time: '',
-    dayOfWeek: '',
+    date: '',
     location: ''
   });
 
@@ -260,7 +261,7 @@ function AdminDashboard() {
   const handleAddClass = async (e) => {
     e.preventDefault();
     try {
-      await axios.post('/api/classes', newClass, {
+      const response = await axios.post('/api/classes', newClass, {
         headers: { 'Content-Type': 'application/json' }
       });
 
@@ -273,10 +274,13 @@ function AdminDashboard() {
         classInfoId: '',
         teacher: '',
         time: '',
-        dayOfWeek: '',
+        date: '',
         location: ''
       });
-      fetchData();
+
+      // Refresh only classes instead of all data
+      const classesRes = await axios.get('/api/classes');
+      setClasses(classesRes.data.classes);
     } catch (error) {
       console.error('Error adding class:', error);
       setMessage({ type: 'error', text: error.response?.data?.message || t('error') });
@@ -388,6 +392,16 @@ function AdminDashboard() {
 
     try {
       const endpoint = type === 'class' ? `/api/classes?id=${id}` : `/api/activities?id=${id}`;
+
+      // Optimistically update UI
+      if (type === 'class') {
+        setClasses(prev => prev.filter(c => c._id !== id));
+      } else {
+        setActivities(prev => prev.filter(a => a._id !== id));
+      }
+      setSelectedItem(null);
+
+      // Then delete on server
       await axios.delete(endpoint);
 
       setMessage({
@@ -396,11 +410,11 @@ function AdminDashboard() {
           ? `${type === 'class' ? '課程' : '活動'}刪除成功`
           : `${type === 'class' ? 'Class' : 'Activity'} deleted successfully`
       });
-      setSelectedItem(null);
-      fetchData();
     } catch (error) {
       console.error('Error deleting item:', error);
       setMessage({ type: 'error', text: error.response?.data?.message || t('error') });
+      // Refresh on error to get correct state
+      fetchData();
     }
   };
 
@@ -425,16 +439,59 @@ function AdminDashboard() {
   };
 
   const updatePaymentStatus = async (type, itemId, participantId, paid) => {
+    const key = `${type}-${itemId}-${participantId}`;
+
     try {
+      setLoadingStates(prev => ({ ...prev, [key]: true }));
+
+      // Optimistically update UI first
+      if (type === 'class') {
+        setClasses(prev => prev.map(c =>
+          c._id === itemId
+            ? {
+                ...c,
+                participants: c.participants.map(p =>
+                  p._id === participantId ? { ...p, paid } : p
+                )
+              }
+            : c
+        ));
+      } else {
+        setActivities(prev => prev.map(a =>
+          a._id === itemId
+            ? {
+                ...a,
+                participants: a.participants.map(p =>
+                  p._id === participantId ? { ...p, paid } : p
+                )
+              }
+            : a
+        ));
+      }
+
+      // Update selected item if viewing details
+      if (selectedItem && selectedItem._id === itemId) {
+        setSelectedItem(prev => ({
+          ...prev,
+          participants: prev.participants.map(p =>
+            p._id === participantId ? { ...p, paid } : p
+          )
+        }));
+      }
+
+      // Then sync with server
       const resource = type === 'class' ? 'class-payment' : 'activity-payment';
       const idParam = type === 'class' ? 'classId' : 'activityId';
       const endpoint = `/api/admin?resource=${resource}&${idParam}=${itemId}&participantId=${participantId}`;
 
       await axios.put(endpoint, { paid });
-      setMessage({ type: 'success', text: t('language') === 'zh' ? '付款狀態已更新' : 'Payment status updated' });
-      fetchData();
+      setMessage({ type: 'success', text: t('paymentStatusUpdated') });
     } catch (error) {
       setMessage({ type: 'error', text: error.response?.data?.message || t('error') });
+      // Refresh on error to get correct state
+      fetchData();
+    } finally {
+      setLoadingStates(prev => ({ ...prev, [key]: false }));
     }
   };
 
@@ -895,21 +952,13 @@ function AdminDashboard() {
 
                 <div className="form-row">
                   <div className="form-group">
-                    <label>{t('language') === 'zh' ? '上課日期 *' : 'Day of Week *'}</label>
-                    <select
-                      value={newClass.dayOfWeek}
-                      onChange={(e) => setNewClass({ ...newClass, dayOfWeek: e.target.value })}
+                    <label>{t('classDate')} *</label>
+                    <input
+                      type="date"
+                      value={newClass.date}
+                      onChange={(e) => setNewClass({ ...newClass, date: e.target.value })}
                       required
-                    >
-                      <option value="">{t('language') === 'zh' ? '選擇日期' : 'Select Day'}</option>
-                      <option value="Monday">Monday</option>
-                      <option value="Tuesday">Tuesday</option>
-                      <option value="Wednesday">Wednesday</option>
-                      <option value="Thursday">Thursday</option>
-                      <option value="Friday">Friday</option>
-                      <option value="Saturday">Saturday</option>
-                      <option value="Sunday">Sunday</option>
-                    </select>
+                    />
                   </div>
                   <div className="form-group">
                     <label>{t('time')} *</label>
@@ -965,7 +1014,7 @@ function AdminDashboard() {
                   <div className="item-summary-content">
                     <h5>{classItem.classInfoId?.name || 'N/A'}</h5>
                     <p className="item-summary-meta">
-                      {classItem.dayOfWeek} | {classItem.time} | {t('teacher')}: {classItem.teacher}
+                      {formatDate(classItem.date)} | {classItem.time} | {t('teacher')}: {classItem.teacher}
                     </p>
                     {classItem.location && (
                       <p className="item-summary-meta" style={{ fontSize: '0.9em', color: '#666' }}>
@@ -1241,13 +1290,13 @@ function AdminDashboard() {
                 <strong>{t('description')}:</strong>
                 <span>{selectedItem.type === 'class' ? selectedItem.classInfoId?.description : selectedItem.description}</span>
               </div>
-              {selectedItem.dayOfWeek && (
+              {selectedItem.date && selectedItem.type === 'class' && (
                 <div className="detail-row">
-                  <strong>{t('language') === 'zh' ? '上課日期' : 'Day'}:</strong>
-                  <span>{selectedItem.dayOfWeek}</span>
+                  <strong>{t('classDate')}:</strong>
+                  <span>{formatDate(selectedItem.date)}</span>
                 </div>
               )}
-              {selectedItem.date && (
+              {selectedItem.date && selectedItem.type === 'activity' && (
                 <div className="detail-row">
                   <strong>{t('language') === 'zh' ? '活動日期' : 'Activity Date'}:</strong>
                   <span>{formatDate(selectedItem.date)}</span>
@@ -1336,10 +1385,13 @@ function AdminDashboard() {
                                 !participant.paid
                               )
                             }
+                            disabled={loadingStates[`${selectedItem.type}-${selectedItem._id}-${participant._id}`]}
                           >
-                            {participant.paid
-                              ? (t('language') === 'zh' ? '標記未付' : 'Mark Unpaid')
-                              : (t('language') === 'zh' ? '標記已付' : 'Mark Paid')}
+                            {loadingStates[`${selectedItem.type}-${selectedItem._id}-${participant._id}`]
+                              ? t('processing')
+                              : participant.paid
+                                ? (t('language') === 'zh' ? '標記未付' : 'Mark Unpaid')
+                                : (t('language') === 'zh' ? '標記已付' : 'Mark Paid')}
                           </button>
                         </td>
                       </tr>

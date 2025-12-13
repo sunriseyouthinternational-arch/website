@@ -67,7 +67,7 @@ module.exports = async (req, res) => {
       }
 
       if (req.method === 'POST') {
-        const { classInfoId, teacher, time, dayOfWeek, location } = req.body;
+        const { classInfoId, teacher, time, date, location } = req.body;
 
         // Verify classInfo exists
         const classInfo = await ClassInfo.findById(classInfoId);
@@ -79,7 +79,7 @@ module.exports = async (req, res) => {
           classInfoId,
           teacher,
           time,
-          dayOfWeek,
+          date: new Date(date),
           location: location || ''
         });
 

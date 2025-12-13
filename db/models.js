@@ -96,11 +96,7 @@ const classSchema = new mongoose.Schema({
   classInfoId: { type: mongoose.Schema.Types.ObjectId, ref: 'ClassInfo', required: true },
   teacher: { type: String, required: true },
   time: { type: String, required: true },
-  dayOfWeek: {
-    type: String,
-    enum: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
-    required: true
-  },
+  date: { type: Date, required: true },
   location: { type: String },
   currentParticipants: { type: Number, default: 0 },
   participants: [{

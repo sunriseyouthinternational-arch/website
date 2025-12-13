@@ -16,6 +16,12 @@ function Profile() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
 
+  // Filters
+  const [selectedClassInfo, setSelectedClassInfo] = useState('all');
+  const [selectedDate, setSelectedDate] = useState('all');
+  const [dateOffset, setDateOffset] = useState(0);
+  const [showCalendar, setShowCalendar] = useState(false);
+
   // Check for tab parameter in URL
   const tabFromUrl = searchParams.get('tab');
   const sessionFromUrl = searchParams.get('session');
@@ -101,6 +107,59 @@ function Profile() {
     } catch (error) {
       console.error('Error fetching classes/activities:', error);
     }
+  };
+
+  // Generate date options for filter (current date + next 6 days = 7 days total)
+  const getDateOptions = () => {
+    const dates = [];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    for (let i = dateOffset; i < dateOffset + 7; i++) {
+      const date = new Date(today);
+      date.setDate(today.getDate() + i);
+      dates.push(date);
+    }
+    return dates;
+  };
+
+  // Filter classes based on selected filters
+  const getFilteredClasses = () => {
+    let filtered = [...classes];
+
+    // Filter by class info template
+    if (selectedClassInfo !== 'all') {
+      filtered = filtered.filter(c => c.classInfoId?._id === selectedClassInfo);
+    }
+
+    // Filter by date
+    if (selectedDate !== 'all') {
+      const selectedDateObj = new Date(selectedDate);
+      selectedDateObj.setHours(0, 0, 0, 0);
+
+      filtered = filtered.filter(c => {
+        const classDate = new Date(c.date);
+        classDate.setHours(0, 0, 0, 0);
+        return classDate.getTime() === selectedDateObj.getTime();
+      });
+    }
+
+    return filtered;
+  };
+
+  // Get unique class info templates from all classes
+  const getUniqueClassInfos = () => {
+    const seen = new Set();
+    const uniqueClassInfos = [];
+
+    classes.forEach(c => {
+      if (c.classInfoId && !seen.has(c.classInfoId._id)) {
+        seen.add(c.classInfoId._id);
+        uniqueClassInfos.push(c.classInfoId);
+      }
+    });
+
+    return uniqueClassInfos;
   };
 
   useEffect(() => {
@@ -628,8 +687,160 @@ function Profile() {
 
                 <h4 className="section-subtitle">{t('availableClasses')}</h4>
 
+                {/* Class Template Filter */}
+                <div style={{ marginBottom: '20px' }}>
+                  <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', color: '#667eea' }}>
+                    {t('filterByClass')}
+                  </label>
+                  <select
+                    value={selectedClassInfo}
+                    onChange={(e) => setSelectedClassInfo(e.target.value)}
+                    style={{
+                      padding: '10px',
+                      border: '2px solid #667eea',
+                      borderRadius: '8px',
+                      fontSize: '16px',
+                      width: '100%',
+                      maxWidth: '400px'
+                    }}
+                  >
+                    <option value="all">{t('allClasses')}</option>
+                    {getUniqueClassInfos().map(classInfo => (
+                      <option key={classInfo._id} value={classInfo._id}>
+                        {classInfo.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Date Filter */}
+                <div style={{ marginBottom: '20px' }}>
+                  <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', color: '#667eea' }}>
+                    {t('filterByDate')}
+                  </label>
+                  <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
+                    <button
+                      onClick={() => setDateOffset(prev => Math.max(0, prev - 7))}
+                      disabled={dateOffset === 0}
+                      style={{
+                        padding: '10px 15px',
+                        background: dateOffset === 0 ? '#ccc' : '#667eea',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '8px',
+                        cursor: dateOffset === 0 ? 'not-allowed' : 'pointer',
+                        fontSize: '16px'
+                      }}
+                    >
+                      ←
+                    </button>
+
+                    <button
+                      onClick={() => setSelectedDate('all')}
+                      style={{
+                        padding: '10px 20px',
+                        background: selectedDate === 'all' ? '#667eea' : 'white',
+                        color: selectedDate === 'all' ? 'white' : '#667eea',
+                        border: '2px solid #667eea',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        fontSize: '15px',
+                        fontWeight: '600'
+                      }}
+                    >
+                      {t('all')}
+                    </button>
+
+                    {getDateOptions().map((date, index) => {
+                      const dateStr = date.toISOString().split('T')[0];
+                      const isSelected = selectedDate === dateStr;
+                      const monthDay = `${date.getMonth() + 1}/${date.getDate()}`;
+
+                      return (
+                        <button
+                          key={index}
+                          onClick={() => setSelectedDate(dateStr)}
+                          style={{
+                            padding: '10px 15px',
+                            background: isSelected ? '#667eea' : 'white',
+                            color: isSelected ? 'white' : '#667eea',
+                            border: '2px solid #667eea',
+                            borderRadius: '8px',
+                            cursor: 'pointer',
+                            fontSize: '14px',
+                            fontWeight: '600',
+                            minWidth: '60px'
+                          }}
+                        >
+                          {monthDay}
+                        </button>
+                      );
+                    })}
+
+                    <button
+                      onClick={() => setDateOffset(prev => prev + 7)}
+                      style={{
+                        padding: '10px 15px',
+                        background: '#667eea',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        fontSize: '16px'
+                      }}
+                    >
+                      →
+                    </button>
+
+                    <div style={{ position: 'relative' }}>
+                      <button
+                        onClick={() => setShowCalendar(!showCalendar)}
+                        style={{
+                          padding: '10px 20px',
+                          background: '#764ba2',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '8px',
+                          cursor: 'pointer',
+                          fontSize: '15px',
+                          fontWeight: '600'
+                        }}
+                      >
+                        📅 {t('selectFromCalendar')}
+                      </button>
+                      {showCalendar && (
+                        <div style={{
+                          position: 'absolute',
+                          top: '100%',
+                          left: 0,
+                          marginTop: '10px',
+                          background: 'white',
+                          padding: '15px',
+                          borderRadius: '8px',
+                          boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
+                          zIndex: 1000
+                        }}>
+                          <input
+                            type="date"
+                            onChange={(e) => {
+                              setSelectedDate(e.target.value);
+                              setShowCalendar(false);
+                            }}
+                            style={{
+                              padding: '10px',
+                              border: '2px solid #667eea',
+                              borderRadius: '8px',
+                              fontSize: '16px'
+                            }}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
                 <div className="grid">
-                  {classes.map((classItem) => (
+                  {getFilteredClasses().map((classItem) => (
                     <div key={classItem._id} className="item-card">
                       {classItem.classInfoId?.banner && (
                         <img src={getImageSrc(classItem.classInfoId.banner)} alt={classItem.classInfoId?.name} className="item-banner" />
@@ -637,7 +848,7 @@ function Profile() {
                       <h4>{classItem.classInfoId?.name || 'N/A'}</h4>
                       <p className="item-description">{classItem.classInfoId?.description || ''}</p>
                       <div className="item-details">
-                        <p><strong>{t('day')}:</strong> {classItem.dayOfWeek}</p>
+                        <p><strong>{t('classDate')}:</strong> {formatDate(classItem.date)}</p>
                         <p><strong>{t('teacher')}:</strong> {classItem.teacher}</p>
                         <p><strong>{t('time')}:</strong> {classItem.time}</p>
                         {classItem.location && (

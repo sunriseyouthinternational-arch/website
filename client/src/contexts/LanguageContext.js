@@ -159,7 +159,17 @@ export const translations = {
     addClassInfo: '添加課程資訊',
     classInfo: '課程資訊',
     hostClass: '開課',
-    day: '星期'
+    day: '星期',
+    classDate: '課程日期',
+    selectDate: '選擇日期',
+    processing: '處理中...',
+
+    // Filters
+    all: '全部',
+    filterByClass: '按課程篩選',
+    filterByDate: '按日期篩選',
+    selectFromCalendar: '從日曆選擇',
+    allClasses: '所有課程'
   },
   en: {
     // Common
@@ -317,7 +327,17 @@ export const translations = {
     addClassInfo: 'Add Class Info',
     classInfo: 'Class Info',
     hostClass: 'Host Class',
-    day: 'Day'
+    day: 'Day',
+    classDate: 'Class Date',
+    selectDate: 'Select Date',
+    processing: 'Processing...',
+
+    // Filters
+    all: 'All',
+    filterByClass: 'Filter by Class',
+    filterByDate: 'Filter by Date',
+    selectFromCalendar: 'Select from Calendar',
+    allClasses: 'All Classes'
   }
 };
 
