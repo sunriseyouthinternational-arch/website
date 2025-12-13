@@ -680,8 +680,8 @@ function Profile() {
                   src={getImageSrc(selectedClass.classInfoId.banner)}
                   alt={selectedClass.classInfoId?.name}
                   style={{
-                    width: '500px',
-                    height: '300px',
+                    width: '1000px',
+                    height: '600px',
                     maxWidth: '100%',
                     objectFit: 'cover',
                     borderRadius: '8px',

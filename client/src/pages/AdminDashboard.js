@@ -883,8 +883,8 @@ function AdminDashboard() {
               />
               <small style={{ color: '#666', display: 'block', marginTop: '5px' }}>
                 {t('language') === 'zh'
-                  ? '上傳橫幅圖片（建議尺寸 500x300）'
-                  : 'Upload banner image (recommended size 500x300)'}
+                  ? '上傳橫幅圖片（建議尺寸 1000x600）'
+                  : 'Upload banner image (recommended size 1000x600)'}
               </small>
               {selectedClassInfo.banner && (
                 <div style={{ marginTop: '15px' }}>
@@ -895,8 +895,8 @@ function AdminDashboard() {
                     src={selectedClassInfo.banner}
                     alt={selectedClassInfo.name}
                     style={{
-                      width: '500px',
-                      height: '300px',
+                      width: '1000px',
+                      height: '600px',
                       maxWidth: '100%',
                       objectFit: 'cover',
                       borderRadius: '8px',
