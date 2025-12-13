@@ -15,6 +15,7 @@ function Profile() {
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
+  const [selectedClass, setSelectedClass] = useState(null);
 
   // Filters
   const [selectedClassInfo, setSelectedClassInfo] = useState('all');
@@ -664,7 +665,114 @@ function Profile() {
             </div>
           )}
 
-          {activeTab === 'courses' && (
+          {activeTab === 'courses' && selectedClass && (
+            <div className="card">
+              <button
+                onClick={() => setSelectedClass(null)}
+                className="btn btn-secondary"
+                style={{ marginBottom: '20px' }}
+              >
+                ← {t('back')}
+              </button>
+
+              {selectedClass.classInfoId?.banner && (
+                <img
+                  src={getImageSrc(selectedClass.classInfoId.banner)}
+                  alt={selectedClass.classInfoId?.name}
+                  style={{
+                    width: '100%',
+                    maxHeight: '300px',
+                    objectFit: 'cover',
+                    borderRadius: '8px',
+                    marginBottom: '20px'
+                  }}
+                />
+              )}
+
+              <h2>{selectedClass.classInfoId?.name || 'N/A'}</h2>
+              <p style={{ fontSize: '18px', lineHeight: '1.6', marginBottom: '20px', color: '#666' }}>
+                {selectedClass.classInfoId?.description || ''}
+              </p>
+
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                gap: '15px',
+                background: '#f8f9ff',
+                padding: '20px',
+                borderRadius: '8px',
+                marginBottom: '20px'
+              }}>
+                <div>
+                  <strong>{t('classDate')}:</strong>
+                  <p>{formatDate(selectedClass.date)}</p>
+                </div>
+                <div>
+                  <strong>{t('time')}:</strong>
+                  <p>{selectedClass.time}</p>
+                </div>
+                <div>
+                  <strong>{t('teacher')}:</strong>
+                  <p>{selectedClass.teacher}</p>
+                </div>
+                <div>
+                  <strong>{t('cost')}:</strong>
+                  <p>NT$ {selectedClass.classInfoId?.cost || 0}</p>
+                </div>
+                <div>
+                  <strong>{t('participants')}:</strong>
+                  <p>{selectedClass.currentParticipants} / {selectedClass.classInfoId?.maxParticipants || 0}</p>
+                </div>
+                {selectedClass.location && (
+                  <div>
+                    <strong>{t('location')}:</strong>
+                    <p>📍 {selectedClass.location}</p>
+                  </div>
+                )}
+              </div>
+
+              {selectedClass.location && (
+                <div style={{ marginBottom: '20px' }}>
+                  <h3>{t('locationMap')}</h3>
+                  <iframe
+                    src={`https://maps.google.com/maps?q=${encodeURIComponent(selectedClass.location)}&output=embed`}
+                    width="100%"
+                    height="400"
+                    style={{ border: '1px solid #ddd', borderRadius: '8px' }}
+                    allowFullScreen=""
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                    title="Class Location Map"
+                  />
+                </div>
+              )}
+
+              <div style={{ display: 'flex', gap: '15px', justifyContent: 'center' }}>
+                {isEnrolled('class', selectedClass._id) ? (
+                  <button className="btn btn-secondary" disabled>{t('enrolled')}</button>
+                ) : (
+                  <button
+                    onClick={() => {
+                      handleEnroll('class', selectedClass._id, selectedClass.classInfoId?.name);
+                      setSelectedClass(null);
+                    }}
+                    className="btn btn-primary"
+                    disabled={selectedClass.currentParticipants >= (selectedClass.classInfoId?.maxParticipants || 0)}
+                  >
+                    {selectedClass.currentParticipants >= (selectedClass.classInfoId?.maxParticipants || 0) ? t('classFull') : t('enroll')}
+                  </button>
+                )}
+                <button
+                  onClick={() => setSelectedClass(null)}
+                  className="btn btn-secondary"
+                >
+                  {t('back')}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'courses' && !selectedClass && (
             <div className="courses-activities-section">
               <div className="card">
                 <h3>{t('classes')}</h3>
@@ -851,37 +959,30 @@ function Profile() {
                         <p><strong>{t('classDate')}:</strong> {formatDate(classItem.date)}</p>
                         <p><strong>{t('teacher')}:</strong> {classItem.teacher}</p>
                         <p><strong>{t('time')}:</strong> {classItem.time}</p>
-                        {classItem.location && (
-                          <p><strong>{t('location')}:</strong> 📍 {classItem.location}</p>
-                        )}
                         <p><strong>{t('cost')}:</strong> NT$ {classItem.classInfoId?.cost || 0}</p>
                         <p><strong>{t('participants')}:</strong> {classItem.currentParticipants} / {classItem.classInfoId?.maxParticipants || 0}</p>
                       </div>
-                      {classItem.location && (
-                        <div style={{ marginTop: '10px', marginBottom: '10px' }}>
-                          <iframe
-                            src={`https://maps.google.com/maps?q=${encodeURIComponent(classItem.location)}&output=embed`}
-                            width="100%"
-                            height="200"
-                            style={{ border: '1px solid #ddd', borderRadius: '8px' }}
-                            allowFullScreen=""
-                            loading="lazy"
-                            referrerPolicy="no-referrer-when-downgrade"
-                            title="Class Location Map"
-                          />
-                        </div>
-                      )}
-                      {isEnrolled('class', classItem._id) ? (
-                        <button className="btn btn-secondary" disabled>{t('enrolled')}</button>
-                      ) : (
+                      <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
                         <button
-                          onClick={() => handleEnroll('class', classItem._id, classItem.classInfoId?.name)}
-                          className="btn btn-primary"
-                          disabled={classItem.currentParticipants >= (classItem.classInfoId?.maxParticipants || 0)}
+                          onClick={() => setSelectedClass(classItem)}
+                          className="btn btn-secondary"
+                          style={{ flex: 1 }}
                         >
-                          {classItem.currentParticipants >= (classItem.classInfoId?.maxParticipants || 0) ? t('classFull') : t('enroll')}
+                          {t('viewDetails')}
                         </button>
-                      )}
+                        {isEnrolled('class', classItem._id) ? (
+                          <button className="btn btn-secondary" disabled style={{ flex: 1 }}>{t('enrolled')}</button>
+                        ) : (
+                          <button
+                            onClick={() => handleEnroll('class', classItem._id, classItem.classInfoId?.name)}
+                            className="btn btn-primary"
+                            disabled={classItem.currentParticipants >= (classItem.classInfoId?.maxParticipants || 0)}
+                            style={{ flex: 1 }}
+                          >
+                            {classItem.currentParticipants >= (classItem.classInfoId?.maxParticipants || 0) ? t('classFull') : t('enroll')}
+                          </button>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>

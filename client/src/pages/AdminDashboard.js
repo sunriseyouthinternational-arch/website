@@ -21,6 +21,7 @@ function AdminDashboard() {
   const [selectedMember, setSelectedMember] = useState(null);
   const [selectedItem, setSelectedItem] = useState(null);
   const [selectedTeacher, setSelectedTeacher] = useState(null);
+  const [selectedClassInfo, setSelectedClassInfo] = useState(null);
 
   // Form states for adding new class info
   const [showAddClassInfoForm, setShowAddClassInfoForm] = useState(false);
@@ -314,6 +315,54 @@ function AdminDashboard() {
     } catch (error) {
       console.error('Error adding activity:', error);
       setMessage({ type: 'error', text: error.response?.data?.message || t('error') });
+    }
+  };
+
+  const handleUpdateClassInfo = async (e) => {
+    e.preventDefault();
+    try {
+      await axios.put(`/api/class-info?id=${selectedClassInfo._id}`, selectedClassInfo, {
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      setMessage({
+        type: 'success',
+        text: t('language') === 'zh' ? '課程資訊更新成功' : 'Class info updated successfully'
+      });
+
+      // Refresh classInfos
+      const classInfosRes = await axios.get('/api/class-info');
+      setClassInfos(classInfosRes.data.classInfos);
+      setSelectedClassInfo(null);
+    } catch (error) {
+      console.error('Error updating class info:', error);
+      setMessage({ type: 'error', text: error.response?.data?.message || t('error') });
+    }
+  };
+
+  const handleDeleteClassInfo = async (id) => {
+    if (!window.confirm(t('language') === 'zh' ? '確定要刪除嗎？此操作將影響所有使用此課程資訊的開課。' : 'Are you sure you want to delete? This will affect all classes using this info.')) {
+      return;
+    }
+
+    try {
+      // Optimistically update UI
+      setClassInfos(prev => prev.filter(ci => ci._id !== id));
+      setSelectedClassInfo(null);
+
+      // Then delete on server
+      await axios.delete(`/api/class-info?id=${id}`);
+
+      setMessage({
+        type: 'success',
+        text: t('language') === 'zh' ? '課程資訊刪除成功' : 'Class info deleted successfully'
+      });
+    } catch (error) {
+      console.error('Error deleting class info:', error);
+      setMessage({ type: 'error', text: error.response?.data?.message || t('error') });
+      // Refresh on error to get correct state
+      const classInfosRes = await axios.get('/api/class-info');
+      setClassInfos(classInfosRes.data.classInfos);
     }
   };
 
@@ -769,7 +818,91 @@ function AdminDashboard() {
         </div>
       )}
 
-      {activeTab === 'items' && !selectedItem && (
+      {activeTab === 'items' && selectedClassInfo && (
+        <div className="card">
+          <div className="detail-header">
+            <button
+              className="btn btn-secondary"
+              onClick={() => setSelectedClassInfo(null)}
+            >
+              ← {t('language') === 'zh' ? '返回列表' : 'Back to List'}
+            </button>
+            <h3>{t('language') === 'zh' ? '編輯課程資訊' : 'Edit Class Information'}</h3>
+          </div>
+
+          <form onSubmit={handleUpdateClassInfo} className="add-form">
+            {selectedClassInfo.banner && (
+              <img
+                src={selectedClassInfo.banner}
+                alt={selectedClassInfo.name}
+                style={{
+                  width: '100%',
+                  maxHeight: '200px',
+                  objectFit: 'cover',
+                  borderRadius: '8px',
+                  marginBottom: '20px'
+                }}
+              />
+            )}
+
+            <div className="form-group">
+              <label>{t('name')} *</label>
+              <input
+                type="text"
+                value={selectedClassInfo.name}
+                onChange={(e) => setSelectedClassInfo({ ...selectedClassInfo, name: e.target.value })}
+                required
+              />
+            </div>
+
+            <div className="form-group">
+              <label>{t('description')} *</label>
+              <textarea
+                value={selectedClassInfo.description}
+                onChange={(e) => setSelectedClassInfo({ ...selectedClassInfo, description: e.target.value })}
+                required
+                rows="3"
+              />
+            </div>
+
+            <div className="form-row">
+              <div className="form-group">
+                <label>{t('cost')} (NT$) *</label>
+                <input
+                  type="number"
+                  value={selectedClassInfo.cost}
+                  onChange={(e) => setSelectedClassInfo({ ...selectedClassInfo, cost: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>{t('maxParticipants')} *</label>
+                <input
+                  type="number"
+                  value={selectedClassInfo.maxParticipants}
+                  onChange={(e) => setSelectedClassInfo({ ...selectedClassInfo, maxParticipants: e.target.value })}
+                  required
+                />
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '15px', marginTop: '20px' }}>
+              <button type="submit" className="btn btn-primary">
+                {t('language') === 'zh' ? '保存更改' : 'Save Changes'}
+              </button>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => setSelectedClassInfo(null)}
+              >
+                {t('cancel')}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {activeTab === 'items' && !selectedItem && !selectedClassInfo && (
         <div className="card">
           <h3>{t('language') === 'zh' ? '課程與活動管理' : 'Classes & Activities Management'}</h3>
 
@@ -897,6 +1030,20 @@ function AdminDashboard() {
                       NT$ {classInfo.cost} | {t('max')} {classInfo.maxParticipants} {t('participants')}
                     </p>
                   </div>
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <button
+                      className="btn btn-small btn-primary"
+                      onClick={() => setSelectedClassInfo(classInfo)}
+                    >
+                      {t('edit')}
+                    </button>
+                    <button
+                      className="btn btn-small btn-danger"
+                      onClick={() => handleDeleteClassInfo(classInfo._id)}
+                    >
+                      {t('delete')}
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -957,6 +1104,7 @@ function AdminDashboard() {
                       type="date"
                       value={newClass.date}
                       onChange={(e) => setNewClass({ ...newClass, date: e.target.value })}
+                      min={new Date().toISOString().split('T')[0]}
                       required
                     />
                   </div>
@@ -1095,6 +1243,7 @@ function AdminDashboard() {
                       type="date"
                       value={newActivity.date}
                       onChange={(e) => setNewActivity({ ...newActivity, date: e.target.value })}
+                      min={new Date().toISOString().split('T')[0]}
                     />
                   </div>
                   <div className="form-group">
