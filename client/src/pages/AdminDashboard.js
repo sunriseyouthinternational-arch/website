@@ -37,6 +37,7 @@ function AdminDashboard() {
   const [showAddClassForm, setShowAddClassForm] = useState(false);
   const [newClass, setNewClass] = useState({
     classInfoId: '',
+    teacherId: '',
     teacher: '',
     time: '',
     date: '',
@@ -52,6 +53,7 @@ function AdminDashboard() {
     time: '',
     location: '',
     cost: '',
+    teacherId: '',
     teacher: '',
     maxParticipants: '',
     banner: ''
@@ -273,6 +275,7 @@ function AdminDashboard() {
       setShowAddClassForm(false);
       setNewClass({
         classInfoId: '',
+        teacherId: '',
         teacher: '',
         time: '',
         date: '',
@@ -307,6 +310,7 @@ function AdminDashboard() {
         time: '',
         location: '',
         cost: '',
+        teacherId: '',
         teacher: '',
         maxParticipants: '',
         banner: ''
@@ -392,6 +396,38 @@ function AdminDashboard() {
     const reader = new FileReader();
     reader.onloadend = () => {
       setNewTeacher({ ...newTeacher, photo: reader.result });
+      setMessage({
+        type: 'success',
+        text: t('language') === 'zh' ? '圖片上傳成功' : 'Image uploaded successfully'
+      });
+    };
+    reader.onerror = () => {
+      setMessage({
+        type: 'error',
+        text: t('language') === 'zh' ? '圖片上傳失敗' : 'Failed to upload image'
+      });
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleClassInfoBannerUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // No file size restriction as per user request
+    // Check file type
+    if (!file.type.startsWith('image/')) {
+      setMessage({
+        type: 'error',
+        text: t('language') === 'zh' ? '請上傳圖片檔案' : 'Please upload an image file'
+      });
+      return;
+    }
+
+    // Convert to base64
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setSelectedClassInfo({ ...selectedClassInfo, banner: reader.result });
       setMessage({
         type: 'success',
         text: t('language') === 'zh' ? '圖片上傳成功' : 'Image uploaded successfully'
@@ -831,19 +867,53 @@ function AdminDashboard() {
           </div>
 
           <form onSubmit={handleUpdateClassInfo} className="add-form">
-            {selectedClassInfo.banner && (
-              <img
-                src={selectedClassInfo.banner}
-                alt={selectedClassInfo.name}
+            <div className="form-group">
+              <label>{t('banner')}</label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleClassInfoBannerUpload}
                 style={{
-                  width: '100%',
-                  maxHeight: '200px',
-                  objectFit: 'cover',
+                  padding: '10px',
+                  border: '2px solid #e0e0e0',
                   borderRadius: '8px',
-                  marginBottom: '20px'
+                  width: '100%',
+                  cursor: 'pointer'
                 }}
               />
-            )}
+              <small style={{ color: '#666', display: 'block', marginTop: '5px' }}>
+                {t('language') === 'zh'
+                  ? '上傳橫幅圖片（建議尺寸 500x300）'
+                  : 'Upload banner image (recommended size 500x300)'}
+              </small>
+              {selectedClassInfo.banner && (
+                <div style={{ marginTop: '15px' }}>
+                  <p style={{ fontWeight: 'bold', marginBottom: '10px' }}>
+                    {t('language') === 'zh' ? '預覽：' : 'Preview:'}
+                  </p>
+                  <img
+                    src={selectedClassInfo.banner}
+                    alt={selectedClassInfo.name}
+                    style={{
+                      width: '500px',
+                      height: '300px',
+                      maxWidth: '100%',
+                      objectFit: 'cover',
+                      borderRadius: '8px',
+                      border: '2px solid #e0e0e0'
+                    }}
+                  />
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-small"
+                    onClick={() => setSelectedClassInfo({ ...selectedClassInfo, banner: '' })}
+                    style={{ marginTop: '10px', display: 'block' }}
+                  >
+                    {t('language') === 'zh' ? '移除圖片' : 'Remove Image'}
+                  </button>
+                </div>
+              )}
+            </div>
 
             <div className="form-group">
               <label>{t('name')} *</label>
@@ -1084,13 +1154,20 @@ function AdminDashboard() {
                 <div className="form-group">
                   <label>{t('teacher')} *</label>
                   <select
-                    value={newClass.teacher}
-                    onChange={(e) => setNewClass({ ...newClass, teacher: e.target.value })}
+                    value={newClass.teacherId || ''}
+                    onChange={(e) => {
+                      const selectedTeacher = teachers.find(t => t._id === e.target.value);
+                      setNewClass({
+                        ...newClass,
+                        teacherId: e.target.value,
+                        teacher: selectedTeacher ? selectedTeacher.name : ''
+                      });
+                    }}
                     required
                   >
                     <option value="">{t('language') === 'zh' ? '選擇教師' : 'Select Teacher'}</option>
                     {teachers.map(teacher => (
-                      <option key={teacher._id} value={teacher.name}>
+                      <option key={teacher._id} value={teacher._id}>
                         {teacher.name}
                       </option>
                     ))}
@@ -1223,13 +1300,20 @@ function AdminDashboard() {
                 <div className="form-group">
                   <label>{t('teacher')} *</label>
                   <select
-                    value={newActivity.teacher}
-                    onChange={(e) => setNewActivity({ ...newActivity, teacher: e.target.value })}
+                    value={newActivity.teacherId || ''}
+                    onChange={(e) => {
+                      const selectedTeacher = teachers.find(t => t._id === e.target.value);
+                      setNewActivity({
+                        ...newActivity,
+                        teacherId: e.target.value,
+                        teacher: selectedTeacher ? selectedTeacher.name : ''
+                      });
+                    }}
                     required
                   >
                     <option value="">{t('language') === 'zh' ? '選擇教師' : 'Select Teacher'}</option>
                     {teachers.map(teacher => (
-                      <option key={teacher._id} value={teacher.name}>
+                      <option key={teacher._id} value={teacher._id}>
                         {teacher.name}
                       </option>
                     ))}

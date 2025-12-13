@@ -11,7 +11,7 @@ module.exports = async (req, res) => {
     if (action === 'enroll' && req.method === 'POST') {
       const { memberId } = req.body;
 
-      const activity = await Activity.findById(id);
+      const activity = await Activity.findById(id).populate('teacherId');
       const member = await Member.findOne({ memberId });
 
       if (!activity) {
@@ -60,12 +60,14 @@ module.exports = async (req, res) => {
     // List all activities or create new
     if (!id) {
       if (req.method === 'GET') {
-        const activities = await Activity.find({ status: 'active' }).sort({ createdAt: -1 });
+        const activities = await Activity.find({ status: 'active' })
+          .populate('teacherId')
+          .sort({ createdAt: -1 });
         return res.status(200).json({ activities });
       }
 
       if (req.method === 'POST') {
-        const { name, description, banner, date, time, location, cost, teacher, maxParticipants } = req.body;
+        const { name, description, banner, date, time, location, cost, teacherId, teacher, maxParticipants } = req.body;
 
         const activity = new Activity({
           name,
@@ -75,6 +77,7 @@ module.exports = async (req, res) => {
           time,
           location: location || '',
           cost: parseFloat(cost),
+          teacherId: teacherId || null,
           teacher,
           maxParticipants: parseInt(maxParticipants)
         });
@@ -91,7 +94,7 @@ module.exports = async (req, res) => {
     // Get/Update/Delete specific activity
     if (id) {
       if (req.method === 'GET') {
-        const activity = await Activity.findById(id);
+        const activity = await Activity.findById(id).populate('teacherId');
 
         if (!activity) {
           return res.status(404).json({ message: '找不到活動 / Activity not found' });

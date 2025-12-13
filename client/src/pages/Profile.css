@@ -203,11 +203,15 @@
 }
 
 .item-banner {
-  width: 100%;
-  height: 150px;
+  width: 500px;
+  height: 300px;
+  max-width: 100%;
   object-fit: cover;
   border-radius: 8px;
   margin-bottom: 15px;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .item-card h4 {

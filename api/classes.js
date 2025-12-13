@@ -11,7 +11,7 @@ module.exports = async (req, res) => {
     if (action === 'enroll' && req.method === 'POST') {
       const { memberId } = req.body;
 
-      const classItem = await Class.findById(id).populate('classInfoId');
+      const classItem = await Class.findById(id).populate('classInfoId').populate('teacherId');
       const member = await Member.findOne({ memberId });
 
       if (!classItem) {
@@ -62,12 +62,13 @@ module.exports = async (req, res) => {
       if (req.method === 'GET') {
         const classes = await Class.find({ status: 'active' })
           .populate('classInfoId')
+          .populate('teacherId')
           .sort({ createdAt: -1 });
         return res.status(200).json({ classes });
       }
 
       if (req.method === 'POST') {
-        const { classInfoId, teacher, time, date, location } = req.body;
+        const { classInfoId, teacherId, teacher, time, date, location } = req.body;
 
         // Verify classInfo exists
         const classInfo = await ClassInfo.findById(classInfoId);
@@ -77,6 +78,7 @@ module.exports = async (req, res) => {
 
         const classItem = new Class({
           classInfoId,
+          teacherId: teacherId || null,
           teacher,
           time,
           date: new Date(date),
@@ -95,7 +97,7 @@ module.exports = async (req, res) => {
     // Get/Update/Delete specific class
     if (id) {
       if (req.method === 'GET') {
-        const classItem = await Class.findById(id).populate('classInfoId');
+        const classItem = await Class.findById(id).populate('classInfoId').populate('teacherId');
 
         if (!classItem) {
           return res.status(404).json({ message: '找不到課程 / Class not found' });

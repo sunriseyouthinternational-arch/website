@@ -680,11 +680,15 @@ function Profile() {
                   src={getImageSrc(selectedClass.classInfoId.banner)}
                   alt={selectedClass.classInfoId?.name}
                   style={{
-                    width: '100%',
-                    maxHeight: '300px',
+                    width: '500px',
+                    height: '300px',
+                    maxWidth: '100%',
                     objectFit: 'cover',
                     borderRadius: '8px',
-                    marginBottom: '20px'
+                    marginBottom: '20px',
+                    display: 'block',
+                    marginLeft: 'auto',
+                    marginRight: 'auto'
                   }}
                 />
               )}
@@ -712,10 +716,6 @@ function Profile() {
                   <p>{selectedClass.time}</p>
                 </div>
                 <div>
-                  <strong>{t('teacher')}:</strong>
-                  <p>{selectedClass.teacher}</p>
-                </div>
-                <div>
                   <strong>{t('cost')}:</strong>
                   <p>NT$ {selectedClass.classInfoId?.cost || 0}</p>
                 </div>
@@ -731,19 +731,95 @@ function Profile() {
                 )}
               </div>
 
+              {/* Teacher Information Section */}
+              {selectedClass.teacherId && (
+                <div style={{
+                  background: '#fff8f0',
+                  padding: '20px',
+                  borderRadius: '8px',
+                  marginBottom: '20px',
+                  border: '2px solid #f0e0c0'
+                }}>
+                  <h3 style={{ marginBottom: '15px', color: '#667eea' }}>{t('teacherInfo')}</h3>
+                  <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', alignItems: 'flex-start' }}>
+                    {selectedClass.teacherId.photo && (
+                      <img
+                        src={getImageSrc(selectedClass.teacherId.photo)}
+                        alt={selectedClass.teacherId.name}
+                        style={{
+                          width: '150px',
+                          height: '150px',
+                          objectFit: 'cover',
+                          borderRadius: '8px',
+                          border: '2px solid #667eea'
+                        }}
+                      />
+                    )}
+                    <div style={{ flex: 1, minWidth: '250px' }}>
+                      <h4 style={{ marginBottom: '10px', fontSize: '20px' }}>{selectedClass.teacherId.name}</h4>
+                      {selectedClass.teacherId.bio && (
+                        <div style={{ marginBottom: '10px' }}>
+                          <strong>{t('teacherBio')}:</strong>
+                          <p style={{ marginTop: '5px', lineHeight: '1.6' }}>{selectedClass.teacherId.bio}</p>
+                        </div>
+                      )}
+                      {selectedClass.teacherId.specialties && (
+                        <div style={{ marginBottom: '10px' }}>
+                          <strong>{t('teacherSpecialties')}:</strong>
+                          <p style={{ marginTop: '5px' }}>{selectedClass.teacherId.specialties}</p>
+                        </div>
+                      )}
+                      {selectedClass.teacherId.education && (
+                        <div style={{ marginBottom: '10px' }}>
+                          <strong>{t('teacherEducation')}:</strong>
+                          <p style={{ marginTop: '5px' }}>{selectedClass.teacherId.education}</p>
+                        </div>
+                      )}
+                      {(selectedClass.teacherId.phone || selectedClass.teacherId.lineId) && (
+                        <div>
+                          <strong>{t('teacherContact')}:</strong>
+                          {selectedClass.teacherId.phone && <p style={{ marginTop: '5px' }}>📞 {selectedClass.teacherId.phone}</p>}
+                          {selectedClass.teacherId.lineId && <p style={{ marginTop: '5px' }}>💬 LINE: {selectedClass.teacherId.lineId}</p>}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+              {!selectedClass.teacherId && selectedClass.teacher && (
+                <div style={{
+                  background: '#fff8f0',
+                  padding: '20px',
+                  borderRadius: '8px',
+                  marginBottom: '20px',
+                  border: '2px solid #f0e0c0'
+                }}>
+                  <h3 style={{ marginBottom: '10px', color: '#667eea' }}>{t('teacherInfo')}</h3>
+                  <p><strong>{t('teacher')}:</strong> {selectedClass.teacher}</p>
+                </div>
+              )}
+
               {selectedClass.location && (
                 <div style={{ marginBottom: '20px' }}>
                   <h3>{t('locationMap')}</h3>
-                  <iframe
-                    src={`https://maps.google.com/maps?q=${encodeURIComponent(selectedClass.location)}&output=embed`}
-                    width="100%"
-                    height="400"
-                    style={{ border: '1px solid #ddd', borderRadius: '8px' }}
-                    allowFullScreen=""
-                    loading="lazy"
-                    referrerPolicy="no-referrer-when-downgrade"
-                    title="Class Location Map"
-                  />
+                  <div style={{ position: 'relative' }}>
+                    <iframe
+                      src={`https://maps.google.com/maps?q=${encodeURIComponent(selectedClass.location)}&output=embed`}
+                      width="100%"
+                      height="400"
+                      style={{ border: '1px solid #ddd', borderRadius: '8px' }}
+                      allowFullScreen=""
+                      loading="lazy"
+                      referrerPolicy="no-referrer-when-downgrade"
+                      title="Class Location Map"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        const errorMsg = document.createElement('div');
+                        errorMsg.innerHTML = `<p style="padding: 20px; background: #f0f0f0; border-radius: 8px; text-align: center;">📍 ${selectedClass.location}<br/><small style="color: #666;">${t('language') === 'zh' ? '地圖載入失敗，請直接使用地址' : 'Map failed to load, please use the address directly'}</small></p>`;
+                        e.target.parentNode.appendChild(errorMsg);
+                      }}
+                    />
+                  </div>
                 </div>
               )}
 
