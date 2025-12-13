@@ -121,19 +121,11 @@ function AdminDashboard() {
     navigate('/admin');
   };
 
-  const handleClassInfoBannerUpload = (e) => {
+  const handleNewClassInfoBannerUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    // Check file size (max 2MB)
-    if (file.size > 2 * 1024 * 1024) {
-      setMessage({
-        type: 'error',
-        text: t('language') === 'zh' ? '圖片大小不能超過 2MB' : 'Image size must be less than 2MB'
-      });
-      return;
-    }
-
+    // No file size restriction as per user request
     // Check file type
     if (!file.type.startsWith('image/')) {
       setMessage({
@@ -143,38 +135,21 @@ function AdminDashboard() {
       return;
     }
 
-    // Validate image dimensions (should be 500x300)
-    const img = new Image();
+    // Convert to base64
     const reader = new FileReader();
-
-    reader.onload = (event) => {
-      img.onload = () => {
-        if (img.width !== 500 || img.height !== 300) {
-          setMessage({
-            type: 'error',
-            text: t('language') === 'zh'
-              ? `圖片尺寸必須為 500x300 像素（目前為 ${img.width}x${img.height}）`
-              : `Image dimensions must be 500x300 pixels (current: ${img.width}x${img.height})`
-          });
-          return;
-        }
-
-        setNewClassInfo({ ...newClassInfo, banner: event.target.result });
-        setMessage({
-          type: 'success',
-          text: t('language') === 'zh' ? '圖片上傳成功' : 'Image uploaded successfully'
-        });
-      };
-      img.src = event.target.result;
+    reader.onloadend = () => {
+      setNewClassInfo({ ...newClassInfo, banner: reader.result });
+      setMessage({
+        type: 'success',
+        text: t('language') === 'zh' ? '圖片上傳成功' : 'Image uploaded successfully'
+      });
     };
-
     reader.onerror = () => {
       setMessage({
         type: 'error',
         text: t('language') === 'zh' ? '圖片上傳失敗' : 'Failed to upload image'
       });
     };
-
     reader.readAsDataURL(file);
   };
 
@@ -1039,7 +1014,7 @@ function AdminDashboard() {
                   <input
                     type="file"
                     accept="image/*"
-                    onChange={handleClassInfoBannerUpload}
+                    onChange={handleNewClassInfoBannerUpload}
                     style={{
                       padding: '10px',
                       border: '2px dashed #667eea',
@@ -1050,8 +1025,8 @@ function AdminDashboard() {
                   />
                   <small style={{ color: '#666', display: 'block', marginTop: '5px' }}>
                     {t('language') === 'zh'
-                      ? '上傳圖片（最大 2MB，尺寸必須：500x300px）'
-                      : 'Upload image (max 2MB, dimensions must be: 500x300px)'}
+                      ? '上傳圖片（建議尺寸：1000x600px）'
+                      : 'Upload image (recommended size: 1000x600px)'}
                   </small>
                   {newClassInfo.banner && (
                     <div style={{ marginTop: '15px' }}>
@@ -1062,8 +1037,9 @@ function AdminDashboard() {
                         src={newClassInfo.banner}
                         alt="Banner preview"
                         style={{
-                          width: '100%',
-                          maxHeight: '200px',
+                          width: '1000px',
+                          height: '600px',
+                          maxWidth: '100%',
                           objectFit: 'cover',
                           borderRadius: '8px',
                           border: '2px solid #e0e0e0'
