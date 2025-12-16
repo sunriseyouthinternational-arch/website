@@ -45,8 +45,7 @@ module.exports = async (req, res) => {
       member.enrollments.push({
         type: 'activity',
         itemId: activity._id,
-        itemName: activity.name,
-        paid: false
+        itemName: activity.name
       });
 
       await member.save();

@@ -654,9 +654,11 @@ function AdminDashboard() {
 
   const updatePaymentStatus = async (type, itemId, participantId, paid) => {
     const key = `${type}-${itemId}-${participantId}`;
+    console.log('[Payment Update] Starting payment status update:', { type, itemId, participantId, paid });
 
     try {
       setLoadingStates(prev => ({ ...prev, [key]: true }));
+      console.log('[Payment Update] Loading state set to true');
 
       // Optimistically update UI first
       if (type === 'class') {
@@ -670,6 +672,7 @@ function AdminDashboard() {
               }
             : c
         ));
+        console.log('[Payment Update] Updated classes state');
       } else {
         setActivities(prev => prev.map(a =>
           a._id === itemId
@@ -681,6 +684,7 @@ function AdminDashboard() {
               }
             : a
         ));
+        console.log('[Payment Update] Updated activities state');
       }
 
       // Update selected item if viewing details
@@ -691,21 +695,28 @@ function AdminDashboard() {
             p._id === participantId ? { ...p, paid } : p
           )
         }));
+        console.log('[Payment Update] Updated selectedItem state');
       }
 
       // Then sync with server
       const resource = type === 'class' ? 'class-payment' : 'activity-payment';
       const idParam = type === 'class' ? 'classId' : 'activityId';
       const endpoint = `/api/admin?resource=${resource}&${idParam}=${itemId}&participantId=${participantId}`;
+      console.log('[Payment Update] Sending request to:', endpoint);
 
-      await axios.put(endpoint, { paid });
+      const response = await axios.put(endpoint, { paid });
+      console.log('[Payment Update] Server response:', response.data);
       setMessage({ type: 'success', text: t('paymentStatusUpdated') });
+      console.log('[Payment Update] Success! Payment status updated');
     } catch (error) {
+      console.error('[Payment Update] Error:', error);
+      console.error('[Payment Update] Error response:', error.response?.data);
       setMessage({ type: 'error', text: error.response?.data?.message || t('error') });
       // Refresh on error to get correct state
       fetchData();
     } finally {
       setLoadingStates(prev => ({ ...prev, [key]: false }));
+      console.log('[Payment Update] Loading state set to false');
     }
   };
 
@@ -951,9 +962,7 @@ function AdminDashboard() {
                       <th>{t('language') === 'zh' ? '類型' : 'Type'}</th>
                       <th>{t('name')}</th>
                       <th>{t('language') === 'zh' ? '報名日期' : 'Enrolled'}</th>
-                      <th>{t('language') === 'zh' ? '付款狀態' : 'Payment'}</th>
                       <th>{t('language') === 'zh' ? '狀態' : 'Status'}</th>
-                      <th>{t('language') === 'zh' ? '操作' : 'Action'}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -963,84 +972,9 @@ function AdminDashboard() {
                         <td>{enrollment.itemName}</td>
                         <td>{formatDate(enrollment.enrolledAt)}</td>
                         <td>
-                          <span className={`status-badge ${enrollment.paid ? 'paid' : 'unpaid'}`}>
-                            {enrollment.paid
-                              ? (t('language') === 'zh' ? '已付款' : 'Paid')
-                              : (t('language') === 'zh' ? '未付款' : 'Unpaid')}
-                          </span>
-                        </td>
-                        <td>
                           <span className={`status-badge ${enrollment.status}`}>
                             {t(enrollment.status)}
                           </span>
-                        </td>
-                        <td>
-                          <button
-                            className="btn btn-small"
-                            onClick={async () => {
-                              // Find the actual class/activity to get its _id
-                              const items = enrollment.type === 'class' ? classes : activities;
-                              const item = items.find(i => i._id === enrollment.itemId);
-                              if (item) {
-                                // Find the participant entry in the item
-                                const participant = item.participants.find(p => {
-                                  const pId = typeof p.memberId === 'object' ? p.memberId._id : p.memberId;
-                                  return pId === selectedMember._id;
-                                });
-
-                                if (participant) {
-                                  const key = `${enrollment.type}-${enrollment.itemId}-${participant._id}`;
-
-                                  // Update payment status
-                                  await updatePaymentStatus(
-                                    enrollment.type,
-                                    enrollment.itemId,
-                                    participant._id,
-                                    !enrollment.paid
-                                  );
-
-                                  // Also update the member's enrollment data
-                                  setSelectedMember(prev => ({
-                                    ...prev,
-                                    enrollments: prev.enrollments.map(e =>
-                                      e.itemId === enrollment.itemId && e.type === enrollment.type
-                                        ? { ...e, paid: !enrollment.paid }
-                                        : e
-                                    )
-                                  }));
-                                }
-                              }
-                            }}
-                            disabled={(() => {
-                              const items = enrollment.type === 'class' ? classes : activities;
-                              const item = items.find(i => i._id === enrollment.itemId);
-                              if (!item) return false;
-                              const participant = item.participants.find(p => {
-                                const pId = typeof p.memberId === 'object' ? p.memberId._id : p.memberId;
-                                return pId === selectedMember._id;
-                              });
-                              if (!participant) return false;
-                              const key = `${enrollment.type}-${enrollment.itemId}-${participant._id}`;
-                              return loadingStates[key];
-                            })()}
-                          >
-                            {(() => {
-                              const items = enrollment.type === 'class' ? classes : activities;
-                              const item = items.find(i => i._id === enrollment.itemId);
-                              if (!item) return t('language') === 'zh' ? '標記已付' : 'Mark Paid';
-                              const participant = item.participants.find(p => {
-                                const pId = typeof p.memberId === 'object' ? p.memberId._id : p.memberId;
-                                return pId === selectedMember._id;
-                              });
-                              if (!participant) return t('language') === 'zh' ? '標記已付' : 'Mark Paid';
-                              const key = `${enrollment.type}-${enrollment.itemId}-${participant._id}`;
-                              return loadingStates[key]
-                                ? t('processing')
-                                : enrollment.paid
-                                  ? (t('language') === 'zh' ? '標記未付' : 'Mark Unpaid')
-                                  : (t('language') === 'zh' ? '標記已付' : 'Mark Paid');
-                            })()}
-                          </button>
                         </td>
                       </tr>
                     ))}

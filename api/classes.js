@@ -46,8 +46,7 @@ module.exports = async (req, res) => {
       member.enrollments.push({
         type: 'class',
         itemId: classItem._id,
-        itemName: classItem.classInfoId.name,
-        paid: false
+        itemName: classItem.classInfoId.name
       });
 
       await member.save();
@@ -285,7 +284,9 @@ module.exports = async (req, res) => {
               }
             };
 
-            await lineClient.broadcast(message);
+            await lineClient.broadcast({
+              messages: [message]
+            });
             classItem.lineAnnouncementSent = true;
             await classItem.save();
           } catch (lineError) {
