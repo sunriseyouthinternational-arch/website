@@ -41,7 +41,8 @@ function AdminDashboard() {
     teacher: '',
     time: '',
     date: '',
-    location: ''
+    location: '',
+    announceOnLine: false
   });
 
   // Form states for adding new activity
@@ -239,7 +240,13 @@ function AdminDashboard() {
   const handleAddClass = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('/api/classes', newClass, {
+      // Use custom time if selected
+      const classData = {
+        ...newClass,
+        time: newClass.time === 'custom' ? newClass.customTime : newClass.time
+      };
+
+      const response = await axios.post('/api/classes', classData, {
         headers: { 'Content-Type': 'application/json' }
       });
 
@@ -254,7 +261,8 @@ function AdminDashboard() {
         teacher: '',
         time: '',
         date: '',
-        location: ''
+        location: '',
+        announceOnLine: false
       });
 
       // Refresh only classes instead of all data
@@ -1163,13 +1171,39 @@ function AdminDashboard() {
                   </div>
                   <div className="form-group">
                     <label>{t('time')} *</label>
-                    <input
-                      type="text"
+                    <select
                       value={newClass.time}
                       onChange={(e) => setNewClass({ ...newClass, time: e.target.value })}
                       required
-                      placeholder={t('language') === 'zh' ? '例如：10:00-12:00' : 'e.g., 10:00-12:00'}
-                    />
+                    >
+                      <option value="">{t('language') === 'zh' ? '選擇時間' : 'Select Time'}</option>
+                      <option value="08:00-09:00">08:00-09:00</option>
+                      <option value="09:00-10:00">09:00-10:00</option>
+                      <option value="10:00-11:00">10:00-11:00</option>
+                      <option value="11:00-12:00">11:00-12:00</option>
+                      <option value="12:00-13:00">12:00-13:00</option>
+                      <option value="13:00-14:00">13:00-14:00</option>
+                      <option value="14:00-15:00">14:00-15:00</option>
+                      <option value="15:00-16:00">15:00-16:00</option>
+                      <option value="16:00-17:00">16:00-17:00</option>
+                      <option value="17:00-18:00">17:00-18:00</option>
+                      <option value="18:00-19:00">18:00-19:00</option>
+                      <option value="19:00-20:00">19:00-20:00</option>
+                      <option value="20:00-21:00">20:00-21:00</option>
+                      <option value="09:00-12:00">09:00-12:00</option>
+                      <option value="13:00-16:00">13:00-16:00</option>
+                      <option value="14:00-17:00">14:00-17:00</option>
+                      <option value="custom">{t('language') === 'zh' ? '自訂時間...' : 'Custom time...'}</option>
+                    </select>
+                    {newClass.time === 'custom' && (
+                      <input
+                        type="text"
+                        value={newClass.customTime || ''}
+                        onChange={(e) => setNewClass({ ...newClass, customTime: e.target.value })}
+                        placeholder={t('language') === 'zh' ? '輸入自訂時間' : 'Enter custom time'}
+                        style={{ marginTop: '10px' }}
+                      />
+                    )}
                   </div>
                 </div>
 
@@ -1181,6 +1215,23 @@ function AdminDashboard() {
                     onChange={(e) => setNewClass({ ...newClass, location: e.target.value })}
                     placeholder={t('language') === 'zh' ? '例如：台北市大安區復興南路一段' : 'e.g., No. 1, Section 1, Fuxing S Rd, Da\'an District, Taipei City'}
                   />
+                </div>
+
+                <div className="form-group">
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      checked={newClass.announceOnLine}
+                      onChange={(e) => setNewClass({ ...newClass, announceOnLine: e.target.checked })}
+                      style={{ width: 'auto', cursor: 'pointer' }}
+                    />
+                    <span>{t('language') === 'zh' ? '在 LINE 官方帳號發布課程公告' : 'Announce on LINE Official Account'}</span>
+                  </label>
+                  <small style={{ color: '#666', display: 'block', marginTop: '5px', marginLeft: '30px' }}>
+                    {t('language') === 'zh'
+                      ? '勾選後，課程將自動發送到所有 LINE 好友'
+                      : 'When checked, class will be announced to all LINE friends'}
+                  </small>
                 </div>
 
                 {newClass.location && (

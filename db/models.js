@@ -99,6 +99,8 @@ const classSchema = new mongoose.Schema({
   time: { type: String, required: true },
   date: { type: Date, required: true },
   location: { type: String },
+  announceOnLine: { type: Boolean, default: false }, // Whether to announce on LINE when class is created
+  lineAnnouncementSent: { type: Boolean, default: false }, // Track if LINE announcement was sent
   currentParticipants: { type: Number, default: 0 },
   participants: [{
     memberId: { type: mongoose.Schema.Types.ObjectId, ref: 'Member', required: true },
