@@ -64,6 +64,17 @@ const memberSchema = new mongoose.Schema({
     enrolledAt: { type: Date, default: Date.now },
     status: { type: String, enum: ['active', 'completed', 'cancelled'], default: 'active' }
   }],
+  coupons: [{
+    type: { type: String, enum: ['trial', 'discount'], required: true },
+    classInfoId: { type: mongoose.Schema.Types.ObjectId, ref: 'ClassInfo' }, // Required for trial coupons
+    discountPercent: { type: Number }, // Required for discount coupons
+    name: { type: String, required: true },
+    description: { type: String },
+    image: { type: String }, // Base64 or file path
+    quantity: { type: Number, default: 1 },
+    usedCount: { type: Number, default: 0 },
+    createdAt: { type: Date, default: Date.now }
+  }],
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });
