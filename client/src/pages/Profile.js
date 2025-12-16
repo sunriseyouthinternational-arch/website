@@ -26,6 +26,7 @@ function Profile() {
   // Check for tab parameter in URL
   const tabFromUrl = searchParams.get('tab');
   const sessionFromUrl = searchParams.get('session');
+  const classIdFromUrl = searchParams.get('classId');
   const [activeTab, setActiveTab] = useState(
     tabFromUrl === 'courses' ? 'courses' :
     tabFromUrl === 'points' ? 'points' :
@@ -234,6 +235,17 @@ function Profile() {
       setActiveTab('profile');
     }
   }, [tabFromUrl]);
+
+  // Auto-open class detail when classId is in URL
+  useEffect(() => {
+    if (classIdFromUrl && classes.length > 0) {
+      const classToOpen = classes.find(c => c._id === classIdFromUrl);
+      if (classToOpen) {
+        setSelectedClass(classToOpen);
+        setActiveTab('courses'); // Switch to courses tab
+      }
+    }
+  }, [classIdFromUrl, classes]);
 
   const fetchMemberById = async (id) => {
     setLoading(true);

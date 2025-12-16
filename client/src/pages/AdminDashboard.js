@@ -1864,9 +1864,9 @@ function AdminDashboard() {
             </div>
           )}
 
-          {selectedItem.participants && selectedItem.participants.length > 0 && (
-            <div className="detail-section" style={{ marginTop: '30px' }}>
-              <h4>{t('language') === 'zh' ? '已報名會員' : 'Enrolled Members'}</h4>
+          <div className="detail-section" style={{ marginTop: '30px' }}>
+            <h4>{t('language') === 'zh' ? '已報名會員' : 'Enrolled Members'}</h4>
+            {selectedItem.participants && selectedItem.participants.length > 0 ? (
               <div className="table-container">
                 <table className="data-table">
                   <thead>
@@ -1918,8 +1918,12 @@ function AdminDashboard() {
                   </tbody>
                 </table>
               </div>
-            </div>
-          )}
+            ) : (
+              <p style={{ textAlign: 'center', color: '#666', padding: '20px' }}>
+                {t('language') === 'zh' ? '目前尚無會員報名' : 'No enrollments yet'}
+              </p>
+            )}
+          </div>
         </div>
       )}
 
