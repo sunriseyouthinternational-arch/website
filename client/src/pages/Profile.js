@@ -892,14 +892,35 @@ function Profile() {
                 <h4 className="section-subtitle">{t('registeredClasses')}</h4>
                 <div className="enrolled-list">
                   {getEnrolledItems('class').length > 0 ? (
-                    getEnrolledItems('class').map((enrollment) => (
-                      <div key={enrollment._id} className="enrolled-item">
-                        <p><strong>{enrollment.itemName}</strong></p>
-                        <span className={`status-badge ${enrollment.paid ? 'paid' : 'unpaid'}`}>
-                          {enrollment.paid ? t('paid') : t('unpaid')}
-                        </span>
-                      </div>
-                    ))
+                    getEnrolledItems('class').map((enrollment) => {
+                      const classItem = classes.find(c => c._id === enrollment.itemId);
+                      return (
+                        <div key={enrollment._id} className="enrolled-item">
+                          <div style={{ flex: 1 }}>
+                            <p><strong>{enrollment.itemName}</strong></p>
+                            {classItem && (
+                              <p style={{ fontSize: '14px', color: '#666', marginTop: '5px' }}>
+                                {formatDate(classItem.date)} • {classItem.time}
+                              </p>
+                            )}
+                          </div>
+                          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                            <span className={`status-badge ${enrollment.paid ? 'paid' : 'unpaid'}`}>
+                              {enrollment.paid ? t('paid') : t('unpaid')}
+                            </span>
+                            {classItem && (
+                              <button
+                                onClick={() => setSelectedClass(classItem)}
+                                className="btn btn-small"
+                                style={{ padding: '6px 12px', fontSize: '14px' }}
+                              >
+                                {t('viewDetails')}
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })
                   ) : (
                     <p className="empty-message">{t('language') === 'zh' ? '尚無報名課程' : 'No enrolled classes'}</p>
                   )}

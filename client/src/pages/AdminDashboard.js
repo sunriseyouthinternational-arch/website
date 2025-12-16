@@ -1277,12 +1277,20 @@ function AdminDashboard() {
                       {classItem.currentParticipants}/{classItem.classInfoId?.maxParticipants || 0} {t('participants')}
                     </p>
                   </div>
-                  <button
-                    className="btn btn-small btn-primary"
-                    onClick={() => setSelectedItem({ ...classItem, type: 'class' })}
-                  >
-                    {t('language') === 'zh' ? '查看詳情' : 'View Details'}
-                  </button>
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <button
+                      className="btn btn-small btn-primary"
+                      onClick={() => setSelectedItem({ ...classItem, type: 'class' })}
+                    >
+                      {t('language') === 'zh' ? '查看詳情' : 'View Details'}
+                    </button>
+                    <button
+                      className="btn btn-small btn-danger"
+                      onClick={() => handleDeleteItem('class', classItem._id)}
+                    >
+                      {t('delete')}
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -1491,12 +1499,20 @@ function AdminDashboard() {
                       {activity.currentParticipants}/{activity.maxParticipants} {t('participants')}
                     </p>
                   </div>
-                  <button
-                    className="btn btn-small btn-primary"
-                    onClick={() => setSelectedItem({ ...activity, type: 'activity' })}
-                  >
-                    {t('language') === 'zh' ? '查看詳情' : 'View Details'}
-                  </button>
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <button
+                      className="btn btn-small btn-primary"
+                      onClick={() => setSelectedItem({ ...activity, type: 'activity' })}
+                    >
+                      {t('language') === 'zh' ? '查看詳情' : 'View Details'}
+                    </button>
+                    <button
+                      className="btn btn-small btn-danger"
+                      onClick={() => handleDeleteItem('activity', activity._id)}
+                    >
+                      {t('delete')}
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
