@@ -145,6 +145,30 @@ function Profile() {
       });
     }
 
+    // Sort by date, then by time
+    filtered.sort((a, b) => {
+      const dateA = new Date(a.date);
+      const dateB = new Date(b.date);
+
+      // First sort by date
+      if (dateA.getTime() !== dateB.getTime()) {
+        return dateA - dateB;
+      }
+
+      // If same date, sort by time
+      // Extract start time from format like "10:00-12:00"
+      const getStartTime = (timeStr) => {
+        if (!timeStr) return '00:00';
+        const parts = timeStr.split('-');
+        return parts[0] ? parts[0].trim() : '00:00';
+      };
+
+      const timeA = getStartTime(a.time);
+      const timeB = getStartTime(b.time);
+
+      return timeA.localeCompare(timeB);
+    });
+
     return filtered;
   };
 
@@ -698,94 +722,106 @@ function Profile() {
                 {selectedClass.classInfoId?.description || ''}
               </p>
 
+              {/* Two-box layout: Class Details and Teacher Info */}
               <div style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                gap: '15px',
-                background: '#f8f9ff',
-                padding: '20px',
-                borderRadius: '8px',
+                gridTemplateColumns: selectedClass.teacherId ? '1.5fr 1fr' : '1fr',
+                gap: '20px',
                 marginBottom: '20px'
               }}>
-                <div>
-                  <strong>{t('classDate')}:</strong>
-                  <p>{formatDate(selectedClass.date)}</p>
+                {/* Class Details Box */}
+                <div style={{
+                  background: '#f8f9ff',
+                  padding: '20px',
+                  borderRadius: '8px',
+                  border: '2px solid #e0e8ff'
+                }}>
+                  <h3 style={{ marginBottom: '15px', color: '#667eea', fontSize: '20px' }}>
+                    {t('language') === 'zh' ? '課程詳情' : 'Class Details'}
+                  </h3>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div>
+                      <strong>{t('classDate')}:</strong>
+                      <p style={{ marginTop: '5px' }}>{formatDate(selectedClass.date)}</p>
+                    </div>
+                    <div>
+                      <strong>{t('time')}:</strong>
+                      <p style={{ marginTop: '5px' }}>{selectedClass.time}</p>
+                    </div>
+                    <div>
+                      <strong>{t('cost')}:</strong>
+                      <p style={{ marginTop: '5px' }}>NT$ {selectedClass.classInfoId?.cost || 0}</p>
+                    </div>
+                    <div>
+                      <strong>{t('participants')}:</strong>
+                      <p style={{ marginTop: '5px' }}>{selectedClass.currentParticipants} / {selectedClass.classInfoId?.maxParticipants || 0}</p>
+                    </div>
+                    {selectedClass.location && (
+                      <div>
+                        <strong>{t('location')}:</strong>
+                        <p style={{ marginTop: '5px' }}>📍 {selectedClass.location}</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <div>
-                  <strong>{t('time')}:</strong>
-                  <p>{selectedClass.time}</p>
-                </div>
-                <div>
-                  <strong>{t('cost')}:</strong>
-                  <p>NT$ {selectedClass.classInfoId?.cost || 0}</p>
-                </div>
-                <div>
-                  <strong>{t('participants')}:</strong>
-                  <p>{selectedClass.currentParticipants} / {selectedClass.classInfoId?.maxParticipants || 0}</p>
-                </div>
-                {selectedClass.location && (
-                  <div>
-                    <strong>{t('location')}:</strong>
-                    <p>📍 {selectedClass.location}</p>
+
+                {/* Teacher Information Box */}
+                {selectedClass.teacherId && (
+                  <div style={{
+                    background: '#fff8f0',
+                    padding: '20px',
+                    borderRadius: '8px',
+                    border: '2px solid #f0e0c0'
+                  }}>
+                    <h3 style={{ marginBottom: '15px', color: '#667eea', fontSize: '20px' }}>{t('teacherInfo')}</h3>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', alignItems: 'center', textAlign: 'center' }}>
+                      {selectedClass.teacherId.photo && (
+                        <img
+                          src={getImageSrc(selectedClass.teacherId.photo)}
+                          alt={selectedClass.teacherId.name}
+                          style={{
+                            width: '120px',
+                            height: '120px',
+                            objectFit: 'cover',
+                            borderRadius: '50%',
+                            border: '3px solid #667eea'
+                          }}
+                        />
+                      )}
+                      <div style={{ width: '100%', textAlign: 'left' }}>
+                        <h4 style={{ marginBottom: '10px', fontSize: '18px', textAlign: 'center' }}>{selectedClass.teacherId.name}</h4>
+                        {selectedClass.teacherId.bio && (
+                          <div style={{ marginBottom: '10px' }}>
+                            <strong>{t('teacherBio')}:</strong>
+                            <p style={{ marginTop: '5px', lineHeight: '1.6', fontSize: '14px' }}>{selectedClass.teacherId.bio}</p>
+                          </div>
+                        )}
+                        {selectedClass.teacherId.specialties && (
+                          <div style={{ marginBottom: '10px' }}>
+                            <strong>{t('teacherSpecialties')}:</strong>
+                            <p style={{ marginTop: '5px', fontSize: '14px' }}>{selectedClass.teacherId.specialties}</p>
+                          </div>
+                        )}
+                        {selectedClass.teacherId.education && (
+                          <div style={{ marginBottom: '10px' }}>
+                            <strong>{t('teacherEducation')}:</strong>
+                            <p style={{ marginTop: '5px', fontSize: '14px' }}>{selectedClass.teacherId.education}</p>
+                          </div>
+                        )}
+                        {(selectedClass.teacherId.phone || selectedClass.teacherId.lineId) && (
+                          <div>
+                            <strong>{t('teacherContact')}:</strong>
+                            {selectedClass.teacherId.phone && <p style={{ marginTop: '5px', fontSize: '14px' }}>📞 {selectedClass.teacherId.phone}</p>}
+                            {selectedClass.teacherId.lineId && <p style={{ marginTop: '5px', fontSize: '14px' }}>💬 LINE: {selectedClass.teacherId.lineId}</p>}
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
 
-              {/* Teacher Information Section */}
-              {selectedClass.teacherId && (
-                <div style={{
-                  background: '#fff8f0',
-                  padding: '20px',
-                  borderRadius: '8px',
-                  marginBottom: '20px',
-                  border: '2px solid #f0e0c0'
-                }}>
-                  <h3 style={{ marginBottom: '15px', color: '#667eea' }}>{t('teacherInfo')}</h3>
-                  <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', alignItems: 'flex-start' }}>
-                    {selectedClass.teacherId.photo && (
-                      <img
-                        src={getImageSrc(selectedClass.teacherId.photo)}
-                        alt={selectedClass.teacherId.name}
-                        style={{
-                          width: '150px',
-                          height: '150px',
-                          objectFit: 'cover',
-                          borderRadius: '8px',
-                          border: '2px solid #667eea'
-                        }}
-                      />
-                    )}
-                    <div style={{ flex: 1, minWidth: '250px' }}>
-                      <h4 style={{ marginBottom: '10px', fontSize: '20px' }}>{selectedClass.teacherId.name}</h4>
-                      {selectedClass.teacherId.bio && (
-                        <div style={{ marginBottom: '10px' }}>
-                          <strong>{t('teacherBio')}:</strong>
-                          <p style={{ marginTop: '5px', lineHeight: '1.6' }}>{selectedClass.teacherId.bio}</p>
-                        </div>
-                      )}
-                      {selectedClass.teacherId.specialties && (
-                        <div style={{ marginBottom: '10px' }}>
-                          <strong>{t('teacherSpecialties')}:</strong>
-                          <p style={{ marginTop: '5px' }}>{selectedClass.teacherId.specialties}</p>
-                        </div>
-                      )}
-                      {selectedClass.teacherId.education && (
-                        <div style={{ marginBottom: '10px' }}>
-                          <strong>{t('teacherEducation')}:</strong>
-                          <p style={{ marginTop: '5px' }}>{selectedClass.teacherId.education}</p>
-                        </div>
-                      )}
-                      {(selectedClass.teacherId.phone || selectedClass.teacherId.lineId) && (
-                        <div>
-                          <strong>{t('teacherContact')}:</strong>
-                          {selectedClass.teacherId.phone && <p style={{ marginTop: '5px' }}>📞 {selectedClass.teacherId.phone}</p>}
-                          {selectedClass.teacherId.lineId && <p style={{ marginTop: '5px' }}>💬 LINE: {selectedClass.teacherId.lineId}</p>}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
+              {/* Fallback if no teacher ID */}
               {!selectedClass.teacherId && selectedClass.teacher && (
                 <div style={{
                   background: '#fff8f0',
