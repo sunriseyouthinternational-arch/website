@@ -103,6 +103,30 @@ function Profile() {
       const activeClasses = classesRes.data.classes.filter(c => c.status === 'active');
       const activeActivities = activitiesRes.data.activities.filter(a => a.status === 'active');
 
+      // Sort activities by date, then by time
+      activeActivities.sort((a, b) => {
+        const dateA = new Date(a.date);
+        const dateB = new Date(b.date);
+
+        // First sort by date
+        if (dateA.getTime() !== dateB.getTime()) {
+          return dateA - dateB;
+        }
+
+        // If same date, sort by time
+        // Extract start time from format like "10:00 - 12:00"
+        const getStartTime = (timeStr) => {
+          if (!timeStr) return '00:00';
+          const parts = timeStr.split('-');
+          return parts[0] ? parts[0].trim() : '00:00';
+        };
+
+        const timeA = getStartTime(a.time);
+        const timeB = getStartTime(b.time);
+
+        return timeA.localeCompare(timeB);
+      });
+
       setClasses(activeClasses);
       setActivities(activeActivities);
     } catch (error) {
@@ -773,7 +797,7 @@ function Profile() {
                     borderRadius: '8px',
                     border: '2px solid #f0e0c0'
                   }}>
-                    <h3 style={{ marginBottom: '15px', color: '#667eea', fontSize: '20px' }}>{t('teacherInfo')}</h3>
+                    <h3 style={{ marginBottom: '15px', color: '#667eea', fontSize: '20px' }}>{t('hostInfo')}</h3>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', alignItems: 'center', textAlign: 'center' }}>
                       {selectedClass.teacherId.photo && (
                         <img
@@ -792,27 +816,20 @@ function Profile() {
                         <h4 style={{ marginBottom: '10px', fontSize: '18px', textAlign: 'center' }}>{selectedClass.teacherId.name}</h4>
                         {selectedClass.teacherId.bio && (
                           <div style={{ marginBottom: '10px' }}>
-                            <strong>{t('teacherBio')}:</strong>
+                            <strong>{t('hostBio')}:</strong>
                             <p style={{ marginTop: '5px', lineHeight: '1.6', fontSize: '14px' }}>{selectedClass.teacherId.bio}</p>
                           </div>
                         )}
                         {selectedClass.teacherId.specialties && (
                           <div style={{ marginBottom: '10px' }}>
-                            <strong>{t('teacherSpecialties')}:</strong>
+                            <strong>{t('hostSpecialties')}:</strong>
                             <p style={{ marginTop: '5px', fontSize: '14px' }}>{selectedClass.teacherId.specialties}</p>
                           </div>
                         )}
                         {selectedClass.teacherId.education && (
                           <div style={{ marginBottom: '10px' }}>
-                            <strong>{t('teacherEducation')}:</strong>
+                            <strong>{t('hostEducation')}:</strong>
                             <p style={{ marginTop: '5px', fontSize: '14px' }}>{selectedClass.teacherId.education}</p>
-                          </div>
-                        )}
-                        {(selectedClass.teacherId.phone || selectedClass.teacherId.lineId) && (
-                          <div>
-                            <strong>{t('teacherContact')}:</strong>
-                            {selectedClass.teacherId.phone && <p style={{ marginTop: '5px', fontSize: '14px' }}>📞 {selectedClass.teacherId.phone}</p>}
-                            {selectedClass.teacherId.lineId && <p style={{ marginTop: '5px', fontSize: '14px' }}>💬 LINE: {selectedClass.teacherId.lineId}</p>}
                           </div>
                         )}
                       </div>
@@ -830,8 +847,8 @@ function Profile() {
                   marginBottom: '20px',
                   border: '2px solid #f0e0c0'
                 }}>
-                  <h3 style={{ marginBottom: '10px', color: '#667eea' }}>{t('teacherInfo')}</h3>
-                  <p><strong>{t('teacher')}:</strong> {selectedClass.teacher}</p>
+                  <h3 style={{ marginBottom: '10px', color: '#667eea' }}>{t('hostInfo')}</h3>
+                  <p><strong>{t('host')}:</strong> {selectedClass.teacher}</p>
                 </div>
               )}
 
@@ -1090,7 +1107,7 @@ function Profile() {
                       <p className="item-description">{classItem.classInfoId?.description || ''}</p>
                       <div className="item-details">
                         <p><strong>{t('classDate')}:</strong> {formatDate(classItem.date)}</p>
-                        <p><strong>{t('teacher')}:</strong> {classItem.teacher}</p>
+                        <p><strong>{t('host')}:</strong> {classItem.teacher}</p>
                         <p><strong>{t('time')}:</strong> {classItem.time}</p>
                         <p><strong>{t('cost')}:</strong> NT$ {classItem.classInfoId?.cost || 0}</p>
                         <p><strong>{t('participants')}:</strong> {classItem.currentParticipants} / {classItem.classInfoId?.maxParticipants || 0}</p>
@@ -1150,7 +1167,7 @@ function Profile() {
                       <h4>{activity.name}</h4>
                       <p className="item-description">{activity.description}</p>
                       <div className="item-details">
-                        <p><strong>{t('teacher')}:</strong> {activity.teacher}</p>
+                        <p><strong>{t('host')}:</strong> {activity.teacher}</p>
                         <p><strong>{t('time')}:</strong> {activity.time}</p>
                         {activity.location && (
                           <p><strong>{t('location')}:</strong> 📍 {activity.location}</p>

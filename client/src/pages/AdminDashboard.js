@@ -240,13 +240,7 @@ function AdminDashboard() {
   const handleAddClass = async (e) => {
     e.preventDefault();
     try {
-      // Use custom time if selected
-      const classData = {
-        ...newClass,
-        time: newClass.time === 'custom' ? newClass.customTime : newClass.time
-      };
-
-      const response = await axios.post('/api/classes', classData, {
+      const response = await axios.post('/api/classes', newClass, {
         headers: { 'Content-Type': 'application/json' }
       });
 
@@ -434,7 +428,7 @@ function AdminDashboard() {
 
       setMessage({
         type: 'success',
-        text: t('language') === 'zh' ? '教師添加成功' : 'Teacher added successfully'
+        text: t('language') === 'zh' ? '主辦人添加成功' : 'Host added successfully'
       });
       setShowAddTeacherForm(false);
       setNewTeacher({
@@ -496,7 +490,7 @@ function AdminDashboard() {
 
       setMessage({
         type: 'success',
-        text: t('language') === 'zh' ? '教師刪除成功' : 'Teacher deleted successfully'
+        text: t('language') === 'zh' ? '主辦人刪除成功' : 'Host deleted successfully'
       });
       setSelectedTeacher(null);
       fetchData();
@@ -611,7 +605,7 @@ function AdminDashboard() {
           className={`tab-button ${activeTab === 'teachers' ? 'active' : ''}`}
           onClick={() => setActiveTab('teachers')}
         >
-          {t('language') === 'zh' ? '教師管理' : 'Teacher Management'}
+          {t('language') === 'zh' ? '主辦人管理' : 'Host Management'}
         </button>
         <button
           className={`tab-button ${activeTab === 'memberDetail' ? 'active' : ''}`}
@@ -807,6 +801,7 @@ function AdminDashboard() {
                       <th>{t('language') === 'zh' ? '報名日期' : 'Enrolled'}</th>
                       <th>{t('language') === 'zh' ? '付款狀態' : 'Payment'}</th>
                       <th>{t('language') === 'zh' ? '狀態' : 'Status'}</th>
+                      <th>{t('language') === 'zh' ? '操作' : 'Action'}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -826,6 +821,35 @@ function AdminDashboard() {
                           <span className={`status-badge ${enrollment.status}`}>
                             {t(enrollment.status)}
                           </span>
+                        </td>
+                        <td>
+                          <button
+                            className="btn btn-small"
+                            onClick={() => {
+                              // Find the actual class/activity to get its _id
+                              const items = enrollment.type === 'class' ? classes : activities;
+                              const item = items.find(i => i._id === enrollment.itemId);
+                              if (item) {
+                                // Find the participant entry in the item
+                                const participant = item.participants.find(p => p.memberId.toString() === selectedMember._id.toString());
+                                if (participant) {
+                                  updatePaymentStatus(
+                                    enrollment.type,
+                                    enrollment.itemId,
+                                    participant._id,
+                                    !enrollment.paid
+                                  );
+                                }
+                              }
+                            }}
+                            disabled={loadingStates[`${enrollment.type}-${enrollment.itemId}-${idx}`]}
+                          >
+                            {loadingStates[`${enrollment.type}-${enrollment.itemId}-${idx}`]
+                              ? t('processing')
+                              : enrollment.paid
+                                ? (t('language') === 'zh' ? '標記未付' : 'Mark Unpaid')
+                                : (t('language') === 'zh' ? '標記已付' : 'Mark Paid')}
+                          </button>
                         </td>
                       </tr>
                     ))}
@@ -1136,7 +1160,7 @@ function AdminDashboard() {
                 </div>
 
                 <div className="form-group">
-                  <label>{t('teacher')} *</label>
+                  <label>{t('host')} *</label>
                   <select
                     value={newClass.teacherId || ''}
                     onChange={(e) => {
@@ -1149,7 +1173,7 @@ function AdminDashboard() {
                     }}
                     required
                   >
-                    <option value="">{t('language') === 'zh' ? '選擇教師' : 'Select Teacher'}</option>
+                    <option value="">{t('language') === 'zh' ? '選擇主辦人' : 'Select Host'}</option>
                     {teachers.map(teacher => (
                       <option key={teacher._id} value={teacher._id}>
                         {teacher.name}
@@ -1171,39 +1195,18 @@ function AdminDashboard() {
                   </div>
                   <div className="form-group">
                     <label>{t('time')} *</label>
-                    <select
+                    <input
+                      type="text"
                       value={newClass.time}
                       onChange={(e) => setNewClass({ ...newClass, time: e.target.value })}
+                      placeholder="HH:MM - HH:MM"
+                      pattern="^([0-1]?[0-9]|2[0-3]):[0-5][0-9]\s*-\s*([0-1]?[0-9]|2[0-3]):[0-5][0-9]$"
                       required
-                    >
-                      <option value="">{t('language') === 'zh' ? '選擇時間' : 'Select Time'}</option>
-                      <option value="08:00-09:00">08:00-09:00</option>
-                      <option value="09:00-10:00">09:00-10:00</option>
-                      <option value="10:00-11:00">10:00-11:00</option>
-                      <option value="11:00-12:00">11:00-12:00</option>
-                      <option value="12:00-13:00">12:00-13:00</option>
-                      <option value="13:00-14:00">13:00-14:00</option>
-                      <option value="14:00-15:00">14:00-15:00</option>
-                      <option value="15:00-16:00">15:00-16:00</option>
-                      <option value="16:00-17:00">16:00-17:00</option>
-                      <option value="17:00-18:00">17:00-18:00</option>
-                      <option value="18:00-19:00">18:00-19:00</option>
-                      <option value="19:00-20:00">19:00-20:00</option>
-                      <option value="20:00-21:00">20:00-21:00</option>
-                      <option value="09:00-12:00">09:00-12:00</option>
-                      <option value="13:00-16:00">13:00-16:00</option>
-                      <option value="14:00-17:00">14:00-17:00</option>
-                      <option value="custom">{t('language') === 'zh' ? '自訂時間...' : 'Custom time...'}</option>
-                    </select>
-                    {newClass.time === 'custom' && (
-                      <input
-                        type="text"
-                        value={newClass.customTime || ''}
-                        onChange={(e) => setNewClass({ ...newClass, customTime: e.target.value })}
-                        placeholder={t('language') === 'zh' ? '輸入自訂時間' : 'Enter custom time'}
-                        style={{ marginTop: '10px' }}
-                      />
-                    )}
+                      title={t('language') === 'zh' ? '請使用格式: HH:MM - HH:MM (例如: 10:00 - 12:00)' : 'Use format: HH:MM - HH:MM (e.g., 10:00 - 12:00)'}
+                    />
+                    <small style={{ color: '#666', display: 'block', marginTop: '5px' }}>
+                      {t('language') === 'zh' ? '格式: HH:MM - HH:MM (例如: 10:00 - 12:00)' : 'Format: HH:MM - HH:MM (e.g., 10:00 - 12:00)'}
+                    </small>
                   </div>
                 </div>
 
@@ -1266,7 +1269,7 @@ function AdminDashboard() {
                   <div className="item-summary-content">
                     <h5>{classItem.classInfoId?.name || 'N/A'}</h5>
                     <p className="item-summary-meta">
-                      {formatDate(classItem.date)} | {classItem.time} | {t('teacher')}: {classItem.teacher}
+                      {formatDate(classItem.date)} | {classItem.time} | {t('host')}: {classItem.teacher}
                     </p>
                     {classItem.location && (
                       <p className="item-summary-meta" style={{ fontSize: '0.9em', color: '#666' }}>
@@ -1333,7 +1336,7 @@ function AdminDashboard() {
                 </div>
 
                 <div className="form-group">
-                  <label>{t('teacher')} *</label>
+                  <label>{t('host')} *</label>
                   <select
                     value={newActivity.teacherId || ''}
                     onChange={(e) => {
@@ -1346,7 +1349,7 @@ function AdminDashboard() {
                     }}
                     required
                   >
-                    <option value="">{t('language') === 'zh' ? '選擇教師' : 'Select Teacher'}</option>
+                    <option value="">{t('language') === 'zh' ? '選擇主辦人' : 'Select Host'}</option>
                     {teachers.map(teacher => (
                       <option key={teacher._id} value={teacher._id}>
                         {teacher.name}
@@ -1371,9 +1374,14 @@ function AdminDashboard() {
                       type="text"
                       value={newActivity.time}
                       onChange={(e) => setNewActivity({ ...newActivity, time: e.target.value })}
+                      placeholder="HH:MM - HH:MM"
+                      pattern="^([0-1]?[0-9]|2[0-3]):[0-5][0-9]\s*-\s*([0-1]?[0-9]|2[0-3]):[0-5][0-9]$"
                       required
-                      placeholder={t('language') === 'zh' ? '例如：10:00-12:00' : 'e.g., 10:00-12:00'}
+                      title={t('language') === 'zh' ? '請使用格式: HH:MM - HH:MM (例如: 10:00 - 12:00)' : 'Use format: HH:MM - HH:MM (e.g., 10:00 - 12:00)'}
                     />
+                    <small style={{ color: '#666', display: 'block', marginTop: '5px' }}>
+                      {t('language') === 'zh' ? '格式: HH:MM - HH:MM (例如: 10:00 - 12:00)' : 'Format: HH:MM - HH:MM (e.g., 10:00 - 12:00)'}
+                    </small>
                   </div>
                 </div>
 
@@ -1488,7 +1496,7 @@ function AdminDashboard() {
                   <div className="item-summary-content">
                     <h5>{activity.name}</h5>
                     <p className="item-summary-meta">
-                      {activity.time} | {t('teacher')}: {activity.teacher}
+                      {activity.time} | {t('host')}: {activity.teacher}
                     </p>
                     {activity.location && (
                       <p className="item-summary-meta" style={{ fontSize: '0.9em', color: '#666' }}>
@@ -1583,7 +1591,7 @@ function AdminDashboard() {
                 <span>{selectedItem.time}</span>
               </div>
               <div className="detail-row">
-                <strong>{t('teacher')}:</strong>
+                <strong>{t('host')}:</strong>
                 <span>{selectedItem.teacher}</span>
               </div>
               {selectedItem.location && (
@@ -1683,7 +1691,7 @@ function AdminDashboard() {
       {activeTab === 'teachers' && !selectedTeacher && (
         <div className="card">
           <div className="section-header">
-            <h3>{t('language') === 'zh' ? '教師管理' : 'Teacher Management'}</h3>
+            <h3>{t('language') === 'zh' ? '主辦人管理' : 'Host Management'}</h3>
             <button
               onClick={() => setShowAddTeacherForm(!showAddTeacherForm)}
               className="btn btn-primary"
@@ -1802,7 +1810,7 @@ function AdminDashboard() {
               </div>
 
               <button type="submit" className="btn btn-primary">
-                {t('language') === 'zh' ? '添加教師' : 'Add Teacher'}
+                {t('language') === 'zh' ? '添加主辦人' : 'Add Host'}
               </button>
             </form>
           )}
@@ -1849,7 +1857,7 @@ function AdminDashboard() {
             >
               ← {t('language') === 'zh' ? '返回列表' : 'Back to List'}
             </button>
-            <h3>{t('language') === 'zh' ? '教師詳情' : 'Teacher Details'}</h3>
+            <h3>{t('language') === 'zh' ? '主辦人詳情' : 'Host Details'}</h3>
             <button
               className="btn btn-danger"
               onClick={() => handleDeleteTeacher(selectedTeacher._id)}

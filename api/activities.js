@@ -123,6 +123,13 @@ module.exports = async (req, res) => {
           return res.status(404).json({ message: '找不到活動 / Activity not found' });
         }
 
+        // Update enrollment status for all participants
+        await Member.updateMany(
+          { 'enrollments.itemId': id },
+          { $set: { 'enrollments.$[elem].status': 'cancelled' } },
+          { arrayFilters: [{ 'elem.itemId': id }] }
+        );
+
         return res.status(200).json({ message: '活動刪除成功 / Activity deleted successfully' });
       }
     }

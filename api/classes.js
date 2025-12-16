@@ -91,7 +91,17 @@ module.exports = async (req, res) => {
         // Send LINE announcement if requested
         if (announceOnLine && !classItem.lineAnnouncementSent) {
           try {
-            const lineClient = require('../lib/lineClient');
+            // Try to require lineClient, but handle if it doesn't exist
+            let lineClient;
+            try {
+              lineClient = require('../lib/lineClient');
+            } catch (requireError) {
+              console.log('LINE client module not found, skipping announcement');
+              return res.status(201).json({
+                message: '課程創建成功 / Class created successfully',
+                class: classItem
+              });
+            }
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || process.env.REACT_APP_API_URL || 'https://sunriseyouth.org';
             const classDetailsUrl = `${apiUrl}/profile?tab=courses&classId=${classItem._id}`;
 
@@ -332,6 +342,13 @@ module.exports = async (req, res) => {
         if (!classItem) {
           return res.status(404).json({ message: '找不到課程 / Class not found' });
         }
+
+        // Update enrollment status for all participants
+        await Member.updateMany(
+          { 'enrollments.itemId': id },
+          { $set: { 'enrollments.$[elem].status': 'cancelled' } },
+          { arrayFilters: [{ 'elem.itemId': id }] }
+        );
 
         return res.status(200).json({ message: '課程刪除成功 / Class deleted successfully' });
       }
