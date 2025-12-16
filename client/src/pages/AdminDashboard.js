@@ -239,8 +239,84 @@ function AdminDashboard() {
 
   const handleAddClass = async (e) => {
     e.preventDefault();
+
+    // Validate time input
+    const timeParts = newClass.time.split(/[:\s-]+/);
+    if (timeParts.length !== 4) {
+      setMessage({
+        type: 'error',
+        text: t('language') === 'zh' ? '請填寫完整的時間' : 'Please fill in complete time'
+      });
+      return;
+    }
+
+    const startHour = parseInt(timeParts[0]);
+    const startMin = parseInt(timeParts[1]);
+    const endHour = parseInt(timeParts[2]);
+    const endMin = parseInt(timeParts[3]);
+
+    // Check for invalid numbers
+    if (isNaN(startHour) || isNaN(startMin) || isNaN(endHour) || isNaN(endMin)) {
+      setMessage({
+        type: 'error',
+        text: t('language') === 'zh' ? '時間格式不正確' : 'Invalid time format'
+      });
+      return;
+    }
+
+    // Check time ranges
+    if (startHour < 0 || startHour > 23 || endHour < 0 || endHour > 23) {
+      setMessage({
+        type: 'error',
+        text: t('language') === 'zh' ? '小時必須在 0-23 之間' : 'Hours must be between 0-23'
+      });
+      return;
+    }
+
+    if (startMin < 0 || startMin > 59 || endMin < 0 || endMin > 59) {
+      setMessage({
+        type: 'error',
+        text: t('language') === 'zh' ? '分鐘必須在 0-59 之間' : 'Minutes must be between 0-59'
+      });
+      return;
+    }
+
+    // Convert to minutes for comparison
+    const startTotalMin = startHour * 60 + startMin;
+    const endTotalMin = endHour * 60 + endMin;
+
+    // Check if end time is after start time
+    if (endTotalMin <= startTotalMin) {
+      setMessage({
+        type: 'error',
+        text: t('language') === 'zh' ? '結束時間必須晚於開始時間' : 'End time must be after start time'
+      });
+      return;
+    }
+
+    // Check if duration is reasonable (at least 15 minutes, max 12 hours)
+    const duration = endTotalMin - startTotalMin;
+    if (duration < 15) {
+      setMessage({
+        type: 'error',
+        text: t('language') === 'zh' ? '課程時間至少需要 15 分鐘' : 'Class must be at least 15 minutes long'
+      });
+      return;
+    }
+
+    if (duration > 720) { // 12 hours
+      setMessage({
+        type: 'error',
+        text: t('language') === 'zh' ? '課程時間不可超過 12 小時' : 'Class cannot exceed 12 hours'
+      });
+      return;
+    }
+
+    // Format time properly
+    const formattedTime = `${String(startHour).padStart(2, '0')}:${String(startMin).padStart(2, '0')} - ${String(endHour).padStart(2, '0')}:${String(endMin).padStart(2, '0')}`;
+
     try {
-      const response = await axios.post('/api/classes', newClass, {
+      const response = await axios.post('/api/classes', { ...newClass, time: formattedTime }, {
         headers: { 'Content-Type': 'application/json' }
       });
 
@@ -270,8 +346,84 @@ function AdminDashboard() {
 
   const handleAddActivity = async (e) => {
     e.preventDefault();
+
+    // Validate time input
+    const timeParts = newActivity.time.split(/[:\s-]+/);
+    if (timeParts.length !== 4) {
+      setMessage({
+        type: 'error',
+        text: t('language') === 'zh' ? '請填寫完整的時間' : 'Please fill in complete time'
+      });
+      return;
+    }
+
+    const startHour = parseInt(timeParts[0]);
+    const startMin = parseInt(timeParts[1]);
+    const endHour = parseInt(timeParts[2]);
+    const endMin = parseInt(timeParts[3]);
+
+    // Check for invalid numbers
+    if (isNaN(startHour) || isNaN(startMin) || isNaN(endHour) || isNaN(endMin)) {
+      setMessage({
+        type: 'error',
+        text: t('language') === 'zh' ? '時間格式不正確' : 'Invalid time format'
+      });
+      return;
+    }
+
+    // Check time ranges
+    if (startHour < 0 || startHour > 23 || endHour < 0 || endHour > 23) {
+      setMessage({
+        type: 'error',
+        text: t('language') === 'zh' ? '小時必須在 0-23 之間' : 'Hours must be between 0-23'
+      });
+      return;
+    }
+
+    if (startMin < 0 || startMin > 59 || endMin < 0 || endMin > 59) {
+      setMessage({
+        type: 'error',
+        text: t('language') === 'zh' ? '分鐘必須在 0-59 之間' : 'Minutes must be between 0-59'
+      });
+      return;
+    }
+
+    // Convert to minutes for comparison
+    const startTotalMin = startHour * 60 + startMin;
+    const endTotalMin = endHour * 60 + endMin;
+
+    // Check if end time is after start time
+    if (endTotalMin <= startTotalMin) {
+      setMessage({
+        type: 'error',
+        text: t('language') === 'zh' ? '結束時間必須晚於開始時間' : 'End time must be after start time'
+      });
+      return;
+    }
+
+    // Check if duration is reasonable (at least 15 minutes, max 12 hours)
+    const duration = endTotalMin - startTotalMin;
+    if (duration < 15) {
+      setMessage({
+        type: 'error',
+        text: t('language') === 'zh' ? '活動時間至少需要 15 分鐘' : 'Activity must be at least 15 minutes long'
+      });
+      return;
+    }
+
+    if (duration > 720) { // 12 hours
+      setMessage({
+        type: 'error',
+        text: t('language') === 'zh' ? '活動時間不可超過 12 小時' : 'Activity cannot exceed 12 hours'
+      });
+      return;
+    }
+
+    // Format time properly
+    const formattedTime = `${String(startHour).padStart(2, '0')}:${String(startMin).padStart(2, '0')} - ${String(endHour).padStart(2, '0')}:${String(endMin).padStart(2, '0')}`;
+
     try {
-      await axios.post('/api/activities', newActivity, {
+      await axios.post('/api/activities', { ...newActivity, time: formattedTime }, {
         headers: { 'Content-Type': 'application/json' }
       });
 
@@ -825,30 +977,69 @@ function AdminDashboard() {
                         <td>
                           <button
                             className="btn btn-small"
-                            onClick={() => {
+                            onClick={async () => {
                               // Find the actual class/activity to get its _id
                               const items = enrollment.type === 'class' ? classes : activities;
                               const item = items.find(i => i._id === enrollment.itemId);
                               if (item) {
                                 // Find the participant entry in the item
-                                const participant = item.participants.find(p => p.memberId.toString() === selectedMember._id.toString());
+                                const participant = item.participants.find(p => {
+                                  const pId = typeof p.memberId === 'object' ? p.memberId._id : p.memberId;
+                                  return pId === selectedMember._id;
+                                });
+
                                 if (participant) {
-                                  updatePaymentStatus(
+                                  const key = `${enrollment.type}-${enrollment.itemId}-${participant._id}`;
+
+                                  // Update payment status
+                                  await updatePaymentStatus(
                                     enrollment.type,
                                     enrollment.itemId,
                                     participant._id,
                                     !enrollment.paid
                                   );
+
+                                  // Also update the member's enrollment data
+                                  setSelectedMember(prev => ({
+                                    ...prev,
+                                    enrollments: prev.enrollments.map(e =>
+                                      e.itemId === enrollment.itemId && e.type === enrollment.type
+                                        ? { ...e, paid: !enrollment.paid }
+                                        : e
+                                    )
+                                  }));
                                 }
                               }
                             }}
-                            disabled={loadingStates[`${enrollment.type}-${enrollment.itemId}-${idx}`]}
+                            disabled={(() => {
+                              const items = enrollment.type === 'class' ? classes : activities;
+                              const item = items.find(i => i._id === enrollment.itemId);
+                              if (!item) return false;
+                              const participant = item.participants.find(p => {
+                                const pId = typeof p.memberId === 'object' ? p.memberId._id : p.memberId;
+                                return pId === selectedMember._id;
+                              });
+                              if (!participant) return false;
+                              const key = `${enrollment.type}-${enrollment.itemId}-${participant._id}`;
+                              return loadingStates[key];
+                            })()}
                           >
-                            {loadingStates[`${enrollment.type}-${enrollment.itemId}-${idx}`]
-                              ? t('processing')
-                              : enrollment.paid
-                                ? (t('language') === 'zh' ? '標記未付' : 'Mark Unpaid')
-                                : (t('language') === 'zh' ? '標記已付' : 'Mark Paid')}
+                            {(() => {
+                              const items = enrollment.type === 'class' ? classes : activities;
+                              const item = items.find(i => i._id === enrollment.itemId);
+                              if (!item) return t('language') === 'zh' ? '標記已付' : 'Mark Paid';
+                              const participant = item.participants.find(p => {
+                                const pId = typeof p.memberId === 'object' ? p.memberId._id : p.memberId;
+                                return pId === selectedMember._id;
+                              });
+                              if (!participant) return t('language') === 'zh' ? '標記已付' : 'Mark Paid';
+                              const key = `${enrollment.type}-${enrollment.itemId}-${participant._id}`;
+                              return loadingStates[key]
+                                ? t('processing')
+                                : enrollment.paid
+                                  ? (t('language') === 'zh' ? '標記未付' : 'Mark Unpaid')
+                                  : (t('language') === 'zh' ? '標記已付' : 'Mark Paid');
+                            })()}
                           </button>
                         </td>
                       </tr>
@@ -1195,17 +1386,72 @@ function AdminDashboard() {
                   </div>
                   <div className="form-group">
                     <label>{t('time')} *</label>
-                    <input
-                      type="text"
-                      value={newClass.time}
-                      onChange={(e) => setNewClass({ ...newClass, time: e.target.value })}
-                      placeholder="HH:MM - HH:MM"
-                      pattern="^([0-1]?[0-9]|2[0-3]):[0-5][0-9]\s*-\s*([0-1]?[0-9]|2[0-3]):[0-5][0-9]$"
-                      required
-                      title={t('language') === 'zh' ? '請使用格式: HH:MM - HH:MM (例如: 10:00 - 12:00)' : 'Use format: HH:MM - HH:MM (e.g., 10:00 - 12:00)'}
-                    />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <input
+                        type="number"
+                        min="0"
+                        max="23"
+                        placeholder="HH"
+                        value={newClass.time.split(':')[0] || ''}
+                        onChange={(e) => {
+                          const val = e.target.value.padStart(2, '0');
+                          const parts = newClass.time.split(/[:\s-]+/);
+                          setNewClass({ ...newClass, time: `${val}:${parts[1] || '00'} - ${parts[2] || '00'}:${parts[3] || '00'}` });
+                        }}
+                        style={{ width: '60px', textAlign: 'center' }}
+                        required
+                      />
+                      <span style={{ fontWeight: 'bold' }}>:</span>
+                      <input
+                        type="number"
+                        min="0"
+                        max="59"
+                        placeholder="MM"
+                        value={newClass.time.split(/[:\s-]+/)[1] || ''}
+                        onChange={(e) => {
+                          const val = e.target.value.padStart(2, '0');
+                          const parts = newClass.time.split(/[:\s-]+/);
+                          const newTime = `${parts[0] || '00'}:${val} - ${parts[2] || '00'}:${parts[3] || '00'}`;
+                          setNewClass({ ...newClass, time: newTime });
+                        }}
+                        style={{ width: '60px', textAlign: 'center' }}
+                        required
+                      />
+                      <span style={{ fontWeight: 'bold', margin: '0 8px' }}>-</span>
+                      <input
+                        type="number"
+                        min="0"
+                        max="23"
+                        placeholder="HH"
+                        value={newClass.time.split(/[:\s-]+/)[2] || ''}
+                        onChange={(e) => {
+                          const val = e.target.value.padStart(2, '0');
+                          const parts = newClass.time.split(/[:\s-]+/);
+                          const newTime = `${parts[0] || '00'}:${parts[1] || '00'} - ${val}:${parts[3] || '00'}`;
+                          setNewClass({ ...newClass, time: newTime });
+                        }}
+                        style={{ width: '60px', textAlign: 'center' }}
+                        required
+                      />
+                      <span style={{ fontWeight: 'bold' }}>:</span>
+                      <input
+                        type="number"
+                        min="0"
+                        max="59"
+                        placeholder="MM"
+                        value={newClass.time.split(/[:\s-]+/)[3] || ''}
+                        onChange={(e) => {
+                          const val = e.target.value.padStart(2, '0');
+                          const parts = newClass.time.split(/[:\s-]+/);
+                          const newTime = `${parts[0] || '00'}:${parts[1] || '00'} - ${parts[2] || '00'}:${val}`;
+                          setNewClass({ ...newClass, time: newTime });
+                        }}
+                        style={{ width: '60px', textAlign: 'center' }}
+                        required
+                      />
+                    </div>
                     <small style={{ color: '#666', display: 'block', marginTop: '5px' }}>
-                      {t('language') === 'zh' ? '格式: HH:MM - HH:MM (例如: 10:00 - 12:00)' : 'Format: HH:MM - HH:MM (e.g., 10:00 - 12:00)'}
+                      {t('language') === 'zh' ? '開始時間 - 結束時間' : 'Start Time - End Time'}
                     </small>
                   </div>
                 </div>
@@ -1370,17 +1616,72 @@ function AdminDashboard() {
                   </div>
                   <div className="form-group">
                     <label>{t('time')} *</label>
-                    <input
-                      type="text"
-                      value={newActivity.time}
-                      onChange={(e) => setNewActivity({ ...newActivity, time: e.target.value })}
-                      placeholder="HH:MM - HH:MM"
-                      pattern="^([0-1]?[0-9]|2[0-3]):[0-5][0-9]\s*-\s*([0-1]?[0-9]|2[0-3]):[0-5][0-9]$"
-                      required
-                      title={t('language') === 'zh' ? '請使用格式: HH:MM - HH:MM (例如: 10:00 - 12:00)' : 'Use format: HH:MM - HH:MM (e.g., 10:00 - 12:00)'}
-                    />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <input
+                        type="number"
+                        min="0"
+                        max="23"
+                        placeholder="HH"
+                        value={newActivity.time.split(':')[0] || ''}
+                        onChange={(e) => {
+                          const val = e.target.value.padStart(2, '0');
+                          const parts = newActivity.time.split(/[:\s-]+/);
+                          setNewActivity({ ...newActivity, time: `${val}:${parts[1] || '00'} - ${parts[2] || '00'}:${parts[3] || '00'}` });
+                        }}
+                        style={{ width: '60px', textAlign: 'center' }}
+                        required
+                      />
+                      <span style={{ fontWeight: 'bold' }}>:</span>
+                      <input
+                        type="number"
+                        min="0"
+                        max="59"
+                        placeholder="MM"
+                        value={newActivity.time.split(/[:\s-]+/)[1] || ''}
+                        onChange={(e) => {
+                          const val = e.target.value.padStart(2, '0');
+                          const parts = newActivity.time.split(/[:\s-]+/);
+                          const newTime = `${parts[0] || '00'}:${val} - ${parts[2] || '00'}:${parts[3] || '00'}`;
+                          setNewActivity({ ...newActivity, time: newTime });
+                        }}
+                        style={{ width: '60px', textAlign: 'center' }}
+                        required
+                      />
+                      <span style={{ fontWeight: 'bold', margin: '0 8px' }}>-</span>
+                      <input
+                        type="number"
+                        min="0"
+                        max="23"
+                        placeholder="HH"
+                        value={newActivity.time.split(/[:\s-]+/)[2] || ''}
+                        onChange={(e) => {
+                          const val = e.target.value.padStart(2, '0');
+                          const parts = newActivity.time.split(/[:\s-]+/);
+                          const newTime = `${parts[0] || '00'}:${parts[1] || '00'} - ${val}:${parts[3] || '00'}`;
+                          setNewActivity({ ...newActivity, time: newTime });
+                        }}
+                        style={{ width: '60px', textAlign: 'center' }}
+                        required
+                      />
+                      <span style={{ fontWeight: 'bold' }}>:</span>
+                      <input
+                        type="number"
+                        min="0"
+                        max="59"
+                        placeholder="MM"
+                        value={newActivity.time.split(/[:\s-]+/)[3] || ''}
+                        onChange={(e) => {
+                          const val = e.target.value.padStart(2, '0');
+                          const parts = newActivity.time.split(/[:\s-]+/);
+                          const newTime = `${parts[0] || '00'}:${parts[1] || '00'} - ${parts[2] || '00'}:${val}`;
+                          setNewActivity({ ...newActivity, time: newTime });
+                        }}
+                        style={{ width: '60px', textAlign: 'center' }}
+                        required
+                      />
+                    </div>
                     <small style={{ color: '#666', display: 'block', marginTop: '5px' }}>
-                      {t('language') === 'zh' ? '格式: HH:MM - HH:MM (例如: 10:00 - 12:00)' : 'Format: HH:MM - HH:MM (e.g., 10:00 - 12:00)'}
+                      {t('language') === 'zh' ? '開始時間 - 結束時間' : 'Start Time - End Time'}
                     </small>
                   </div>
                 </div>

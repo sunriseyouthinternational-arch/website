@@ -1,5 +1,6 @@
 const connectDB = require('../lib/mongodb');
 const { Class, ClassInfo, Member } = require('../db/models');
+const lineClient = require('../lib/lineClient');
 
 module.exports = async (req, res) => {
   const { id, action } = req.query;
@@ -91,17 +92,6 @@ module.exports = async (req, res) => {
         // Send LINE announcement if requested
         if (announceOnLine && !classItem.lineAnnouncementSent) {
           try {
-            // Try to require lineClient, but handle if it doesn't exist
-            let lineClient;
-            try {
-              lineClient = require('../lib/lineClient');
-            } catch (requireError) {
-              console.log('LINE client module not found, skipping announcement');
-              return res.status(201).json({
-                message: '課程創建成功 / Class created successfully',
-                class: classItem
-              });
-            }
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || process.env.REACT_APP_API_URL || 'https://sunriseyouth.org';
             const classDetailsUrl = `${apiUrl}/profile?tab=courses&classId=${classItem._id}`;
 
