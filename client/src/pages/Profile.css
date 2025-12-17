@@ -203,15 +203,12 @@
 }
 
 .item-banner {
-  width: 1000px;
-  height: 600px;
-  max-width: 100%;
+  width: 100%;
+  aspect-ratio: 16 / 9;
   object-fit: cover;
   border-radius: 8px;
   margin-bottom: 15px;
   display: block;
-  margin-left: auto;
-  margin-right: auto;
 }
 
 .item-card h4 {

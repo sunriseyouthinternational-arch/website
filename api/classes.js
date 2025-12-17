@@ -1,6 +1,5 @@
 const connectDB = require('../lib/mongodb');
 const { Class, ClassInfo, Member } = require('../db/models');
-const lineClient = require('../lib/lineClient');
 
 module.exports = async (req, res) => {
   const { id, action } = req.query;
@@ -68,7 +67,7 @@ module.exports = async (req, res) => {
       }
 
       if (req.method === 'POST') {
-        const { classInfoId, teacherId, teacher, time, date, location, announceOnLine } = req.body;
+        const { classInfoId, teacherId, teacher, time, date, location } = req.body;
 
         // Verify classInfo exists
         const classInfo = await ClassInfo.findById(classInfoId);
@@ -82,218 +81,10 @@ module.exports = async (req, res) => {
           teacher,
           time,
           date: new Date(date),
-          location: location || '',
-          announceOnLine: announceOnLine || false
+          location: location || ''
         });
 
         await classItem.save();
-
-        // Send LINE announcement if requested
-        if (announceOnLine && !classItem.lineAnnouncementSent) {
-          try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || process.env.REACT_APP_API_URL || 'https://sunriseyouth.org';
-            const classDetailsUrl = `${apiUrl}/profile?tab=courses&classId=${classItem._id}`;
-
-            const formattedDate = new Date(date).toLocaleDateString('zh-TW', {
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
-              weekday: 'long'
-            });
-
-            const message = {
-              type: 'flex',
-              altText: `新課程：${classInfo.name}`,
-              contents: {
-                type: 'bubble',
-                hero: classInfo.banner ? {
-                  type: 'image',
-                  url: classInfo.banner.startsWith('data:') ? `${apiUrl}/default-class-banner.jpg` : `${apiUrl}${classInfo.banner}`,
-                  size: 'full',
-                  aspectRatio: '5:3',
-                  aspectMode: 'cover'
-                } : undefined,
-                body: {
-                  type: 'box',
-                  layout: 'vertical',
-                  contents: [
-                    {
-                      type: 'text',
-                      text: '新課程通知',
-                      weight: 'bold',
-                      size: 'xl',
-                      color: '#667eea'
-                    },
-                    {
-                      type: 'text',
-                      text: classInfo.name,
-                      weight: 'bold',
-                      size: 'xxl',
-                      margin: 'md'
-                    },
-                    {
-                      type: 'text',
-                      text: classInfo.description,
-                      size: 'sm',
-                      color: '#666666',
-                      margin: 'md',
-                      wrap: true
-                    },
-                    {
-                      type: 'separator',
-                      margin: 'xl'
-                    },
-                    {
-                      type: 'box',
-                      layout: 'vertical',
-                      margin: 'lg',
-                      spacing: 'sm',
-                      contents: [
-                        {
-                          type: 'box',
-                          layout: 'baseline',
-                          spacing: 'sm',
-                          contents: [
-                            {
-                              type: 'text',
-                              text: '日期',
-                              color: '#aaaaaa',
-                              size: 'sm',
-                              flex: 1
-                            },
-                            {
-                              type: 'text',
-                              text: formattedDate,
-                              wrap: true,
-                              color: '#666666',
-                              size: 'sm',
-                              flex: 4
-                            }
-                          ]
-                        },
-                        {
-                          type: 'box',
-                          layout: 'baseline',
-                          spacing: 'sm',
-                          contents: [
-                            {
-                              type: 'text',
-                              text: '時間',
-                              color: '#aaaaaa',
-                              size: 'sm',
-                              flex: 1
-                            },
-                            {
-                              type: 'text',
-                              text: time,
-                              wrap: true,
-                              color: '#666666',
-                              size: 'sm',
-                              flex: 4
-                            }
-                          ]
-                        },
-                        {
-                          type: 'box',
-                          layout: 'baseline',
-                          spacing: 'sm',
-                          contents: [
-                            {
-                              type: 'text',
-                              text: '教師',
-                              color: '#aaaaaa',
-                              size: 'sm',
-                              flex: 1
-                            },
-                            {
-                              type: 'text',
-                              text: teacher,
-                              wrap: true,
-                              color: '#666666',
-                              size: 'sm',
-                              flex: 4
-                            }
-                          ]
-                        },
-                        location ? {
-                          type: 'box',
-                          layout: 'baseline',
-                          spacing: 'sm',
-                          contents: [
-                            {
-                              type: 'text',
-                              text: '地點',
-                              color: '#aaaaaa',
-                              size: 'sm',
-                              flex: 1
-                            },
-                            {
-                              type: 'text',
-                              text: location,
-                              wrap: true,
-                              color: '#666666',
-                              size: 'sm',
-                              flex: 4
-                            }
-                          ]
-                        } : null,
-                        {
-                          type: 'box',
-                          layout: 'baseline',
-                          spacing: 'sm',
-                          contents: [
-                            {
-                              type: 'text',
-                              text: '費用',
-                              color: '#aaaaaa',
-                              size: 'sm',
-                              flex: 1
-                            },
-                            {
-                              type: 'text',
-                              text: `NT$ ${classInfo.cost}`,
-                              wrap: true,
-                              color: '#666666',
-                              size: 'sm',
-                              flex: 4
-                            }
-                          ]
-                        }
-                      ].filter(Boolean)
-                    }
-                  ]
-                },
-                footer: {
-                  type: 'box',
-                  layout: 'vertical',
-                  spacing: 'sm',
-                  contents: [
-                    {
-                      type: 'button',
-                      style: 'primary',
-                      height: 'sm',
-                      action: {
-                        type: 'uri',
-                        label: '查看詳情並報名',
-                        uri: classDetailsUrl
-                      }
-                    }
-                  ],
-                  flex: 0
-                }
-              }
-            };
-
-            await lineClient.broadcast({
-              messages: [message]
-            });
-            classItem.lineAnnouncementSent = true;
-            await classItem.save();
-          } catch (lineError) {
-            console.error('LINE announcement error:', lineError);
-            // Don't fail the class creation if LINE announcement fails
-          }
-        }
 
         return res.status(201).json({
           message: '課程創建成功 / Class created successfully',

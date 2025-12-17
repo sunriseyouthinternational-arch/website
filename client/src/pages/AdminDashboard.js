@@ -41,8 +41,7 @@ function AdminDashboard() {
     teacher: '',
     time: '',
     date: '',
-    location: '',
-    announceOnLine: false
+    location: ''
   });
 
   // Form states for adding new activity
@@ -331,8 +330,7 @@ function AdminDashboard() {
         teacher: '',
         time: '',
         date: '',
-        location: '',
-        announceOnLine: false
+        location: ''
       });
 
       // Refresh only classes instead of all data
@@ -1400,21 +1398,12 @@ function AdminDashboard() {
                   />
                 </div>
 
-                <div className="form-group">
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
-                    <input
-                      type="checkbox"
-                      checked={newClass.announceOnLine}
-                      onChange={(e) => setNewClass({ ...newClass, announceOnLine: e.target.checked })}
-                      style={{ width: 'auto', cursor: 'pointer' }}
-                    />
-                    <span>{t('language') === 'zh' ? '在 LINE 官方帳號發布課程公告' : 'Announce on LINE Official Account'}</span>
-                  </label>
-                  <small style={{ color: '#666', display: 'block', marginTop: '5px', marginLeft: '30px' }}>
-                    {t('language') === 'zh'
-                      ? '勾選後，課程將自動發送到所有 LINE 好友'
-                      : 'When checked, class will be announced to all LINE friends'}
-                  </small>
+                <div className="form-group" style={{ background: '#f0f8ff', padding: '15px', borderRadius: '8px', border: '1px solid #d0e8ff' }}>
+                  <p style={{ margin: 0, color: '#1a5490', fontSize: '14px', lineHeight: '1.6' }}>
+                    ℹ️ {t('language') === 'zh'
+                      ? '會員可以在個人選單中點擊「課程與活動」來查看和報名此課程！'
+                      : 'Members can view and enroll in this class by clicking "Classes & Activities" in their profile menu!'}
+                  </p>
                 </div>
 
                 {newClass.location && (
