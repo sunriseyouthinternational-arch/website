@@ -121,6 +121,8 @@ function CouponClaim() {
               <img
                 src={coupon.image}
                 alt={coupon.name}
+                loading="lazy"
+                decoding="async"
                 style={{
                   width: '100%',
                   height: '180px',

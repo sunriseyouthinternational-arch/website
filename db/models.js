@@ -86,6 +86,14 @@ memberSchema.pre('save', function(next) {
   next();
 });
 
+// Add indexes for faster queries
+memberSchema.index({ memberId: 1 });
+memberSchema.index({ 'contact.lineId': 1 });
+memberSchema.index({ 'line.userId': 1 });
+memberSchema.index({ registrationToken: 1 });
+memberSchema.index({ sessionToken: 1 });
+memberSchema.index({ referralCode: 1 });
+
 // ClassInfo Schema - General information about a class type
 const classInfoSchema = new mongoose.Schema({
   name: { type: String, required: true },
@@ -199,6 +207,12 @@ const couponShareTokenSchema = new mongoose.Schema({
   claimedAt: { type: Date },
   status: { type: String, enum: ['pending', 'claimed', 'expired'], default: 'pending' }
 });
+
+// Add indexes for faster coupon share token queries
+couponShareTokenSchema.index({ token: 1 });
+couponShareTokenSchema.index({ senderMemberId: 1 });
+couponShareTokenSchema.index({ status: 1 });
+couponShareTokenSchema.index({ expiresAt: 1 });
 
 // Export models
 module.exports = {

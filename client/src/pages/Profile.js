@@ -843,6 +843,8 @@ function Profile() {
                 <img
                   src={getImageSrc(selectedClass.classInfoId.banner)}
                   alt={selectedClass.classInfoId?.name}
+                  loading="lazy"
+                  decoding="async"
                   style={{
                     width: '100%',
                     aspectRatio: '16 / 9',
@@ -1218,6 +1220,8 @@ function Profile() {
                         <img
                           src={getImageSrc(classItem.classInfoId.banner)}
                           alt={classItem.classInfoId?.name}
+                          loading="lazy"
+                          decoding="async"
                           style={{
                             width: '100%',
                             aspectRatio: '16 / 9',
@@ -1290,6 +1294,8 @@ function Profile() {
                         <img
                           src={getImageSrc(activity.banner)}
                           alt={activity.name}
+                          loading="lazy"
+                          decoding="async"
                           style={{
                             width: '100%',
                             aspectRatio: '16 / 9',
@@ -1416,6 +1422,8 @@ function Profile() {
                           <img
                             src={coupon.image}
                             alt={coupon.name}
+                            loading="lazy"
+                            decoding="async"
                             style={{
                               width: '100%',
                               height: '150px',
@@ -1963,6 +1971,8 @@ function Profile() {
                 <img
                   src={shareCoupon.image}
                   alt={shareCoupon.name}
+                  loading="lazy"
+                  decoding="async"
                   style={{
                     width: '100%',
                     height: '120px',

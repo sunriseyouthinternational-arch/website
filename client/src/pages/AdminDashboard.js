@@ -74,6 +74,7 @@ function AdminDashboard() {
   // Form states for adding coupons to members
   const [showAddCouponForm, setShowAddCouponForm] = useState(false);
   const [addingCoupon, setAddingCoupon] = useState(false);
+  const [deletingCouponId, setDeletingCouponId] = useState(null);
   const [newCoupon, setNewCoupon] = useState({
     type: 'trial',
     classInfoId: '',
@@ -822,6 +823,7 @@ function AdminDashboard() {
       return;
     }
 
+    setDeletingCouponId(couponId);
     try {
       await axios.delete(`/api/members?memberId=${selectedMember.memberId}&action=delete-coupon&couponId=${couponId}`);
 
@@ -837,6 +839,8 @@ function AdminDashboard() {
     } catch (error) {
       console.error('Error deleting coupon:', error);
       setMessage({ type: 'error', text: error.response?.data?.message || t('error') });
+    } finally {
+      setDeletingCouponId(null);
     }
   };
 
@@ -1402,6 +1406,7 @@ function AdminDashboard() {
                       <button
                         onClick={() => handleDeleteCoupon(coupon._id)}
                         className="btn btn-danger"
+                        disabled={deletingCouponId === coupon._id}
                         style={{
                           marginTop: '15px',
                           width: '100%',
@@ -1409,7 +1414,9 @@ function AdminDashboard() {
                           padding: '8px'
                         }}
                       >
-                        {t('language') === 'zh' ? '刪除' : 'Delete'}
+                        {deletingCouponId === coupon._id
+                          ? (t('language') === 'zh' ? '⏳ 刪除中...' : '⏳ Deleting...')
+                          : (t('language') === 'zh' ? '🗑️ 刪除' : '🗑️ Delete')}
                       </button>
                     </div>
                   );
