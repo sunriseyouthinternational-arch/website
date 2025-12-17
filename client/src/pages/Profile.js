@@ -494,6 +494,12 @@ function Profile() {
               {t('myCoursesActivities')}
             </button>
             <button
+              className={`tab-button ${activeTab === 'coupons' ? 'active' : ''}`}
+              onClick={() => setActiveTab('coupons')}
+            >
+              {t('language') === 'zh' ? '我的優惠券' : 'My Coupons'}
+            </button>
+            <button
               className={`tab-button ${activeTab === 'points' ? 'active' : ''}`}
               onClick={() => setActiveTab('points')}
             >
@@ -1260,6 +1266,139 @@ function Profile() {
                   ))}
                 </div>
               </div>
+            </div>
+          )}
+
+          {activeTab === 'coupons' && (
+            <div className="card">
+              <h3 style={{ color: '#667eea', marginBottom: '30px', textAlign: 'center' }}>
+                {t('language') === 'zh' ? '我的優惠券' : 'My Coupons'}
+              </h3>
+
+              {member.coupons && member.coupons.length > 0 ? (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
+                  {member.coupons.map((coupon, idx) => {
+                    const remainingUses = coupon.quantity - coupon.usedCount;
+
+                    return (
+                      <div
+                        key={idx}
+                        style={{
+                          background: remainingUses > 0 ? 'white' : '#f5f5f5',
+                          border: `2px solid ${remainingUses > 0 ? '#667eea' : '#ddd'}`,
+                          borderRadius: '12px',
+                          padding: '20px',
+                          opacity: remainingUses > 0 ? 1 : 0.6,
+                          position: 'relative'
+                        }}
+                      >
+                        {coupon.image && (
+                          <img
+                            src={coupon.image}
+                            alt={coupon.name}
+                            style={{
+                              width: '100%',
+                              height: '150px',
+                              objectFit: 'cover',
+                              borderRadius: '8px',
+                              marginBottom: '15px'
+                            }}
+                          />
+                        )}
+                        <div style={{ marginBottom: '10px' }}>
+                          <span
+                            style={{
+                              display: 'inline-block',
+                              padding: '4px 12px',
+                              background: coupon.type === 'trial' ? '#d3f9d8' : '#ffe3e3',
+                              color: coupon.type === 'trial' ? '#2b8a3e' : '#c92a2a',
+                              borderRadius: '6px',
+                              fontSize: '12px',
+                              fontWeight: 'bold',
+                              textTransform: 'uppercase'
+                            }}
+                          >
+                            {coupon.type === 'trial'
+                              ? (t('language') === 'zh' ? '體驗券' : 'Trial')
+                              : (t('language') === 'zh' ? '折扣券' : 'Discount')}
+                          </span>
+                          {remainingUses === 0 && (
+                            <span
+                              style={{
+                                marginLeft: '10px',
+                                padding: '4px 12px',
+                                background: '#e9ecef',
+                                color: '#868e96',
+                                borderRadius: '6px',
+                                fontSize: '12px',
+                                fontWeight: 'bold'
+                              }}
+                            >
+                              {t('language') === 'zh' ? '已用完' : 'Used Up'}
+                            </span>
+                          )}
+                        </div>
+                        <h4 style={{ color: '#667eea', marginBottom: '10px', fontSize: '18px' }}>
+                          {coupon.name}
+                        </h4>
+                        <p style={{ color: '#666', fontSize: '14px', marginBottom: '15px', lineHeight: '1.5' }}>
+                          {coupon.description}
+                        </p>
+                        {coupon.type === 'discount' && (
+                          <p style={{ fontSize: '16px', color: '#c92a2a', fontWeight: 'bold', marginBottom: '10px' }}>
+                            {t('language') === 'zh' ? '折扣：' : 'Discount: '}{coupon.discountPercent}%
+                          </p>
+                        )}
+                        <p style={{ fontSize: '14px', marginBottom: '8px', color: remainingUses > 0 ? '#495057' : '#868e96' }}>
+                          <strong>{t('language') === 'zh' ? '剩餘使用次數：' : 'Remaining Uses: '}</strong>
+                          <span style={{ fontSize: '18px', fontWeight: 'bold', color: remainingUses > 0 ? '#667eea' : '#868e96' }}>
+                            {remainingUses}
+                          </span> / {coupon.quantity}
+                        </p>
+                        <p style={{ fontSize: '12px', color: '#999', marginBottom: '15px' }}>
+                          {t('language') === 'zh' ? '創建於 ' : 'Created '}{formatDate(coupon.createdAt)}
+                        </p>
+                        {remainingUses > 0 && (
+                          <button
+                            onClick={() => {
+                              // Transfer functionality will be added later
+                              setMessage({
+                                type: 'info',
+                                text: t('language') === 'zh' ? '轉讓功能即將推出' : 'Transfer feature coming soon'
+                              });
+                            }}
+                            className="btn btn-secondary"
+                            style={{
+                              width: '100%',
+                              fontSize: '14px',
+                              padding: '10px'
+                            }}
+                          >
+                            🎁 {t('language') === 'zh' ? '轉讓優惠券' : 'Transfer Coupon'}
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div style={{
+                  textAlign: 'center',
+                  padding: '60px 20px',
+                  background: '#f8f9ff',
+                  borderRadius: '16px'
+                }}>
+                  <div style={{ fontSize: '64px', marginBottom: '20px' }}>🎫</div>
+                  <h4 style={{ color: '#667eea', marginBottom: '15px' }}>
+                    {t('language') === 'zh' ? '尚無優惠券' : 'No Coupons Yet'}
+                  </h4>
+                  <p style={{ color: '#666', fontSize: '16px' }}>
+                    {t('language') === 'zh'
+                      ? '您目前沒有任何優惠券。請關注我們的活動以獲取優惠券！'
+                      : 'You don\'t have any coupons yet. Follow our events to get coupons!'}
+                  </p>
+                </div>
+              )}
             </div>
           )}
 
