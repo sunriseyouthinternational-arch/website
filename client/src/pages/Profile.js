@@ -54,6 +54,12 @@ function Profile() {
   const [shareCoupon, setShareCoupon] = useState(null);
   const [shareLink, setShareLink] = useState(null);
   const [shareLoading, setShareLoading] = useState(false);
+  const [sharingCouponId, setSharingCouponId] = useState(null);
+
+  // Loading states for buttons
+  const [enrollingClass, setEnrollingClass] = useState(null);
+  const [enrollingActivity, setEnrollingActivity] = useState(null);
+  const [completingEnrollment, setCompletingEnrollment] = useState(false);
 
   // Helper function to get image source (handles both base64 and file paths)
   const getImageSrc = (imagePath) => {
@@ -415,6 +421,7 @@ function Profile() {
   };
 
   const handleCompleteEnrollment = async (paymentMethod, coupon = null) => {
+    setCompletingEnrollment(true);
     try {
       const endpoint = checkoutData.type === 'class'
         ? `/api/classes?id=${checkoutData.id}&action=enroll`
@@ -441,10 +448,13 @@ function Profile() {
         type: 'error',
         text: error.response?.data?.message || t('enrollmentFailed')
       });
+    } finally {
+      setCompletingEnrollment(false);
     }
   };
 
   const handleGenerateShareLink = async (coupon) => {
+    setSharingCouponId(coupon._id);
     setShareCoupon(coupon);
     setShowShareModal(true);
     setShareLoading(true);
@@ -467,6 +477,7 @@ function Profile() {
       setShowShareModal(false);
     } finally {
       setShareLoading(false);
+      setSharingCouponId(null);
     }
   };
 
@@ -1339,7 +1350,36 @@ function Profile() {
 
               {member.coupons && member.coupons.length > 0 ? (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
-                  {member.coupons.map((coupon, idx) => {
+                  {(() => {
+                    // Group identical coupons
+                    const groupedCoupons = member.coupons.reduce((acc, coupon) => {
+                      // Create a unique key for identical coupons
+                      const key = JSON.stringify({
+                        type: coupon.type,
+                        classInfoId: coupon.classInfoId?._id || coupon.classInfoId,
+                        discountPercent: coupon.discountPercent,
+                        name: coupon.name,
+                        expiryDate: coupon.expiryDate
+                      });
+
+                      if (!acc[key]) {
+                        acc[key] = {
+                          ...coupon,
+                          count: 1,
+                          ids: [coupon._id]
+                        };
+                      } else {
+                        acc[key].count += 1;
+                        acc[key].ids.push(coupon._id);
+                        // Aggregate quantities
+                        acc[key].quantity += coupon.quantity;
+                        acc[key].usedCount += coupon.usedCount;
+                      }
+
+                      return acc;
+                    }, {});
+
+                    return Object.values(groupedCoupons).map((coupon, idx) => {
                     const remainingUses = coupon.quantity - coupon.usedCount;
 
                     // Calculate days remaining until expiry
@@ -1402,6 +1442,21 @@ function Profile() {
                               ? (t('language') === 'zh' ? '體驗券' : 'Trial')
                               : (t('language') === 'zh' ? '折扣券' : 'Discount')}
                           </span>
+                          {coupon.count > 1 && (
+                            <span
+                              style={{
+                                marginLeft: '10px',
+                                padding: '4px 12px',
+                                background: '#667eea',
+                                color: 'white',
+                                borderRadius: '6px',
+                                fontSize: '12px',
+                                fontWeight: 'bold'
+                              }}
+                            >
+                              ×{coupon.count}
+                            </span>
+                          )}
                           {remainingUses === 0 && (
                             <span
                               style={{
@@ -1486,20 +1541,25 @@ function Profile() {
                         </p>
                         {remainingUses > 0 && (
                           <button
-                            onClick={() => handleGenerateShareLink(coupon)}
+                            onClick={() => handleGenerateShareLink({ ...coupon, _id: coupon.ids[0] })}
                             className="btn btn-secondary"
+                            disabled={sharingCouponId === coupon.ids[0]}
                             style={{
                               width: '100%',
                               fontSize: '14px',
                               padding: '10px'
                             }}
                           >
-                            🔗 {t('language') === 'zh' ? '分享優惠券' : 'Share Coupon'}
+                            {sharingCouponId === coupon.ids[0] ? (
+                              t('language') === 'zh' ? '⏳ 載入中...' : '⏳ Loading...'
+                            ) : (
+                              <>🔗 {t('language') === 'zh' ? '分享優惠券' : 'Share Coupon'}</>
+                            )}
                           </button>
                         )}
                       </div>
                     );
-                  })}
+                  })})()}
                 </div>
               ) : (
                 <div style={{
@@ -1654,6 +1714,7 @@ function Profile() {
               <button
                 onClick={() => handleCompleteEnrollment('in-person', selectedCoupon)}
                 className="btn btn-primary"
+                disabled={completingEnrollment}
                 style={{
                   padding: '20px',
                   fontSize: '18px',
@@ -1663,7 +1724,11 @@ function Profile() {
                   gap: '10px'
                 }}
               >
-                💵 {t('language') === 'zh' ? '現場付款' : 'Pay in Person'}
+                {completingEnrollment ? (
+                  t('language') === 'zh' ? '⏳ 處理中...' : '⏳ Processing...'
+                ) : (
+                  <>💵 {t('language') === 'zh' ? '現場付款' : 'Pay in Person'}</>
+                )}
               </button>
 
               <button

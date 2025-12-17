@@ -73,6 +73,7 @@ function AdminDashboard() {
 
   // Form states for adding coupons to members
   const [showAddCouponForm, setShowAddCouponForm] = useState(false);
+  const [addingCoupon, setAddingCoupon] = useState(false);
   const [newCoupon, setNewCoupon] = useState({
     type: 'trial',
     classInfoId: '',
@@ -758,6 +759,7 @@ function AdminDashboard() {
       return;
     }
 
+    setAddingCoupon(true);
     try {
       const couponData = {
         type: newCoupon.type,
@@ -769,6 +771,11 @@ function AdminDashboard() {
 
       if (newCoupon.type === 'trial') {
         couponData.classInfoId = newCoupon.classInfoId;
+        // For trial coupons, use the class banner image
+        const selectedClassInfo = classInfos.find(c => c._id === newCoupon.classInfoId);
+        if (selectedClassInfo && selectedClassInfo.banner) {
+          couponData.image = selectedClassInfo.banner;
+        }
       } else {
         couponData.discountPercent = parseInt(newCoupon.discountPercent);
       }
@@ -805,6 +812,8 @@ function AdminDashboard() {
     } catch (error) {
       console.error('Error adding coupon:', error);
       setMessage({ type: 'error', text: error.response?.data?.message || t('error') });
+    } finally {
+      setAddingCoupon(false);
     }
   };
 
@@ -1280,25 +1289,42 @@ function AdminDashboard() {
                   </small>
                 </div>
 
-                <div className="form-group">
-                  <label>{t('language') === 'zh' ? '優惠券圖片（可選）' : 'Coupon Image (Optional)'}</label>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleCouponImageUpload}
-                    className="form-control"
-                  />
-                  {newCoupon.image && (
-                    <img
-                      src={newCoupon.image}
-                      alt="Coupon preview"
-                      style={{ marginTop: '10px', maxWidth: '200px', borderRadius: '8px' }}
+                {newCoupon.type === 'discount' && (
+                  <div className="form-group">
+                    <label>{t('language') === 'zh' ? '優惠券圖片（可選）' : 'Coupon Image (Optional)'}</label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleCouponImageUpload}
+                      className="form-control"
                     />
-                  )}
-                </div>
+                    {newCoupon.image && (
+                      <img
+                        src={newCoupon.image}
+                        alt="Coupon preview"
+                        style={{ marginTop: '10px', maxWidth: '200px', borderRadius: '8px' }}
+                      />
+                    )}
+                    <small style={{ color: '#666' }}>
+                      {t('language') === 'zh' ? '折扣券可以上傳自定義圖片' : 'Discount coupons can have custom images'}
+                    </small>
+                  </div>
+                )}
 
-                <button type="submit" className="btn btn-primary">
-                  {t('language') === 'zh' ? '添加優惠券' : 'Add Coupon'}
+                {newCoupon.type === 'trial' && (
+                  <div style={{ padding: '10px', background: '#e7f3ff', borderRadius: '8px', marginBottom: '15px' }}>
+                    <small style={{ color: '#004085' }}>
+                      ℹ️ {t('language') === 'zh'
+                        ? '體驗券將自動使用所選課程的橫幅圖片'
+                        : 'Trial coupons will automatically use the selected class banner image'}
+                    </small>
+                  </div>
+                )}
+
+                <button type="submit" className="btn btn-primary" disabled={addingCoupon}>
+                  {addingCoupon
+                    ? (t('language') === 'zh' ? '⏳ 添加中...' : '⏳ Adding...')
+                    : (t('language') === 'zh' ? '添加優惠券' : 'Add Coupon')}
                 </button>
               </form>
             )}
