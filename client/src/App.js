@@ -7,6 +7,7 @@ import './App.css';
 import Profile from './pages/Profile';
 import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
+import CouponClaim from './pages/CouponClaim';
 
 function AppContent() {
   const { language, toggleLanguage, t } = useLanguage();
@@ -39,6 +40,7 @@ function AppContent() {
             <Route path="/" element={<Navigate to="/profile" replace />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/profile/:memberId" element={<Profile />} />
+            <Route path="/claim/:token" element={<CouponClaim />} />
             <Route path="/admin" element={<AdminLogin />} />
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
           </Routes>
