@@ -334,6 +334,114 @@ module.exports = async (req, res) => {
       });
     }
 
+    // Transfer coupon to another member
+    if (req.method === 'POST' && action === 'transfer-coupon') {
+      const { senderMemberId, recipientMemberId, couponId } = req.body;
+
+      if (!senderMemberId || !recipientMemberId || !couponId) {
+        return res.status(400).json({
+          message: '缺少必要欄位 / Missing required fields'
+        });
+      }
+
+      const sender = await Member.findOne({ memberId: senderMemberId });
+      const recipient = await Member.findOne({ memberId: recipientMemberId });
+
+      if (!sender) {
+        return res.status(404).json({
+          message: '找不到發送者 / Sender not found'
+        });
+      }
+
+      if (!recipient) {
+        return res.status(404).json({
+          message: '找不到收件人 / Recipient not found'
+        });
+      }
+
+      // Find the coupon in sender's coupons
+      const coupon = sender.coupons.id(couponId);
+
+      if (!coupon) {
+        return res.status(404).json({
+          message: '找不到優惠券 / Coupon not found'
+        });
+      }
+
+      // Check if coupon has remaining uses
+      const remainingUses = coupon.quantity - coupon.usedCount;
+      if (remainingUses <= 0) {
+        return res.status(400).json({
+          message: '優惠券已用完，無法轉讓 / Coupon has no remaining uses'
+        });
+      }
+
+      // Create a copy of the coupon for the recipient
+      const transferredCoupon = {
+        type: coupon.type,
+        name: coupon.name,
+        description: coupon.description,
+        image: coupon.image,
+        quantity: 1, // Transfer only 1 use
+        usedCount: 0
+      };
+
+      if (coupon.type === 'trial') {
+        transferredCoupon.classInfoId = coupon.classInfoId;
+      } else {
+        transferredCoupon.discountPercent = coupon.discountPercent;
+      }
+
+      // Add coupon to recipient
+      recipient.coupons.push(transferredCoupon);
+      await recipient.save();
+
+      // Decrement sender's coupon quantity or remove it if no uses left
+      if (coupon.quantity - coupon.usedCount === 1) {
+        // Last remaining use - remove the coupon entirely
+        sender.coupons.pull(couponId);
+      } else {
+        // Decrement quantity
+        coupon.quantity -= 1;
+      }
+      await sender.save();
+
+      // Send LINE notification to recipient if they have LINE account
+      if (recipient.line && recipient.line.userId) {
+        try {
+          const client = new line.messagingApi.MessagingApiClient({
+            channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN
+          });
+
+          const protocol = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split('://')[0] : 'https';
+          const host = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split('://')[1] : 'www.sunriseyouth.org';
+          const baseUrl = `${protocol}://${host}`;
+          const couponsUrl = `${baseUrl}/profile/${recipient.memberId}?tab=coupons`;
+
+          await client.pushMessage({
+            to: recipient.line.userId,
+            messages: [
+              {
+                type: 'text',
+                text: `🎁 您收到了一張新優惠券！\n\n優惠券名稱：${coupon.name}\n類型：${coupon.type === 'trial' ? '體驗券' : '折扣券'}\n\n點擊查看您的優惠券：\n${couponsUrl}`
+              }
+            ]
+          });
+
+          console.log(`[Coupon Transfer] LINE notification sent to ${recipient.line.userId}`);
+        } catch (lineError) {
+          console.error('[Coupon Transfer] Error sending LINE notification:', lineError);
+          // Don't fail the transfer if LINE notification fails
+        }
+      }
+
+      return res.status(200).json({
+        message: `優惠券轉讓成功！${recipient.line && recipient.line.userId ? '收件人已收到 LINE 通知。' : ''} / Coupon transferred successfully!${recipient.line && recipient.line.userId ? ' Recipient notified via LINE.' : ''}`,
+        sender,
+        recipient
+      });
+    }
+
     res.status(405).json({ message: 'Method not allowed' });
   } catch (error) {
     console.error('Member operation error:', error);

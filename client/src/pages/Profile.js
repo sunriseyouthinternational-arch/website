@@ -49,6 +49,11 @@ function Profile() {
   const [selectedCoupon, setSelectedCoupon] = useState(null);
   const [showCouponModal, setShowCouponModal] = useState(false);
 
+  // Transfer modal state
+  const [showTransferModal, setShowTransferModal] = useState(false);
+  const [transferCoupon, setTransferCoupon] = useState(null);
+  const [recipientMemberId, setRecipientMemberId] = useState('');
+
   // Helper function to get image source (handles both base64 and file paths)
   const getImageSrc = (imagePath) => {
     if (!imagePath) return null;
@@ -434,6 +439,53 @@ function Profile() {
       setMessage({
         type: 'error',
         text: error.response?.data?.message || t('enrollmentFailed')
+      });
+    }
+  };
+
+  const handleTransferCoupon = async (e) => {
+    e.preventDefault();
+
+    if (!recipientMemberId.trim()) {
+      setMessage({
+        type: 'error',
+        text: t('language') === 'zh' ? '請輸入收件人團員編號' : 'Please enter recipient member ID'
+      });
+      return;
+    }
+
+    if (recipientMemberId.trim() === member.memberId) {
+      setMessage({
+        type: 'error',
+        text: t('language') === 'zh' ? '無法轉讓給自己' : 'Cannot transfer to yourself'
+      });
+      return;
+    }
+
+    try {
+      const response = await axios.post('/api/members?action=transfer-coupon', {
+        senderMemberId: member.memberId,
+        recipientMemberId: recipientMemberId.trim(),
+        couponId: transferCoupon._id
+      });
+
+      setMessage({
+        type: 'success',
+        text: response.data.message
+      });
+
+      // Refresh member data
+      const memberResponse = await axios.get(`/api/members?memberId=${member.memberId}`);
+      setMember(memberResponse.data.member);
+
+      // Close modal and reset state
+      setShowTransferModal(false);
+      setTransferCoupon(null);
+      setRecipientMemberId('');
+    } catch (error) {
+      setMessage({
+        type: 'error',
+        text: error.response?.data?.message || (t('language') === 'zh' ? '轉讓失敗' : 'Transfer failed')
       });
     }
   };
@@ -1361,11 +1413,8 @@ function Profile() {
                         {remainingUses > 0 && (
                           <button
                             onClick={() => {
-                              // Transfer functionality will be added later
-                              setMessage({
-                                type: 'info',
-                                text: t('language') === 'zh' ? '轉讓功能即將推出' : 'Transfer feature coming soon'
-                              });
+                              setTransferCoupon(coupon);
+                              setShowTransferModal(true);
                             }}
                             className="btn btn-secondary"
                             style={{
@@ -1733,6 +1782,139 @@ function Profile() {
             >
               {t('language') === 'zh' ? '取消' : 'Cancel'}
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Transfer Coupon Modal */}
+      {showTransferModal && transferCoupon && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.7)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1002,
+          padding: '20px'
+        }}>
+          <div style={{
+            background: 'white',
+            borderRadius: '16px',
+            padding: '40px',
+            maxWidth: '500px',
+            width: '100%',
+            boxShadow: '0 10px 50px rgba(0, 0, 0, 0.3)'
+          }}>
+            <h2 style={{ color: '#667eea', marginBottom: '30px', textAlign: 'center' }}>
+              {t('language') === 'zh' ? '轉讓優惠券' : 'Transfer Coupon'}
+            </h2>
+
+            {/* Coupon Summary */}
+            <div style={{
+              background: '#f8f9ff',
+              padding: '20px',
+              borderRadius: '12px',
+              marginBottom: '30px',
+              border: '2px solid #d3e0ff'
+            }}>
+              {transferCoupon.image && (
+                <img
+                  src={transferCoupon.image}
+                  alt={transferCoupon.name}
+                  style={{
+                    width: '100%',
+                    height: '120px',
+                    objectFit: 'cover',
+                    borderRadius: '8px',
+                    marginBottom: '15px'
+                  }}
+                />
+              )}
+              <div style={{ marginBottom: '10px' }}>
+                <span style={{
+                  display: 'inline-block',
+                  padding: '4px 12px',
+                  background: transferCoupon.type === 'trial' ? '#d3f9d8' : '#ffe3e3',
+                  color: transferCoupon.type === 'trial' ? '#2b8a3e' : '#c92a2a',
+                  borderRadius: '6px',
+                  fontSize: '12px',
+                  fontWeight: 'bold',
+                  textTransform: 'uppercase'
+                }}>
+                  {transferCoupon.type === 'trial'
+                    ? (t('language') === 'zh' ? '體驗券' : 'Trial')
+                    : (t('language') === 'zh' ? '折扣券' : 'Discount')}
+                </span>
+              </div>
+              <h4 style={{ color: '#667eea', marginBottom: '10px' }}>
+                {transferCoupon.name}
+              </h4>
+              <p style={{ color: '#666', fontSize: '14px', marginBottom: '8px' }}>
+                {transferCoupon.description}
+              </p>
+              <p style={{ fontSize: '14px', color: '#495057' }}>
+                <strong>{t('language') === 'zh' ? '剩餘：' : 'Remaining: '}</strong>
+                {transferCoupon.quantity - transferCoupon.usedCount}
+              </p>
+            </div>
+
+            <form onSubmit={handleTransferCoupon}>
+              <div style={{ marginBottom: '25px' }}>
+                <label style={{
+                  display: 'block',
+                  marginBottom: '10px',
+                  color: '#333',
+                  fontWeight: '600'
+                }}>
+                  {t('language') === 'zh' ? '收件人團員編號' : 'Recipient Member ID'}
+                </label>
+                <input
+                  type="text"
+                  value={recipientMemberId}
+                  onChange={(e) => setRecipientMemberId(e.target.value)}
+                  placeholder={t('language') === 'zh' ? '輸入團員編號' : 'Enter member ID'}
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    border: '2px solid #e0e0e0',
+                    borderRadius: '8px',
+                    fontSize: '16px'
+                  }}
+                  required
+                />
+                <small style={{ color: '#666', display: 'block', marginTop: '8px' }}>
+                  {t('language') === 'zh'
+                    ? '⚠️ 轉讓後優惠券將立即從您的帳戶移除，並轉移到收件人帳戶。收件人將收到 LINE 通知。'
+                    : '⚠️ The coupon will be immediately removed from your account and transferred to the recipient. They will receive a LINE notification.'}
+                </small>
+              </div>
+
+              <div style={{ display: 'flex', gap: '15px' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowTransferModal(false);
+                    setTransferCoupon(null);
+                    setRecipientMemberId('');
+                  }}
+                  className="btn btn-secondary"
+                  style={{ flex: 1 }}
+                >
+                  {t('language') === 'zh' ? '取消' : 'Cancel'}
+                </button>
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  style={{ flex: 1 }}
+                >
+                  {t('language') === 'zh' ? '確認轉讓' : 'Confirm Transfer'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
