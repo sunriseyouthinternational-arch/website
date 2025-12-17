@@ -131,7 +131,7 @@ async function handleFollowEvent(event) {
           const shareToken = await CouponShareToken.findOne({ token: pendingCouponToken });
 
           if (shareToken && shareToken.status === 'pending' && new Date() <= shareToken.expiresAt) {
-            // Add coupon to member
+            // Add coupon to recipient
             member.coupons.push({
               type: shareToken.couponData.type,
               classInfoId: shareToken.couponData.classInfoId,
@@ -143,6 +143,21 @@ async function handleFollowEvent(event) {
               quantity: 1,
               usedCount: 0
             });
+
+            // Decrement sender's coupon now that it's been successfully claimed
+            const sender = await Member.findOne({ memberId: shareToken.senderMemberId });
+            if (sender) {
+              const senderCoupon = sender.coupons.id(shareToken.senderCouponId);
+              if (senderCoupon) {
+                const remainingUses = senderCoupon.quantity - senderCoupon.usedCount;
+                if (remainingUses === 1) {
+                  sender.coupons.pull(shareToken.senderCouponId);
+                } else {
+                  senderCoupon.quantity -= 1;
+                }
+                await sender.save();
+              }
+            }
 
             // Mark token as claimed
             shareToken.status = 'claimed';

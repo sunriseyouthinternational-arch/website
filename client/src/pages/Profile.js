@@ -458,9 +458,7 @@ function Profile() {
 
       setShareLink(response.data);
 
-      // Refresh member data (coupon quantity decremented)
-      const memberResponse = await axios.get(`/api/members?memberId=${member.memberId}`);
-      setMember(memberResponse.data.member);
+      // Note: Coupon quantity is NOT decremented until successfully claimed by recipient
     } catch (error) {
       setMessage({
         type: 'error',
@@ -1999,26 +1997,6 @@ function Profile() {
                     </button>
                   </div>
                 </div>
-
-                {/* Share via LINE button */}
-                <a
-                  href={shareLink.lineAddFriendUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    display: 'block',
-                    textAlign: 'center',
-                    padding: '15px',
-                    background: '#06C755',
-                    color: 'white',
-                    borderRadius: '8px',
-                    textDecoration: 'none',
-                    fontWeight: '600',
-                    marginBottom: '20px'
-                  }}
-                >
-                  🔗 {t('language') === 'zh' ? '開啟 LINE 分享連結' : 'Open LINE Share Link'}
-                </a>
 
                 {/* Expiry Info */}
                 <div style={{

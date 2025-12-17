@@ -192,6 +192,7 @@ const couponShareTokenSchema = new mongoose.Schema({
   },
   senderMemberId: { type: String, required: true },
   senderName: { type: String, required: true },
+  senderCouponId: { type: mongoose.Schema.Types.ObjectId, required: true }, // Reference to sender's specific coupon
   createdAt: { type: Date, default: Date.now },
   expiresAt: { type: Date, required: true }, // Link expires after 7 days
   claimedBy: { type: String }, // Member ID who claimed it

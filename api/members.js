@@ -128,7 +128,7 @@ module.exports = async (req, res) => {
           if (shareToken && shareToken.status === 'pending' && new Date() <= shareToken.expiresAt) {
             // Check if coupon itself is not expired
             if (!shareToken.couponData.expiryDate || new Date() <= new Date(shareToken.couponData.expiryDate)) {
-              // Add coupon to member
+              // Add coupon to recipient
               member.coupons.push({
                 type: shareToken.couponData.type,
                 classInfoId: shareToken.couponData.classInfoId,
@@ -140,6 +140,21 @@ module.exports = async (req, res) => {
                 quantity: 1,
                 usedCount: 0
               });
+
+              // Decrement sender's coupon now that it's been successfully claimed
+              const sender = await Member.findOne({ memberId: shareToken.senderMemberId });
+              if (sender) {
+                const senderCoupon = sender.coupons.id(shareToken.senderCouponId);
+                if (senderCoupon) {
+                  const remainingUses = senderCoupon.quantity - senderCoupon.usedCount;
+                  if (remainingUses === 1) {
+                    sender.coupons.pull(shareToken.senderCouponId);
+                  } else {
+                    senderCoupon.quantity -= 1;
+                  }
+                  await sender.save();
+                }
+              }
 
               // Mark token as claimed
               shareToken.status = 'claimed';
@@ -441,18 +456,13 @@ module.exports = async (req, res) => {
         },
         senderMemberId: sender.memberId,
         senderName: sender.name,
+        senderCouponId: coupon._id, // Store reference to sender's coupon
         expiresAt
       });
 
       await shareToken.save();
 
-      // Decrement sender's coupon quantity or remove if last use
-      if (remainingUses === 1) {
-        sender.coupons.pull(couponId);
-      } else {
-        coupon.quantity -= 1;
-      }
-      await sender.save();
+      // Note: Coupon is NOT decremented here. It will be decremented when successfully claimed.
 
       const protocol = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split('://')[0] : 'https';
       const host = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split('://')[1] : 'www.sunriseyouth.org';
