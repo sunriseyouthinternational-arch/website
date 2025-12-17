@@ -71,6 +71,18 @@ function AdminDashboard() {
     photo: ''
   });
 
+  // Form states for adding coupons to members
+  const [showAddCouponForm, setShowAddCouponForm] = useState(false);
+  const [newCoupon, setNewCoupon] = useState({
+    type: 'trial',
+    classInfoId: '',
+    discountPercent: '',
+    name: '',
+    description: '',
+    image: '',
+    quantity: 1
+  });
+
   useEffect(() => {
     const token = localStorage.getItem('adminToken');
     if (!token) {
@@ -650,6 +662,168 @@ function AdminDashboard() {
     }
   };
 
+  // Coupon handlers
+  const handleCouponImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setNewCoupon(prev => ({ ...prev, image: reader.result }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleCouponTypeChange = (type) => {
+    setNewCoupon(prev => {
+      const updated = { ...prev, type };
+
+      // Auto-fill name and description when type changes
+      if (type === 'trial' && prev.classInfoId) {
+        const classInfo = classInfos.find(c => c._id === prev.classInfoId);
+        if (classInfo) {
+          updated.name = t('language') === 'zh'
+            ? `${classInfo.name} 體驗券`
+            : `${classInfo.name} Trial Coupon`;
+          updated.description = t('language') === 'zh'
+            ? `此券可用於體驗 ${classInfo.name} 課程`
+            : `This coupon can be used for a trial ${classInfo.name} class`;
+        }
+      } else if (type === 'discount') {
+        updated.name = t('language') === 'zh'
+          ? `折扣券 ${prev.discountPercent || ''}%`
+          : `Discount Coupon ${prev.discountPercent || ''}%`;
+        updated.description = t('language') === 'zh'
+          ? `此券可用於所有課程，享 ${prev.discountPercent || ''} % 折扣`
+          : `This coupon can be used for all classes with ${prev.discountPercent || ''}% discount`;
+      }
+
+      return updated;
+    });
+  };
+
+  const handleCouponClassChange = (classInfoId) => {
+    const classInfo = classInfos.find(c => c._id === classInfoId);
+    setNewCoupon(prev => ({
+      ...prev,
+      classInfoId,
+      name: classInfo ? (t('language') === 'zh'
+        ? `${classInfo.name} 體驗券`
+        : `${classInfo.name} Trial Coupon`) : '',
+      description: classInfo ? (t('language') === 'zh'
+        ? `此券可用於體驗 ${classInfo.name} 課程`
+        : `This coupon can be used for a trial ${classInfo.name} class`) : ''
+    }));
+  };
+
+  const handleCouponDiscountChange = (discountPercent) => {
+    setNewCoupon(prev => ({
+      ...prev,
+      discountPercent,
+      name: t('language') === 'zh'
+        ? `折扣券 ${discountPercent}%`
+        : `Discount Coupon ${discountPercent}%`,
+      description: t('language') === 'zh'
+        ? `此券可用於所有課程，享 ${discountPercent}% 折扣`
+        : `This coupon can be used for all classes with ${discountPercent}% discount`
+    }));
+  };
+
+  const handleAddCoupon = async (e) => {
+    e.preventDefault();
+
+    // Validation
+    if (newCoupon.type === 'trial' && !newCoupon.classInfoId) {
+      setMessage({
+        type: 'error',
+        text: t('language') === 'zh' ? '請選擇課程' : 'Please select a class'
+      });
+      return;
+    }
+
+    if (newCoupon.type === 'discount' && (!newCoupon.discountPercent || newCoupon.discountPercent <= 0 || newCoupon.discountPercent > 100)) {
+      setMessage({
+        type: 'error',
+        text: t('language') === 'zh' ? '請輸入有效的折扣百分比 (1-100)' : 'Please enter a valid discount percentage (1-100)'
+      });
+      return;
+    }
+
+    if (!newCoupon.quantity || newCoupon.quantity <= 0) {
+      setMessage({
+        type: 'error',
+        text: t('language') === 'zh' ? '請輸入有效的數量' : 'Please enter a valid quantity'
+      });
+      return;
+    }
+
+    try {
+      const couponData = {
+        type: newCoupon.type,
+        name: newCoupon.name,
+        description: newCoupon.description,
+        image: newCoupon.image,
+        quantity: parseInt(newCoupon.quantity)
+      };
+
+      if (newCoupon.type === 'trial') {
+        couponData.classInfoId = newCoupon.classInfoId;
+      } else {
+        couponData.discountPercent = parseInt(newCoupon.discountPercent);
+      }
+
+      await axios.post(`/api/members?memberId=${selectedMember.memberId}&action=add-coupon`, couponData);
+
+      setMessage({
+        type: 'success',
+        text: t('language') === 'zh' ? '優惠券添加成功！' : 'Coupon added successfully!'
+      });
+
+      // Reset form
+      setNewCoupon({
+        type: 'trial',
+        classInfoId: '',
+        discountPercent: '',
+        name: '',
+        description: '',
+        image: '',
+        quantity: 1
+      });
+      setShowAddCouponForm(false);
+
+      // Refresh member data
+      const res = await axios.get(`/api/members?memberId=${selectedMember.memberId}`);
+      setSelectedMember(res.data.member);
+      fetchData();
+    } catch (error) {
+      console.error('Error adding coupon:', error);
+      setMessage({ type: 'error', text: error.response?.data?.message || t('error') });
+    }
+  };
+
+  const handleDeleteCoupon = async (couponId) => {
+    if (!window.confirm(t('language') === 'zh' ? '確定要刪除此優惠券嗎？' : 'Are you sure you want to delete this coupon?')) {
+      return;
+    }
+
+    try {
+      await axios.delete(`/api/members?memberId=${selectedMember.memberId}&action=delete-coupon&couponId=${couponId}`);
+
+      setMessage({
+        type: 'success',
+        text: t('language') === 'zh' ? '優惠券刪除成功' : 'Coupon deleted successfully'
+      });
+
+      // Refresh member data
+      const res = await axios.get(`/api/members?memberId=${selectedMember.memberId}`);
+      setSelectedMember(res.data.member);
+      fetchData();
+    } catch (error) {
+      console.error('Error deleting coupon:', error);
+      setMessage({ type: 'error', text: error.response?.data?.message || t('error') });
+    }
+  };
+
   const updatePaymentStatus = async (type, itemId, participantId, paid) => {
     const key = `${type}-${itemId}-${participantId}`;
     console.log('[Payment Update] Starting payment status update:', { type, itemId, participantId, paid });
@@ -981,6 +1155,225 @@ function AdminDashboard() {
               </div>
             </div>
           )}
+
+          {/* Coupon Management Section */}
+          <div className="detail-section" style={{ marginTop: '30px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h4 style={{ margin: 0 }}>{t('language') === 'zh' ? '優惠券管理' : 'Coupon Management'}</h4>
+              <button
+                className="btn btn-primary"
+                onClick={() => setShowAddCouponForm(!showAddCouponForm)}
+                style={{ fontSize: '14px', padding: '8px 16px' }}
+              >
+                {showAddCouponForm
+                  ? (t('language') === 'zh' ? '取消' : 'Cancel')
+                  : (t('language') === 'zh' ? '+ 添加優惠券' : '+ Add Coupon')}
+              </button>
+            </div>
+
+            {showAddCouponForm && (
+              <form onSubmit={handleAddCoupon} className="add-form" style={{ marginBottom: '30px', background: '#f8f9ff', padding: '20px', borderRadius: '8px' }}>
+                <div className="form-group">
+                  <label>{t('language') === 'zh' ? '優惠券類型' : 'Coupon Type'}</label>
+                  <select
+                    value={newCoupon.type}
+                    onChange={(e) => handleCouponTypeChange(e.target.value)}
+                    className="form-control"
+                    required
+                  >
+                    <option value="trial">{t('language') === 'zh' ? '體驗券（特定課程）' : 'Trial Coupon (Specific Class)'}</option>
+                    <option value="discount">{t('language') === 'zh' ? '折扣券（所有課程）' : 'Discount Coupon (All Classes)'}</option>
+                  </select>
+                </div>
+
+                {newCoupon.type === 'trial' && (
+                  <div className="form-group">
+                    <label>{t('language') === 'zh' ? '選擇課程' : 'Select Class'}</label>
+                    <select
+                      value={newCoupon.classInfoId}
+                      onChange={(e) => handleCouponClassChange(e.target.value)}
+                      className="form-control"
+                      required
+                    >
+                      <option value="">{t('language') === 'zh' ? '-- 選擇課程 --' : '-- Select Class --'}</option>
+                      {classInfos.map(classInfo => (
+                        <option key={classInfo._id} value={classInfo._id}>
+                          {classInfo.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {newCoupon.type === 'discount' && (
+                  <div className="form-group">
+                    <label>{t('language') === 'zh' ? '折扣百分比 (1-100)' : 'Discount Percentage (1-100)'}</label>
+                    <input
+                      type="number"
+                      value={newCoupon.discountPercent}
+                      onChange={(e) => handleCouponDiscountChange(e.target.value)}
+                      className="form-control"
+                      min="1"
+                      max="100"
+                      required
+                    />
+                  </div>
+                )}
+
+                <div className="form-group">
+                  <label>{t('language') === 'zh' ? '優惠券名稱' : 'Coupon Name'}</label>
+                  <input
+                    type="text"
+                    value={newCoupon.name}
+                    onChange={(e) => setNewCoupon(prev => ({ ...prev, name: e.target.value }))}
+                    className="form-control"
+                    required
+                  />
+                  <small style={{ color: '#666' }}>
+                    {t('language') === 'zh' ? '自動填入，可編輯' : 'Auto-filled, editable'}
+                  </small>
+                </div>
+
+                <div className="form-group">
+                  <label>{t('language') === 'zh' ? '優惠券描述' : 'Coupon Description'}</label>
+                  <textarea
+                    value={newCoupon.description}
+                    onChange={(e) => setNewCoupon(prev => ({ ...prev, description: e.target.value }))}
+                    className="form-control"
+                    rows="3"
+                  />
+                  <small style={{ color: '#666' }}>
+                    {t('language') === 'zh' ? '自動填入，可編輯' : 'Auto-filled, editable'}
+                  </small>
+                </div>
+
+                <div className="form-group">
+                  <label>{t('language') === 'zh' ? '數量' : 'Quantity'}</label>
+                  <input
+                    type="number"
+                    value={newCoupon.quantity}
+                    onChange={(e) => setNewCoupon(prev => ({ ...prev, quantity: e.target.value }))}
+                    className="form-control"
+                    min="1"
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>{t('language') === 'zh' ? '優惠券圖片（可選）' : 'Coupon Image (Optional)'}</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleCouponImageUpload}
+                    className="form-control"
+                  />
+                  {newCoupon.image && (
+                    <img
+                      src={newCoupon.image}
+                      alt="Coupon preview"
+                      style={{ marginTop: '10px', maxWidth: '200px', borderRadius: '8px' }}
+                    />
+                  )}
+                </div>
+
+                <button type="submit" className="btn btn-primary">
+                  {t('language') === 'zh' ? '添加優惠券' : 'Add Coupon'}
+                </button>
+              </form>
+            )}
+
+            {/* Display existing coupons */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
+              {selectedMember.coupons && selectedMember.coupons.length > 0 ? (
+                selectedMember.coupons.map((coupon, idx) => {
+                  const classInfo = coupon.classInfoId ? classInfos.find(c => c._id === coupon.classInfoId) : null;
+                  return (
+                    <div
+                      key={idx}
+                      style={{
+                        background: 'white',
+                        border: '2px solid #667eea',
+                        borderRadius: '12px',
+                        padding: '20px',
+                        position: 'relative'
+                      }}
+                    >
+                      {coupon.image && (
+                        <img
+                          src={coupon.image}
+                          alt={coupon.name}
+                          style={{
+                            width: '100%',
+                            height: '150px',
+                            objectFit: 'cover',
+                            borderRadius: '8px',
+                            marginBottom: '15px'
+                          }}
+                        />
+                      )}
+                      <div style={{ marginBottom: '10px' }}>
+                        <span
+                          style={{
+                            display: 'inline-block',
+                            padding: '4px 12px',
+                            background: coupon.type === 'trial' ? '#d3f9d8' : '#ffe3e3',
+                            color: coupon.type === 'trial' ? '#2b8a3e' : '#c92a2a',
+                            borderRadius: '6px',
+                            fontSize: '12px',
+                            fontWeight: 'bold',
+                            textTransform: 'uppercase'
+                          }}
+                        >
+                          {coupon.type === 'trial'
+                            ? (t('language') === 'zh' ? '體驗券' : 'Trial')
+                            : (t('language') === 'zh' ? '折扣券' : 'Discount')}
+                        </span>
+                      </div>
+                      <h5 style={{ color: '#667eea', marginBottom: '10px' }}>{coupon.name}</h5>
+                      <p style={{ color: '#666', fontSize: '14px', marginBottom: '10px' }}>
+                        {coupon.description}
+                      </p>
+                      {coupon.type === 'trial' && classInfo && (
+                        <p style={{ fontSize: '13px', color: '#1971c2', marginBottom: '8px' }}>
+                          <strong>{t('language') === 'zh' ? '適用課程：' : 'Valid for: '}</strong>
+                          {classInfo.name}
+                        </p>
+                      )}
+                      {coupon.type === 'discount' && (
+                        <p style={{ fontSize: '13px', color: '#c92a2a', marginBottom: '8px' }}>
+                          <strong>{t('language') === 'zh' ? '折扣：' : 'Discount: '}</strong>
+                          {coupon.discountPercent}%
+                        </p>
+                      )}
+                      <p style={{ fontSize: '14px', marginBottom: '8px' }}>
+                        <strong>{t('language') === 'zh' ? '數量：' : 'Quantity: '}</strong>
+                        {coupon.quantity - coupon.usedCount} / {coupon.quantity}
+                      </p>
+                      <p style={{ fontSize: '12px', color: '#999' }}>
+                        {t('language') === 'zh' ? '創建於 ' : 'Created '}{formatDate(coupon.createdAt)}
+                      </p>
+                      <button
+                        onClick={() => handleDeleteCoupon(coupon._id)}
+                        className="btn btn-danger"
+                        style={{
+                          marginTop: '15px',
+                          width: '100%',
+                          fontSize: '13px',
+                          padding: '8px'
+                        }}
+                      >
+                        {t('language') === 'zh' ? '刪除' : 'Delete'}
+                      </button>
+                    </div>
+                  );
+                })
+              ) : (
+                <p style={{ color: '#999', gridColumn: '1 / -1', textAlign: 'center', padding: '20px' }}>
+                  {t('language') === 'zh' ? '此會員尚無優惠券' : 'No coupons for this member'}
+                </p>
+              )}
+            </div>
+          </div>
         </div>
       )}
 

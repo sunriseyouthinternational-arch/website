@@ -4,7 +4,7 @@ const { createPersonalizedRichMenu } = require('../lib/lineRichMenu');
 const line = require('@line/bot-sdk');
 
 module.exports = async (req, res) => {
-  const { memberId, token, sessionToken } = req.query;
+  const { memberId, token, sessionToken, action, couponId } = req.query;
 
   try {
     await connectDB();
@@ -245,6 +245,91 @@ module.exports = async (req, res) => {
 
       return res.status(200).json({
         message: '更新成功 / Update successful',
+        member
+      });
+    }
+
+    // Add coupon to member
+    if (req.method === 'POST' && action === 'add-coupon' && memberId) {
+      const { type, classInfoId, discountPercent, name, description, image, quantity } = req.body;
+
+      const member = await Member.findOne({ memberId });
+
+      if (!member) {
+        return res.status(404).json({
+          message: '找不到團員 / Member not found'
+        });
+      }
+
+      // Validate coupon data
+      if (!type || !name || !quantity) {
+        return res.status(400).json({
+          message: '缺少必要欄位 / Missing required fields'
+        });
+      }
+
+      if (type === 'trial' && !classInfoId) {
+        return res.status(400).json({
+          message: '體驗券必須指定課程 / Trial coupon must specify a class'
+        });
+      }
+
+      if (type === 'discount' && (!discountPercent || discountPercent <= 0 || discountPercent > 100)) {
+        return res.status(400).json({
+          message: '折扣券必須指定有效的折扣百分比 / Discount coupon must specify valid discount percentage'
+        });
+      }
+
+      // Create coupon object
+      const coupon = {
+        type,
+        name,
+        description: description || '',
+        image: image || '',
+        quantity: parseInt(quantity),
+        usedCount: 0
+      };
+
+      if (type === 'trial') {
+        coupon.classInfoId = classInfoId;
+      } else {
+        coupon.discountPercent = parseInt(discountPercent);
+      }
+
+      // Add coupon to member's coupons array
+      member.coupons.push(coupon);
+      await member.save();
+
+      return res.status(200).json({
+        message: '優惠券添加成功 / Coupon added successfully',
+        member
+      });
+    }
+
+    // Delete coupon from member
+    if (req.method === 'DELETE' && action === 'delete-coupon' && memberId && couponId) {
+      const member = await Member.findOne({ memberId });
+
+      if (!member) {
+        return res.status(404).json({
+          message: '找不到團員 / Member not found'
+        });
+      }
+
+      // Find and remove coupon
+      const couponIndex = member.coupons.findIndex(c => c._id.toString() === couponId);
+
+      if (couponIndex === -1) {
+        return res.status(404).json({
+          message: '找不到優惠券 / Coupon not found'
+        });
+      }
+
+      member.coupons.splice(couponIndex, 1);
+      await member.save();
+
+      return res.status(200).json({
+        message: '優惠券刪除成功 / Coupon deleted successfully',
         member
       });
     }
