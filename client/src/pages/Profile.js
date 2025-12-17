@@ -1773,8 +1773,8 @@ function Profile() {
         </div>
       )}
 
-      {/* Transfer Coupon Modal */}
-      {showTransferModal && transferCoupon && (
+      {/* Share Coupon Modal */}
+      {showShareModal && shareCoupon && (
         <div style={{
           position: 'fixed',
           top: 0,
@@ -1792,12 +1792,14 @@ function Profile() {
             background: 'white',
             borderRadius: '16px',
             padding: '40px',
-            maxWidth: '500px',
+            maxWidth: '600px',
             width: '100%',
+            maxHeight: '90vh',
+            overflow: 'auto',
             boxShadow: '0 10px 50px rgba(0, 0, 0, 0.3)'
           }}>
             <h2 style={{ color: '#667eea', marginBottom: '30px', textAlign: 'center' }}>
-              {t('language') === 'zh' ? '轉讓優惠券' : 'Transfer Coupon'}
+              {t('language') === 'zh' ? '分享優惠券' : 'Share Coupon'}
             </h2>
 
             {/* Coupon Summary */}
@@ -1808,10 +1810,10 @@ function Profile() {
               marginBottom: '30px',
               border: '2px solid #d3e0ff'
             }}>
-              {transferCoupon.image && (
+              {shareCoupon.image && (
                 <img
-                  src={transferCoupon.image}
-                  alt={transferCoupon.name}
+                  src={shareCoupon.image}
+                  alt={shareCoupon.name}
                   style={{
                     width: '100%',
                     height: '120px',
@@ -1825,83 +1827,156 @@ function Profile() {
                 <span style={{
                   display: 'inline-block',
                   padding: '4px 12px',
-                  background: transferCoupon.type === 'trial' ? '#d3f9d8' : '#ffe3e3',
-                  color: transferCoupon.type === 'trial' ? '#2b8a3e' : '#c92a2a',
+                  background: shareCoupon.type === 'trial' ? '#d3f9d8' : '#ffe3e3',
+                  color: shareCoupon.type === 'trial' ? '#2b8a3e' : '#c92a2a',
                   borderRadius: '6px',
                   fontSize: '12px',
                   fontWeight: 'bold',
                   textTransform: 'uppercase'
                 }}>
-                  {transferCoupon.type === 'trial'
+                  {shareCoupon.type === 'trial'
                     ? (t('language') === 'zh' ? '體驗券' : 'Trial')
                     : (t('language') === 'zh' ? '折扣券' : 'Discount')}
                 </span>
               </div>
               <h4 style={{ color: '#667eea', marginBottom: '10px' }}>
-                {transferCoupon.name}
+                {shareCoupon.name}
               </h4>
-              <p style={{ color: '#666', fontSize: '14px', marginBottom: '8px' }}>
-                {transferCoupon.description}
-              </p>
-              <p style={{ fontSize: '14px', color: '#495057' }}>
-                <strong>{t('language') === 'zh' ? '剩餘：' : 'Remaining: '}</strong>
-                {transferCoupon.quantity - transferCoupon.usedCount}
+              <p style={{ color: '#666', fontSize: '14px' }}>
+                {shareCoupon.description}
               </p>
             </div>
 
-            <form onSubmit={handleTransferCoupon}>
-              <div style={{ marginBottom: '25px' }}>
-                <label style={{
-                  display: 'block',
-                  marginBottom: '10px',
-                  color: '#333',
-                  fontWeight: '600'
-                }}>
-                  {t('language') === 'zh' ? '收件人團員編號' : 'Recipient Member ID'}
-                </label>
-                <input
-                  type="text"
-                  value={recipientMemberId}
-                  onChange={(e) => setRecipientMemberId(e.target.value)}
-                  placeholder={t('language') === 'zh' ? '輸入團員編號' : 'Enter member ID'}
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    border: '2px solid #e0e0e0',
-                    borderRadius: '8px',
-                    fontSize: '16px'
-                  }}
-                  required
-                />
-                <small style={{ color: '#666', display: 'block', marginTop: '8px' }}>
-                  {t('language') === 'zh'
-                    ? '⚠️ 轉讓後優惠券將立即從您的帳戶移除，並轉移到收件人帳戶。收件人將收到 LINE 通知。'
-                    : '⚠️ The coupon will be immediately removed from your account and transferred to the recipient. They will receive a LINE notification.'}
-                </small>
+            {shareLoading ? (
+              <div style={{ textAlign: 'center', padding: '40px' }}>
+                <div style={{ fontSize: '48px', marginBottom: '20px' }}>⏳</div>
+                <p style={{ color: '#667eea', fontSize: '16px' }}>
+                  {t('language') === 'zh' ? '正在生成分享連結...' : 'Generating share link...'}
+                </p>
               </div>
+            ) : shareLink ? (
+              <>
+                {/* QR Code for LINE Add Friend */}
+                <div style={{ textAlign: 'center', marginBottom: '30px' }}>
+                  <p style={{ marginBottom: '15px', fontWeight: '600', color: '#333' }}>
+                    {t('language') === 'zh' ? '掃描 QR Code 領取優惠券' : 'Scan QR Code to Claim'}
+                  </p>
+                  <img
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(shareLink.lineAddFriendUrl)}`}
+                    alt="QR Code"
+                    style={{
+                      width: '200px',
+                      height: '200px',
+                      border: '4px solid #667eea',
+                      borderRadius: '12px',
+                      padding: '10px',
+                      background: 'white'
+                    }}
+                  />
+                  <p style={{ marginTop: '10px', fontSize: '12px', color: '#666' }}>
+                    {t('language') === 'zh'
+                      ? '掃描後將提示加入 LINE 官方帳號'
+                      : 'Scanning will prompt to add LINE Official Account'}
+                  </p>
+                </div>
 
-              <div style={{ display: 'flex', gap: '15px' }}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowTransferModal(false);
-                    setTransferCoupon(null);
-                    setRecipientMemberId('');
+                {/* Share Link */}
+                <div style={{ marginBottom: '20px' }}>
+                  <label style={{
+                    display: 'block',
+                    marginBottom: '10px',
+                    fontWeight: '600',
+                    color: '#333'
+                  }}>
+                    {t('language') === 'zh' ? '或使用此連結分享' : 'Or Share This Link'}
+                  </label>
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <input
+                      type="text"
+                      value={shareLink.claimUrl}
+                      readOnly
+                      style={{
+                        flex: 1,
+                        padding: '12px',
+                        border: '2px solid #e0e0e0',
+                        borderRadius: '8px',
+                        fontSize: '14px',
+                        background: '#f8f9fa'
+                      }}
+                    />
+                    <button
+                      onClick={() => handleCopyToClipboard(shareLink.claimUrl)}
+                      className="btn btn-secondary"
+                      style={{ whiteSpace: 'nowrap' }}
+                    >
+                      {t('language') === 'zh' ? '複製' : 'Copy'}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Share via LINE button */}
+                <a
+                  href={shareLink.lineAddFriendUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: 'block',
+                    textAlign: 'center',
+                    padding: '15px',
+                    background: '#06C755',
+                    color: 'white',
+                    borderRadius: '8px',
+                    textDecoration: 'none',
+                    fontWeight: '600',
+                    marginBottom: '20px'
                   }}
-                  className="btn btn-secondary"
-                  style={{ flex: 1 }}
                 >
-                  {t('language') === 'zh' ? '取消' : 'Cancel'}
-                </button>
-                <button
-                  type="submit"
-                  className="btn btn-primary"
-                  style={{ flex: 1 }}
-                >
-                  {t('language') === 'zh' ? '確認轉讓' : 'Confirm Transfer'}
-                </button>
-              </div>
-            </form>
+                  🔗 {t('language') === 'zh' ? '開啟 LINE 分享連結' : 'Open LINE Share Link'}
+                </a>
+
+                {/* Expiry Info */}
+                <div style={{
+                  background: '#fff3cd',
+                  border: '1px solid #ffc107',
+                  borderRadius: '8px',
+                  padding: '15px',
+                  marginBottom: '20px'
+                }}>
+                  <p style={{ margin: 0, fontSize: '14px', color: '#856404' }}>
+                    ⏰ {t('language') === 'zh'
+                      ? `此分享連結將於 ${new Date(shareLink.expiresAt).toLocaleDateString('zh-TW')} 過期`
+                      : `This share link expires on ${new Date(shareLink.expiresAt).toLocaleDateString('en-US')}`}
+                  </p>
+                </div>
+
+                {/* Instructions */}
+                <div style={{
+                  background: '#e7f3ff',
+                  border: '1px solid #b3d9ff',
+                  borderRadius: '8px',
+                  padding: '15px',
+                  marginBottom: '20px'
+                }}>
+                  <p style={{ margin: 0, fontSize: '13px', color: '#004085', lineHeight: '1.6' }}>
+                    {t('language') === 'zh'
+                      ? '💡 收件人點擊連結後需要加入 LINE 官方帳號並完成註冊，優惠券將自動加入他們的帳戶。'
+                      : '💡 Recipients need to add the LINE Official Account and complete registration. The coupon will be automatically added to their account.'}
+                  </p>
+                </div>
+              </>
+            ) : null}
+
+            <button
+              onClick={() => {
+                setShowShareModal(false);
+                setShareCoupon(null);
+                setShareLink(null);
+              }}
+              className="btn btn-secondary"
+              style={{ width: '100%' }}
+            >
+              {t('language') === 'zh' ? '關閉' : 'Close'}
+            </button>
           </div>
         </div>
       )}
