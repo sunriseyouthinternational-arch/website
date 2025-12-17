@@ -1,6 +1,6 @@
 const line = require('@line/bot-sdk');
 const connectDB = require('../lib/mongodb');
-const { Member } = require('../db/models');
+const { Member, CouponShareToken } = require('../db/models');
 const { createPersonalizedRichMenu } = require('../lib/lineRichMenu');
 
 const config = {
@@ -107,6 +107,15 @@ async function handleFollowEvent(event) {
   const lineUserId = event.source.userId;
   console.log('[handleFollowEvent] START - User ID:', lineUserId);
 
+  // Check for state parameter (coupon token)
+  const state = event.follow?.params?.state;
+  let pendingCouponToken = null;
+
+  if (state && state.startsWith('COUPON_')) {
+    pendingCouponToken = state.substring(7); // Remove 'COUPON_' prefix
+    console.log('[handleFollowEvent] Coupon token detected:', pendingCouponToken);
+  }
+
   try {
     // Check if user already exists
     console.log('[handleFollowEvent] Checking if user exists...');
@@ -114,6 +123,55 @@ async function handleFollowEvent(event) {
 
     if (member) {
       console.log('[handleFollowEvent] Existing member re-followed:', member.memberId);
+
+      // If there's a pending coupon, claim it immediately for existing member
+      if (pendingCouponToken) {
+        console.log('[handleFollowEvent] Claiming coupon for existing member...');
+        try {
+          const shareToken = await CouponShareToken.findOne({ token: pendingCouponToken });
+
+          if (shareToken && shareToken.status === 'pending' && new Date() <= shareToken.expiresAt) {
+            // Add coupon to member
+            member.coupons.push({
+              type: shareToken.couponData.type,
+              classInfoId: shareToken.couponData.classInfoId,
+              discountPercent: shareToken.couponData.discountPercent,
+              name: shareToken.couponData.name,
+              description: shareToken.couponData.description,
+              image: shareToken.couponData.image,
+              expiryDate: shareToken.couponData.expiryDate,
+              quantity: 1,
+              usedCount: 0
+            });
+
+            // Mark token as claimed
+            shareToken.status = 'claimed';
+            shareToken.claimedBy = member.memberId;
+            shareToken.claimedAt = new Date();
+            await shareToken.save();
+            await member.save();
+
+            const protocol = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split('://')[0] : 'https';
+            const host = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split('://')[1] : 'www.sunriseyouth.org';
+            const baseUrl = `${protocol}://${host}`;
+            const couponsUrl = `${baseUrl}/profile/${member.memberId}?tab=coupons`;
+
+            await client.pushMessage({
+              to: lineUserId,
+              messages: [{
+                type: 'text',
+                text: `🎁 您收到了一張新優惠券！\nYou received a new coupon!\n\n優惠券名稱 Name:\n${shareToken.couponData.name}\n\n點擊查看 View your coupons:\n${couponsUrl}`
+              }]
+            });
+
+            console.log('[handleFollowEvent] Coupon claimed successfully!');
+            return;
+          }
+        } catch (couponError) {
+          console.error('[handleFollowEvent] Error claiming coupon:', couponError);
+        }
+      }
+
       // Send welcome back message using push message (not reply)
       console.log('[handleFollowEvent] Sending welcome back message...');
       await client.pushMessage({
@@ -178,7 +236,8 @@ async function handleFollowEvent(event) {
       },
       registrationToken,
       registrationTokenExpires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
-      registrationCompleted: false
+      registrationCompleted: false,
+      pendingCouponToken: pendingCouponToken || undefined // Store coupon token if provided
     });
 
     // Save incomplete member
@@ -188,12 +247,19 @@ async function handleFollowEvent(event) {
 
     // Send welcome message with registration link
     console.log('[handleFollowEvent] Sending welcome message with registration link...');
+    let welcomeMessage = `🎉 歡迎加入晨光國際少年團！\nWelcome to Sunrise Youth International!\n\n您的團員編號 Your Member ID:\n${memberId}\n\n⚠️ 請點擊以下連結完成註冊\nPlease click the link below to complete registration:\n\n${registrationUrl}\n\n此連結將在 7 天後失效\nThis link will expire in 7 days`;
+
+    // Add coupon message if pending
+    if (pendingCouponToken) {
+      welcomeMessage += `\n\n🎁 您有一張優惠券等待領取！\nYou have a coupon waiting!\n完成註冊後將自動加入您的帳戶。\nIt will be added to your account after registration.`;
+    }
+
     await client.pushMessage({
       to: lineUserId,
       messages: [
         {
           type: 'text',
-          text: `🎉 歡迎加入晨光國際少年團！\nWelcome to Sunrise Youth International!\n\n您的團員編號 Your Member ID:\n${memberId}\n\n⚠️ 請點擊以下連結完成註冊\nPlease click the link below to complete registration:\n\n${registrationUrl}\n\n此連結將在 7 天後失效\nThis link will expire in 7 days`
+          text: welcomeMessage
         }
       ]
     });

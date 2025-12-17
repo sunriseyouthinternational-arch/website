@@ -1,7 +1,8 @@
 const connectDB = require('../lib/mongodb');
-const { Member } = require('../db/models');
+const { Member, CouponShareToken } = require('../db/models');
 const { createPersonalizedRichMenu } = require('../lib/lineRichMenu');
 const line = require('@line/bot-sdk');
+const crypto = require('crypto');
 
 module.exports = async (req, res) => {
   const { memberId, token, sessionToken, action, couponId } = req.query;
@@ -118,6 +119,45 @@ module.exports = async (req, res) => {
       member.registrationCompleted = true;
       member.registrationToken = undefined; // Remove token after use
       member.registrationTokenExpires = undefined;
+
+      // Check for pending coupon and claim it
+      if (member.pendingCouponToken) {
+        try {
+          const shareToken = await CouponShareToken.findOne({ token: member.pendingCouponToken });
+
+          if (shareToken && shareToken.status === 'pending' && new Date() <= shareToken.expiresAt) {
+            // Check if coupon itself is not expired
+            if (!shareToken.couponData.expiryDate || new Date() <= new Date(shareToken.couponData.expiryDate)) {
+              // Add coupon to member
+              member.coupons.push({
+                type: shareToken.couponData.type,
+                classInfoId: shareToken.couponData.classInfoId,
+                discountPercent: shareToken.couponData.discountPercent,
+                name: shareToken.couponData.name,
+                description: shareToken.couponData.description,
+                image: shareToken.couponData.image,
+                expiryDate: shareToken.couponData.expiryDate,
+                quantity: 1,
+                usedCount: 0
+              });
+
+              // Mark token as claimed
+              shareToken.status = 'claimed';
+              shareToken.claimedBy = member.memberId;
+              shareToken.claimedAt = new Date();
+              await shareToken.save();
+
+              console.log(`[Registration] Coupon auto-claimed for ${member.memberId}`);
+            }
+          }
+        } catch (couponError) {
+          console.error('[Registration] Error claiming pending coupon:', couponError);
+          // Don't block registration if coupon claim fails
+        }
+
+        // Clear pending coupon token regardless of success
+        member.pendingCouponToken = undefined;
+      }
 
       await member.save();
 
@@ -334,28 +374,21 @@ module.exports = async (req, res) => {
       });
     }
 
-    // Transfer coupon to another member
-    if (req.method === 'POST' && action === 'transfer-coupon') {
-      const { senderMemberId, recipientMemberId, couponId } = req.body;
+    // Generate shareable link for coupon
+    if (req.method === 'POST' && action === 'generate-share-link') {
+      const { memberId: senderMemberId, couponId } = req.body;
 
-      if (!senderMemberId || !recipientMemberId || !couponId) {
+      if (!senderMemberId || !couponId) {
         return res.status(400).json({
           message: '缺少必要欄位 / Missing required fields'
         });
       }
 
       const sender = await Member.findOne({ memberId: senderMemberId });
-      const recipient = await Member.findOne({ memberId: recipientMemberId });
 
       if (!sender) {
         return res.status(404).json({
-          message: '找不到發送者 / Sender not found'
-        });
-      }
-
-      if (!recipient) {
-        return res.status(404).json({
-          message: '找不到收件人 / Recipient not found'
+          message: '找不到團員 / Member not found'
         });
       }
 
@@ -372,73 +405,65 @@ module.exports = async (req, res) => {
       const remainingUses = coupon.quantity - coupon.usedCount;
       if (remainingUses <= 0) {
         return res.status(400).json({
-          message: '優惠券已用完，無法轉讓 / Coupon has no remaining uses'
+          message: '優惠券已用完，無法分享 / Coupon has no remaining uses'
         });
       }
 
-      // Create a copy of the coupon for the recipient
-      const transferredCoupon = {
-        type: coupon.type,
-        name: coupon.name,
-        description: coupon.description,
-        image: coupon.image,
-        quantity: 1, // Transfer only 1 use
-        usedCount: 0
-      };
-
-      if (coupon.type === 'trial') {
-        transferredCoupon.classInfoId = coupon.classInfoId;
-      } else {
-        transferredCoupon.discountPercent = coupon.discountPercent;
+      // Check if coupon is expired
+      if (coupon.expiryDate && new Date(coupon.expiryDate) < new Date()) {
+        return res.status(400).json({
+          message: '優惠券已過期 / Coupon has expired'
+        });
       }
 
-      // Add coupon to recipient
-      recipient.coupons.push(transferredCoupon);
-      await recipient.save();
+      // Generate unique token
+      const token = crypto.randomBytes(16).toString('hex');
 
-      // Decrement sender's coupon quantity or remove it if no uses left
-      if (coupon.quantity - coupon.usedCount === 1) {
-        // Last remaining use - remove the coupon entirely
+      // Create share token (expires in 7 days)
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 7);
+
+      const shareToken = new CouponShareToken({
+        token,
+        couponData: {
+          type: coupon.type,
+          classInfoId: coupon.classInfoId,
+          discountPercent: coupon.discountPercent,
+          name: coupon.name,
+          description: coupon.description,
+          image: coupon.image,
+          expiryDate: coupon.expiryDate
+        },
+        senderMemberId: sender.memberId,
+        senderName: sender.name,
+        expiresAt
+      });
+
+      await shareToken.save();
+
+      // Decrement sender's coupon quantity or remove if last use
+      if (remainingUses === 1) {
         sender.coupons.pull(couponId);
       } else {
-        // Decrement quantity
         coupon.quantity -= 1;
       }
       await sender.save();
 
-      // Send LINE notification to recipient if they have LINE account
-      if (recipient.line && recipient.line.userId) {
-        try {
-          const client = new line.messagingApi.MessagingApiClient({
-            channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN
-          });
+      const protocol = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split('://')[0] : 'https';
+      const host = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split('://')[1] : 'www.sunriseyouth.org';
+      const baseUrl = `${protocol}://${host}`;
+      const claimUrl = `${baseUrl}/claim/${token}`;
 
-          const protocol = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split('://')[0] : 'https';
-          const host = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split('://')[1] : 'www.sunriseyouth.org';
-          const baseUrl = `${protocol}://${host}`;
-          const couponsUrl = `${baseUrl}/profile/${recipient.memberId}?tab=coupons`;
-
-          await client.pushMessage({
-            to: recipient.line.userId,
-            messages: [
-              {
-                type: 'text',
-                text: `🎁 您收到了一張新優惠券！\n\n優惠券名稱：${coupon.name}\n類型：${coupon.type === 'trial' ? '體驗券' : '折扣券'}\n\n點擊查看您的優惠券：\n${couponsUrl}`
-              }
-            ]
-          });
-
-          console.log(`[Coupon Transfer] LINE notification sent to ${recipient.line.userId}`);
-        } catch (lineError) {
-          console.error('[Coupon Transfer] Error sending LINE notification:', lineError);
-          // Don't fail the transfer if LINE notification fails
-        }
-      }
+      // Get LINE Official Account ID for add friend URL
+      const lineChannelId = process.env.LINE_CHANNEL_ID || '@sunriseyouth';
+      const lineAddFriendUrl = `https://line.me/R/ti/p/${lineChannelId}?state=COUPON_${token}`;
 
       return res.status(200).json({
-        message: `優惠券轉讓成功！${recipient.line && recipient.line.userId ? '收件人已收到 LINE 通知。' : ''} / Coupon transferred successfully!${recipient.line && recipient.line.userId ? ' Recipient notified via LINE.' : ''}`,
-        sender,
-        recipient
+        message: '分享連結已生成 / Share link generated successfully',
+        token,
+        claimUrl,
+        lineAddFriendUrl,
+        expiresAt
       });
     }
 

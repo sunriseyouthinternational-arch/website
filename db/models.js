@@ -73,8 +73,10 @@ const memberSchema = new mongoose.Schema({
     image: { type: String }, // Base64 or file path
     quantity: { type: Number, default: 1 },
     usedCount: { type: Number, default: 0 },
+    expiryDate: { type: Date }, // Optional expiry date
     createdAt: { type: Date, default: Date.now }
   }],
+  pendingCouponToken: { type: String }, // Token for coupon to be claimed after registration
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });
@@ -176,6 +178,27 @@ activitySchema.pre('save', function(next) {
   next();
 });
 
+// Coupon Share Token Schema - For shareable coupon links
+const couponShareTokenSchema = new mongoose.Schema({
+  token: { type: String, unique: true, required: true },
+  couponData: {
+    type: { type: String, enum: ['trial', 'discount'], required: true },
+    classInfoId: { type: mongoose.Schema.Types.ObjectId, ref: 'ClassInfo' },
+    discountPercent: { type: Number },
+    name: { type: String, required: true },
+    description: { type: String },
+    image: { type: String },
+    expiryDate: { type: Date }
+  },
+  senderMemberId: { type: String, required: true },
+  senderName: { type: String, required: true },
+  createdAt: { type: Date, default: Date.now },
+  expiresAt: { type: Date, required: true }, // Link expires after 7 days
+  claimedBy: { type: String }, // Member ID who claimed it
+  claimedAt: { type: Date },
+  status: { type: String, enum: ['pending', 'claimed', 'expired'], default: 'pending' }
+});
+
 // Export models
 module.exports = {
   Admin: mongoose.models.Admin || mongoose.model('Admin', adminSchema),
@@ -183,5 +206,6 @@ module.exports = {
   ClassInfo: mongoose.models.ClassInfo || mongoose.model('ClassInfo', classInfoSchema),
   Class: mongoose.models.Class || mongoose.model('Class', classSchema),
   Activity: mongoose.models.Activity || mongoose.model('Activity', activitySchema),
-  Teacher: mongoose.models.Teacher || mongoose.model('Teacher', teacherSchema)
+  Teacher: mongoose.models.Teacher || mongoose.model('Teacher', teacherSchema),
+  CouponShareToken: mongoose.models.CouponShareToken || mongoose.model('CouponShareToken', couponShareTokenSchema)
 };
