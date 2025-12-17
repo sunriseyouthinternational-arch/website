@@ -9,7 +9,7 @@ module.exports = async (req, res) => {
 
     // Enroll in activity
     if (action === 'enroll' && req.method === 'POST') {
-      const { memberId } = req.body;
+      const { memberId, paymentMethod, couponId } = req.body;
 
       const activity = await Activity.findById(id).populate('teacherId');
       const member = await Member.findOne({ memberId });
@@ -34,6 +34,34 @@ module.exports = async (req, res) => {
         return res.status(400).json({ message: '已經報名此活動 / Already enrolled in this activity' });
       }
 
+      // Handle coupon redemption
+      let couponUsed = null;
+      if (couponId) {
+        const coupon = member.coupons.id(couponId);
+
+        if (!coupon) {
+          return res.status(404).json({ message: '找不到優惠券 / Coupon not found' });
+        }
+
+        // Check if coupon has remaining uses
+        if (coupon.usedCount >= coupon.quantity) {
+          return res.status(400).json({ message: '優惠券已用完 / Coupon has been fully used' });
+        }
+
+        // Validate coupon type - only discount coupons work for activities
+        if (coupon.type === 'trial') {
+          return res.status(400).json({ message: '體驗券僅適用於課程 / Trial coupons are only valid for classes' });
+        }
+
+        // Increment usedCount
+        coupon.usedCount += 1;
+        couponUsed = {
+          name: coupon.name,
+          type: coupon.type,
+          discountPercent: coupon.discountPercent
+        };
+      }
+
       activity.participants.push({
         memberId: member._id,
         memberName: member.name,
@@ -50,9 +78,24 @@ module.exports = async (req, res) => {
 
       await member.save();
 
+      let message = '報名成功！';
+      if (couponUsed) {
+        message += `已使用 ${couponUsed.discountPercent}% 折扣券。`;
+      } else {
+        message += '請記得於活動現場繳費。';
+      }
+      message += ' / Enrollment successful!';
+
+      if (couponUsed) {
+        message += ` ${couponUsed.discountPercent}% discount coupon applied.`;
+      } else {
+        message += ' Please remember to pay at the venue.';
+      }
+
       return res.status(200).json({
-        message: '報名成功！請記得於活動現場繳費。 / Enrollment successful! Please remember to pay at the venue.',
-        activity
+        message,
+        activity,
+        couponUsed
       });
     }
 

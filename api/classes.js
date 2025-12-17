@@ -9,7 +9,7 @@ module.exports = async (req, res) => {
 
     // Enroll in class
     if (action === 'enroll' && req.method === 'POST') {
-      const { memberId } = req.body;
+      const { memberId, paymentMethod, couponId } = req.body;
 
       const classItem = await Class.findById(id).populate('classInfoId').populate('teacherId');
       const member = await Member.findOne({ memberId });
@@ -34,6 +34,38 @@ module.exports = async (req, res) => {
         return res.status(400).json({ message: '已經報名此課程 / Already enrolled in this class' });
       }
 
+      // Handle coupon redemption
+      let couponUsed = null;
+      if (couponId) {
+        const coupon = member.coupons.id(couponId);
+
+        if (!coupon) {
+          return res.status(404).json({ message: '找不到優惠券 / Coupon not found' });
+        }
+
+        // Check if coupon has remaining uses
+        if (coupon.usedCount >= coupon.quantity) {
+          return res.status(400).json({ message: '優惠券已用完 / Coupon has been fully used' });
+        }
+
+        // Validate coupon type
+        if (coupon.type === 'trial') {
+          // Trial coupon must match the class
+          if (coupon.classInfoId.toString() !== classItem.classInfoId._id.toString()) {
+            return res.status(400).json({ message: '此優惠券不適用於本課程 / This coupon is not valid for this class' });
+          }
+        }
+        // Discount coupons are valid for all classes
+
+        // Increment usedCount
+        coupon.usedCount += 1;
+        couponUsed = {
+          name: coupon.name,
+          type: coupon.type,
+          discountPercent: coupon.discountPercent
+        };
+      }
+
       classItem.participants.push({
         memberId: member._id,
         memberName: member.name,
@@ -50,9 +82,32 @@ module.exports = async (req, res) => {
 
       await member.save();
 
+      let message = '報名成功！';
+      if (couponUsed) {
+        if (couponUsed.type === 'trial') {
+          message += '已使用體驗券，本次課程免費。';
+        } else {
+          message += `已使用 ${couponUsed.discountPercent}% 折扣券。`;
+        }
+      } else {
+        message += '請記得於課程現場繳費。';
+      }
+      message += ' / Enrollment successful!';
+
+      if (couponUsed) {
+        if (couponUsed.type === 'trial') {
+          message += ' Trial coupon applied - this class is free.';
+        } else {
+          message += ` ${couponUsed.discountPercent}% discount coupon applied.`;
+        }
+      } else {
+        message += ' Please remember to pay at the venue.';
+      }
+
       return res.status(200).json({
-        message: '報名成功！請記得於課程現場繳費。 / Enrollment successful! Please remember to pay at the venue.',
-        class: classItem
+        message,
+        class: classItem,
+        couponUsed
       });
     }
 

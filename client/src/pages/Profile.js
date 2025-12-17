@@ -43,6 +43,12 @@ function Profile() {
     contact: { phone: '', mobile: '', lineId: '' }
   });
 
+  // Checkout modal state
+  const [showCheckout, setShowCheckout] = useState(false);
+  const [checkoutData, setCheckoutData] = useState(null);
+  const [selectedCoupon, setSelectedCoupon] = useState(null);
+  const [showCouponModal, setShowCouponModal] = useState(false);
+
   // Helper function to get image source (handles both base64 and file paths)
   const getImageSrc = (imagePath) => {
     if (!imagePath) return null;
@@ -377,15 +383,53 @@ function Profile() {
       return;
     }
 
+    // Get item details for cost information
+    let item;
+    if (type === 'class') {
+      item = classes.find(c => c._id === id);
+    } else {
+      item = activities.find(a => a._id === id);
+    }
+
+    if (!item) {
+      setMessage({ type: 'error', text: t('language') === 'zh' ? '找不到項目' : 'Item not found' });
+      return;
+    }
+
+    // Open checkout modal with item details
+    setCheckoutData({
+      type,
+      id,
+      name,
+      cost: type === 'class' ? item.classInfoId?.cost : item.cost,
+      classInfoId: type === 'class' ? item.classInfoId?._id : null,
+      item
+    });
+    setShowCheckout(true);
+  };
+
+  const handleCompleteEnrollment = async (paymentMethod, coupon = null) => {
     try {
-      const endpoint = type === 'class' ? `/api/classes?id=${id}&action=enroll` : `/api/activities?id=${id}&action=enroll`;
-      const response = await axios.post(endpoint, { memberId: member.memberId });
+      const endpoint = checkoutData.type === 'class'
+        ? `/api/classes?id=${checkoutData.id}&action=enroll`
+        : `/api/activities?id=${checkoutData.id}&action=enroll`;
+
+      const response = await axios.post(endpoint, {
+        memberId: member.memberId,
+        paymentMethod,
+        couponId: coupon?._id
+      });
 
       setMessage({ type: 'success', text: response.data.message });
 
       // Refresh member data
       const memberResponse = await axios.get(`/api/members?memberId=${member.memberId}`);
       setMember(memberResponse.data.member);
+
+      // Close checkout modal
+      setShowCheckout(false);
+      setCheckoutData(null);
+      setSelectedCoupon(null);
     } catch (error) {
       setMessage({
         type: 'error',
@@ -1246,6 +1290,312 @@ function Profile() {
             </div>
           )}
         </>
+      )}
+
+      {/* Checkout Modal */}
+      {showCheckout && checkoutData && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          padding: '20px'
+        }}>
+          <div style={{
+            background: 'white',
+            borderRadius: '16px',
+            padding: '40px',
+            maxWidth: '600px',
+            width: '100%',
+            maxHeight: '90vh',
+            overflow: 'auto',
+            boxShadow: '0 10px 50px rgba(0, 0, 0, 0.3)'
+          }}>
+            <h2 style={{ color: '#667eea', marginBottom: '30px', textAlign: 'center' }}>
+              {t('language') === 'zh' ? '選擇付款方式' : 'Select Payment Method'}
+            </h2>
+
+            {/* Item Summary */}
+            <div style={{
+              background: '#f8f9ff',
+              padding: '20px',
+              borderRadius: '12px',
+              marginBottom: '30px',
+              border: '2px solid #d3e0ff'
+            }}>
+              <h3 style={{ color: '#667eea', marginBottom: '15px', fontSize: '20px' }}>
+                {checkoutData.name}
+              </h3>
+              <p style={{ fontSize: '18px', marginBottom: '8px' }}>
+                <strong>{t('language') === 'zh' ? '金額：' : 'Cost: '}</strong>
+                {selectedCoupon ? (
+                  <>
+                    {selectedCoupon.type === 'trial' ? (
+                      <span style={{ color: '#2b8a3e', fontWeight: 'bold' }}>
+                        {t('language') === 'zh' ? '免費（體驗券）' : 'Free (Trial Coupon)'}
+                      </span>
+                    ) : (
+                      <>
+                        <span style={{ textDecoration: 'line-through', color: '#999' }}>
+                          NT$ {checkoutData.cost}
+                        </span>
+                        {' → '}
+                        <span style={{ color: '#c92a2a', fontWeight: 'bold' }}>
+                          NT$ {Math.round(checkoutData.cost * (100 - selectedCoupon.discountPercent) / 100)}
+                        </span>
+                        <span style={{ color: '#c92a2a', fontSize: '14px' }}>
+                          {' '}({selectedCoupon.discountPercent}% {t('language') === 'zh' ? '折扣' : 'off'})
+                        </span>
+                      </>
+                    )}
+                  </>
+                ) : (
+                  <span style={{ fontWeight: 'bold', color: '#667eea' }}>
+                    NT$ {checkoutData.cost}
+                  </span>
+                )}
+              </p>
+              {selectedCoupon && (
+                <div style={{
+                  marginTop: '15px',
+                  padding: '15px',
+                  background: 'white',
+                  borderRadius: '8px',
+                  border: '2px solid #667eea'
+                }}>
+                  <p style={{ marginBottom: '5px', color: '#667eea', fontWeight: 'bold' }}>
+                    ✓ {t('language') === 'zh' ? '已選擇優惠券：' : 'Coupon Selected: '}{selectedCoupon.name}
+                  </p>
+                  <button
+                    onClick={() => setSelectedCoupon(null)}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#c92a2a',
+                      cursor: 'pointer',
+                      textDecoration: 'underline',
+                      fontSize: '14px',
+                      padding: 0
+                    }}
+                  >
+                    {t('language') === 'zh' ? '移除優惠券' : 'Remove Coupon'}
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Payment Options */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginBottom: '30px' }}>
+              <button
+                onClick={() => handleCompleteEnrollment('in-person', selectedCoupon)}
+                className="btn btn-primary"
+                style={{
+                  padding: '20px',
+                  fontSize: '18px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '10px'
+                }}
+              >
+                💵 {t('language') === 'zh' ? '現場付款' : 'Pay in Person'}
+              </button>
+
+              <button
+                disabled
+                className="btn btn-secondary"
+                style={{
+                  padding: '20px',
+                  fontSize: '18px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '10px',
+                  opacity: 0.5,
+                  cursor: 'not-allowed'
+                }}
+              >
+                💳 {t('language') === 'zh' ? '信用卡付款（施工中）' : 'Credit Card (Under Construction)'}
+              </button>
+
+              <button
+                onClick={() => setShowCouponModal(true)}
+                className="btn"
+                style={{
+                  padding: '20px',
+                  fontSize: '18px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '10px',
+                  background: selectedCoupon ? '#d3f9d8' : '#667eea',
+                  color: 'white',
+                  border: 'none'
+                }}
+              >
+                🎫 {t('language') === 'zh' ? '使用優惠券' : 'Redeem Coupon'}
+              </button>
+            </div>
+
+            <button
+              onClick={() => {
+                setShowCheckout(false);
+                setCheckoutData(null);
+                setSelectedCoupon(null);
+              }}
+              className="btn btn-secondary"
+              style={{ width: '100%' }}
+            >
+              {t('language') === 'zh' ? '取消' : 'Cancel'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Coupon Selection Modal */}
+      {showCouponModal && checkoutData && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.7)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1001,
+          padding: '20px'
+        }}>
+          <div style={{
+            background: 'white',
+            borderRadius: '16px',
+            padding: '40px',
+            maxWidth: '800px',
+            width: '100%',
+            maxHeight: '90vh',
+            overflow: 'auto',
+            boxShadow: '0 10px 50px rgba(0, 0, 0, 0.3)'
+          }}>
+            <h2 style={{ color: '#667eea', marginBottom: '30px', textAlign: 'center' }}>
+              {t('language') === 'zh' ? '選擇優惠券' : 'Select Coupon'}
+            </h2>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '20px', marginBottom: '30px' }}>
+              {member.coupons && member.coupons.length > 0 ? (
+                member.coupons
+                  .filter(coupon => (coupon.quantity - coupon.usedCount) > 0) // Only show coupons with remaining quantity
+                  .map((coupon, idx) => {
+                    // Check if coupon is valid for this class
+                    const isValid = coupon.type === 'discount' ||
+                      (coupon.type === 'trial' && coupon.classInfoId === checkoutData.classInfoId);
+
+                    return (
+                      <div
+                        key={idx}
+                        onClick={() => {
+                          if (isValid) {
+                            setSelectedCoupon(coupon);
+                            setShowCouponModal(false);
+                          }
+                        }}
+                        style={{
+                          background: isValid ? 'white' : '#f5f5f5',
+                          border: `2px solid ${isValid ? '#667eea' : '#ddd'}`,
+                          borderRadius: '12px',
+                          padding: '20px',
+                          cursor: isValid ? 'pointer' : 'not-allowed',
+                          opacity: isValid ? 1 : 0.5,
+                          transition: 'all 0.3s ease',
+                          position: 'relative'
+                        }}
+                      >
+                        {coupon.image && (
+                          <img
+                            src={coupon.image}
+                            alt={coupon.name}
+                            style={{
+                              width: '100%',
+                              height: '120px',
+                              objectFit: 'cover',
+                              borderRadius: '8px',
+                              marginBottom: '15px'
+                            }}
+                          />
+                        )}
+                        <div style={{ marginBottom: '10px' }}>
+                          <span style={{
+                            display: 'inline-block',
+                            padding: '4px 12px',
+                            background: coupon.type === 'trial' ? '#d3f9d8' : '#ffe3e3',
+                            color: coupon.type === 'trial' ? '#2b8a3e' : '#c92a2a',
+                            borderRadius: '6px',
+                            fontSize: '11px',
+                            fontWeight: 'bold',
+                            textTransform: 'uppercase'
+                          }}>
+                            {coupon.type === 'trial'
+                              ? (t('language') === 'zh' ? '體驗券' : 'Trial')
+                              : (t('language') === 'zh' ? '折扣券' : 'Discount')}
+                          </span>
+                        </div>
+                        <h4 style={{ color: '#667eea', marginBottom: '8px', fontSize: '16px' }}>
+                          {coupon.name}
+                        </h4>
+                        <p style={{ color: '#666', fontSize: '13px', marginBottom: '8px' }}>
+                          {coupon.description}
+                        </p>
+                        {coupon.type === 'discount' && (
+                          <p style={{ fontSize: '14px', color: '#c92a2a', fontWeight: 'bold', marginBottom: '8px' }}>
+                            {coupon.discountPercent}% {t('language') === 'zh' ? '折扣' : 'OFF'}
+                          </p>
+                        )}
+                        <p style={{ fontSize: '13px', color: '#999' }}>
+                          {t('language') === 'zh' ? '剩餘：' : 'Remaining: '}
+                          {coupon.quantity - coupon.usedCount}
+                        </p>
+                        {!isValid && (
+                          <div style={{
+                            position: 'absolute',
+                            top: '50%',
+                            left: '50%',
+                            transform: 'translate(-50%, -50%)',
+                            background: 'rgba(0, 0, 0, 0.8)',
+                            color: 'white',
+                            padding: '10px 20px',
+                            borderRadius: '8px',
+                            fontSize: '12px',
+                            fontWeight: 'bold',
+                            textAlign: 'center'
+                          }}>
+                            {t('language') === 'zh' ? '不適用此課程' : 'Not valid for this class'}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })
+              ) : (
+                <p style={{ gridColumn: '1 / -1', textAlign: 'center', color: '#999', padding: '40px' }}>
+                  {t('language') === 'zh' ? '您目前沒有可用的優惠券' : 'You have no available coupons'}
+                </p>
+              )}
+            </div>
+
+            <button
+              onClick={() => setShowCouponModal(false)}
+              className="btn btn-secondary"
+              style={{ width: '100%' }}
+            >
+              {t('language') === 'zh' ? '取消' : 'Cancel'}
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );
