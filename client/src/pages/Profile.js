@@ -49,10 +49,11 @@ function Profile() {
   const [selectedCoupon, setSelectedCoupon] = useState(null);
   const [showCouponModal, setShowCouponModal] = useState(false);
 
-  // Transfer modal state
-  const [showTransferModal, setShowTransferModal] = useState(false);
-  const [transferCoupon, setTransferCoupon] = useState(null);
-  const [recipientMemberId, setRecipientMemberId] = useState('');
+  // Share modal state
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [shareCoupon, setShareCoupon] = useState(null);
+  const [shareLink, setShareLink] = useState(null);
+  const [shareLoading, setShareLoading] = useState(false);
 
   // Helper function to get image source (handles both base64 and file paths)
   const getImageSrc = (imagePath) => {
@@ -443,51 +444,40 @@ function Profile() {
     }
   };
 
-  const handleTransferCoupon = async (e) => {
-    e.preventDefault();
-
-    if (!recipientMemberId.trim()) {
-      setMessage({
-        type: 'error',
-        text: t('language') === 'zh' ? '請輸入收件人團員編號' : 'Please enter recipient member ID'
-      });
-      return;
-    }
-
-    if (recipientMemberId.trim() === member.memberId) {
-      setMessage({
-        type: 'error',
-        text: t('language') === 'zh' ? '無法轉讓給自己' : 'Cannot transfer to yourself'
-      });
-      return;
-    }
+  const handleGenerateShareLink = async (coupon) => {
+    setShareCoupon(coupon);
+    setShowShareModal(true);
+    setShareLoading(true);
+    setShareLink(null);
 
     try {
-      const response = await axios.post('/api/members?action=transfer-coupon', {
-        senderMemberId: member.memberId,
-        recipientMemberId: recipientMemberId.trim(),
-        couponId: transferCoupon._id
+      const response = await axios.post('/api/members?action=generate-share-link', {
+        memberId: member.memberId,
+        couponId: coupon._id
       });
 
-      setMessage({
-        type: 'success',
-        text: response.data.message
-      });
+      setShareLink(response.data);
 
-      // Refresh member data
+      // Refresh member data (coupon quantity decremented)
       const memberResponse = await axios.get(`/api/members?memberId=${member.memberId}`);
       setMember(memberResponse.data.member);
-
-      // Close modal and reset state
-      setShowTransferModal(false);
-      setTransferCoupon(null);
-      setRecipientMemberId('');
     } catch (error) {
       setMessage({
         type: 'error',
-        text: error.response?.data?.message || (t('language') === 'zh' ? '轉讓失敗' : 'Transfer failed')
+        text: error.response?.data?.message || (t('language') === 'zh' ? '生成分享連結失敗' : 'Failed to generate share link')
       });
+      setShowShareModal(false);
+    } finally {
+      setShareLoading(false);
     }
+  };
+
+  const handleCopyToClipboard = (text) => {
+    navigator.clipboard.writeText(text);
+    setMessage({
+      type: 'success',
+      text: t('language') === 'zh' ? '已複製到剪貼簿' : 'Copied to clipboard'
+    });
   };
 
   const isEnrolled = (type, id) => {
@@ -1412,10 +1402,7 @@ function Profile() {
                         </p>
                         {remainingUses > 0 && (
                           <button
-                            onClick={() => {
-                              setTransferCoupon(coupon);
-                              setShowTransferModal(true);
-                            }}
+                            onClick={() => handleGenerateShareLink(coupon)}
                             className="btn btn-secondary"
                             style={{
                               width: '100%',
@@ -1423,7 +1410,7 @@ function Profile() {
                               padding: '10px'
                             }}
                           >
-                            🎁 {t('language') === 'zh' ? '轉讓優惠券' : 'Transfer Coupon'}
+                            🔗 {t('language') === 'zh' ? '分享優惠券' : 'Share Coupon'}
                           </button>
                         )}
                       </div>
