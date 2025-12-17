@@ -507,7 +507,7 @@ function Profile() {
           <div className="member-id-input">
             <input
               type="text"
-              placeholder={t('memberId')}
+              placeholder={t('language') === 'zh' ? '團員編號 / LINE ID' : 'Member ID / LINE ID'}
               value={memberId}
               onChange={(e) => setMemberId(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && fetchMember()}
@@ -1997,6 +1997,40 @@ function Profile() {
                     </button>
                   </div>
                 </div>
+
+                {/* LINE Share Button */}
+                <a
+                  href={`https://line.me/R/msg/text/?${encodeURIComponent(
+                    `${t('language') === 'zh' ? '🎁 我分享了一張優惠券給你！\n' : '🎁 I shared a coupon with you!\n'}${shareLink.claimUrl}`
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: 'block',
+                    textAlign: 'center',
+                    padding: '15px',
+                    background: '#06C755',
+                    color: 'white',
+                    borderRadius: '8px',
+                    textDecoration: 'none',
+                    fontWeight: '600',
+                    marginBottom: '20px',
+                    transition: 'all 0.3s ease',
+                    cursor: 'pointer'
+                  }}
+                  onMouseOver={(e) => {
+                    e.currentTarget.style.background = '#05b34b';
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                    e.currentTarget.style.boxShadow = '0 6px 16px rgba(6, 199, 85, 0.4)';
+                  }}
+                  onMouseOut={(e) => {
+                    e.currentTarget.style.background = '#06C755';
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = 'none';
+                  }}
+                >
+                  💬 {t('language') === 'zh' ? '透過 LINE 分享給朋友' : 'Share via LINE to Friends'}
+                </a>
 
                 {/* Expiry Info */}
                 <div style={{

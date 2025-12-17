@@ -259,7 +259,13 @@ module.exports = async (req, res) => {
       }
 
       // No session token, normal member lookup
-      const member = await Member.findOne({ memberId });
+      // Try to find by memberId first, then by LINE ID
+      let member = await Member.findOne({ memberId });
+
+      if (!member) {
+        // Try searching by LINE ID if not found by member ID
+        member = await Member.findOne({ 'contact.lineId': memberId });
+      }
 
       if (!member) {
         return res.status(404).json({
