@@ -291,7 +291,7 @@ module.exports = async (req, res) => {
 
     // Add coupon to member
     if (req.method === 'POST' && action === 'add-coupon' && memberId) {
-      const { type, classInfoId, discountPercent, name, description, image, quantity } = req.body;
+      const { type, classInfoId, discountPercent, name, description, image, quantity, expiryDate } = req.body;
 
       const member = await Member.findOne({ memberId });
 
@@ -334,6 +334,11 @@ module.exports = async (req, res) => {
         coupon.classInfoId = classInfoId;
       } else {
         coupon.discountPercent = parseInt(discountPercent);
+      }
+
+      // Add expiry date if provided
+      if (expiryDate) {
+        coupon.expiryDate = new Date(expiryDate);
       }
 
       // Add coupon to member's coupons array

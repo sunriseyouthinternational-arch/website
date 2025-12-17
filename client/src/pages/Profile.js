@@ -98,7 +98,7 @@ function Profile() {
 
   const fetchMember = async () => {
     if (!memberId) {
-      setMessage({ type: 'error', text: t('language') === 'zh' ? '請輸入團員編號' : 'Please enter member ID' });
+      setMessage({ type: 'error', text: t('language') === 'zh' ? '請輸入團員編號 / LINE ID' : 'Please enter member ID / LINE ID' });
       return;
     }
 
@@ -505,7 +505,7 @@ function Profile() {
 
       {!member ? (
         <div className="card">
-          <h3>{t('language') === 'zh' ? '請輸入您的團員編號' : 'Please enter your member ID'}</h3>
+          <h3>{t('language') === 'zh' ? '請輸入您的團員編號 / LINE ID' : 'Please enter your member ID / LINE ID'}</h3>
           <div className="member-id-input">
             <input
               type="text"
@@ -736,12 +736,13 @@ function Profile() {
                   </div>
 
                   <div className="form-group">
-                    <label>{t('lineId')}</label>
+                    <label>{t('lineId')} *</label>
                     <input
                       type="text"
                       name="contact.lineId"
                       value={editFormData.contact.lineId}
                       onChange={handleEditChange}
+                      required
                     />
                   </div>
 
@@ -827,25 +828,24 @@ function Profile() {
                 ← {t('back')}
               </button>
 
+              <h2>{selectedClass.classInfoId?.name || 'N/A'}</h2>
+
               {selectedClass.classInfoId?.banner && (
                 <img
                   src={getImageSrc(selectedClass.classInfoId.banner)}
                   alt={selectedClass.classInfoId?.name}
                   style={{
-                    width: '1000px',
-                    height: '600px',
-                    maxWidth: '100%',
+                    width: '100%',
+                    aspectRatio: '16 / 9',
                     objectFit: 'cover',
                     borderRadius: '8px',
+                    marginTop: '15px',
                     marginBottom: '20px',
-                    display: 'block',
-                    marginLeft: 'auto',
-                    marginRight: 'auto'
+                    display: 'block'
                   }}
                 />
               )}
 
-              <h2>{selectedClass.classInfoId?.name || 'N/A'}</h2>
               <p style={{ fontSize: '18px', lineHeight: '1.6', marginBottom: '20px', color: '#666' }}>
                 {selectedClass.classInfoId?.description || ''}
               </p>
@@ -1204,10 +1204,21 @@ function Profile() {
                 <div className="grid">
                   {getFilteredClasses().map((classItem) => (
                     <div key={classItem._id} className="item-card">
-                      {classItem.classInfoId?.banner && (
-                        <img src={getImageSrc(classItem.classInfoId.banner)} alt={classItem.classInfoId?.name} className="item-banner" />
-                      )}
                       <h4>{classItem.classInfoId?.name || 'N/A'}</h4>
+                      {classItem.classInfoId?.banner && (
+                        <img
+                          src={getImageSrc(classItem.classInfoId.banner)}
+                          alt={classItem.classInfoId?.name}
+                          style={{
+                            width: '100%',
+                            aspectRatio: '16 / 9',
+                            objectFit: 'cover',
+                            borderRadius: '8px',
+                            marginTop: '10px',
+                            marginBottom: '15px'
+                          }}
+                        />
+                      )}
                       <p className="item-description">{classItem.classInfoId?.description || ''}</p>
                       <div className="item-details">
                         <p><strong>{t('classDate')}:</strong> {formatDate(classItem.date)}</p>
@@ -1265,10 +1276,21 @@ function Profile() {
                 <div className="grid">
                   {activities.map((activity) => (
                     <div key={activity._id} className="item-card">
-                      {activity.banner && (
-                        <img src={getImageSrc(activity.banner)} alt={activity.name} className="item-banner" />
-                      )}
                       <h4>{activity.name}</h4>
+                      {activity.banner && (
+                        <img
+                          src={getImageSrc(activity.banner)}
+                          alt={activity.name}
+                          style={{
+                            width: '100%',
+                            aspectRatio: '16 / 9',
+                            objectFit: 'cover',
+                            borderRadius: '8px',
+                            marginTop: '10px',
+                            marginBottom: '15px'
+                          }}
+                        />
+                      )}
                       <p className="item-description">{activity.description}</p>
                       <div className="item-details">
                         <p><strong>{t('host')}:</strong> {activity.teacher}</p>
@@ -1321,6 +1343,24 @@ function Profile() {
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
                   {member.coupons.map((coupon, idx) => {
                     const remainingUses = coupon.quantity - coupon.usedCount;
+
+                    // Calculate days remaining until expiry
+                    let daysLeft = null;
+                    let expiryUrgency = null;
+                    if (coupon.expiryDate) {
+                      const now = new Date();
+                      const expiry = new Date(coupon.expiryDate);
+                      const diffTime = expiry - now;
+                      daysLeft = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                      if (daysLeft < 0) {
+                        expiryUrgency = 'expired';
+                      } else if (daysLeft <= 3) {
+                        expiryUrgency = 'critical';
+                      } else if (daysLeft <= 7) {
+                        expiryUrgency = 'warning';
+                      }
+                    }
 
                     return (
                       <div
@@ -1377,6 +1417,52 @@ function Profile() {
                               }}
                             >
                               {t('language') === 'zh' ? '已用完' : 'Used Up'}
+                            </span>
+                          )}
+                          {expiryUrgency === 'expired' && (
+                            <span
+                              style={{
+                                marginLeft: '10px',
+                                padding: '4px 12px',
+                                background: '#ffe0e0',
+                                color: '#c92a2a',
+                                borderRadius: '6px',
+                                fontSize: '12px',
+                                fontWeight: 'bold'
+                              }}
+                            >
+                              {t('language') === 'zh' ? '已過期' : 'Expired'}
+                            </span>
+                          )}
+                          {expiryUrgency === 'critical' && daysLeft >= 0 && (
+                            <span
+                              style={{
+                                marginLeft: '10px',
+                                padding: '4px 12px',
+                                background: '#ffe0e0',
+                                color: '#c92a2a',
+                                borderRadius: '6px',
+                                fontSize: '12px',
+                                fontWeight: 'bold',
+                                animation: 'pulse 2s ease-in-out infinite'
+                              }}
+                            >
+                              ⚠️ {daysLeft} {t('language') === 'zh' ? '天後過期' : 'days left'}
+                            </span>
+                          )}
+                          {expiryUrgency === 'warning' && (
+                            <span
+                              style={{
+                                marginLeft: '10px',
+                                padding: '4px 12px',
+                                background: '#fff3cd',
+                                color: '#856404',
+                                borderRadius: '6px',
+                                fontSize: '12px',
+                                fontWeight: 'bold'
+                              }}
+                            >
+                              {daysLeft} {t('language') === 'zh' ? '天後過期' : 'days left'}
                             </span>
                           )}
                         </div>

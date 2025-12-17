@@ -80,7 +80,8 @@ function AdminDashboard() {
     name: '',
     description: '',
     image: '',
-    quantity: 1
+    quantity: 1,
+    expiryDate: ''
   });
 
   useEffect(() => {
@@ -772,6 +773,11 @@ function AdminDashboard() {
         couponData.discountPercent = parseInt(newCoupon.discountPercent);
       }
 
+      // Add expiry date if provided
+      if (newCoupon.expiryDate) {
+        couponData.expiryDate = new Date(newCoupon.expiryDate);
+      }
+
       await axios.post(`/api/members?memberId=${selectedMember.memberId}&action=add-coupon`, couponData);
 
       setMessage({
@@ -787,7 +793,8 @@ function AdminDashboard() {
         name: '',
         description: '',
         image: '',
-        quantity: 1
+        quantity: 1,
+        expiryDate: ''
       });
       setShowAddCouponForm(false);
 
@@ -1257,6 +1264,20 @@ function AdminDashboard() {
                     min="1"
                     required
                   />
+                </div>
+
+                <div className="form-group">
+                  <label>{t('language') === 'zh' ? '有效期限（可選）' : 'Expiry Date (Optional)'}</label>
+                  <input
+                    type="date"
+                    value={newCoupon.expiryDate}
+                    onChange={(e) => setNewCoupon(prev => ({ ...prev, expiryDate: e.target.value }))}
+                    className="form-control"
+                    min={new Date().toISOString().split('T')[0]}
+                  />
+                  <small style={{ color: '#666' }}>
+                    {t('language') === 'zh' ? '留空表示永久有效' : 'Leave empty for no expiration'}
+                  </small>
                 </div>
 
                 <div className="form-group">
