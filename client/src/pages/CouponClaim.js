@@ -33,9 +33,9 @@ function CouponClaim() {
 
   const getLineAddFriendUrl = () => {
     const lineChannelId = process.env.REACT_APP_LINE_CHANNEL_ID || '@sunriseyouth';
-    // Remove @ symbol if present for the URL - LINE doesn't support query parameters
-    const channelIdClean = lineChannelId.startsWith('@') ? lineChannelId.substring(1) : lineChannelId;
-    return `https://line.me/ti/p/${channelIdClean}`;
+    // Ensure @ symbol is present for LINE Official Account URL
+    const channelIdWithAt = lineChannelId.startsWith('@') ? lineChannelId : `@${lineChannelId}`;
+    return `https://line.me/ti/p/${channelIdWithAt}`;
   };
 
   if (loading) {

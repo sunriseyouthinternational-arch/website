@@ -475,11 +475,11 @@ module.exports = async (req, res) => {
       const baseUrl = `${protocol}://${host}`;
       const claimUrl = `${baseUrl}/claim/${token}`;
 
-      // Get LINE Official Account ID for add friend URL (without state - LINE doesn't support query params here)
+      // Get LINE Official Account ID for add friend URL
       const lineChannelId = process.env.LINE_CHANNEL_ID || '@sunriseyouth';
-      // Remove @ symbol if present for the URL
-      const channelIdClean = lineChannelId.startsWith('@') ? lineChannelId.substring(1) : lineChannelId;
-      const lineAddFriendUrl = `https://line.me/ti/p/${channelIdClean}`;
+      // Ensure @ symbol is present for LINE Official Account URL
+      const channelIdWithAt = lineChannelId.startsWith('@') ? lineChannelId : `@${lineChannelId}`;
+      const lineAddFriendUrl = `https://line.me/ti/p/${channelIdWithAt}`;
 
       return res.status(200).json({
         message: '分享連結已生成 / Share link generated successfully',
