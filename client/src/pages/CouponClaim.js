@@ -33,7 +33,9 @@ function CouponClaim() {
 
   const getLineAddFriendUrl = () => {
     const lineChannelId = process.env.REACT_APP_LINE_CHANNEL_ID || '@sunriseyouth';
-    return `https://line.me/R/ti/p/${lineChannelId}?state=COUPON_${token}`;
+    // Remove @ symbol if present for the URL - LINE doesn't support query parameters
+    const channelIdClean = lineChannelId.startsWith('@') ? lineChannelId.substring(1) : lineChannelId;
+    return `https://line.me/ti/p/${channelIdClean}`;
   };
 
   if (loading) {
@@ -192,11 +194,39 @@ function CouponClaim() {
               {t('language') === 'zh' ? '📋 如何領取' : '📋 How to Claim'}
             </h3>
             <ol style={{ margin: 0, paddingLeft: '20px', color: '#004085', lineHeight: '1.8' }}>
-              <li>{t('language') === 'zh' ? '點擊下方「加入 LINE 領取」按鈕' : 'Click "Add LINE to Claim" button below'}</li>
-              <li>{t('language') === 'zh' ? '加入晨光國際少年團 LINE 官方帳號' : 'Add Sunrise Youth LINE Official Account'}</li>
-              <li>{t('language') === 'zh' ? '完成註冊程序' : 'Complete registration'}</li>
-              <li>{t('language') === 'zh' ? '優惠券將自動加入您的帳戶！' : 'Coupon will be automatically added!'}</li>
+              <li>
+                {t('language') === 'zh'
+                  ? '點擊下方「加入 LINE」按鈕加入晨光國際少年團官方帳號'
+                  : 'Click "Add LINE Account" button below to add our official account'}
+              </li>
+              <li>
+                {t('language') === 'zh'
+                  ? '按照 LINE 訊息中的指示完成註冊'
+                  : 'Follow the instructions in LINE messages to complete registration'}
+              </li>
+              <li>
+                {t('language') === 'zh'
+                  ? '註冊完成後，將此頁面的連結傳送給 LINE 官方帳號'
+                  : 'After registration, send this page\'s URL to our LINE Official Account'}
+              </li>
+              <li>
+                {t('language') === 'zh'
+                  ? '我們會為您領取優惠券！'
+                  : 'We will claim the coupon for you!'}
+              </li>
             </ol>
+            <div style={{
+              marginTop: '15px',
+              padding: '10px',
+              background: '#fff8dc',
+              borderRadius: '6px',
+              fontSize: '13px',
+              color: '#856404'
+            }}>
+              💡 {t('language') === 'zh'
+                ? '建議：將此頁面加入書籤，以便稍後傳送連結'
+                : 'Tip: Bookmark this page to easily send the link later'}
+            </div>
           </div>
 
           {/* Add LINE Button */}
@@ -229,7 +259,7 @@ function CouponClaim() {
               e.currentTarget.style.boxShadow = '0 4px 12px rgba(6, 199, 85, 0.3)';
             }}
           >
-            🎁 {t('language') === 'zh' ? '加入 LINE 領取優惠券' : 'Add LINE to Claim Coupon'}
+            {t('language') === 'zh' ? '➕ 加入 LINE 官方帳號' : '➕ Add LINE Official Account'}
           </a>
 
           {/* Expiry Warning */}

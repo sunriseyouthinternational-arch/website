@@ -2015,13 +2015,13 @@ function Profile() {
               </div>
             ) : shareLink ? (
               <>
-                {/* QR Code for LINE Add Friend */}
+                {/* QR Code for Claim Page */}
                 <div style={{ textAlign: 'center', marginBottom: '30px' }}>
                   <p style={{ marginBottom: '15px', fontWeight: '600', color: '#333' }}>
                     {t('language') === 'zh' ? '掃描 QR Code 領取優惠券' : 'Scan QR Code to Claim'}
                   </p>
                   <img
-                    src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(shareLink.lineAddFriendUrl)}`}
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(shareLink.claimUrl)}`}
                     alt="QR Code"
                     style={{
                       width: '200px',
@@ -2034,8 +2034,8 @@ function Profile() {
                   />
                   <p style={{ marginTop: '10px', fontSize: '12px', color: '#666' }}>
                     {t('language') === 'zh'
-                      ? '掃描後將提示加入 LINE 官方帳號'
-                      : 'Scanning will prompt to add LINE Official Account'}
+                      ? '掃描後前往領取頁面，依照指示完成領取'
+                      : 'Scan to visit claim page and follow instructions'}
                   </p>
                 </div>
 
