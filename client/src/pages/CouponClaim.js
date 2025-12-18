@@ -32,7 +32,7 @@ function CouponClaim() {
   }, [token, t]);
 
   const getLineAddFriendUrl = () => {
-    const lineChannelId = process.env.REACT_APP_LINE_CHANNEL_ID || '@sunriseyouth';
+    const lineChannelId = process.env.REACT_APP_LINE_CHANNEL_ID || '@907xmpck';
     // Ensure @ symbol is present for LINE Official Account URL
     const channelIdWithAt = lineChannelId.startsWith('@') ? lineChannelId : `@${lineChannelId}`;
     return `https://line.me/ti/p/${channelIdWithAt}`;

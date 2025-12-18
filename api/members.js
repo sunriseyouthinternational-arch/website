@@ -476,7 +476,7 @@ module.exports = async (req, res) => {
       const claimUrl = `${baseUrl}/claim/${token}`;
 
       // Get LINE Official Account ID for add friend URL
-      const lineChannelId = process.env.LINE_CHANNEL_ID || '@sunriseyouth';
+      const lineChannelId = process.env.LINE_CHANNEL_ID || '@907xmpck';
       // Ensure @ symbol is present for LINE Official Account URL
       const channelIdWithAt = lineChannelId.startsWith('@') ? lineChannelId : `@${lineChannelId}`;
       const lineAddFriendUrl = `https://line.me/ti/p/${channelIdWithAt}`;
