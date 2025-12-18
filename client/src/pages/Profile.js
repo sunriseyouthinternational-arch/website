@@ -1561,7 +1561,7 @@ function Profile() {
                             {sharingCouponId === coupon.ids[0] ? (
                               t('language') === 'zh' ? '⏳ 載入中...' : '⏳ Loading...'
                             ) : (
-                              <>🔗 {t('language') === 'zh' ? '分享優惠券' : 'Share Coupon'}</>
+                              <>🔗 {t('language') === 'zh' ? '分享給新朋友' : 'Share to New Friends'}</>
                             )}
                           </button>
                         )}
@@ -1955,9 +1955,34 @@ function Profile() {
             overflow: 'auto',
             boxShadow: '0 10px 50px rgba(0, 0, 0, 0.3)'
           }}>
-            <h2 style={{ color: '#667eea', marginBottom: '30px', textAlign: 'center' }}>
-              {t('language') === 'zh' ? '分享優惠券' : 'Share Coupon'}
+            <h2 style={{ color: '#667eea', marginBottom: '20px', textAlign: 'center' }}>
+              {t('language') === 'zh' ? '分享優惠券給新朋友' : 'Share Coupon to New Friends'}
             </h2>
+
+            {/* Important Notice */}
+            <div style={{
+              background: '#fff3cd',
+              border: '2px solid #ffc107',
+              borderRadius: '8px',
+              padding: '15px',
+              marginBottom: '25px'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                <span style={{ fontSize: '20px', marginTop: '2px' }}>ℹ️</span>
+                <div>
+                  <p style={{ margin: 0, fontSize: '14px', color: '#856404', fontWeight: '600' }}>
+                    {t('language') === 'zh'
+                      ? '⚠️ 此優惠券僅能分享給尚未加入 LINE 官方帳號的朋友'
+                      : '⚠️ This coupon can only be shared with friends who haven\'t added our LINE Official Account yet'}
+                  </p>
+                  <p style={{ margin: '8px 0 0 0', fontSize: '13px', color: '#856404' }}>
+                    {t('language') === 'zh'
+                      ? '當您的朋友透過連結加入並完成註冊後，優惠券將自動加入他們的帳戶。'
+                      : 'When your friend joins via the link and completes registration, the coupon will be automatically added to their account.'}
+                  </p>
+                </div>
+              </div>
+            </div>
 
             {/* Coupon Summary */}
             <div style={{
@@ -2104,7 +2129,7 @@ function Profile() {
                     e.currentTarget.style.boxShadow = 'none';
                   }}
                 >
-                  💬 {t('language') === 'zh' ? '透過 LINE 分享給朋友' : 'Share via LINE to Friends'}
+                  💬 {t('language') === 'zh' ? '透過 LINE 分享給新朋友' : 'Share via LINE to New Friends'}
                 </a>
 
                 {/* Expiry Info */}
