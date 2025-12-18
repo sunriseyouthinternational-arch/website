@@ -11,25 +11,95 @@ function CouponClaim() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [status, setStatus] = useState(null);
+  const [liffInitialized, setLiffInitialized] = useState(false);
+  const [claiming, setClaiming] = useState(false);
 
-  useEffect(() => {
-    const fetchCouponDetails = async () => {
-      try {
-        const response = await axios.get(`/api/coupon-claim?token=${token}`);
-        setCouponData(response.data);
-        setStatus(response.data.status);
-      } catch (err) {
-        setError(err.response?.data?.message || (t('language') === 'zh' ? '載入失敗' : 'Failed to load'));
-        setStatus(err.response?.data?.status || 'error');
-      } finally {
+  // Fetch coupon details
+  const fetchCouponDetails = async () => {
+    try {
+      const response = await axios.get(`/api/coupon-claim?token=${token}`);
+      setCouponData(response.data);
+      setStatus(response.data.status);
+    } catch (err) {
+      setError(err.response?.data?.message || (t('language') === 'zh' ? '載入失敗' : 'Failed to load'));
+      setStatus(err.response?.data?.status || 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Attempt automatic coupon claiming with LIFF
+  const attemptAutoClaim = async (lineUserId) => {
+    if (!token || !lineUserId) return;
+
+    setClaiming(true);
+    try {
+      const response = await axios.post('/api/coupon-claim', {
+        token,
+        lineUserId
+      });
+
+      if (response.data.success) {
+        setStatus('claimed');
+        setCouponData({
+          coupon: response.data.coupon,
+          senderName: response.data.senderName
+        });
         setLoading(false);
+      }
+    } catch (err) {
+      console.error('Auto-claim error:', err);
+
+      // Check if user needs to complete registration
+      if (err.response?.data?.needsRegistration) {
+        setError(err.response.data.message);
+        setStatus('needs_registration');
+        setLoading(false);
+      } else {
+        // For other errors, show manual flow
+        fetchCouponDetails();
+      }
+    } finally {
+      setClaiming(false);
+    }
+  };
+
+  // Initialize LIFF on component mount
+  useEffect(() => {
+    const initializeLiff = async () => {
+      try {
+        const liffId = process.env.REACT_APP_LIFF_ID;
+
+        // If LIFF ID not configured, fall back to manual flow
+        if (!liffId || !window.liff) {
+          console.log('LIFF not configured, using manual claim flow');
+          fetchCouponDetails();
+          return;
+        }
+
+        await window.liff.init({ liffId });
+        setLiffInitialized(true);
+
+        // Check if user is logged in to LINE
+        if (window.liff.isLoggedIn()) {
+          const profile = await window.liff.getProfile();
+          // Automatically try to claim coupon
+          await attemptAutoClaim(profile.userId);
+        } else {
+          // If not logged in, redirect to LINE login
+          window.liff.login();
+        }
+      } catch (err) {
+        console.error('LIFF initialization error:', err);
+        // Fall back to manual claim flow
+        fetchCouponDetails();
       }
     };
 
     if (token) {
-      fetchCouponDetails();
+      initializeLiff();
     }
-  }, [token, t]);
+  }, [token]);
 
   const getLineAddFriendUrl = () => {
     const lineChannelId = process.env.REACT_APP_LINE_CHANNEL_ID || '@907xmpck';
@@ -38,14 +108,24 @@ function CouponClaim() {
     return `https://line.me/ti/p/${channelIdWithAt}`;
   };
 
-  if (loading) {
+  if (loading || claiming) {
     return (
       <div className="container">
         <div className="card" style={{ textAlign: 'center', padding: '60px 20px' }}>
           <div style={{ fontSize: '64px', marginBottom: '20px' }}>⏳</div>
           <h3 style={{ color: '#667eea' }}>
-            {t('language') === 'zh' ? '載入中...' : 'Loading...'}
+            {claiming
+              ? (t('language') === 'zh' ? '自動領取中...' : 'Auto-claiming...')
+              : (t('language') === 'zh' ? '載入中...' : 'Loading...')
+            }
           </h3>
+          {claiming && (
+            <p style={{ color: '#666', marginTop: '10px', fontSize: '14px' }}>
+              {t('language') === 'zh'
+                ? '正在自動為您領取優惠券，請稍候...'
+                : 'Automatically claiming your coupon, please wait...'}
+            </p>
+          )}
         </div>
       </div>
     );
@@ -57,12 +137,108 @@ function CouponClaim() {
         <div className="card" style={{ textAlign: 'center', padding: '60px 20px' }}>
           <div style={{ fontSize: '64px', marginBottom: '20px' }}>✅</div>
           <h2 style={{ color: '#2b8a3e', marginBottom: '15px' }}>
-            {t('language') === 'zh' ? '優惠券已被領取' : 'Coupon Already Claimed'}
+            {t('language') === 'zh' ? '優惠券領取成功！' : 'Coupon Claimed Successfully!'}
           </h2>
-          <p style={{ color: '#666', fontSize: '16px' }}>
+
+          {couponData && couponData.coupon && (
+            <div style={{
+              background: '#d3f9d8',
+              borderRadius: '12px',
+              padding: '20px',
+              marginTop: '20px',
+              marginBottom: '20px'
+            }}>
+              <h3 style={{ color: '#2b8a3e', marginBottom: '10px', fontSize: '20px' }}>
+                {couponData.coupon.name}
+              </h3>
+              <p style={{ color: '#2b8a3e', fontSize: '14px', margin: 0 }}>
+                {t('language') === 'zh'
+                  ? `來自：${couponData.senderName || '好友'}`
+                  : `From: ${couponData.senderName || 'Friend'}`}
+              </p>
+            </div>
+          )}
+
+          <p style={{ color: '#666', fontSize: '16px', marginBottom: '25px' }}>
             {t('language') === 'zh'
-              ? '此優惠券已經被其他人領取了。'
-              : 'This coupon has already been claimed by someone else.'}
+              ? '優惠券已自動加入您的帳戶。您可以在個人資料頁面查看所有優惠券。'
+              : 'The coupon has been automatically added to your account. You can view all your coupons in your profile page.'}
+          </p>
+
+          <a
+            href="/profile"
+            style={{
+              display: 'inline-block',
+              padding: '12px 30px',
+              background: '#667eea',
+              color: 'white',
+              borderRadius: '8px',
+              textDecoration: 'none',
+              fontWeight: 'bold',
+              fontSize: '16px',
+              marginTop: '10px',
+              transition: 'all 0.3s ease'
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.background = '#5568d3';
+              e.currentTarget.style.transform = 'translateY(-2px)';
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.background = '#667eea';
+              e.currentTarget.style.transform = 'translateY(0)';
+            }}
+          >
+            {t('language') === 'zh' ? '查看我的優惠券' : 'View My Coupons'}
+          </a>
+        </div>
+      </div>
+    );
+  }
+
+  if (status === 'needs_registration') {
+    return (
+      <div className="container">
+        <div className="card" style={{ textAlign: 'center', padding: '60px 20px' }}>
+          <div style={{ fontSize: '64px', marginBottom: '20px' }}>📝</div>
+          <h2 style={{ color: '#f59f00', marginBottom: '15px' }}>
+            {t('language') === 'zh' ? '需要完成註冊' : 'Registration Required'}
+          </h2>
+          <p style={{ color: '#666', fontSize: '16px', marginBottom: '25px' }}>
+            {error || (t('language') === 'zh'
+              ? '請先完成註冊才能領取優惠券。'
+              : 'Please complete registration before claiming the coupon.')}
+          </p>
+          <a
+            href={getLineAddFriendUrl()}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: 'inline-block',
+              padding: '15px 30px',
+              background: '#06C755',
+              color: 'white',
+              borderRadius: '8px',
+              textDecoration: 'none',
+              fontWeight: 'bold',
+              fontSize: '16px',
+              marginBottom: '15px',
+              transition: 'all 0.3s ease'
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.background = '#05b34b';
+              e.currentTarget.style.transform = 'translateY(-2px)';
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.background = '#06C755';
+              e.currentTarget.style.transform = 'translateY(0)';
+            }}
+          >
+            {t('language') === 'zh' ? '➕ 加入 LINE 並註冊' : '➕ Add LINE & Register'}
+          </a>
+          <p style={{ color: '#999', fontSize: '13px', marginTop: '15px' }}>
+            {t('language') === 'zh'
+              ? '註冊完成後，可以回到此頁面自動領取優惠券'
+              : 'After registration, return to this page to automatically claim the coupon'}
           </p>
         </div>
       </div>
