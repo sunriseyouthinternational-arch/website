@@ -81,6 +81,8 @@ function AdminDashboard() {
     quantity: 1,
     expiryDate: ''
   });
+  const [couponProfiles, setCouponProfiles] = useState([]);
+  const [couponsForSale, setCouponsForSale] = useState([]);
 
   useEffect(() => {
     const token = localStorage.getItem('adminToken');
@@ -98,14 +100,16 @@ function AdminDashboard() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [membersRes, classesRes, classInfosRes, activitiesRes, teachersRes, statsRes, leaderboardRes] = await Promise.all([
+      const [membersRes, classesRes, classInfosRes, activitiesRes, teachersRes, statsRes, leaderboardRes, profilesRes, forSaleRes] = await Promise.all([
         axios.get('/api/admin?resource=members'),
         axios.get('/api/classes'),
         axios.get('/api/class-info'),
         axios.get('/api/activities'),
         axios.get('/api/teachers'),
         axios.get('/api/admin?resource=stats'),
-        axios.get('/api/admin?resource=referral-leaderboard')
+        axios.get('/api/admin?resource=referral-leaderboard'),
+        axios.get('/api/coupon-profiles'),
+        axios.get('/api/coupons-for-sale')
       ]);
 
       setMembers(membersRes.data.members);
@@ -115,6 +119,8 @@ function AdminDashboard() {
       setTeachers(teachersRes.data.teachers);
       setStats(statsRes.data);
       setReferralLeaderboard(leaderboardRes.data.leaderboard);
+      setCouponProfiles(profilesRes.data.profiles);
+      setCouponsForSale(forSaleRes.data.coupons);
     } catch (error) {
       if (error.response?.status === 401) {
         localStorage.removeItem('adminToken');
