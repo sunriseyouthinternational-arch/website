@@ -66,6 +66,19 @@ function Profile() {
   const [lineUserId, setLineUserId] = useState(null);
   const [lineProfile, setLineProfile] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [needsRegistration, setNeedsRegistration] = useState(false);
+
+  // Registration form state
+  const [registrationData, setRegistrationData] = useState({
+    name: '',
+    englishAlias: '',
+    gender: '男',
+    birthDate: '',
+    familyMembers: [],
+    contact: { phone: '', mobile: '', lineId: '' },
+    referralCode: ''
+  });
+  const [submittingRegistration, setSubmittingRegistration] = useState(false);
 
   // Helper function to get image source (handles both base64 and file paths)
   const getImageSrc = (imagePath) => {
@@ -228,18 +241,9 @@ function Profile() {
   useEffect(() => {
     fetchClassesAndActivities();
 
-    // Initialize LINE Login (LIFF)
+    // Initialize LINE Login (LIFF) - this handles everything
     initializeLIFF();
-
-    // Handle session token from URL
-    if (sessionFromUrl && urlMemberId) {
-      console.log('Session token found in URL, validating...');
-      validateAndSaveSession(sessionFromUrl, urlMemberId);
-    } else if (urlMemberId) {
-      // If memberId is in URL, automatically fetch member profile
-      fetchMemberById(urlMemberId);
-    }
-  }, [urlMemberId, sessionFromUrl]);
+  }, []);
 
   // Update active tab when URL parameter changes
   useEffect(() => {
@@ -263,39 +267,54 @@ function Profile() {
     }
   }, [classIdFromUrl, classes]);
 
-  // Fetch member by LINE user ID
-  const fetchMemberByLineId = async (userId) => {
+  // Fetch or create member by LINE user ID
+  const fetchOrCreateMember = async (userId, profile) => {
     setLoading(true);
     setMessage({ type: '', text: '' });
 
-    console.log('[Profile] Fetching member by LINE user ID:', userId);
+    console.log('[Profile] Fetching/creating member for LINE user ID:', userId);
 
     try {
-      const response = await axios.get(`/api/members?lineUserId=${userId}`);
-      if (response.data.member) {
-        console.log('[Profile] Member found:', response.data.member.memberId, 'Registration completed:', response.data.member.registrationCompleted);
-        setMember(response.data.member);
-        setMemberId(response.data.member.memberId);
-        // Update URL to member's ID
-        navigate(`/profile/${response.data.member.memberId}`, { replace: true });
+      // Try to fetch existing member
+      const response = await axios.post('/api/members/auth', {
+        lineUserId: userId,
+        displayName: profile.displayName,
+        pictureUrl: profile.pictureUrl
+      });
+
+      const memberData = response.data.member;
+      console.log('[Profile] Member response:', {
+        memberId: memberData.memberId,
+        registered: memberData.registrationCompleted
+      });
+
+      setMember(memberData);
+      setMemberId(memberData.memberId);
+
+      // Check if needs registration
+      if (!memberData.registrationCompleted) {
+        console.log('[Profile] Member needs to complete registration');
+        setNeedsRegistration(true);
+        // Pre-fill registration form with LINE display name
+        setRegistrationData(prev => ({
+          ...prev,
+          name: profile.displayName || ''
+        }));
       } else {
-        throw new Error('Member not found');
+        setNeedsRegistration(false);
+        // Update URL to member's ID
+        navigate(`/profile/${memberData.memberId}`, { replace: true });
       }
+
+      setLoading(false);
     } catch (error) {
-      console.error('[Profile] Failed to fetch member by LINE ID:', error);
-      console.error('[Profile] Error response:', error.response?.data);
-
-      // Show detailed error message
-      const errorMessage = error.response?.data?.message || (t('language') === 'zh'
-        ? '找不到會員資料。您的 LINE 帳戶可能尚未與團員資料連結。'
-        : 'Member not found. Your LINE account may not be linked to a member profile yet.');
-
+      console.error('[Profile] Error fetching/creating member:', error);
       setMessage({
         type: 'error',
-        text: errorMessage
+        text: error.response?.data?.message || (t('language') === 'zh'
+          ? '載入失敗，請稍後再試'
+          : 'Failed to load, please try again')
       });
-      setMember(null);
-    } finally {
       setLoading(false);
     }
   };
@@ -304,47 +323,91 @@ function Profile() {
   const initializeLIFF = async () => {
     const liffId = process.env.REACT_APP_LIFF_ID_PROFILE || process.env.REACT_APP_LIFF_ID;
 
-    // If no LIFF ID configured, fall back to manual login
     if (!liffId || !window.liff) {
-      console.log('LIFF not configured for profile, using manual login');
-      setLiffReady(false);
+      console.error('[Profile] LIFF not configured! Please set REACT_APP_LIFF_ID_PROFILE');
+      setMessage({
+        type: 'error',
+        text: t('language') === 'zh'
+          ? '系統設定錯誤，請聯繫管理員'
+          : 'System configuration error, please contact administrator'
+      });
+      setLoading(false);
       return;
     }
 
     try {
+      console.log('[Profile] Initializing LIFF with ID:', liffId);
       await window.liff.init({ liffId });
       setLiffReady(true);
 
       if (window.liff.isLoggedIn()) {
         const profile = await window.liff.getProfile();
+        console.log('[Profile] User logged in:', profile.displayName);
         setLineUserId(profile.userId);
         setLineProfile(profile);
         setIsLoggedIn(true);
 
-        // If no member loaded yet and no URL member ID, fetch by LINE user ID
-        if (!member && !urlMemberId) {
-          await fetchMemberByLineId(profile.userId);
-        }
+        // Fetch or create member
+        await fetchOrCreateMember(profile.userId, profile);
       } else {
-        setIsLoggedIn(false);
+        console.log('[Profile] User not logged in, redirecting to LINE login');
+        window.liff.login();
       }
     } catch (error) {
-      console.error('LIFF initialization failed:', error);
-      setLiffReady(false);
-    }
-  };
-
-  // Handle LINE Login button click
-  const handleLineLogin = () => {
-    if (window.liff && liffReady) {
-      window.liff.login();
-    } else {
+      console.error('[Profile] LIFF initialization failed:', error);
       setMessage({
         type: 'error',
         text: t('language') === 'zh'
-          ? 'LINE 登入未設定，請使用團員編號登入'
-          : 'LINE Login not configured, please use member ID'
+          ? 'LINE 登入失敗，請重新整理頁面'
+          : 'LINE login failed, please refresh the page'
       });
+      setLoading(false);
+    }
+  };
+
+  // Handle registration form submission
+  const handleRegistrationSubmit = async (e) => {
+    e.preventDefault();
+    setSubmittingRegistration(true);
+    setMessage({ type: '', text: '' });
+
+    // Validation
+    if (!registrationData.name || !registrationData.contact.mobile) {
+      setMessage({
+        type: 'error',
+        text: t('language') === 'zh'
+          ? '請填寫所有必填欄位'
+          : 'Please fill in all required fields'
+      });
+      setSubmittingRegistration(false);
+      return;
+    }
+
+    try {
+      const response = await axios.post('/api/members/register', {
+        lineUserId,
+        ...registrationData
+      });
+
+      setMember(response.data.member);
+      setNeedsRegistration(false);
+      setMessage({
+        type: 'success',
+        text: t('language') === 'zh' ? '註冊成功！' : 'Registration successful!'
+      });
+
+      // Update URL
+      navigate(`/profile/${response.data.member.memberId}`, { replace: true });
+    } catch (error) {
+      console.error('[Profile] Registration failed:', error);
+      setMessage({
+        type: 'error',
+        text: error.response?.data?.message || (t('language') === 'zh'
+          ? '註冊失敗，請稍後再試'
+          : 'Registration failed, please try again')
+      });
+    } finally {
+      setSubmittingRegistration(false);
     }
   };
 
@@ -357,6 +420,7 @@ function Profile() {
       setLineProfile(null);
       setMember(null);
       setMemberId('');
+      setNeedsRegistration(false);
       navigate('/profile', { replace: true });
     }
   };
@@ -608,88 +672,149 @@ function Profile() {
         <h2>{t('myProfile')}</h2>
       </div>
 
-      {!member ? (
-        <div className="card" style={{ textAlign: 'center', padding: '40px 20px' }}>
-          <div style={{ fontSize: '64px', marginBottom: '20px' }}>🔐</div>
-          <h3 style={{ marginBottom: '30px', color: '#333' }}>
-            {t('language') === 'zh' ? '登入您的帳戶' : 'Login to Your Account'}
+      {/* Show loading while initializing LIFF or processing */}
+      {loading ? (
+        <div className="card" style={{ textAlign: 'center', padding: '60px 20px' }}>
+          <div style={{ fontSize: '64px', marginBottom: '20px' }}>⏳</div>
+          <h3 style={{ color: '#667eea', marginBottom: '15px' }}>
+            {t('language') === 'zh' ? '載入中...' : 'Loading...'}
           </h3>
-
-          {loading ? (
-            <div style={{ padding: '40px 0' }}>
-              <div style={{ fontSize: '48px', marginBottom: '20px' }}>⏳</div>
-              <p style={{ color: '#667eea', fontSize: '16px' }}>
-                {t('language') === 'zh' ? '載入中...' : 'Loading...'}
-              </p>
-            </div>
-          ) : (
-            <>
-              {/* LINE Login Button */}
-              {liffReady && (
-                <button
-                  onClick={handleLineLogin}
-                  style={{
-                    width: '100%',
-                    maxWidth: '400px',
-                    padding: '16px 24px',
-                    background: '#06C755',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '12px',
-                    fontSize: '18px',
-                    fontWeight: 'bold',
-                    cursor: 'pointer',
-                    marginBottom: '20px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '12px',
-                    transition: 'all 0.3s ease',
-                    boxShadow: '0 4px 12px rgba(6, 199, 85, 0.3)'
-                  }}
-                  onMouseOver={(e) => {
-                    e.currentTarget.style.background = '#05b34b';
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                    e.currentTarget.style.boxShadow = '0 6px 16px rgba(6, 199, 85, 0.4)';
-                  }}
-                  onMouseOut={(e) => {
-                    e.currentTarget.style.background = '#06C755';
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(6, 199, 85, 0.3)';
-                  }}
-                >
-                  <span style={{ fontSize: '24px' }}>💬</span>
-                  {t('language') === 'zh' ? '使用 LINE 登入' : 'Login with LINE'}
-                </button>
-              )}
-
-              {/* Security notice */}
-              <div style={{
-                background: '#e7f3ff',
-                border: '2px solid #b3d9ff',
-                borderRadius: '8px',
-                padding: '15px',
-                marginTop: liffReady ? '20px' : '0',
-                marginBottom: '20px',
-                maxWidth: '400px',
-                margin: '20px auto'
-              }}>
-                <p style={{ margin: 0, fontSize: '14px', color: '#004085', lineHeight: '1.6' }}>
-                  {t('language') === 'zh'
-                    ? '🔒 請使用您的 LINE 帳戶登入以存取個人資料。'
-                    : '🔒 Please login with your LINE account to access your profile.'}
-                </p>
-              </div>
-            </>
-          )}
-
-          {message.text && (
-            <div className={`message ${message.type}`} style={{ marginTop: '20px', maxWidth: '400px', margin: '20px auto 0' }}>
-              {message.text}
-            </div>
-          )}
+          <p style={{ color: '#666', fontSize: '14px' }}>
+            {t('language') === 'zh'
+              ? '正在透過 LINE 登入...'
+              : 'Logging in via LINE...'}
+          </p>
         </div>
-      ) : (
+      ) : needsRegistration ? (
+        /* Show registration form if member needs to complete registration */
+        <div className="card">
+          <h2 style={{ color: '#667eea', marginBottom: '20px', textAlign: 'center' }}>
+            {t('language') === 'zh' ? '完成註冊' : 'Complete Registration'}
+          </h2>
+
+          <p style={{ textAlign: 'center', marginBottom: '30px', color: '#666' }}>
+            {t('language') === 'zh'
+              ? '歡迎！請填寫以下資料完成註冊'
+              : 'Welcome! Please fill in the following information to complete registration'}
+          </p>
+
+          <form onSubmit={handleRegistrationSubmit}>
+            {/* Registration form fields - will add shortly */}
+            <div style={{ marginBottom: '15px' }}>
+              <label style={{ display: 'block', marginBottom: '5px', fontWeight: '600' }}>
+                {t('language') === 'zh' ? '姓名 *' : 'Name *'}
+              </label>
+              <input
+                type="text"
+                required
+                value={registrationData.name}
+                onChange={(e) => setRegistrationData({...registrationData, name: e.target.value})}
+                style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ccc' }}
+              />
+            </div>
+
+            <div style={{ marginBottom: '15px' }}>
+              <label style={{ display: 'block', marginBottom: '5px', fontWeight: '600' }}>
+                {t('language') === 'zh' ? '英文別名' : 'English Alias'}
+              </label>
+              <input
+                type="text"
+                value={registrationData.englishAlias}
+                onChange={(e) => setRegistrationData({...registrationData, englishAlias: e.target.value})}
+                style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ccc' }}
+              />
+            </div>
+
+            <div style={{ marginBottom: '15px' }}>
+              <label style={{ display: 'block', marginBottom: '5px', fontWeight: '600' }}>
+                {t('language') === 'zh' ? '性別 *' : 'Gender *'}
+              </label>
+              <select
+                required
+                value={registrationData.gender}
+                onChange={(e) => setRegistrationData({...registrationData, gender: e.target.value})}
+                style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ccc' }}
+              >
+                <option value="男">男 / Male</option>
+                <option value="女">女 / Female</option>
+              </select>
+            </div>
+
+            <div style={{ marginBottom: '15px' }}>
+              <label style={{ display: 'block', marginBottom: '5px', fontWeight: '600' }}>
+                {t('language') === 'zh' ? '出生日期 *' : 'Birth Date *'}
+              </label>
+              <input
+                type="date"
+                required
+                value={registrationData.birthDate}
+                onChange={(e) => setRegistrationData({...registrationData, birthDate: e.target.value})}
+                style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ccc' }}
+              />
+            </div>
+
+            <div style={{ marginBottom: '15px' }}>
+              <label style={{ display: 'block', marginBottom: '5px', fontWeight: '600' }}>
+                {t('language') === 'zh' ? '手機號碼 *' : 'Mobile Number *'}
+              </label>
+              <input
+                type="tel"
+                required
+                value={registrationData.contact.mobile}
+                onChange={(e) => setRegistrationData({
+                  ...registrationData,
+                  contact: {...registrationData.contact, mobile: e.target.value}
+                })}
+                style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ccc' }}
+              />
+            </div>
+
+            <div style={{ marginBottom: '15px' }}>
+              <label style={{ display: 'block', marginBottom: '5px', fontWeight: '600' }}>
+                {t('language') === 'zh' ? 'LINE ID' : 'LINE ID'}
+              </label>
+              <input
+                type="text"
+                value={registrationData.contact.lineId}
+                onChange={(e) => setRegistrationData({
+                  ...registrationData,
+                  contact: {...registrationData.contact, lineId: e.target.value}
+                })}
+                style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ccc' }}
+              />
+            </div>
+
+            <div style={{ marginBottom: '15px' }}>
+              <label style={{ display: 'block', marginBottom: '5px', fontWeight: '600' }}>
+                {t('language') === 'zh' ? '推薦碼（選填）' : 'Referral Code (Optional)'}
+              </label>
+              <input
+                type="text"
+                value={registrationData.referralCode}
+                onChange={(e) => setRegistrationData({...registrationData, referralCode: e.target.value})}
+                style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ccc' }}
+              />
+            </div>
+
+            {message.text && (
+              <div className={`message ${message.type}`} style={{ marginBottom: '15px' }}>
+                {message.text}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={submittingRegistration}
+              className="btn btn-primary"
+              style={{ width: '100%', padding: '12px', fontSize: '16px' }}
+            >
+              {submittingRegistration
+                ? (t('language') === 'zh' ? '提交中...' : 'Submitting...')
+                : (t('language') === 'zh' ? '完成註冊' : 'Complete Registration')}
+            </button>
+          </form>
+        </div>
+      ) : member ? (
         <>
           {/* Logout button (only show if logged in via LINE) */}
           {isLoggedIn && lineUserId && (

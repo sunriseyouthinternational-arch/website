@@ -10,6 +10,145 @@ module.exports = async (req, res) => {
   try {
     await connectDB();
 
+    // POST /api/members/auth - Authenticate/create member via LIFF
+    if (req.method === 'POST' && req.url.includes('/auth')) {
+      const { lineUserId: userId, displayName, pictureUrl } = req.body;
+
+      if (!userId) {
+        return res.status(400).json({
+          message: '缺少 LINE 用戶 ID / Missing LINE user ID'
+        });
+      }
+
+      console.log('[API /auth] Looking up member with LINE userId:', userId);
+
+      // Try to find existing member
+      let member = await Member.findOne({ 'line.userId': userId });
+
+      if (member) {
+        console.log('[API /auth] Found existing member:', member.memberId);
+        // Update LINE profile info in case it changed
+        member.line.displayName = displayName;
+        member.line.pictureUrl = pictureUrl;
+        await member.save();
+      } else {
+        // Create new incomplete member
+        console.log('[API /auth] Creating new member for userId:', userId);
+
+        // Generate unique member ID
+        let uniqueMemberId = false;
+        let newMemberId = '';
+        while (!uniqueMemberId) {
+          newMemberId = 'M' + Date.now().toString().slice(-8) + Math.floor(Math.random() * 100);
+          const existing = await Member.findOne({ memberId: newMemberId });
+          if (!existing) uniqueMemberId = true;
+        }
+
+        member = new Member({
+          memberId: newMemberId,
+          name: displayName || 'New Member',
+          gender: '男',
+          birthDate: new Date('2000-01-01'),
+          contact: {
+            phone: '',
+            mobile: '',
+            lineId: ''
+          },
+          line: {
+            userId,
+            displayName,
+            pictureUrl,
+            linkedAt: new Date()
+          },
+          registrationCompleted: false
+        });
+
+        await member.save();
+        console.log('[API /auth] Created new member:', newMemberId);
+      }
+
+      return res.status(200).json({ member });
+    }
+
+    // POST /api/members/register - Complete registration
+    if (req.method === 'POST' && req.url.includes('/register')) {
+      const {
+        lineUserId: userId,
+        name,
+        englishAlias,
+        gender,
+        birthDate,
+        familyMembers,
+        contact,
+        referralCode
+      } = req.body;
+
+      if (!userId) {
+        return res.status(400).json({
+          message: '缺少 LINE 用戶 ID / Missing LINE user ID'
+        });
+      }
+
+      console.log('[API /register] Completing registration for userId:', userId);
+
+      const member = await Member.findOne({ 'line.userId': userId });
+
+      if (!member) {
+        return res.status(404).json({
+          message: '找不到會員 / Member not found'
+        });
+      }
+
+      // Handle referral code
+      if (referralCode) {
+        const referrer = await Member.findOne({
+          referralCode: referralCode.trim().toUpperCase(),
+          registrationCompleted: true
+        });
+
+        if (referrer) {
+          member.referredBy = referrer._id;
+        }
+      }
+
+      // Generate unique referral code for this member
+      let uniqueCode = false;
+      let generatedCode = '';
+      while (!uniqueCode) {
+        const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        const numbers = '0123456789';
+        generatedCode = '';
+        for (let i = 0; i < 3; i++) {
+          generatedCode += letters.charAt(Math.floor(Math.random() * letters.length));
+        }
+        for (let i = 0; i < 3; i++) {
+          generatedCode += numbers.charAt(Math.floor(Math.random() * numbers.length));
+        }
+
+        const existing = await Member.findOne({ referralCode: generatedCode });
+        if (!existing) uniqueCode = true;
+      }
+
+      // Update member with complete information
+      member.name = name;
+      member.englishAlias = englishAlias || '';
+      member.gender = gender;
+      member.birthDate = birthDate;
+      member.familyMembers = familyMembers || [];
+      member.contact = contact;
+      member.referralCode = generatedCode;
+      member.registrationCompleted = true;
+
+      await member.save();
+
+      console.log('[API /register] Registration completed for member:', member.memberId);
+
+      return res.status(200).json({
+        message: '註冊成功 / Registration successful',
+        member
+      });
+    }
+
     // Get member by registration token (for completing registration)
     if (req.method === 'GET' && token && !memberId) {
       const member = await Member.findOne({ registrationToken: token });
