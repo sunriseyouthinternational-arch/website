@@ -287,10 +287,14 @@ function Profile() {
       if (!memberData || needsReg) {
         console.log('[Profile] Member needs to register');
         setNeedsRegistration(true);
-        // Pre-fill registration form with LINE display name
+        // Pre-fill registration form with LINE display name and user ID
         setRegistrationData(prev => ({
           ...prev,
-          name: profile.displayName || ''
+          name: profile.displayName || '',
+          contact: {
+            ...prev.contact,
+            lineId: userId
+          }
         }));
         setLoading(false);
         return;
@@ -407,6 +411,19 @@ function Profile() {
         text: t('language') === 'zh'
           ? '請填寫所有必填欄位'
           : 'Please fill in all required fields'
+      });
+      setSubmittingRegistration(false);
+      return;
+    }
+
+    // Validate Taiwan phone number format (9 or 10 digits)
+    const phoneNumber = registrationData.contact.mobile.replace(/\D/g, ''); // Remove non-digits
+    if (phoneNumber.length < 9 || phoneNumber.length > 10) {
+      setMessage({
+        type: 'error',
+        text: t('language') === 'zh'
+          ? '請輸入有效的台灣手機號碼（9-10位數字）'
+          : 'Please enter a valid Taiwan phone number (9-10 digits)'
       });
       setSubmittingRegistration(false);
       return;
@@ -800,16 +817,13 @@ function Profile() {
 
             <div style={{ marginBottom: '15px' }}>
               <label style={{ display: 'block', marginBottom: '5px', fontWeight: '600' }}>
-                {t('language') === 'zh' ? 'LINE ID' : 'LINE ID'}
+                {t('language') === 'zh' ? 'LINE ID（自動偵測）' : 'LINE ID (Auto-detected)'}
               </label>
               <input
                 type="text"
                 value={registrationData.contact.lineId}
-                onChange={(e) => setRegistrationData({
-                  ...registrationData,
-                  contact: {...registrationData.contact, lineId: e.target.value}
-                })}
-                style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ccc' }}
+                readOnly
+                style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ccc', backgroundColor: '#f5f5f5' }}
               />
             </div>
 

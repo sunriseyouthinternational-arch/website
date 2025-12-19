@@ -138,6 +138,30 @@ module.exports = async (req, res) => {
 
       console.log('[API /register] Registration completed for member:', member.memberId);
 
+      // Send welcome message via LINE
+      if (member.line && member.line.userId) {
+        try {
+          const client = new line.messagingApi.MessagingApiClient({
+            channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN
+          });
+
+          const welcomeMessage = {
+            type: 'text',
+            text: `🎉 恭喜！註冊完成\n\n您的會員編號：${member.memberId}\n\n現在您可以：\n✨ 報名課程和活動\n📝 編輯個人資料\n🎫 購買和使用優惠券\n🎁 查看積分和獎勵\n\n請點擊下方選單開始使用！`
+          };
+
+          await client.pushMessage({
+            to: member.line.userId,
+            messages: [welcomeMessage]
+          });
+
+          console.log('[API /register] Welcome message sent to:', member.memberId);
+        } catch (messageError) {
+          console.error('[API /register] Error sending welcome message:', messageError);
+          // Don't fail registration if message sending fails
+        }
+      }
+
       return res.status(200).json({
         message: '註冊成功 / Registration successful',
         member
@@ -350,6 +374,24 @@ module.exports = async (req, res) => {
           await member.save();
 
           console.log(`[Registration] Rich menu created successfully: ${richMenuId}`);
+
+          // Send welcome message
+          try {
+            const welcomeMessage = {
+              type: 'text',
+              text: `🎉 恭喜！註冊完成\n\n您的會員編號：${member.memberId}\n\n現在您可以：\n✨ 報名課程和活動\n📝 編輯個人資料\n🎫 購買和使用優惠券\n🎁 查看積分和獎勵\n\n請點擊下方選單開始使用！`
+            };
+
+            await client.pushMessage({
+              to: member.line.userId,
+              messages: [welcomeMessage]
+            });
+
+            console.log('[Registration] Welcome message sent to:', member.memberId);
+          } catch (messageError) {
+            console.error('[Registration] Error sending welcome message:', messageError);
+            // Don't fail registration if message sending fails
+          }
         } catch (richMenuError) {
           console.error(`[Registration] Error creating rich menu:`, richMenuError);
           // Don't fail registration if rich menu creation fails
