@@ -67,6 +67,7 @@ function Profile() {
   const [lineProfile, setLineProfile] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [needsRegistration, setNeedsRegistration] = useState(false);
+  const [needsToFollowBot, setNeedsToFollowBot] = useState(false);
 
   // Registration form state
   const [registrationData, setRegistrationData] = useState({
@@ -309,12 +310,23 @@ function Profile() {
       setLoading(false);
     } catch (error) {
       console.error('[Profile] Error fetching/creating member:', error);
-      setMessage({
-        type: 'error',
-        text: error.response?.data?.message || (t('language') === 'zh'
-          ? '載入失敗，請稍後再試'
-          : 'Failed to load, please try again')
-      });
+
+      // Check if user needs to follow the official account first
+      if (error.response?.data?.needsToFollowBot) {
+        setNeedsToFollowBot(true);
+        setMessage({
+          type: 'error',
+          text: error.response.data.message
+        });
+      } else {
+        setMessage({
+          type: 'error',
+          text: error.response?.data?.message || (t('language') === 'zh'
+            ? '載入失敗，請稍後再試'
+            : 'Failed to load, please try again')
+        });
+      }
+
       setLoading(false);
     }
   };
@@ -684,6 +696,45 @@ function Profile() {
               ? '正在透過 LINE 登入...'
               : 'Logging in via LINE...'}
           </p>
+        </div>
+      ) : needsToFollowBot ? (
+        /* Show message if user needs to follow official account first */
+        <div className="card" style={{ textAlign: 'center', padding: '60px 20px' }}>
+          <div style={{ fontSize: '64px', marginBottom: '20px' }}>👋</div>
+          <h3 style={{ color: '#667eea', marginBottom: '15px' }}>
+            {t('language') === 'zh' ? '請先加入官方帳號' : 'Please Add Official Account First'}
+          </h3>
+          <p style={{ color: '#666', fontSize: '16px', marginBottom: '30px', lineHeight: '1.6' }}>
+            {t('language') === 'zh'
+              ? '請先加入晨光國際少年團的 LINE 官方帳號，然後點擊訊息中的連結開始註冊。'
+              : 'Please add Sunrise Youth International LINE Official Account first, then click the link in the message to start registration.'}
+          </p>
+          {message.text && (
+            <div className={`message ${message.type}`} style={{ marginBottom: '20px' }}>
+              {message.text}
+            </div>
+          )}
+          <div style={{
+            background: '#f5f5f5',
+            padding: '20px',
+            borderRadius: '12px',
+            marginBottom: '20px'
+          }}>
+            <p style={{ fontSize: '14px', color: '#666', marginBottom: '10px' }}>
+              {t('language') === 'zh' ? '加入步驟：' : 'Steps to join:'}
+            </p>
+            <ol style={{
+              textAlign: 'left',
+              fontSize: '14px',
+              color: '#666',
+              paddingLeft: '20px',
+              lineHeight: '1.8'
+            }}>
+              <li>{t('language') === 'zh' ? '在 LINE 中搜尋「晨光國際少年團」' : 'Search for "Sunrise Youth International" in LINE'}</li>
+              <li>{t('language') === 'zh' ? '點擊「加入好友」' : 'Click "Add Friend"'}</li>
+              <li>{t('language') === 'zh' ? '點擊收到的訊息中的連結' : 'Click the link in the message you receive'}</li>
+            </ol>
+          </div>
         </div>
       ) : needsRegistration ? (
         /* Show registration form if member needs to complete registration */

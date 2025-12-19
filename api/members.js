@@ -22,50 +22,23 @@ module.exports = async (req, res) => {
 
       console.log('[API /auth] Looking up member with LINE userId:', userId);
 
-      // Try to find existing member
-      let member = await Member.findOne({ 'line.userId': userId });
+      // Find existing member (member must be created by following the official account first)
+      const member = await Member.findOne({ 'line.userId': userId });
 
-      if (member) {
-        console.log('[API /auth] Found existing member:', member.memberId);
-        // Update LINE profile info in case it changed
-        member.line.displayName = displayName;
-        member.line.pictureUrl = pictureUrl;
-        await member.save();
-      } else {
-        // Create new incomplete member
-        console.log('[API /auth] Creating new member for userId:', userId);
-
-        // Generate unique member ID
-        let uniqueMemberId = false;
-        let newMemberId = '';
-        while (!uniqueMemberId) {
-          newMemberId = 'M' + Date.now().toString().slice(-8) + Math.floor(Math.random() * 100);
-          const existing = await Member.findOne({ memberId: newMemberId });
-          if (!existing) uniqueMemberId = true;
-        }
-
-        member = new Member({
-          memberId: newMemberId,
-          name: displayName || 'New Member',
-          gender: '男',
-          birthDate: new Date('2000-01-01'),
-          contact: {
-            phone: '',
-            mobile: '',
-            lineId: ''
-          },
-          line: {
-            userId,
-            displayName,
-            pictureUrl,
-            linkedAt: new Date()
-          },
-          registrationCompleted: false
+      if (!member) {
+        console.log('[API /auth] Member not found - user must follow official account first');
+        return res.status(404).json({
+          message: '請先加入官方帳號 / Please add the official account first',
+          needsToFollowBot: true
         });
-
-        await member.save();
-        console.log('[API /auth] Created new member:', newMemberId);
       }
+
+      console.log('[API /auth] Found existing member:', member.memberId);
+
+      // Update LINE profile info in case it changed
+      member.line.displayName = displayName;
+      member.line.pictureUrl = pictureUrl;
+      await member.save();
 
       return res.status(200).json({ member });
     }

@@ -129,20 +129,42 @@ async function handleFollowEvent(event) {
       return;
     }
 
-    // New user - send welcome message telling them to visit website
-    console.log('[handleFollowEvent] New user, sending welcome message');
+    // New user - create member and send welcome message
+    console.log('[handleFollowEvent] New user, creating member...');
     const profile = await client.getProfile(lineUserId);
 
+    // Generate unique member ID
+    let newMemberId = 'M' + Date.now().toString().slice(-8) + Math.floor(Math.random() * 100);
+    console.log('[handleFollowEvent] Generated member ID:', newMemberId);
+
+    // Create incomplete member
+    const newMember = new Member({
+      memberId: newMemberId,
+      name: profile.displayName || 'New Member',
+      gender: '男',
+      birthDate: new Date('2000-01-01'),
+      contact: { phone: '', mobile: '', lineId: '' },
+      line: {
+        userId: lineUserId,
+        displayName: profile.displayName,
+        pictureUrl: profile.pictureUrl,
+        linkedAt: new Date()
+      },
+      registrationCompleted: false
+    });
+
+    await newMember.save();
+    console.log('[handleFollowEvent] Member created:', newMemberId);
+
+    // Send welcome message with registration link
     await client.pushMessage({
       to: lineUserId,
       messages: [{
         type: 'text',
-        text: `🎉 歡迎加入晨光國際少年團！\nWelcome to Sunrise Youth International!\n\n${profile.displayName} 您好！\nHello ${profile.displayName}!\n\n請點擊以下連結開始註冊：\nPlease click the link below to register:\n\n${baseUrl}/profile\n\n完成註冊後即可使用所有功能！\nComplete registration to access all features!`
+        text: `🎉 歡迎加入晨光國際少年團！\nWelcome to Sunrise Youth International!\n\n${profile.displayName} 您好！\nHello ${profile.displayName}!\n\n您的團員編號 Your Member ID:\n${newMemberId}\n\n請點擊以下連結完成註冊：\nPlease click the link below to complete registration:\n\n${baseUrl}/profile\n\n完成註冊後即可使用所有功能！\nComplete registration to access all features!`
       }]
     });
-    console.log('[handleFollowEvent] Welcome message sent');
-
-    // Note: Member will be created automatically when they visit the website via LIFF
+    console.log('[handleFollowEvent] Welcome message sent')
   } catch (error) {
     console.error('[handleFollowEvent] Error:', error);
 
