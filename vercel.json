@@ -8,6 +8,25 @@
       "maxDuration": 30
     }
   },
+  "rewrites": [
+    {
+      "source": "/api/members/:path*",
+      "destination": "/api/members"
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "sunriseyouth.org"
+        }
+      ],
+      "destination": "https://www.sunriseyouth.org/:path*",
+      "permanent": true
+    }
+  ],
   "env": {
     "NODE_ENV": "production"
   }
