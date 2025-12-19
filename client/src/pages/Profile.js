@@ -310,15 +310,20 @@ function Profile() {
       setLoading(false);
     } catch (error) {
       console.error('[Profile] Error fetching/creating member:', error);
+      console.log('[Profile] Error response:', error.response);
+      console.log('[Profile] Error response data:', error.response?.data);
+      console.log('[Profile] needsToFollowBot flag:', error.response?.data?.needsToFollowBot);
 
       // Check if user needs to follow the official account first
       if (error.response?.data?.needsToFollowBot) {
+        console.log('[Profile] Setting needsToFollowBot to true');
         setNeedsToFollowBot(true);
         setMessage({
           type: 'error',
           text: error.response.data.message
         });
       } else {
+        console.log('[Profile] Not a follow bot error, showing generic error');
         setMessage({
           type: 'error',
           text: error.response?.data?.message || (t('language') === 'zh'
