@@ -1,5 +1,5 @@
 const connectDB = require('../lib/mongodb');
-const { Member, CouponShareToken } = require('../db/models');
+const { Member, CouponShareToken, CouponForSale } = require('../db/models');
 const { createPersonalizedRichMenu } = require('../lib/lineRichMenu');
 const line = require('@line/bot-sdk');
 const crypto = require('crypto');
@@ -699,6 +699,76 @@ module.exports = async (req, res) => {
         claimUrl,
         lineAddFriendUrl,
         expiresAt
+      });
+    }
+
+    // Purchase coupon from marketplace
+    if (req.method === 'POST' && action === 'purchase-coupon') {
+      const { memberId, couponForSaleId } = req.body;
+
+      if (!memberId || !couponForSaleId) {
+        return res.status(400).json({
+          message: '缺少必要欄位 / Missing required fields'
+        });
+      }
+
+      const member = await Member.findOne({ memberId });
+
+      if (!member) {
+        return res.status(404).json({
+          message: '找不到團員 / Member not found'
+        });
+      }
+
+      // Fetch the coupon for sale
+      const couponForSale = await CouponForSale.findById(couponForSaleId).populate('couponProfileId');
+
+      if (!couponForSale) {
+        return res.status(404).json({
+          message: '找不到販售優惠券 / Coupon for sale not found'
+        });
+      }
+
+      if (!couponForSale.active) {
+        return res.status(400).json({
+          message: '此優惠券已下架 / This coupon is no longer available'
+        });
+      }
+
+      // Check stock availability
+      if (couponForSale.stock !== -1 && couponForSale.stock <= 0) {
+        return res.status(400).json({
+          message: '此優惠券已售完 / This coupon is sold out'
+        });
+      }
+
+      const profile = couponForSale.couponProfileId;
+
+      // Create new coupon based on profile
+      const newCoupon = {
+        type: profile.type,
+        classInfoId: profile.classInfoId,
+        discountPercent: profile.discountPercent,
+        name: profile.name,
+        description: profile.description,
+        image: profile.image,
+        quantity: 1,
+        usedCount: 0
+      };
+
+      // Add coupon to member's coupons
+      member.coupons.push(newCoupon);
+      await member.save();
+
+      // Decrement stock if not unlimited
+      if (couponForSale.stock !== -1) {
+        couponForSale.stock -= 1;
+        await couponForSale.save();
+      }
+
+      return res.status(200).json({
+        message: '購買成功 / Purchase successful',
+        member
       });
     }
 

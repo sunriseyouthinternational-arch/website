@@ -77,11 +77,7 @@ function AdminDashboard() {
   const [deletingCouponId, setDeletingCouponId] = useState(null);
   const [newCoupon, setNewCoupon] = useState({
     type: 'trial',
-    classInfoId: '',
-    discountPercent: '',
-    name: '',
-    description: '',
-    image: '',
+    profileId: '',
     quantity: 1,
     expiryDate: ''
   });
@@ -678,57 +674,18 @@ function AdminDashboard() {
   };
 
   const handleCouponTypeChange = (type) => {
-    setNewCoupon(prev => {
-      const updated = { ...prev, type };
-
-      // Auto-fill name and description when type changes
-      if (type === 'trial' && prev.classInfoId) {
-        const classInfo = classInfos.find(c => c._id === prev.classInfoId);
-        if (classInfo) {
-          updated.name = t('language') === 'zh'
-            ? `${classInfo.name} 體驗券`
-            : `${classInfo.name} Trial Coupon`;
-          updated.description = t('language') === 'zh'
-            ? `此券可用於體驗 ${classInfo.name} 課程`
-            : `This coupon can be used for a trial ${classInfo.name} class`;
-        }
-      } else if (type === 'discount') {
-        updated.name = t('language') === 'zh'
-          ? `折扣券 ${prev.discountPercent || ''}%`
-          : `Discount Coupon ${prev.discountPercent || ''}%`;
-        updated.description = t('language') === 'zh'
-          ? `此券可用於所有課程，享 ${prev.discountPercent || ''} % 折扣`
-          : `This coupon can be used for all classes with ${prev.discountPercent || ''}% discount`;
-      }
-
-      return updated;
+    setNewCoupon({
+      type,
+      profileId: '',
+      quantity: 1,
+      expiryDate: ''
     });
   };
 
-  const handleCouponClassChange = (classInfoId) => {
-    const classInfo = classInfos.find(c => c._id === classInfoId);
+  const handleCouponProfileChange = (profileId) => {
     setNewCoupon(prev => ({
       ...prev,
-      classInfoId,
-      name: classInfo ? (t('language') === 'zh'
-        ? `${classInfo.name} 體驗券`
-        : `${classInfo.name} Trial Coupon`) : '',
-      description: classInfo ? (t('language') === 'zh'
-        ? `此券可用於體驗 ${classInfo.name} 課程`
-        : `This coupon can be used for a trial ${classInfo.name} class`) : ''
-    }));
-  };
-
-  const handleCouponDiscountChange = (discountPercent) => {
-    setNewCoupon(prev => ({
-      ...prev,
-      discountPercent,
-      name: t('language') === 'zh'
-        ? `折扣券 ${discountPercent}%`
-        : `Discount Coupon ${discountPercent}%`,
-      description: t('language') === 'zh'
-        ? `此券可用於所有課程，享 ${discountPercent}% 折扣`
-        : `This coupon can be used for all classes with ${discountPercent}% discount`
+      profileId
     }));
   };
 
@@ -736,18 +693,10 @@ function AdminDashboard() {
     e.preventDefault();
 
     // Validation
-    if (newCoupon.type === 'trial' && !newCoupon.classInfoId) {
+    if (!newCoupon.profileId) {
       setMessage({
         type: 'error',
-        text: t('language') === 'zh' ? '請選擇課程' : 'Please select a class'
-      });
-      return;
-    }
-
-    if (newCoupon.type === 'discount' && (!newCoupon.discountPercent || newCoupon.discountPercent <= 0 || newCoupon.discountPercent > 100)) {
-      setMessage({
-        type: 'error',
-        text: t('language') === 'zh' ? '請輸入有效的折扣百分比 (1-100)' : 'Please enter a valid discount percentage (1-100)'
+        text: t('language') === 'zh' ? '請選擇優惠券模板' : 'Please select a coupon profile'
       });
       return;
     }
@@ -762,23 +711,25 @@ function AdminDashboard() {
 
     setAddingCoupon(true);
     try {
+      // Get the selected profile
+      const selectedProfile = couponProfiles.find(p => p._id === newCoupon.profileId);
+
+      if (!selectedProfile) {
+        throw new Error('Profile not found');
+      }
+
       const couponData = {
-        type: newCoupon.type,
-        name: newCoupon.name,
-        description: newCoupon.description,
-        image: newCoupon.image,
+        type: selectedProfile.type,
+        name: selectedProfile.name,
+        description: selectedProfile.description,
+        image: selectedProfile.image,
         quantity: parseInt(newCoupon.quantity)
       };
 
-      if (newCoupon.type === 'trial') {
-        couponData.classInfoId = newCoupon.classInfoId;
-        // For trial coupons, use the class banner image
-        const selectedClassInfo = classInfos.find(c => c._id === newCoupon.classInfoId);
-        if (selectedClassInfo && selectedClassInfo.banner) {
-          couponData.image = selectedClassInfo.banner;
-        }
+      if (selectedProfile.type === 'trial') {
+        couponData.classInfoId = selectedProfile.classInfoId;
       } else {
-        couponData.discountPercent = parseInt(newCoupon.discountPercent);
+        couponData.discountPercent = selectedProfile.discountPercent;
       }
 
       // Add expiry date if provided
@@ -796,11 +747,7 @@ function AdminDashboard() {
       // Reset form
       setNewCoupon({
         type: 'trial',
-        classInfoId: '',
-        discountPercent: '',
-        name: '',
-        description: '',
-        image: '',
+        profileId: '',
         quantity: 1,
         expiryDate: ''
       });
@@ -1201,71 +1148,76 @@ function AdminDashboard() {
                     className="form-control"
                     required
                   >
-                    <option value="trial">{t('language') === 'zh' ? '體驗券（特定課程）' : 'Trial Coupon (Specific Class)'}</option>
-                    <option value="discount">{t('language') === 'zh' ? '折扣券（所有課程）' : 'Discount Coupon (All Classes)'}</option>
+                    <option value="trial">{t('language') === 'zh' ? '體驗券' : 'Trial Coupon'}</option>
+                    <option value="discount">{t('language') === 'zh' ? '折扣券' : 'Discount Coupon'}</option>
                   </select>
                 </div>
 
-                {newCoupon.type === 'trial' && (
-                  <div className="form-group">
-                    <label>{t('language') === 'zh' ? '選擇課程' : 'Select Class'}</label>
-                    <select
-                      value={newCoupon.classInfoId}
-                      onChange={(e) => handleCouponClassChange(e.target.value)}
-                      className="form-control"
-                      required
-                    >
-                      <option value="">{t('language') === 'zh' ? '-- 選擇課程 --' : '-- Select Class --'}</option>
-                      {classInfos.map(classInfo => (
-                        <option key={classInfo._id} value={classInfo._id}>
-                          {classInfo.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-
-                {newCoupon.type === 'discount' && (
-                  <div className="form-group">
-                    <label>{t('language') === 'zh' ? '折扣百分比 (1-100)' : 'Discount Percentage (1-100)'}</label>
-                    <input
-                      type="number"
-                      value={newCoupon.discountPercent}
-                      onChange={(e) => handleCouponDiscountChange(e.target.value)}
-                      className="form-control"
-                      min="1"
-                      max="100"
-                      required
-                    />
-                  </div>
-                )}
-
                 <div className="form-group">
-                  <label>{t('language') === 'zh' ? '優惠券名稱' : 'Coupon Name'}</label>
-                  <input
-                    type="text"
-                    value={newCoupon.name}
-                    onChange={(e) => setNewCoupon(prev => ({ ...prev, name: e.target.value }))}
+                  <label>{t('language') === 'zh' ? '選擇優惠券模板' : 'Select Coupon Profile'}</label>
+                  <select
+                    value={newCoupon.profileId}
+                    onChange={(e) => handleCouponProfileChange(e.target.value)}
                     className="form-control"
                     required
-                  />
+                  >
+                    <option value="">{t('language') === 'zh' ? '-- 選擇模板 --' : '-- Select Profile --'}</option>
+                    {couponProfiles
+                      .filter(profile => profile.type === newCoupon.type)
+                      .map(profile => (
+                        <option key={profile._id} value={profile._id}>
+                          {profile.name}
+                          {profile.type === 'trial' && profile.classInfoId?.name && ` (${profile.classInfoId.name})`}
+                          {profile.type === 'discount' && ` (${profile.discountPercent}%)`}
+                        </option>
+                      ))}
+                  </select>
                   <small style={{ color: '#666' }}>
-                    {t('language') === 'zh' ? '自動填入，可編輯' : 'Auto-filled, editable'}
+                    {t('language') === 'zh'
+                      ? '選擇後將自動填入優惠券資訊'
+                      : 'Coupon information will be auto-filled based on profile'}
                   </small>
                 </div>
 
-                <div className="form-group">
-                  <label>{t('language') === 'zh' ? '優惠券描述' : 'Coupon Description'}</label>
-                  <textarea
-                    value={newCoupon.description}
-                    onChange={(e) => setNewCoupon(prev => ({ ...prev, description: e.target.value }))}
-                    className="form-control"
-                    rows="3"
-                  />
-                  <small style={{ color: '#666' }}>
-                    {t('language') === 'zh' ? '自動填入，可編輯' : 'Auto-filled, editable'}
-                  </small>
-                </div>
+                {newCoupon.profileId && (() => {
+                  const selectedProfile = couponProfiles.find(p => p._id === newCoupon.profileId);
+                  if (!selectedProfile) return null;
+
+                  return (
+                    <div style={{ padding: '15px', background: '#e7f3ff', borderRadius: '8px', marginBottom: '15px' }}>
+                      <h5 style={{ marginTop: 0, marginBottom: '10px', color: '#004085' }}>
+                        {t('language') === 'zh' ? '📋 模板預覽' : '📋 Profile Preview'}
+                      </h5>
+                      {selectedProfile.image && (
+                        <img
+                          src={selectedProfile.image}
+                          alt={selectedProfile.name}
+                          style={{ width: '100%', maxWidth: '200px', borderRadius: '8px', marginBottom: '10px' }}
+                        />
+                      )}
+                      <p style={{ margin: '5px 0', color: '#004085' }}>
+                        <strong>{t('language') === 'zh' ? '名稱：' : 'Name: '}</strong>
+                        {selectedProfile.name}
+                      </p>
+                      <p style={{ margin: '5px 0', color: '#004085' }}>
+                        <strong>{t('language') === 'zh' ? '描述：' : 'Description: '}</strong>
+                        {selectedProfile.description}
+                      </p>
+                      {selectedProfile.type === 'trial' && selectedProfile.classInfoId && (
+                        <p style={{ margin: '5px 0', color: '#004085' }}>
+                          <strong>{t('language') === 'zh' ? '課程：' : 'Class: '}</strong>
+                          {selectedProfile.classInfoId.name}
+                        </p>
+                      )}
+                      {selectedProfile.type === 'discount' && (
+                        <p style={{ margin: '5px 0', color: '#004085' }}>
+                          <strong>{t('language') === 'zh' ? '折扣：' : 'Discount: '}</strong>
+                          {selectedProfile.discountPercent}%
+                        </p>
+                      )}
+                    </div>
+                  );
+                })()}
 
                 <div className="form-group">
                   <label>{t('language') === 'zh' ? '數量' : 'Quantity'}</label>
@@ -1292,38 +1244,6 @@ function AdminDashboard() {
                     {t('language') === 'zh' ? '留空表示永久有效' : 'Leave empty for no expiration'}
                   </small>
                 </div>
-
-                {newCoupon.type === 'discount' && (
-                  <div className="form-group">
-                    <label>{t('language') === 'zh' ? '優惠券圖片（可選）' : 'Coupon Image (Optional)'}</label>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleCouponImageUpload}
-                      className="form-control"
-                    />
-                    {newCoupon.image && (
-                      <img
-                        src={newCoupon.image}
-                        alt="Coupon preview"
-                        style={{ marginTop: '10px', maxWidth: '200px', borderRadius: '8px' }}
-                      />
-                    )}
-                    <small style={{ color: '#666' }}>
-                      {t('language') === 'zh' ? '折扣券可以上傳自定義圖片' : 'Discount coupons can have custom images'}
-                    </small>
-                  </div>
-                )}
-
-                {newCoupon.type === 'trial' && (
-                  <div style={{ padding: '10px', background: '#e7f3ff', borderRadius: '8px', marginBottom: '15px' }}>
-                    <small style={{ color: '#004085' }}>
-                      ℹ️ {t('language') === 'zh'
-                        ? '體驗券將自動使用所選課程的橫幅圖片'
-                        : 'Trial coupons will automatically use the selected class banner image'}
-                    </small>
-                  </div>
-                )}
 
                 <button type="submit" className="btn btn-primary" disabled={addingCoupon}>
                   {addingCoupon

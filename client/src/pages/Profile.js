@@ -56,6 +56,10 @@ function Profile() {
   const [shareLoading, setShareLoading] = useState(false);
   const [sharingCouponId, setSharingCouponId] = useState(null);
 
+  // Coupon purchase state
+  const [couponsForSale, setCouponsForSale] = useState([]);
+  const [purchasingCoupon, setPurchasingCoupon] = useState(null);
+
   // Loading states for buttons
   const [enrollingClass, setEnrollingClass] = useState(null);
   const [enrollingActivity, setEnrollingActivity] = useState(null);
@@ -158,6 +162,16 @@ function Profile() {
       setActivities(activeActivities);
     } catch (error) {
       console.error('Error fetching classes/activities:', error);
+    }
+  };
+
+  const fetchCouponsForSale = async () => {
+    try {
+      const response = await axios.get('/api/coupons-for-sale');
+      const activeCoupons = response.data.coupons.filter(c => c.active && (c.stock === -1 || c.stock > 0));
+      setCouponsForSale(activeCoupons);
+    } catch (error) {
+      console.error('Error fetching coupons for sale:', error);
     }
   };
 
@@ -266,6 +280,13 @@ function Profile() {
       }
     }
   }, [classIdFromUrl, classes]);
+
+  // Fetch coupons for sale when coupons tab is active
+  useEffect(() => {
+    if (activeTab === 'coupons') {
+      fetchCouponsForSale();
+    }
+  }, [activeTab]);
 
   // Fetch member by LINE user ID
   const fetchOrCreateMember = async (userId, profile) => {
@@ -698,6 +719,44 @@ function Profile() {
       type: 'success',
       text: t('language') === 'zh' ? '已複製到剪貼簿' : 'Copied to clipboard'
     });
+  };
+
+  const handlePurchaseCoupon = async (couponForSale) => {
+    if (!member) {
+      setMessage({
+        type: 'error',
+        text: t('language') === 'zh' ? '請先登入' : 'Please login first'
+      });
+      return;
+    }
+
+    setPurchasingCoupon(couponForSale._id);
+
+    try {
+      // Purchase the coupon - this will add it to member's coupons and decrement stock
+      const response = await axios.post('/api/members?action=purchase-coupon', {
+        memberId: member.memberId,
+        couponForSaleId: couponForSale._id
+      });
+
+      // Update member data with new coupon
+      setMember(response.data.member);
+
+      setMessage({
+        type: 'success',
+        text: t('language') === 'zh' ? '購買成功！' : 'Purchase successful!'
+      });
+
+      // Refresh coupons for sale to update stock
+      await fetchCouponsForSale();
+    } catch (error) {
+      setMessage({
+        type: 'error',
+        text: error.response?.data?.message || (t('language') === 'zh' ? '購買失敗' : 'Purchase failed')
+      });
+    } finally {
+      setPurchasingCoupon(null);
+    }
   };
 
   const isEnrolled = (type, id) => {
@@ -1746,6 +1805,139 @@ function Profile() {
               <h3 style={{ color: '#667eea', marginBottom: '30px', textAlign: 'center' }}>
                 {t('language') === 'zh' ? '我的優惠券' : 'My Coupons'}
               </h3>
+
+              {/* Disclaimer Banner */}
+              <div style={{
+                background: '#fff3cd',
+                border: '1px solid #ffc107',
+                borderRadius: '8px',
+                padding: '15px 20px',
+                marginBottom: '30px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px'
+              }}>
+                <span style={{ fontSize: '24px' }}>ℹ️</span>
+                <p style={{ margin: 0, color: '#856404', fontSize: '14px' }}>
+                  {t('language') === 'zh'
+                    ? '提醒：優惠券只能分享給非會員。已註冊的會員無法領取分享的優惠券。'
+                    : 'Reminder: Coupons can only be shared to non-members. Registered members cannot claim shared coupons.'}
+                </p>
+              </div>
+
+              {/* Purchase Coupons Section */}
+              {couponsForSale.length > 0 && (
+                <div style={{ marginBottom: '40px' }}>
+                  <h4 style={{ color: '#667eea', marginBottom: '20px', fontSize: '20px', textAlign: 'center' }}>
+                    {t('language') === 'zh' ? '🛒 購買優惠券' : '🛒 Purchase Coupons'}
+                  </h4>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px', marginBottom: '30px' }}>
+                    {couponsForSale.map((couponForSale) => {
+                      const profile = couponForSale.couponProfileId;
+                      return (
+                        <div
+                          key={couponForSale._id}
+                          style={{
+                            background: 'white',
+                            border: '2px solid #28a745',
+                            borderRadius: '12px',
+                            padding: '20px',
+                            position: 'relative'
+                          }}
+                        >
+                          {profile.image && (
+                            <img
+                              src={profile.image}
+                              alt={profile.name}
+                              loading="lazy"
+                              decoding="async"
+                              style={{
+                                width: '100%',
+                                height: '150px',
+                                objectFit: 'cover',
+                                borderRadius: '8px',
+                                marginBottom: '15px'
+                              }}
+                            />
+                          )}
+                          <div style={{ marginBottom: '10px' }}>
+                            <span
+                              style={{
+                                display: 'inline-block',
+                                padding: '4px 12px',
+                                background: profile.type === 'trial' ? '#d3f9d8' : '#ffe3e3',
+                                color: profile.type === 'trial' ? '#2b8a3e' : '#c92a2a',
+                                borderRadius: '6px',
+                                fontSize: '12px',
+                                fontWeight: 'bold',
+                                textTransform: 'uppercase'
+                              }}
+                            >
+                              {profile.type === 'trial'
+                                ? (t('language') === 'zh' ? '體驗券' : 'Trial')
+                                : (t('language') === 'zh' ? '折扣券' : 'Discount')}
+                            </span>
+                            {couponForSale.stock !== -1 && (
+                              <span
+                                style={{
+                                  marginLeft: '10px',
+                                  padding: '4px 12px',
+                                  background: couponForSale.stock > 0 ? '#e3f2fd' : '#ffebee',
+                                  color: couponForSale.stock > 0 ? '#1976d2' : '#c62828',
+                                  borderRadius: '6px',
+                                  fontSize: '12px',
+                                  fontWeight: 'bold'
+                                }}
+                              >
+                                {t('language') === 'zh' ? '庫存：' : 'Stock: '}{couponForSale.stock}
+                              </span>
+                            )}
+                          </div>
+                          <h4 style={{ color: '#667eea', marginBottom: '10px', fontSize: '18px' }}>
+                            {profile.name}
+                          </h4>
+                          <p style={{ color: '#666', fontSize: '14px', marginBottom: '15px', lineHeight: '1.5' }}>
+                            {profile.description}
+                          </p>
+                          {profile.type === 'discount' && (
+                            <p style={{ fontSize: '16px', color: '#c92a2a', fontWeight: 'bold', marginBottom: '10px' }}>
+                              {t('language') === 'zh' ? '折扣：' : 'Discount: '}{profile.discountPercent}%
+                            </p>
+                          )}
+                          <p style={{ fontSize: '20px', marginBottom: '15px', fontWeight: 'bold', color: '#28a745' }}>
+                            {t('language') === 'zh' ? '價格：$' : 'Price: $'}{couponForSale.price}
+                          </p>
+                          <button
+                            onClick={() => handlePurchaseCoupon(couponForSale)}
+                            className="btn btn-primary"
+                            disabled={purchasingCoupon === couponForSale._id || (couponForSale.stock !== -1 && couponForSale.stock <= 0)}
+                            style={{
+                              width: '100%',
+                              fontSize: '14px',
+                              padding: '10px',
+                              background: couponForSale.stock !== -1 && couponForSale.stock <= 0 ? '#ccc' : undefined
+                            }}
+                          >
+                            {purchasingCoupon === couponForSale._id ? (
+                              t('language') === 'zh' ? '⏳ 購買中...' : '⏳ Purchasing...'
+                            ) : couponForSale.stock !== -1 && couponForSale.stock <= 0 ? (
+                              t('language') === 'zh' ? '已售完' : 'Sold Out'
+                            ) : (
+                              <>💰 {t('language') === 'zh' ? '購買' : 'Purchase'}</>
+                            )}
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <hr style={{ border: 'none', borderTop: '2px solid #e9ecef', margin: '30px 0' }} />
+                </div>
+              )}
+
+              {/* My Coupons Section */}
+              <h4 style={{ color: '#667eea', marginBottom: '20px', fontSize: '20px', textAlign: 'center' }}>
+                {t('language') === 'zh' ? '📋 我擁有的優惠券' : '📋 My Owned Coupons'}
+              </h4>
 
               {member.coupons && member.coupons.length > 0 ? (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
