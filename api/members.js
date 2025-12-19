@@ -263,7 +263,26 @@ module.exports = async (req, res) => {
 
       // If LINE user ID provided, search by that first (for LIFF login)
       if (lineUserId) {
+        console.log('[API] Looking up member by LINE user ID:', lineUserId);
         member = await Member.findOne({ 'line.userId': lineUserId });
+
+        if (!member) {
+          console.log('[API] No member found with line.userId:', lineUserId);
+          // Check if there's a member with this userId but not yet linked
+          const allMembers = await Member.find({ 'line.userId': { $exists: true } }).limit(5);
+          console.log('[API] Sample of existing members with line.userId:', allMembers.map(m => ({
+            memberId: m.memberId,
+            lineUserId: m.line?.userId,
+            registrationCompleted: m.registrationCompleted
+          })));
+        } else {
+          console.log('[API] Member found:', {
+            memberId: member.memberId,
+            name: member.name,
+            registrationCompleted: member.registrationCompleted,
+            hasLineUserId: !!member.line?.userId
+          });
+        }
       } else if (memberId) {
         // Try to find by memberId first, then by LINE ID
         member = await Member.findOne({ memberId });
@@ -276,7 +295,7 @@ module.exports = async (req, res) => {
 
       if (!member) {
         return res.status(404).json({
-          message: '找不到團員 / Member not found'
+          message: '找不到會員 / Member not found'
         });
       }
 

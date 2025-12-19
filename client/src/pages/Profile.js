@@ -268,9 +268,12 @@ function Profile() {
     setLoading(true);
     setMessage({ type: '', text: '' });
 
+    console.log('[Profile] Fetching member by LINE user ID:', userId);
+
     try {
       const response = await axios.get(`/api/members?lineUserId=${userId}`);
       if (response.data.member) {
+        console.log('[Profile] Member found:', response.data.member.memberId, 'Registration completed:', response.data.member.registrationCompleted);
         setMember(response.data.member);
         setMemberId(response.data.member.memberId);
         // Update URL to member's ID
@@ -279,12 +282,17 @@ function Profile() {
         throw new Error('Member not found');
       }
     } catch (error) {
-      console.error('Failed to fetch member by LINE ID:', error);
+      console.error('[Profile] Failed to fetch member by LINE ID:', error);
+      console.error('[Profile] Error response:', error.response?.data);
+
+      // Show detailed error message
+      const errorMessage = error.response?.data?.message || (t('language') === 'zh'
+        ? '找不到會員資料。您的 LINE 帳戶可能尚未與團員資料連結。'
+        : 'Member not found. Your LINE account may not be linked to a member profile yet.');
+
       setMessage({
         type: 'error',
-        text: t('language') === 'zh'
-          ? '找不到會員資料，請先完成註冊'
-          : 'Member not found, please complete registration first'
+        text: errorMessage
       });
       setMember(null);
     } finally {
