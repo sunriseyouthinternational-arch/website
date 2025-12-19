@@ -387,8 +387,8 @@ function Profile() {
         // Fetch or create member
         await fetchOrCreateMember(profile.userId, profile);
       } else {
-        console.log('[Profile] User not logged in, redirecting to LINE login');
-        window.liff.login();
+        console.log('[Profile] User not logged in, showing login button');
+        setLoading(false);
       }
     } catch (error) {
       console.error('[Profile] LIFF initialization failed:', error);
@@ -732,9 +732,40 @@ function Profile() {
           </h3>
           <p style={{ color: '#666', fontSize: '14px' }}>
             {t('language') === 'zh'
-              ? '正在透過 LINE 登入...'
-              : 'Logging in via LINE...'}
+              ? '正在初始化...'
+              : 'Initializing...'}
           </p>
+        </div>
+      ) : !isLoggedIn ? (
+        /* Show LINE login button if user is not logged in */
+        <div className="card" style={{ textAlign: 'center', padding: '60px 20px' }}>
+          <div style={{ fontSize: '64px', marginBottom: '20px' }}>🔐</div>
+          <h2 style={{ color: '#667eea', marginBottom: '20px' }}>
+            {t('language') === 'zh' ? '會員登入' : 'Member Login'}
+          </h2>
+          <p style={{ textAlign: 'center', marginBottom: '30px', color: '#666' }}>
+            {t('language') === 'zh'
+              ? '請使用 LINE 帳號登入以查看或註冊您的會員資料'
+              : 'Please login with LINE to view or register your member profile'}
+          </p>
+          <button
+            onClick={() => window.liff.login()}
+            className="btn btn-primary"
+            style={{
+              width: '100%',
+              maxWidth: '300px',
+              padding: '15px',
+              fontSize: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '10px',
+              margin: '0 auto'
+            }}
+          >
+            <span style={{ fontSize: '20px' }}>📱</span>
+            {t('language') === 'zh' ? '使用 LINE 登入' : 'Login with LINE'}
+          </button>
         </div>
       ) : needsRegistration ? (
         /* Show registration form if member needs to complete registration */
