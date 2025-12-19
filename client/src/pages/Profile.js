@@ -556,31 +556,6 @@ function Profile() {
     }
   };
 
-  const handleProfilePictureUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const formData = new FormData();
-    formData.append('profilePicture', file);
-
-    try {
-      const response = await axios.post(`/api/members/${member.memberId}/profile-picture`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
-
-      setMember(prev => ({
-        ...prev,
-        profilePicture: response.data.profilePicture
-      }));
-
-      setMessage({ type: 'success', text: response.data.message });
-    } catch (error) {
-      setMessage({
-        type: 'error',
-        text: error.response?.data?.message || t('error')
-      });
-    }
-  };
 
   const handleEnroll = async (type, id, name) => {
     if (!member) {
@@ -938,22 +913,22 @@ function Profile() {
               {t('myProfile')}
             </button>
             <button
-              className={`tab-button ${activeTab === 'courses' ? 'active' : ''}`}
-              onClick={() => setActiveTab('courses')}
+              className={`tab-button ${activeTab === 'classes' ? 'active' : ''}`}
+              onClick={() => setActiveTab('classes')}
             >
-              {t('myCoursesActivities')}
+              {t('language') === 'zh' ? '課程' : 'Classes'}
+            </button>
+            <button
+              className={`tab-button ${activeTab === 'activities' ? 'active' : ''}`}
+              onClick={() => setActiveTab('activities')}
+            >
+              {t('language') === 'zh' ? '活動' : 'Activities'}
             </button>
             <button
               className={`tab-button ${activeTab === 'coupons' ? 'active' : ''}`}
               onClick={() => setActiveTab('coupons')}
             >
-              {t('language') === 'zh' ? '我的優惠券' : 'My Coupons'}
-            </button>
-            <button
-              className={`tab-button ${activeTab === 'points' ? 'active' : ''}`}
-              onClick={() => setActiveTab('points')}
-            >
-              {t('language') === 'zh' ? '點數與禮物' : 'Points & Gifts'}
+              {t('language') === 'zh' ? '優惠券' : 'Coupons'}
             </button>
           </div>
 
@@ -972,15 +947,6 @@ function Profile() {
                           <span>{member.name[0]}</span>
                         </div>
                       )}
-                      <label className="upload-button">
-                        {t('uploadPicture')}
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={handleProfilePictureUpload}
-                          style={{ display: 'none' }}
-                        />
-                      </label>
                     </div>
 
                     <div className="profile-info">
@@ -1223,7 +1189,7 @@ function Profile() {
             </div>
           )}
 
-          {activeTab === 'courses' && selectedClass && (
+          {activeTab === 'classes' && selectedClass && (
             <div className="card">
               <button
                 onClick={() => setSelectedClass(null)}
@@ -1401,10 +1367,9 @@ function Profile() {
             </div>
           )}
 
-          {activeTab === 'courses' && !selectedClass && (
-            <div className="courses-activities-section">
-              <div className="card">
-                <h3>{t('classes')}</h3>
+          {activeTab === 'classes' && !selectedClass && (
+            <div className="card">
+              <h3>{t('classes')}</h3>
 
                 <h4 className="section-subtitle">{t('registeredClasses')}</h4>
                 <div className="enrolled-list">
@@ -1643,10 +1608,12 @@ function Profile() {
                     </div>
                   ))}
                 </div>
-              </div>
+            </div>
+          )}
 
-              <div className="card">
-                <h3>{t('activities')}</h3>
+          {activeTab === 'activities' && (
+            <div className="card">
+              <h3>{t('activities')}</h3>
 
                 <h4 className="section-subtitle">{t('registeredActivities')}</h4>
                 <div className="enrolled-list">
@@ -1723,31 +1690,16 @@ function Profile() {
                     </div>
                   ))}
                 </div>
-              </div>
             </div>
           )}
 
           {activeTab === 'coupons' && (
             <div className="card">
               <h3 style={{ color: '#667eea', marginBottom: '30px', textAlign: 'center' }}>
-                {t('language') === 'zh' ? '我的優惠券' : 'My Coupons'}
-              </h3>              <div style={{
-                background: '#fff3cd',
-                border: '1px solid #ffc107',
-                borderRadius: '8px',
-                padding: '15px 20px',
-                marginBottom: '30px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px'
-              }}>
-                <span style={{ fontSize: '24px' }}>ℹ️</span>
-                <p style={{ margin: 0, color: '#856404', fontSize: '14px' }}>
-                  {t('language') === 'zh'
-                    ? '提醒：優惠券只能分享給非會員。已註冊的會員無法領取分享的優惠券。'
-                    : 'Reminder: Coupons can only be shared to non-members. Registered members cannot claim shared coupons.'}
-                </p>
-              </div>              {couponsForSale.length > 0 && (
+                {t('language') === 'zh' ? '優惠券商店' : 'Coupon Store'}
+              </h3>
+
+              {couponsForSale.length > 0 && (
                 <div style={{ marginBottom: '40px' }}>
                   <h4 style={{ color: '#667eea', marginBottom: '20px', fontSize: '20px', textAlign: 'center' }}>
                     {t('language') === 'zh' ? '🛒 購買優惠券' : '🛒 Purchase Coupons'}
@@ -1853,9 +1805,29 @@ function Profile() {
                   </div>
                   <hr style={{ border: 'none', borderTop: '2px solid #e9ecef', margin: '30px 0' }} />
                 </div>
-              )}              <h4 style={{ color: '#667eea', marginBottom: '20px', fontSize: '20px', textAlign: 'center' }}>
+              )}
+
+              <h4 style={{ color: '#667eea', marginBottom: '20px', fontSize: '20px', textAlign: 'center' }}>
                 {t('language') === 'zh' ? '📋 我擁有的優惠券' : '📋 My Owned Coupons'}
               </h4>
+
+              <div style={{
+                background: '#fff3cd',
+                border: '1px solid #ffc107',
+                borderRadius: '8px',
+                padding: '15px 20px',
+                marginBottom: '20px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px'
+              }}>
+                <span style={{ fontSize: '24px' }}>ℹ️</span>
+                <p style={{ margin: 0, color: '#856404', fontSize: '14px' }}>
+                  {t('language') === 'zh'
+                    ? '提醒：優惠券只能分享給非會員。已註冊的會員無法領取分享的優惠券。'
+                    : 'Reminder: Coupons can only be shared to non-members. Registered members cannot claim shared coupons.'}
+                </p>
+              </div>
 
               {member.coupons && member.coupons.length > 0 ? (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
@@ -2092,32 +2064,6 @@ function Profile() {
             </div>
           )}
 
-          {activeTab === 'points' && (
-            <div className="card">
-              <div className="points-gifts-section">
-                <div className="points-display-large">
-                  <h3>{t('language') === 'zh' ? '您的會員點數' : 'Your Member Points'}</h3>
-                  <div className="points-value-large">
-                    <span className="points-number-large">{member.points || 0}</span>
-                    <span className="points-label-large">{t('language') === 'zh' ? '點' : 'points'}</span>
-                  </div>
-                </div>
-
-                <div className="gifts-under-construction">
-                  <div className="construction-icon">🚧</div>
-                  <h3>{t('language') === 'zh' ? '禮物兌換' : 'Gift Redemption'}</h3>
-                  <p className="construction-message">
-                    {t('language') === 'zh' ? '施工中' : 'Under Construction'}
-                  </p>
-                  <p className="construction-description">
-                    {t('language') === 'zh'
-                      ? '此功能正在開發中，敬請期待！'
-                      : 'This feature is currently under development. Stay tuned!'}
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
         </>
       ) : (
         /* Fallback: Show error message if something went wrong */
