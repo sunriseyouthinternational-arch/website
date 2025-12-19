@@ -107,189 +107,52 @@ async function handleFollowEvent(event) {
   const lineUserId = event.source.userId;
   console.log('[handleFollowEvent] START - User ID:', lineUserId);
 
-  // Check for state parameter (coupon token)
-  const state = event.follow?.params?.state;
-  let pendingCouponToken = null;
-
-  if (state && state.startsWith('COUPON_')) {
-    pendingCouponToken = state.substring(7); // Remove 'COUPON_' prefix
-    console.log('[handleFollowEvent] Coupon token detected:', pendingCouponToken);
-  }
-
   try {
     // Check if user already exists
     console.log('[handleFollowEvent] Checking if user exists...');
-    let member = await Member.findOne({ 'line.userId': lineUserId });
+    const member = await Member.findOne({ 'line.userId': lineUserId });
+
+    const baseUrl = process.env.FRONTEND_URL || 'https://sunriseyouth.org';
 
     if (member) {
       console.log('[handleFollowEvent] Existing member re-followed:', member.memberId);
 
-      // If there's a pending coupon, claim it immediately for existing member
-      if (pendingCouponToken) {
-        console.log('[handleFollowEvent] Claiming coupon for existing member...');
-        try {
-          const shareToken = await CouponShareToken.findOne({ token: pendingCouponToken });
-
-          if (shareToken && shareToken.status === 'pending' && new Date() <= shareToken.expiresAt) {
-            // Add coupon to recipient
-            member.coupons.push({
-              type: shareToken.couponData.type,
-              classInfoId: shareToken.couponData.classInfoId,
-              discountPercent: shareToken.couponData.discountPercent,
-              name: shareToken.couponData.name,
-              description: shareToken.couponData.description,
-              image: shareToken.couponData.image,
-              expiryDate: shareToken.couponData.expiryDate,
-              quantity: 1,
-              usedCount: 0
-            });
-
-            // Decrement sender's coupon now that it's been successfully claimed
-            const sender = await Member.findOne({ memberId: shareToken.senderMemberId });
-            if (sender) {
-              const senderCoupon = sender.coupons.id(shareToken.senderCouponId);
-              if (senderCoupon) {
-                const remainingUses = senderCoupon.quantity - senderCoupon.usedCount;
-                if (remainingUses === 1) {
-                  sender.coupons.pull(shareToken.senderCouponId);
-                } else {
-                  senderCoupon.quantity -= 1;
-                }
-                await sender.save();
-              }
-            }
-
-            // Mark token as claimed
-            shareToken.status = 'claimed';
-            shareToken.claimedBy = member.memberId;
-            shareToken.claimedAt = new Date();
-            await shareToken.save();
-            await member.save();
-
-            const protocol = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split('://')[0] : 'https';
-            const host = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split('://')[1] : 'www.sunriseyouth.org';
-            const baseUrl = `${protocol}://${host}`;
-            const couponsUrl = `${baseUrl}/profile/${member.memberId}?tab=coupons`;
-
-            await client.pushMessage({
-              to: lineUserId,
-              messages: [{
-                type: 'text',
-                text: `🎁 您收到了一張新優惠券！\nYou received a new coupon!\n\n優惠券名稱 Name:\n${shareToken.couponData.name}\n\n點擊查看 View your coupons:\n${couponsUrl}`
-              }]
-            });
-
-            console.log('[handleFollowEvent] Coupon claimed successfully!');
-            return;
-          }
-        } catch (couponError) {
-          console.error('[handleFollowEvent] Error claiming coupon:', couponError);
-        }
-      }
-
-      // Send welcome back message using push message (not reply)
-      console.log('[handleFollowEvent] Sending welcome back message...');
+      // Send welcome back message
       await client.pushMessage({
         to: lineUserId,
         messages: [{
           type: 'text',
-          text: `歡迎回來！Welcome back!\n您的團員編號：${member.memberId}\nYour member ID: ${member.memberId}`
+          text: `🎉 歡迎回來！Welcome back!\n\n您的團員編號 Your Member ID:\n${member.memberId}\n\n請造訪我們的網站 Visit our website:\n${baseUrl}/profile`
         }]
       });
-      console.log('[handleFollowEvent] Welcome back message sent!');
+      console.log('[handleFollowEvent] Welcome back message sent');
       return;
     }
 
-    // Get LINE profile information
-    console.log('[handleFollowEvent] Getting LINE profile...');
+    // New user - send welcome message telling them to visit website
+    console.log('[handleFollowEvent] New user, sending welcome message');
     const profile = await client.getProfile(lineUserId);
-    console.log('[handleFollowEvent] Profile received:', profile.displayName);
-
-    // Generate sequential member ID (M0001, M0002, etc.)
-    console.log('[handleFollowEvent] Generating sequential member ID...');
-    const lastMember = await Member.findOne().sort({ createdAt: -1 }).select('memberId');
-    let nextNumber = 1;
-
-    if (lastMember && lastMember.memberId) {
-      // Extract number from last member ID (e.g., "M0001" -> 1)
-      const lastNumber = parseInt(lastMember.memberId.substring(1));
-      if (!isNaN(lastNumber)) {
-        nextNumber = lastNumber + 1;
-      }
-    }
-
-    // Format as M0001, M0002, etc. (4 digits)
-    const memberId = `M${nextNumber.toString().padStart(4, '0')}`;
-    const registrationToken = require('crypto').randomBytes(32).toString('hex');
-    console.log('[handleFollowEvent] Generated member ID:', memberId);
-
-    // Determine domain from request
-    const protocol = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split('://')[0] : 'https';
-    const host = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split('://')[1] : 'www.sunriseyouth.org';
-    const baseUrl = `${protocol}://${host}`;
-    const registrationUrl = `${baseUrl}/register?token=${registrationToken}`;
-    console.log('[handleFollowEvent] Registration URL:', registrationUrl);
-
-    // Create incomplete member (pending registration)
-    console.log('[handleFollowEvent] Creating incomplete member object...');
-    member = new Member({
-      memberId,
-      name: profile.displayName, // Temporary, will be updated
-      englishAlias: '',
-      gender: '男', // Default, must be updated
-      birthDate: new Date('2000-01-01'), // Default, must be updated
-      familyMembers: [],
-      contact: {
-        mobile: '', // Must be filled during registration
-        lineId: '' // Cannot auto-fill - LINE API doesn't provide custom LINE ID
-      },
-      line: {
-        userId: lineUserId,
-        displayName: profile.displayName,
-        pictureUrl: profile.pictureUrl,
-        linkedAt: new Date()
-      },
-      registrationToken,
-      registrationTokenExpires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
-      registrationCompleted: false,
-      pendingCouponToken: pendingCouponToken || undefined // Store coupon token if provided
-    });
-
-    // Save incomplete member
-    console.log('[handleFollowEvent] Saving incomplete member to database...');
-    await member.save();
-    console.log('[handleFollowEvent] ✅ Incomplete member created:', memberId, 'LINE ID:', lineUserId);
-
-    // Send welcome message with registration link
-    console.log('[handleFollowEvent] Sending welcome message with registration link...');
-    let welcomeMessage = `🎉 歡迎加入晨光國際少年團！\nWelcome to Sunrise Youth International!\n\n您的團員編號 Your Member ID:\n${memberId}\n\n⚠️ 請點擊以下連結完成註冊\nPlease click the link below to complete registration:\n\n${registrationUrl}\n\n此連結將在 7 天後失效\nThis link will expire in 7 days`;
-
-    // Add coupon message if pending
-    if (pendingCouponToken) {
-      welcomeMessage += `\n\n🎁 您有一張優惠券等待領取！\nYou have a coupon waiting!\n完成註冊後將自動加入您的帳戶。\nIt will be added to your account after registration.`;
-    }
 
     await client.pushMessage({
       to: lineUserId,
-      messages: [
-        {
-          type: 'text',
-          text: welcomeMessage
-        }
-      ]
+      messages: [{
+        type: 'text',
+        text: `🎉 歡迎加入晨光國際少年團！\nWelcome to Sunrise Youth International!\n\n${profile.displayName} 您好！\nHello ${profile.displayName}!\n\n請點擊以下連結開始註冊：\nPlease click the link below to register:\n\n${baseUrl}/profile\n\n完成註冊後即可使用所有功能！\nComplete registration to access all features!`
+      }]
     });
-    console.log('[handleFollowEvent] ✅ Welcome message with registration link sent!');
+    console.log('[handleFollowEvent] Welcome message sent');
 
+    // Note: Member will be created automatically when they visit the website via LIFF
   } catch (error) {
-    console.error('Error handling follow event:', error);
+    console.error('[handleFollowEvent] Error:', error);
 
-    // Send error message to user using push message
+    // Send error message to user
     try {
       await client.pushMessage({
         to: lineUserId,
         messages: [{
           type: 'text',
-          text: '抱歉，註冊過程中發生錯誤。請稍後再試。\nSorry, an error occurred during registration. Please try again later.'
+          text: '抱歉，發生錯誤。請稍後再試。\nSorry, an error occurred. Please try again later.'
         }]
       });
     } catch (pushError) {
@@ -302,7 +165,6 @@ async function handleUnfollowEvent(event) {
   const lineUserId = event.source.userId;
 
   try {
-    // Find member and mark as inactive (optional)
     const member = await Member.findOne({ 'line.userId': lineUserId });
 
     if (member) {
@@ -344,7 +206,7 @@ async function handleMessageEvent(event) {
         to: lineUserId,
         messages: [{
           type: 'text',
-          text: `您的團員編號：${member.memberId}\nYour member ID: ${member.memberId}\n\n個人檔案連結：\nProfile link:\n${baseUrl}/profile/${member.memberId}`
+          text: `您的團員編號：${member.memberId}\nYour member ID: ${member.memberId}\n\n個人檔案連結：\nProfile link:\n${baseUrl}/profile`
         }]
       });
       return;
@@ -354,22 +216,11 @@ async function handleMessageEvent(event) {
     if (messageText && (messageText.includes('點數') || messageText.toLowerCase().includes('point'))) {
       const points = member.points || 0;
 
-      // Generate a session token for auto-login
-      const sessionToken = require('crypto').randomBytes(32).toString('hex');
-      const sessionExpires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
-
-      // Save session token to member
-      member.sessionToken = sessionToken;
-      member.sessionTokenExpires = sessionExpires;
-      await member.save();
-
-      const profileUrl = `${baseUrl}/profile/${member.memberId}?tab=points&session=${sessionToken}`;
-
       await client.pushMessage({
         to: lineUserId,
         messages: [{
           type: 'text',
-          text: `💎 您的會員點數 Your Points:\n\n${points} 點 points\n\n點擊下方連結查看可兌換的禮物：\nClick below to view redeemable gifts:\n\n${profileUrl}`
+          text: `💎 您的會員點數 Your Points:\n\n${points} 點 points\n\n點擊下方連結查看可兌換的禮物：\nClick below to view redeemable gifts:\n\n${baseUrl}/profile?tab=points`
         }]
       });
       return;
