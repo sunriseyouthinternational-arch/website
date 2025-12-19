@@ -930,6 +930,12 @@ function Profile() {
             >
               {t('language') === 'zh' ? '優惠券' : 'Coupons'}
             </button>
+            <button
+              className={`tab-button ${activeTab === 'points' ? 'active' : ''}`}
+              onClick={() => setActiveTab('points')}
+            >
+              {t('language') === 'zh' ? '點數與禮物' : 'Points & Gifts'}
+            </button>
           </div>
 
           {message.text && <div className={`message ${message.type}`}>{message.text}</div>}
@@ -957,53 +963,6 @@ function Profile() {
                       <p><strong>{t('memberId')}:</strong> {member.memberId}</p>
                       <p><strong>{t('gender')}:</strong> {member.gender}</p>
                       <p><strong>{t('birthDate')}:</strong> {formatDate(member.birthDate)}</p>
-                    </div>
-                  </div>                  <div className="statistics-section">
-                    <h3>{t('language') === 'zh' ? '會員統計' : 'Member Statistics'}</h3>
-                    <div className="stats-grid">
-                      <div className="stat-card">
-                        <div className="stat-icon">💎</div>
-                        <div className="stat-value">{member.points || 0}</div>
-                        <div className="stat-label">{t('language') === 'zh' ? '會員點數' : 'Points'}</div>
-                      </div>
-
-                      <div className="stat-card">
-                        <div className="stat-icon">📚</div>
-                        <div className="stat-value">
-                          {member.enrollments ? member.enrollments.filter(e => e.type === 'class' && e.status === 'active').length : 0}
-                        </div>
-                        <div className="stat-label">{t('language') === 'zh' ? '已報名課程' : 'Classes'}</div>
-                      </div>
-
-                      <div className="stat-card">
-                        <div className="stat-icon">🎯</div>
-                        <div className="stat-value">
-                          {member.enrollments ? member.enrollments.filter(e => e.type === 'activity' && e.status === 'active').length : 0}
-                        </div>
-                        <div className="stat-label">{t('language') === 'zh' ? '參加活動' : 'Activities'}</div>
-                      </div>
-
-                      <div className="stat-card">
-                        <div className="stat-icon">📅</div>
-                        <div className="stat-value">
-                          {Math.floor((new Date() - new Date(member.createdAt)) / (1000 * 60 * 60 * 24))}
-                        </div>
-                        <div className="stat-label">{t('language') === 'zh' ? '會員天數' : 'Days'}</div>
-                      </div>
-
-                      <div className="stat-card">
-                        <div className="stat-icon">👥</div>
-                        <div className="stat-value">{member.referralCount || 0}</div>
-                        <div className="stat-label">{t('language') === 'zh' ? '推薦人數' : 'Referrals'}</div>
-                      </div>
-
-                      <div className="stat-card">
-                        <div className="stat-icon">⭐</div>
-                        <div className="stat-value">
-                          {member.enrollments ? member.enrollments.filter(e => e.status === 'active').length : 0}
-                        </div>
-                        <div className="stat-label">{t('language') === 'zh' ? '總報名數' : 'Total'}</div>
-                      </div>
                     </div>
                   </div>
 
@@ -2061,6 +2020,33 @@ function Profile() {
                   </p>
                 </div>
               )}
+            </div>
+          )}
+
+          {activeTab === 'points' && (
+            <div className="card">
+              <div className="points-gifts-section">
+                <div className="points-display-large">
+                  <h3>{t('language') === 'zh' ? '您的會員點數' : 'Your Member Points'}</h3>
+                  <div className="points-value-large">
+                    <span className="points-number-large">{member.points || 0}</span>
+                    <span className="points-label-large">{t('language') === 'zh' ? '點' : 'points'}</span>
+                  </div>
+                </div>
+
+                <div className="gifts-under-construction">
+                  <div className="construction-icon">🚧</div>
+                  <h3>{t('language') === 'zh' ? '禮物兌換' : 'Gift Redemption'}</h3>
+                  <p className="construction-message">
+                    {t('language') === 'zh' ? '施工中' : 'Under Construction'}
+                  </p>
+                  <p className="construction-description">
+                    {t('language') === 'zh'
+                      ? '此功能正在開發中，敬請期待！'
+                      : 'This feature is currently under development. Stay tuned!'}
+                  </p>
+                </div>
+              </div>
             </div>
           )}
 
