@@ -35,13 +35,19 @@ function CouponClaim() {
   };
 
   // Attempt automatic coupon claiming with LIFF
-  const attemptAutoClaim = async (lineUserId) => {
-    if (!token || !lineUserId) return;
+  const attemptAutoClaim = async (lineUserId, couponToken) => {
+    const tokenToUse = couponToken || token;
 
+    if (!tokenToUse || !lineUserId) {
+      console.error('Missing token or lineUserId for auto-claim');
+      return;
+    }
+
+    console.log('Attempting auto-claim with token:', tokenToUse);
     setClaiming(true);
     try {
       const response = await axios.post('/api/coupon-claim', {
-        token,
+        token: tokenToUse,
         lineUserId
       });
 
@@ -83,32 +89,65 @@ function CouponClaim() {
           return;
         }
 
+        // IMPORTANT: Save token to localStorage before LIFF processes anything
+        // This prevents losing the token during LIFF login redirect
+        if (token) {
+          localStorage.setItem('pendingCouponToken', token);
+          console.log('Saved coupon token to localStorage:', token);
+        }
+
         await window.liff.init({ liffId });
         setLiffInitialized(true);
+
+        // After LIFF init, retrieve token from localStorage if not in URL
+        const actualToken = token || localStorage.getItem('pendingCouponToken');
+        console.log('Token for claiming:', actualToken);
+
+        if (!actualToken) {
+          console.error('No token available for claiming');
+          fetchCouponDetails();
+          return;
+        }
 
         // Check if user is logged in to LINE
         if (window.liff.isLoggedIn()) {
           const profile = await window.liff.getProfile();
-          // Automatically try to claim coupon
-          await attemptAutoClaim(profile.userId);
+          console.log('User logged in via LIFF, attempting auto-claim');
+          // Automatically try to claim coupon with the actual token
+          await attemptAutoClaim(profile.userId, actualToken);
+          // Clear the saved token after successful attempt
+          localStorage.removeItem('pendingCouponToken');
         } else {
           // If not logged in, redirect to LINE login
+          // Token is already saved in localStorage, will be retrieved after redirect
+          console.log('User not logged in, redirecting to LINE login');
           window.liff.login();
         }
       } catch (err) {
         console.error('LIFF initialization error:', err);
         // Fall back to manual claim flow
         fetchCouponDetails();
+        // Clear any saved token
+        localStorage.removeItem('pendingCouponToken');
       }
     };
 
     if (token) {
       initializeLiff();
     } else {
-      // No token provided, show error
-      setError(t('language') === 'zh' ? '無效的優惠券連結' : 'Invalid coupon link');
-      setStatus('error');
-      setLoading(false);
+      // Check if we have a saved token from previous redirect
+      const savedToken = localStorage.getItem('pendingCouponToken');
+      if (savedToken) {
+        console.log('Found saved token, initializing LIFF');
+        // Update the component state with the saved token
+        // (we can't modify useParams, but we can use it directly in functions)
+        initializeLiff();
+      } else {
+        // No token provided and none saved, show error
+        setError(t('language') === 'zh' ? '無效的優惠券連結' : 'Invalid coupon link');
+        setStatus('error');
+        setLoading(false);
+      }
     }
   }, [token]);
 
