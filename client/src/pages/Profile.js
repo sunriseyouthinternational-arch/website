@@ -13,7 +13,7 @@ function Profile() {
   const [member, setMember] = useState(null);
   const [classes, setClasses] = useState([]);
   const [activities, setActivities] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState({ type: '', text: '' });
   const [selectedClass, setSelectedClass] = useState(null);
 

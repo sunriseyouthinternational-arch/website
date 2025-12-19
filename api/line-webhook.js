@@ -133,8 +133,21 @@ async function handleFollowEvent(event) {
     console.log('[handleFollowEvent] New user, creating member...');
     const profile = await client.getProfile(lineUserId);
 
-    // Generate unique member ID
-    let newMemberId = 'M' + Date.now().toString().slice(-8) + Math.floor(Math.random() * 100);
+    // Generate sequential member ID (M0001, M0002, etc.)
+    console.log('[handleFollowEvent] Generating sequential member ID...');
+    const lastMember = await Member.findOne().sort({ createdAt: -1 }).select('memberId');
+    let nextNumber = 1;
+
+    if (lastMember && lastMember.memberId) {
+      // Extract number from last member ID (e.g., "M0001" -> 1)
+      const lastNumber = parseInt(lastMember.memberId.substring(1));
+      if (!isNaN(lastNumber)) {
+        nextNumber = lastNumber + 1;
+      }
+    }
+
+    // Format as M0001, M0002, etc. (4 digits)
+    const newMemberId = `M${nextNumber.toString().padStart(4, '0')}`;
     console.log('[handleFollowEvent] Generated member ID:', newMemberId);
 
     // Create incomplete member
