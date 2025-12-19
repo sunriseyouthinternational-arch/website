@@ -129,52 +129,15 @@ async function handleFollowEvent(event) {
       return;
     }
 
-    // New user - create member and send welcome message
-    console.log('[handleFollowEvent] New user, creating member...');
+    // New user - send welcome message
+    console.log('[handleFollowEvent] New user, sending welcome message');
     const profile = await client.getProfile(lineUserId);
 
-    // Generate sequential member ID (M0001, M0002, etc.)
-    console.log('[handleFollowEvent] Generating sequential member ID...');
-    const lastMember = await Member.findOne().sort({ createdAt: -1 }).select('memberId');
-    let nextNumber = 1;
-
-    if (lastMember && lastMember.memberId) {
-      // Extract number from last member ID (e.g., "M0001" -> 1)
-      const lastNumber = parseInt(lastMember.memberId.substring(1));
-      if (!isNaN(lastNumber)) {
-        nextNumber = lastNumber + 1;
-      }
-    }
-
-    // Format as M0001, M0002, etc. (4 digits)
-    const newMemberId = `M${nextNumber.toString().padStart(4, '0')}`;
-    console.log('[handleFollowEvent] Generated member ID:', newMemberId);
-
-    // Create incomplete member
-    const newMember = new Member({
-      memberId: newMemberId,
-      name: profile.displayName || 'New Member',
-      gender: '男',
-      birthDate: new Date('2000-01-01'),
-      contact: { phone: '', mobile: '', lineId: '' },
-      line: {
-        userId: lineUserId,
-        displayName: profile.displayName,
-        pictureUrl: profile.pictureUrl,
-        linkedAt: new Date()
-      },
-      registrationCompleted: false
-    });
-
-    await newMember.save();
-    console.log('[handleFollowEvent] Member created:', newMemberId);
-
-    // Send welcome message with registration link
     await client.pushMessage({
       to: lineUserId,
       messages: [{
         type: 'text',
-        text: `🎉 歡迎加入晨光國際少年團！\nWelcome to Sunrise Youth International!\n\n${profile.displayName} 您好！\nHello ${profile.displayName}!\n\n您的團員編號 Your Member ID:\n${newMemberId}\n\n請點擊以下連結完成註冊：\nPlease click the link below to complete registration:\n\n${baseUrl}/profile\n\n完成註冊後即可使用所有功能！\nComplete registration to access all features!`
+        text: `🎉 歡迎加入晨光國際少年團！\nWelcome to Sunrise Youth International!\n\n${profile.displayName} 您好！\nHello ${profile.displayName}!\n\n請點擊以下連結開始註冊：\nPlease click the link below to register:\n\n${baseUrl}/profile\n\n完成註冊後即可使用所有功能！\nComplete registration to access all features!`
       }]
     });
     console.log('[handleFollowEvent] Welcome message sent')

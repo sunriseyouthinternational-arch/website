@@ -22,14 +22,15 @@ module.exports = async (req, res) => {
 
       console.log('[API /auth] Looking up member with LINE userId:', userId);
 
-      // Find existing member (member must be created by following the official account first)
+      // Find existing member
       const member = await Member.findOne({ 'line.userId': userId });
 
       if (!member) {
-        console.log('[API /auth] Member not found - user must follow official account first');
-        return res.status(404).json({
-          message: '請先加入官方帳號 / Please add the official account first',
-          needsToFollowBot: true
+        console.log('[API /auth] Member not found - needs to register');
+        return res.status(200).json({
+          member: null,
+          needsRegistration: true,
+          lineProfile: { userId, displayName, pictureUrl }
         });
       }
 
@@ -40,7 +41,7 @@ module.exports = async (req, res) => {
       member.line.pictureUrl = pictureUrl;
       await member.save();
 
-      return res.status(200).json({ member });
+      return res.status(200).json({ member, needsRegistration: !member.registrationCompleted });
     }
 
     // POST /api/members/register - Complete registration
@@ -64,11 +65,32 @@ module.exports = async (req, res) => {
 
       console.log('[API /register] Completing registration for userId:', userId);
 
-      const member = await Member.findOne({ 'line.userId': userId });
+      let member = await Member.findOne({ 'line.userId': userId });
 
+      // If member doesn't exist, create new one
       if (!member) {
-        return res.status(404).json({
-          message: '找不到會員 / Member not found'
+        console.log('[API /register] Creating new member');
+
+        // Generate sequential member ID (M0001, M0002, etc.)
+        const lastMember = await Member.findOne().sort({ createdAt: -1 }).select('memberId');
+        let nextNumber = 1;
+
+        if (lastMember && lastMember.memberId) {
+          const lastNumber = parseInt(lastMember.memberId.substring(1));
+          if (!isNaN(lastNumber)) {
+            nextNumber = lastNumber + 1;
+          }
+        }
+
+        const newMemberId = `M${nextNumber.toString().padStart(4, '0')}`;
+        console.log('[API /register] Generated member ID:', newMemberId);
+
+        member = new Member({
+          memberId: newMemberId,
+          line: {
+            userId,
+            linkedAt: new Date()
+          }
         });
       }
 
@@ -102,7 +124,7 @@ module.exports = async (req, res) => {
         if (!existing) uniqueCode = true;
       }
 
-      // Update member with complete information
+      // Update/set member information
       member.name = name;
       member.englishAlias = englishAlias || '';
       member.gender = gender;
