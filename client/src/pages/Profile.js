@@ -17,13 +17,11 @@ function Profile() {
   const [message, setMessage] = useState({ type: '', text: '' });
   const [selectedClass, setSelectedClass] = useState(null);
 
-  // Filters
   const [selectedClassInfo, setSelectedClassInfo] = useState('all');
   const [selectedDate, setSelectedDate] = useState('all');
   const [dateOffset, setDateOffset] = useState(0);
   const [showCalendar, setShowCalendar] = useState(false);
 
-  // Check for tab parameter in URL
   const tabFromUrl = searchParams.get('tab');
   const sessionFromUrl = searchParams.get('session');
   const classIdFromUrl = searchParams.get('classId');
@@ -43,36 +41,30 @@ function Profile() {
     contact: { phone: '', mobile: '', lineId: '' }
   });
 
-  // Checkout modal state
   const [showCheckout, setShowCheckout] = useState(false);
   const [checkoutData, setCheckoutData] = useState(null);
   const [selectedCoupon, setSelectedCoupon] = useState(null);
   const [showCouponModal, setShowCouponModal] = useState(false);
 
-  // Share modal state
   const [showShareModal, setShowShareModal] = useState(false);
   const [shareCoupon, setShareCoupon] = useState(null);
   const [shareLink, setShareLink] = useState(null);
   const [shareLoading, setShareLoading] = useState(false);
   const [sharingCouponId, setSharingCouponId] = useState(null);
 
-  // Coupon purchase state
   const [couponsForSale, setCouponsForSale] = useState([]);
   const [purchasingCoupon, setPurchasingCoupon] = useState(null);
 
-  // Loading states for buttons
   const [enrollingClass, setEnrollingClass] = useState(null);
   const [enrollingActivity, setEnrollingActivity] = useState(null);
   const [completingEnrollment, setCompletingEnrollment] = useState(false);
 
-  // LINE Login state
   const [liffReady, setLiffReady] = useState(false);
   const [lineUserId, setLineUserId] = useState(null);
   const [lineProfile, setLineProfile] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [needsRegistration, setNeedsRegistration] = useState(false);
 
-  // Registration form state
   const [registrationData, setRegistrationData] = useState({
     name: '',
     englishAlias: '',
@@ -84,12 +76,11 @@ function Profile() {
   });
   const [submittingRegistration, setSubmittingRegistration] = useState(false);
 
-  // Helper function to get image source (handles both base64 and file paths)
   const getImageSrc = (imagePath) => {
     if (!imagePath) return null;
-    // If it's already a base64 data URI, return as is
+
     if (imagePath.startsWith('data:')) return imagePath;
-    // Otherwise, assume it's a file path and prepend API URL
+
     const apiUrl = process.env.REACT_APP_API_URL || '';
     return `${apiUrl}${imagePath}`;
   };
@@ -106,7 +97,6 @@ function Profile() {
 
         setMessage({ type: 'success', text: t('language') === 'zh' ? '登入成功' : 'Login successful' });
 
-        // Clean up URL by removing session parameter
         if (sessionFromUrl) {
           const newUrl = `/profile/${id}${tabFromUrl ? `?tab=${tabFromUrl}` : ''}`;
           navigate(newUrl, { replace: true });
@@ -134,18 +124,14 @@ function Profile() {
       const activeClasses = classesRes.data.classes.filter(c => c.status === 'active');
       const activeActivities = activitiesRes.data.activities.filter(a => a.status === 'active');
 
-      // Sort activities by date, then by time
       activeActivities.sort((a, b) => {
         const dateA = new Date(a.date);
         const dateB = new Date(b.date);
 
-        // First sort by date
         if (dateA.getTime() !== dateB.getTime()) {
           return dateA - dateB;
         }
 
-        // If same date, sort by time
-        // Extract start time from format like "10:00 - 12:00"
         const getStartTime = (timeStr) => {
           if (!timeStr) return '00:00';
           const parts = timeStr.split('-');
@@ -175,7 +161,6 @@ function Profile() {
     }
   };
 
-  // Generate date options for filter (current date + next 6 days = 7 days total)
   const getDateOptions = () => {
     const dates = [];
     const today = new Date();
@@ -189,16 +174,13 @@ function Profile() {
     return dates;
   };
 
-  // Filter classes based on selected filters
   const getFilteredClasses = () => {
     let filtered = [...classes];
 
-    // Filter by class info template
     if (selectedClassInfo !== 'all') {
       filtered = filtered.filter(c => c.classInfoId?._id === selectedClassInfo);
     }
 
-    // Filter by date
     if (selectedDate !== 'all') {
       const selectedDateObj = new Date(selectedDate);
       selectedDateObj.setHours(0, 0, 0, 0);
@@ -210,18 +192,14 @@ function Profile() {
       });
     }
 
-    // Sort by date, then by time
     filtered.sort((a, b) => {
       const dateA = new Date(a.date);
       const dateB = new Date(b.date);
 
-      // First sort by date
       if (dateA.getTime() !== dateB.getTime()) {
         return dateA - dateB;
       }
 
-      // If same date, sort by time
-      // Extract start time from format like "10:00-12:00"
       const getStartTime = (timeStr) => {
         if (!timeStr) return '00:00';
         const parts = timeStr.split('-');
@@ -237,7 +215,6 @@ function Profile() {
     return filtered;
   };
 
-  // Get unique class info templates from all classes
   const getUniqueClassInfos = () => {
     const seen = new Set();
     const uniqueClassInfos = [];
@@ -255,11 +232,9 @@ function Profile() {
   useEffect(() => {
     fetchClassesAndActivities();
 
-    // Initialize LINE Login (LIFF) - this handles everything
     initializeLIFF();
   }, []);
 
-  // Update active tab when URL parameter changes
   useEffect(() => {
     if (tabFromUrl === 'courses') {
       setActiveTab('courses');
@@ -270,7 +245,6 @@ function Profile() {
     }
   }, [tabFromUrl]);
 
-  // Auto-open class detail when classId is in URL
   useEffect(() => {
     if (classIdFromUrl && classes.length > 0) {
       const classToOpen = classes.find(c => c._id === classIdFromUrl);
@@ -281,14 +255,12 @@ function Profile() {
     }
   }, [classIdFromUrl, classes]);
 
-  // Fetch coupons for sale when coupons tab is active
   useEffect(() => {
     if (activeTab === 'coupons') {
       fetchCouponsForSale();
     }
   }, [activeTab]);
 
-  // Fetch member by LINE user ID
   const fetchOrCreateMember = async (userId, profile) => {
     setLoading(true);
     setMessage({ type: '', text: '' });
@@ -304,12 +276,11 @@ function Profile() {
 
       const { member: memberData, needsRegistration: needsReg } = response.data;
 
-      // Member doesn't exist - show registration form
       if (!memberData || needsReg) {
         console.log('[Profile] Member needs to register');
         console.log('[Profile] Setting LINE ID to:', userId);
         setNeedsRegistration(true);
-        // Pre-fill registration form with LINE display name and user ID
+
         setRegistrationData(prev => {
           const newData = {
             ...prev,
@@ -326,13 +297,11 @@ function Profile() {
         return;
       }
 
-      // Member exists
       console.log('[Profile] Found member:', memberData.memberId, 'Registered:', memberData.registrationCompleted);
       setMember(memberData);
       setMemberId(memberData.memberId);
       setNeedsRegistration(false);
 
-      // Navigate to profile
       navigate(`/profile/${memberData.memberId}`, { replace: true });
       setLoading(false);
 
@@ -348,14 +317,12 @@ function Profile() {
     }
   };
 
-  // Initialize LINE Login (LIFF)
   const initializeLIFF = async () => {
     console.log('[Profile] Starting LIFF initialization...');
 
-    // Check if window.liff is available
     if (!window.liff) {
       console.error('[Profile] LIFF SDK not loaded! Waiting for SDK...');
-      // Wait a bit for SDK to load
+
       setTimeout(() => {
         if (window.liff) {
           console.log('[Profile] LIFF SDK now available, retrying...');
@@ -405,7 +372,6 @@ function Profile() {
         setLineProfile(profile);
         setIsLoggedIn(true);
 
-        // Fetch or create member
         await fetchOrCreateMember(profile.userId, profile);
       } else {
         console.log('[Profile] User not logged in, showing login button');
@@ -424,13 +390,11 @@ function Profile() {
     }
   };
 
-  // Handle registration form submission
   const handleRegistrationSubmit = async (e) => {
     e.preventDefault();
     setSubmittingRegistration(true);
     setMessage({ type: '', text: '' });
 
-    // Validation
     if (!registrationData.name || !registrationData.contact.mobile) {
       setMessage({
         type: 'error',
@@ -442,7 +406,6 @@ function Profile() {
       return;
     }
 
-    // Validate Taiwan phone number format (9 or 10 digits)
     const phoneNumber = registrationData.contact.mobile.replace(/\D/g, ''); // Remove non-digits
     if (phoneNumber.length < 9 || phoneNumber.length > 10) {
       setMessage({
@@ -468,7 +431,6 @@ function Profile() {
         text: t('language') === 'zh' ? '註冊成功！' : 'Registration successful!'
       });
 
-      // Update URL
       navigate(`/profile/${response.data.member.memberId}`, { replace: true });
     } catch (error) {
       console.error('[Profile] Registration failed:', error);
@@ -483,7 +445,6 @@ function Profile() {
     }
   };
 
-  // Handle LINE Logout
   const handleLineLogout = () => {
     if (window.liff && window.liff.isLoggedIn()) {
       window.liff.logout();
@@ -627,7 +588,6 @@ function Profile() {
       return;
     }
 
-    // Get item details for cost information
     let item;
     if (type === 'class') {
       item = classes.find(c => c._id === id);
@@ -640,7 +600,6 @@ function Profile() {
       return;
     }
 
-    // Open checkout modal with item details
     setCheckoutData({
       type,
       id,
@@ -667,11 +626,9 @@ function Profile() {
 
       setMessage({ type: 'success', text: response.data.message });
 
-      // Refresh member data
       const memberResponse = await axios.get(`/api/members?memberId=${member.memberId}`);
       setMember(memberResponse.data.member);
 
-      // Close checkout modal
       setShowCheckout(false);
       setCheckoutData(null);
       setSelectedCoupon(null);
@@ -700,7 +657,6 @@ function Profile() {
 
       setShareLink(response.data);
 
-      // Note: Coupon quantity is NOT decremented until successfully claimed by recipient
     } catch (error) {
       setMessage({
         type: 'error',
@@ -733,13 +689,12 @@ function Profile() {
     setPurchasingCoupon(couponForSale._id);
 
     try {
-      // Purchase the coupon - this will add it to member's coupons and decrement stock
+
       const response = await axios.post('/api/members?action=purchase-coupon', {
         memberId: member.memberId,
         couponForSaleId: couponForSale._id
       });
 
-      // Update member data with new coupon
       setMember(response.data.member);
 
       setMessage({
@@ -747,7 +702,6 @@ function Profile() {
         text: t('language') === 'zh' ? '購買成功！' : 'Purchase successful!'
       });
 
-      // Refresh coupons for sale to update stock
       await fetchCouponsForSale();
     } catch (error) {
       setMessage({
@@ -772,7 +726,7 @@ function Profile() {
   const formatDate = (dateString) => {
     if (!dateString) return '';
     const date = new Date(dateString);
-    // Taiwan date format (ROC calendar can be complex, using Western for simplicity)
+
     return date.toLocaleDateString('zh-TW');
   };
 
@@ -780,10 +734,7 @@ function Profile() {
     <div className="container">
       <div className="page-title">
         <h2>{t('myProfile')}</h2>
-      </div>
-
-      {/* Show loading while initializing LIFF or processing */}
-      {loading ? (
+      </div>      {loading ? (
         <div className="card" style={{ textAlign: 'center', padding: '60px 20px' }}>
           <div style={{ fontSize: '64px', marginBottom: '20px' }}>⏳</div>
           <h3 style={{ color: '#667eea', marginBottom: '15px' }}>
@@ -839,9 +790,7 @@ function Profile() {
               : 'Welcome! Please fill in the following information to complete registration'}
           </p>
 
-          <form onSubmit={handleRegistrationSubmit}>
-            {/* Registration form fields - will add shortly */}
-            <div style={{ marginBottom: '15px' }}>
+          <form onSubmit={handleRegistrationSubmit}>            <div style={{ marginBottom: '15px' }}>
               <label style={{ display: 'block', marginBottom: '5px', fontWeight: '600' }}>
                 {t('language') === 'zh' ? '姓名 *' : 'Name *'}
               </label>
@@ -953,9 +902,7 @@ function Profile() {
           </form>
         </div>
       ) : member ? (
-        <>
-          {/* Logout button (only show if logged in via LINE) */}
-          {isLoggedIn && lineUserId && (
+        <>          {isLoggedIn && lineUserId && (
             <div style={{ textAlign: 'right', marginBottom: '15px' }}>
               <button
                 onClick={handleLineLogout}
@@ -1045,10 +992,7 @@ function Profile() {
                       <p><strong>{t('gender')}:</strong> {member.gender}</p>
                       <p><strong>{t('birthDate')}:</strong> {formatDate(member.birthDate)}</p>
                     </div>
-                  </div>
-
-                  {/* Statistics Section */}
-                  <div className="statistics-section">
+                  </div>                  <div className="statistics-section">
                     <h3>{t('language') === 'zh' ? '會員統計' : 'Member Statistics'}</h3>
                     <div className="stats-grid">
                       <div className="stat-card">
@@ -1311,17 +1255,12 @@ function Profile() {
 
               <p style={{ fontSize: '18px', lineHeight: '1.6', marginBottom: '20px', color: '#666' }}>
                 {selectedClass.classInfoId?.description || ''}
-              </p>
-
-              {/* Two-box layout: Class Details and Teacher Info */}
-              <div style={{
+              </p>              <div style={{
                 display: 'grid',
                 gridTemplateColumns: selectedClass.teacherId ? '1.5fr 1fr' : '1fr',
                 gap: '20px',
                 marginBottom: '20px'
-              }}>
-                {/* Class Details Box */}
-                <div style={{
+              }}>                <div style={{
                   background: '#f8f9ff',
                   padding: '20px',
                   borderRadius: '8px',
@@ -1354,10 +1293,7 @@ function Profile() {
                       </div>
                     )}
                   </div>
-                </div>
-
-                {/* Teacher Information Box */}
-                {selectedClass.teacherId && (
+                </div>                {selectedClass.teacherId && (
                   <div style={{
                     background: '#fff8f0',
                     padding: '20px',
@@ -1403,10 +1339,7 @@ function Profile() {
                     </div>
                   </div>
                 )}
-              </div>
-
-              {/* Fallback if no teacher ID */}
-              {!selectedClass.teacherId && selectedClass.teacher && (
+              </div>              {!selectedClass.teacherId && selectedClass.teacher && (
                 <div style={{
                   background: '#fff8f0',
                   padding: '20px',
@@ -1510,10 +1443,7 @@ function Profile() {
                   )}
                 </div>
 
-                <h4 className="section-subtitle">{t('availableClasses')}</h4>
-
-                {/* Class Template Filter */}
-                <div style={{ marginBottom: '20px' }}>
+                <h4 className="section-subtitle">{t('availableClasses')}</h4>                <div style={{ marginBottom: '20px' }}>
                   <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', color: '#667eea' }}>
                     {t('filterByClass')}
                   </label>
@@ -1536,10 +1466,7 @@ function Profile() {
                       </option>
                     ))}
                   </select>
-                </div>
-
-                {/* Date Filter */}
-                <div style={{ marginBottom: '20px' }}>
+                </div>                <div style={{ marginBottom: '20px' }}>
                   <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', color: '#667eea' }}>
                     {t('filterByDate')}
                   </label>
@@ -1804,10 +1731,7 @@ function Profile() {
             <div className="card">
               <h3 style={{ color: '#667eea', marginBottom: '30px', textAlign: 'center' }}>
                 {t('language') === 'zh' ? '我的優惠券' : 'My Coupons'}
-              </h3>
-
-              {/* Disclaimer Banner */}
-              <div style={{
+              </h3>              <div style={{
                 background: '#fff3cd',
                 border: '1px solid #ffc107',
                 borderRadius: '8px',
@@ -1823,10 +1747,7 @@ function Profile() {
                     ? '提醒：優惠券只能分享給非會員。已註冊的會員無法領取分享的優惠券。'
                     : 'Reminder: Coupons can only be shared to non-members. Registered members cannot claim shared coupons.'}
                 </p>
-              </div>
-
-              {/* Purchase Coupons Section */}
-              {couponsForSale.length > 0 && (
+              </div>              {couponsForSale.length > 0 && (
                 <div style={{ marginBottom: '40px' }}>
                   <h4 style={{ color: '#667eea', marginBottom: '20px', fontSize: '20px', textAlign: 'center' }}>
                     {t('language') === 'zh' ? '🛒 購買優惠券' : '🛒 Purchase Coupons'}
@@ -1932,19 +1853,16 @@ function Profile() {
                   </div>
                   <hr style={{ border: 'none', borderTop: '2px solid #e9ecef', margin: '30px 0' }} />
                 </div>
-              )}
-
-              {/* My Coupons Section */}
-              <h4 style={{ color: '#667eea', marginBottom: '20px', fontSize: '20px', textAlign: 'center' }}>
+              )}              <h4 style={{ color: '#667eea', marginBottom: '20px', fontSize: '20px', textAlign: 'center' }}>
                 {t('language') === 'zh' ? '📋 我擁有的優惠券' : '📋 My Owned Coupons'}
               </h4>
 
               {member.coupons && member.coupons.length > 0 ? (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
                   {(() => {
-                    // Group identical coupons
+
                     const groupedCoupons = member.coupons.reduce((acc, coupon) => {
-                      // Create a unique key for identical coupons
+
                       const key = JSON.stringify({
                         type: coupon.type,
                         classInfoId: coupon.classInfoId?._id || coupon.classInfoId,
@@ -1962,7 +1880,7 @@ function Profile() {
                       } else {
                         acc[key].count += 1;
                         acc[key].ids.push(coupon._id);
-                        // Aggregate quantities
+
                         acc[key].quantity += coupon.quantity;
                         acc[key].usedCount += coupon.usedCount;
                       }
@@ -1973,7 +1891,6 @@ function Profile() {
                     return Object.values(groupedCoupons).map((coupon, idx) => {
                     const remainingUses = coupon.quantity - coupon.usedCount;
 
-                    // Calculate days remaining until expiry
                     let daysLeft = null;
                     let expiryUrgency = null;
                     if (coupon.expiryDate) {
@@ -2234,10 +2151,7 @@ function Profile() {
             {t('language') === 'zh' ? '重新整理' : 'Refresh Page'}
           </button>
         </div>
-      )}
-
-      {/* Checkout Modal */}
-      {showCheckout && checkoutData && (
+      )}      {showCheckout && checkoutData && (
         <div style={{
           position: 'fixed',
           top: 0,
@@ -2263,10 +2177,7 @@ function Profile() {
           }}>
             <h2 style={{ color: '#667eea', marginBottom: '30px', textAlign: 'center' }}>
               {t('language') === 'zh' ? '選擇付款方式' : 'Select Payment Method'}
-            </h2>
-
-            {/* Item Summary */}
-            <div style={{
+            </h2>            <div style={{
               background: '#f8f9ff',
               padding: '20px',
               borderRadius: '12px',
@@ -2332,10 +2243,7 @@ function Profile() {
                   </button>
                 </div>
               )}
-            </div>
-
-            {/* Payment Options */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginBottom: '30px' }}>
+            </div>            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginBottom: '30px' }}>
               <button
                 onClick={() => handleCompleteEnrollment('in-person', selectedCoupon)}
                 className="btn btn-primary"
@@ -2405,10 +2313,7 @@ function Profile() {
             </button>
           </div>
         </div>
-      )}
-
-      {/* Coupon Selection Modal */}
-      {showCouponModal && checkoutData && (
+      )}      {showCouponModal && checkoutData && (
         <div style={{
           position: 'fixed',
           top: 0,
@@ -2441,7 +2346,7 @@ function Profile() {
                 member.coupons
                   .filter(coupon => (coupon.quantity - coupon.usedCount) > 0) // Only show coupons with remaining quantity
                   .map((coupon, idx) => {
-                    // Check if coupon is valid for this class
+
                     const isValid = coupon.type === 'discount' ||
                       (coupon.type === 'trial' && coupon.classInfoId === checkoutData.classInfoId);
 
@@ -2545,10 +2450,7 @@ function Profile() {
             </button>
           </div>
         </div>
-      )}
-
-      {/* Share Coupon Modal */}
-      {showShareModal && shareCoupon && (
+      )}      {showShareModal && shareCoupon && (
         <div style={{
           position: 'fixed',
           top: 0,
@@ -2574,10 +2476,7 @@ function Profile() {
           }}>
             <h2 style={{ color: '#667eea', marginBottom: '20px', textAlign: 'center' }}>
               {t('language') === 'zh' ? '分享優惠券給新朋友' : 'Share Coupon to New Friends'}
-            </h2>
-
-            {/* Important Notice */}
-            <div style={{
+            </h2>            <div style={{
               background: '#fff3cd',
               border: '2px solid #ffc107',
               borderRadius: '8px',
@@ -2599,10 +2498,7 @@ function Profile() {
                   </p>
                 </div>
               </div>
-            </div>
-
-            {/* Coupon Summary */}
-            <div style={{
+            </div>            <div style={{
               background: '#f8f9ff',
               padding: '20px',
               borderRadius: '12px',
@@ -2656,9 +2552,7 @@ function Profile() {
                 </p>
               </div>
             ) : shareLink ? (
-              <>
-                {/* QR Code for Claim Page */}
-                <div style={{ textAlign: 'center', marginBottom: '30px' }}>
+              <>                <div style={{ textAlign: 'center', marginBottom: '30px' }}>
                   <p style={{ marginBottom: '15px', fontWeight: '600', color: '#333' }}>
                     {t('language') === 'zh' ? '掃描 QR Code 領取優惠券' : 'Scan QR Code to Claim'}
                   </p>
@@ -2679,10 +2573,7 @@ function Profile() {
                       ? '掃描後前往領取頁面，依照指示完成領取'
                       : 'Scan to visit claim page and follow instructions'}
                   </p>
-                </div>
-
-                {/* Share Link */}
-                <div style={{ marginBottom: '20px' }}>
+                </div>                <div style={{ marginBottom: '20px' }}>
                   <label style={{
                     display: 'block',
                     marginBottom: '10px',
@@ -2713,10 +2604,7 @@ function Profile() {
                       {t('language') === 'zh' ? '複製' : 'Copy'}
                     </button>
                   </div>
-                </div>
-
-                {/* LINE Share Button */}
-                <a
+                </div>                <a
                   href={`https://line.me/R/msg/text/?${encodeURIComponent(
                     `${t('language') === 'zh' ? '🎁 我分享了一張優惠券給你！\n' : '🎁 I shared a coupon with you!\n'}${shareLink.claimUrl}`
                   )}`}
@@ -2747,10 +2635,7 @@ function Profile() {
                   }}
                 >
                   💬 {t('language') === 'zh' ? '透過 LINE 分享給新朋友' : 'Share via LINE to New Friends'}
-                </a>
-
-                {/* Expiry Info */}
-                <div style={{
+                </a>                <div style={{
                   background: '#fff3cd',
                   border: '1px solid #ffc107',
                   borderRadius: '8px',
@@ -2762,10 +2647,7 @@ function Profile() {
                       ? `此分享連結將於 ${new Date(shareLink.expiresAt).toLocaleDateString('zh-TW')} 過期`
                       : `This share link expires on ${new Date(shareLink.expiresAt).toLocaleDateString('en-US')}`}
                   </p>
-                </div>
-
-                {/* Instructions */}
-                <div style={{
+                </div>                <div style={{
                   background: '#e7f3ff',
                   border: '1px solid #b3d9ff',
                   borderRadius: '8px',

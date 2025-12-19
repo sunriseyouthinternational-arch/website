@@ -21,7 +21,6 @@ function AdminDashboard() {
   const [selectedTeacher, setSelectedTeacher] = useState(null);
   const [selectedClassInfo, setSelectedClassInfo] = useState(null);
 
-  // Form states for adding new class info
   const [showAddClassInfoForm, setShowAddClassInfoForm] = useState(false);
   const [newClassInfo, setNewClassInfo] = useState({
     name: '',
@@ -31,7 +30,6 @@ function AdminDashboard() {
     banner: ''
   });
 
-  // Form states for adding new host class
   const [showAddClassForm, setShowAddClassForm] = useState(false);
   const [newClass, setNewClass] = useState({
     classInfoId: '',
@@ -42,7 +40,6 @@ function AdminDashboard() {
     location: ''
   });
 
-  // Form states for adding new activity
   const [showAddActivityForm, setShowAddActivityForm] = useState(false);
   const [newActivity, setNewActivity] = useState({
     name: '',
@@ -57,7 +54,6 @@ function AdminDashboard() {
     banner: ''
   });
 
-  // Form states for adding new teacher
   const [showAddTeacherForm, setShowAddTeacherForm] = useState(false);
   const [newTeacher, setNewTeacher] = useState({
     name: '',
@@ -69,7 +65,6 @@ function AdminDashboard() {
     photo: ''
   });
 
-  // Form states for adding coupons to members
   const [showAddCouponForm, setShowAddCouponForm] = useState(false);
   const [addingCoupon, setAddingCoupon] = useState(false);
   const [deletingCouponId, setDeletingCouponId] = useState(null);
@@ -89,7 +84,6 @@ function AdminDashboard() {
       return;
     }
 
-    // Set axios default header
     axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
     fetchData();
@@ -135,8 +129,6 @@ function AdminDashboard() {
     const file = e.target.files[0];
     if (!file) return;
 
-    // No file size restriction as per user request
-    // Check file type
     if (!file.type.startsWith('image/')) {
       setMessage({
         type: 'error',
@@ -145,7 +137,6 @@ function AdminDashboard() {
       return;
     }
 
-    // Convert to base64
     const reader = new FileReader();
     reader.onloadend = () => {
       setNewClassInfo({ ...newClassInfo, banner: reader.result });
@@ -167,7 +158,6 @@ function AdminDashboard() {
     const file = e.target.files[0];
     if (!file) return;
 
-    // Check file size (max 2MB)
     if (file.size > 2 * 1024 * 1024) {
       setMessage({
         type: 'error',
@@ -176,7 +166,6 @@ function AdminDashboard() {
       return;
     }
 
-    // Check file type
     if (!file.type.startsWith('image/')) {
       setMessage({
         type: 'error',
@@ -185,7 +174,6 @@ function AdminDashboard() {
       return;
     }
 
-    // Validate image dimensions (should be 500x300)
     const img = new Image();
     const reader = new FileReader();
 
@@ -249,7 +237,6 @@ function AdminDashboard() {
   const handleAddClass = async (e) => {
     e.preventDefault();
 
-    // Validate time input
     const timeParts = newClass.time.split(/[:\s-]+/);
     if (timeParts.length !== 4) {
       setMessage({
@@ -264,7 +251,6 @@ function AdminDashboard() {
     const endHour = parseInt(timeParts[2]);
     const endMin = parseInt(timeParts[3]);
 
-    // Check for invalid numbers
     if (isNaN(startHour) || isNaN(startMin) || isNaN(endHour) || isNaN(endMin)) {
       setMessage({
         type: 'error',
@@ -273,7 +259,6 @@ function AdminDashboard() {
       return;
     }
 
-    // Check time ranges
     if (startHour < 0 || startHour > 23 || endHour < 0 || endHour > 23) {
       setMessage({
         type: 'error',
@@ -290,11 +275,9 @@ function AdminDashboard() {
       return;
     }
 
-    // Convert to minutes for comparison
     const startTotalMin = startHour * 60 + startMin;
     const endTotalMin = endHour * 60 + endMin;
 
-    // Check if end time is after start time
     if (endTotalMin <= startTotalMin) {
       setMessage({
         type: 'error',
@@ -303,7 +286,6 @@ function AdminDashboard() {
       return;
     }
 
-    // Check if duration is reasonable (at least 15 minutes, max 12 hours)
     const duration = endTotalMin - startTotalMin;
     if (duration < 15) {
       setMessage({
@@ -321,7 +303,6 @@ function AdminDashboard() {
       return;
     }
 
-    // Format time properly
     const formattedTime = `${String(startHour).padStart(2, '0')}:${String(startMin).padStart(2, '0')} - ${String(endHour).padStart(2, '0')}:${String(endMin).padStart(2, '0')}`;
 
     try {
@@ -343,7 +324,6 @@ function AdminDashboard() {
         location: ''
       });
 
-      // Refresh only classes instead of all data
       const classesRes = await axios.get('/api/classes');
       setClasses(classesRes.data.classes);
     } catch (error) {
@@ -355,7 +335,6 @@ function AdminDashboard() {
   const handleAddActivity = async (e) => {
     e.preventDefault();
 
-    // Validate time input
     const timeParts = newActivity.time.split(/[:\s-]+/);
     if (timeParts.length !== 4) {
       setMessage({
@@ -370,7 +349,6 @@ function AdminDashboard() {
     const endHour = parseInt(timeParts[2]);
     const endMin = parseInt(timeParts[3]);
 
-    // Check for invalid numbers
     if (isNaN(startHour) || isNaN(startMin) || isNaN(endHour) || isNaN(endMin)) {
       setMessage({
         type: 'error',
@@ -379,7 +357,6 @@ function AdminDashboard() {
       return;
     }
 
-    // Check time ranges
     if (startHour < 0 || startHour > 23 || endHour < 0 || endHour > 23) {
       setMessage({
         type: 'error',
@@ -396,11 +373,9 @@ function AdminDashboard() {
       return;
     }
 
-    // Convert to minutes for comparison
     const startTotalMin = startHour * 60 + startMin;
     const endTotalMin = endHour * 60 + endMin;
 
-    // Check if end time is after start time
     if (endTotalMin <= startTotalMin) {
       setMessage({
         type: 'error',
@@ -409,7 +384,6 @@ function AdminDashboard() {
       return;
     }
 
-    // Check if duration is reasonable (at least 15 minutes, max 12 hours)
     const duration = endTotalMin - startTotalMin;
     if (duration < 15) {
       setMessage({
@@ -427,7 +401,6 @@ function AdminDashboard() {
       return;
     }
 
-    // Format time properly
     const formattedTime = `${String(startHour).padStart(2, '0')}:${String(startMin).padStart(2, '0')} - ${String(endHour).padStart(2, '0')}:${String(endMin).padStart(2, '0')}`;
 
     try {
@@ -471,7 +444,6 @@ function AdminDashboard() {
         text: t('language') === 'zh' ? '課程資訊更新成功' : 'Class info updated successfully'
       });
 
-      // Refresh classInfos
       const classInfosRes = await axios.get('/api/class-info');
       setClassInfos(classInfosRes.data.classInfos);
       setSelectedClassInfo(null);
@@ -487,11 +459,10 @@ function AdminDashboard() {
     }
 
     try {
-      // Optimistically update UI
+
       setClassInfos(prev => prev.filter(ci => ci._id !== id));
       setSelectedClassInfo(null);
 
-      // Then delete on server
       await axios.delete(`/api/class-info?id=${id}`);
 
       setMessage({
@@ -501,7 +472,7 @@ function AdminDashboard() {
     } catch (error) {
       console.error('Error deleting class info:', error);
       setMessage({ type: 'error', text: error.response?.data?.message || t('error') });
-      // Refresh on error to get correct state
+
       const classInfosRes = await axios.get('/api/class-info');
       setClassInfos(classInfosRes.data.classInfos);
     }
@@ -511,7 +482,6 @@ function AdminDashboard() {
     const file = e.target.files[0];
     if (!file) return;
 
-    // Check file size (max 2MB)
     if (file.size > 2 * 1024 * 1024) {
       setMessage({
         type: 'error',
@@ -520,7 +490,6 @@ function AdminDashboard() {
       return;
     }
 
-    // Check file type
     if (!file.type.startsWith('image/')) {
       setMessage({
         type: 'error',
@@ -529,7 +498,6 @@ function AdminDashboard() {
       return;
     }
 
-    // Convert to base64
     const reader = new FileReader();
     reader.onloadend = () => {
       setNewTeacher({ ...newTeacher, photo: reader.result });
@@ -551,8 +519,6 @@ function AdminDashboard() {
     const file = e.target.files[0];
     if (!file) return;
 
-    // No file size restriction as per user request
-    // Check file type
     if (!file.type.startsWith('image/')) {
       setMessage({
         type: 'error',
@@ -561,7 +527,6 @@ function AdminDashboard() {
       return;
     }
 
-    // Convert to base64
     const reader = new FileReader();
     reader.onloadend = () => {
       setSelectedClassInfo({ ...selectedClassInfo, banner: reader.result });
@@ -615,7 +580,6 @@ function AdminDashboard() {
     try {
       const endpoint = type === 'class' ? `/api/classes?id=${id}` : `/api/activities?id=${id}`;
 
-      // Optimistically update UI
       if (type === 'class') {
         setClasses(prev => prev.filter(c => c._id !== id));
       } else {
@@ -623,7 +587,6 @@ function AdminDashboard() {
       }
       setSelectedItem(null);
 
-      // Then delete on server
       await axios.delete(endpoint);
 
       setMessage({
@@ -635,7 +598,7 @@ function AdminDashboard() {
     } catch (error) {
       console.error('Error deleting item:', error);
       setMessage({ type: 'error', text: error.response?.data?.message || t('error') });
-      // Refresh on error to get correct state
+
       fetchData();
     }
   };
@@ -660,7 +623,6 @@ function AdminDashboard() {
     }
   };
 
-  // Coupon handlers
   const handleCouponImageUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -691,7 +653,6 @@ function AdminDashboard() {
   const handleAddCoupon = async (e) => {
     e.preventDefault();
 
-    // Validation
     if (!newCoupon.profileId) {
       setMessage({
         type: 'error',
@@ -710,7 +671,7 @@ function AdminDashboard() {
 
     setAddingCoupon(true);
     try {
-      // Get the selected profile
+
       const selectedProfile = couponProfiles.find(p => p._id === newCoupon.profileId);
 
       if (!selectedProfile) {
@@ -731,7 +692,6 @@ function AdminDashboard() {
         couponData.discountPercent = selectedProfile.discountPercent;
       }
 
-      // Add expiry date if provided
       if (newCoupon.expiryDate) {
         couponData.expiryDate = new Date(newCoupon.expiryDate);
       }
@@ -743,7 +703,6 @@ function AdminDashboard() {
         text: t('language') === 'zh' ? '優惠券添加成功！' : 'Coupon added successfully!'
       });
 
-      // Reset form
       setNewCoupon({
         type: 'trial',
         profileId: '',
@@ -752,7 +711,6 @@ function AdminDashboard() {
       });
       setShowAddCouponForm(false);
 
-      // Refresh member data
       const res = await axios.get(`/api/members?memberId=${selectedMember.memberId}`);
       setSelectedMember(res.data.member);
       fetchData();
@@ -778,7 +736,6 @@ function AdminDashboard() {
         text: t('language') === 'zh' ? '優惠券刪除成功' : 'Coupon deleted successfully'
       });
 
-      // Refresh member data
       const res = await axios.get(`/api/members?memberId=${selectedMember.memberId}`);
       setSelectedMember(res.data.member);
       fetchData();
@@ -798,7 +755,6 @@ function AdminDashboard() {
       setLoadingStates(prev => ({ ...prev, [key]: true }));
       console.log('[Payment Update] Loading state set to true');
 
-      // Optimistically update UI first
       if (type === 'class') {
         setClasses(prev => prev.map(c =>
           c._id === itemId
@@ -825,7 +781,6 @@ function AdminDashboard() {
         console.log('[Payment Update] Updated activities state');
       }
 
-      // Update selected item if viewing details
       if (selectedItem && selectedItem._id === itemId) {
         setSelectedItem(prev => ({
           ...prev,
@@ -836,7 +791,6 @@ function AdminDashboard() {
         console.log('[Payment Update] Updated selectedItem state');
       }
 
-      // Then sync with server
       const resource = type === 'class' ? 'class-payment' : 'activity-payment';
       const idParam = type === 'class' ? 'classId' : 'activityId';
       const endpoint = `/api/admin?resource=${resource}&${idParam}=${itemId}&participantId=${participantId}`;
@@ -850,7 +804,7 @@ function AdminDashboard() {
       console.error('[Payment Update] Error:', error);
       console.error('[Payment Update] Error response:', error.response?.data);
       setMessage({ type: 'error', text: error.response?.data?.message || t('error') });
-      // Refresh on error to get correct state
+
       fetchData();
     } finally {
       setLoadingStates(prev => ({ ...prev, [key]: false }));
@@ -895,10 +849,7 @@ function AdminDashboard() {
 
       {activeTab === 'members' && !selectedMember && (
         <div className="card">
-          <h3>{t('memberManagement')}</h3>
-
-          {/* Member List Table */}
-          <div className="table-container">
+          <h3>{t('memberManagement')}</h3>          <div className="table-container">
             <table className="data-table">
               <thead>
                 <tr>
@@ -1030,10 +981,7 @@ function AdminDashboard() {
                 </table>
               </div>
             </div>
-          )}
-
-          {/* Coupon Management Section */}
-          <div className="detail-section" style={{ marginTop: '30px' }}>
+          )}          <div className="detail-section" style={{ marginTop: '30px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
               <h4 style={{ margin: 0 }}>{t('language') === 'zh' ? '優惠券管理' : 'Coupon Management'}</h4>
               <button
@@ -1160,10 +1108,7 @@ function AdminDashboard() {
                     : (t('language') === 'zh' ? '添加優惠券' : 'Add Coupon')}
                 </button>
               </form>
-            )}
-
-            {/* Display existing coupons */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
+            )}            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
               {selectedMember.coupons && selectedMember.coupons.length > 0 ? (
                 selectedMember.coupons.map((coupon, idx) => {
                   const classInfo = coupon.classInfoId ? classInfos.find(c => c._id === coupon.classInfoId) : null;
@@ -1380,10 +1325,7 @@ function AdminDashboard() {
 
       {activeTab === 'items' && !selectedItem && !selectedClassInfo && (
         <div className="card">
-          <h3>{t('language') === 'zh' ? '課程與活動管理' : 'Classes & Activities Management'}</h3>
-
-          {/* Class Info Section */}
-          <div className="items-section" style={{ marginTop: '30px' }}>
+          <h3>{t('language') === 'zh' ? '課程與活動管理' : 'Classes & Activities Management'}</h3>          <div className="items-section" style={{ marginTop: '30px' }}>
             <div className="section-header">
               <h4 style={{ color: '#667eea' }}>
                 {t('classInformation')} ({classInfos.length})
@@ -1437,10 +1379,7 @@ function AdminDashboard() {
                       required
                     />
                   </div>
-                </div>
-
-                {/* Banner Image Upload */}
-                <div className="form-group">
+                </div>                <div className="form-group">
                   <label>{t('language') === 'zh' ? '宣傳圖片 (選填)' : 'Banner Image (Optional)'}</label>
                   <input
                     type="file"
@@ -1492,10 +1431,7 @@ function AdminDashboard() {
                   {t('addClassInfo')}
                 </button>
               </form>
-            )}
-
-            {/* Class Info List */}
-            <div className="items-list" style={{ marginTop: '20px' }}>
+            )}            <div className="items-list" style={{ marginTop: '20px' }}>
               {classInfos.map(classInfo => (
                 <div key={classInfo._id} className="item-summary-card">
                   {classInfo.banner && (
@@ -1524,10 +1460,7 @@ function AdminDashboard() {
                 </div>
               ))}
             </div>
-          </div>
-
-          {/* Host Class Section */}
-          <div className="items-section" style={{ marginTop: '40px' }}>
+          </div>          <div className="items-section" style={{ marginTop: '40px' }}>
             <div className="section-header">
               <h4 style={{ color: '#667eea' }}>
                 {t('hostClasses')} ({classes.length})
@@ -1702,10 +1635,7 @@ function AdminDashboard() {
                   {t('hostClass')}
                 </button>
               </form>
-            )}
-
-            {/* Host Class List */}
-            <div className="items-list" style={{ marginTop: '20px' }}>
+            )}            <div className="items-list" style={{ marginTop: '20px' }}>
               {classes.map(classItem => (
                 <div key={classItem._id} className="item-summary-card">
                   {classItem.classInfoId?.banner && (
@@ -1742,10 +1672,7 @@ function AdminDashboard() {
                 </div>
               ))}
             </div>
-          </div>
-
-          {/* Activities Section */}
-          <div className="items-section" style={{ marginTop: '40px' }}>
+          </div>          <div className="items-section" style={{ marginTop: '40px' }}>
             <div className="section-header">
               <h4 style={{ color: '#667eea' }}>
                 {t('activities')} ({activities.length})
@@ -1930,10 +1857,7 @@ function AdminDashboard() {
                       title="Location Map"
                     />
                   </div>
-                )}
-
-                {/* Banner Image Upload */}
-                <div className="form-group">
+                )}                <div className="form-group">
                   <label>{t('language') === 'zh' ? '宣傳圖片 (選填)' : 'Banner Image (Optional)'}</label>
                   <input
                     type="file"
@@ -1984,10 +1908,7 @@ function AdminDashboard() {
                   {t('language') === 'zh' ? '添加活動' : 'Add Activity'}
                 </button>
               </form>
-            )}
-
-            {/* Activities List */}
-            <div className="items-list" style={{ marginTop: '20px' }}>
+            )}            <div className="items-list" style={{ marginTop: '20px' }}>
               {activities.map(activity => (
                 <div key={activity._id} className="item-summary-card">
                   {activity.banner && (
@@ -2263,10 +2184,7 @@ function AdminDashboard() {
                     onChange={(e) => setNewTeacher({ ...newTeacher, lineId: e.target.value })}
                   />
                 </div>
-              </div>
-
-              {/* Profile Picture Upload */}
-              <div className="form-group">
+              </div>              <div className="form-group">
                 <label>{t('language') === 'zh' ? '個人照片' : 'Profile Picture'}</label>
                 <input
                   type="file"
@@ -2317,10 +2235,7 @@ function AdminDashboard() {
                 {t('language') === 'zh' ? '添加主辦人' : 'Add Host'}
               </button>
             </form>
-          )}
-
-          {/* Teachers List */}
-          <div className="table-container" style={{ marginTop: '30px' }}>
+          )}          <div className="table-container" style={{ marginTop: '30px' }}>
             <table className="data-table">
               <thead>
                 <tr>
