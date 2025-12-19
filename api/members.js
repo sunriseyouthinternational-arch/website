@@ -5,7 +5,7 @@ const line = require('@line/bot-sdk');
 const crypto = require('crypto');
 
 module.exports = async (req, res) => {
-  const { memberId, token, sessionToken, action, couponId } = req.query;
+  const { memberId, lineUserId, token, sessionToken, action, couponId } = req.query;
 
   try {
     await connectDB();
@@ -259,12 +259,19 @@ module.exports = async (req, res) => {
       }
 
       // No session token, normal member lookup
-      // Try to find by memberId first, then by LINE ID
-      let member = await Member.findOne({ memberId });
+      let member;
 
-      if (!member) {
-        // Try searching by LINE ID if not found by member ID
-        member = await Member.findOne({ 'contact.lineId': memberId });
+      // If LINE user ID provided, search by that first (for LIFF login)
+      if (lineUserId) {
+        member = await Member.findOne({ 'line.userId': lineUserId });
+      } else if (memberId) {
+        // Try to find by memberId first, then by LINE ID
+        member = await Member.findOne({ memberId });
+
+        if (!member) {
+          // Try searching by LINE ID if not found by member ID
+          member = await Member.findOne({ 'contact.lineId': memberId });
+        }
       }
 
       if (!member) {

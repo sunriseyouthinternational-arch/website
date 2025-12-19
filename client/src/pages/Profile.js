@@ -61,6 +61,12 @@ function Profile() {
   const [enrollingActivity, setEnrollingActivity] = useState(null);
   const [completingEnrollment, setCompletingEnrollment] = useState(false);
 
+  // LINE Login state
+  const [liffReady, setLiffReady] = useState(false);
+  const [lineUserId, setLineUserId] = useState(null);
+  const [lineProfile, setLineProfile] = useState(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
   // Helper function to get image source (handles both base64 and file paths)
   const getImageSrc = (imagePath) => {
     if (!imagePath) return null;
@@ -233,6 +239,9 @@ function Profile() {
   useEffect(() => {
     fetchClassesAndActivities();
 
+    // Initialize LINE Login (LIFF)
+    initializeLIFF();
+
     // Handle session token from URL
     if (sessionFromUrl && urlMemberId) {
       console.log('Session token found in URL, validating...');
@@ -264,6 +273,96 @@ function Profile() {
       }
     }
   }, [classIdFromUrl, classes]);
+
+  // Fetch member by LINE user ID
+  const fetchMemberByLineId = async (userId) => {
+    setLoading(true);
+    setMessage({ type: '', text: '' });
+
+    try {
+      const response = await axios.get(`/api/members?lineUserId=${userId}`);
+      if (response.data.member) {
+        setMember(response.data.member);
+        setMemberId(response.data.member.memberId);
+        // Update URL to member's ID
+        navigate(`/profile/${response.data.member.memberId}`, { replace: true });
+      } else {
+        throw new Error('Member not found');
+      }
+    } catch (error) {
+      console.error('Failed to fetch member by LINE ID:', error);
+      setMessage({
+        type: 'error',
+        text: t('language') === 'zh'
+          ? '找不到會員資料，請先完成註冊'
+          : 'Member not found, please complete registration first'
+      });
+      setMember(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Initialize LINE Login (LIFF)
+  const initializeLIFF = async () => {
+    const liffId = process.env.REACT_APP_LIFF_ID_PROFILE || process.env.REACT_APP_LIFF_ID;
+
+    // If no LIFF ID configured, fall back to manual login
+    if (!liffId || !window.liff) {
+      console.log('LIFF not configured for profile, using manual login');
+      setLiffReady(false);
+      return;
+    }
+
+    try {
+      await window.liff.init({ liffId });
+      setLiffReady(true);
+
+      if (window.liff.isLoggedIn()) {
+        const profile = await window.liff.getProfile();
+        setLineUserId(profile.userId);
+        setLineProfile(profile);
+        setIsLoggedIn(true);
+
+        // If no member loaded yet and no URL member ID, fetch by LINE user ID
+        if (!member && !urlMemberId) {
+          await fetchMemberByLineId(profile.userId);
+        }
+      } else {
+        setIsLoggedIn(false);
+      }
+    } catch (error) {
+      console.error('LIFF initialization failed:', error);
+      setLiffReady(false);
+    }
+  };
+
+  // Handle LINE Login button click
+  const handleLineLogin = () => {
+    if (window.liff && liffReady) {
+      window.liff.login();
+    } else {
+      setMessage({
+        type: 'error',
+        text: t('language') === 'zh'
+          ? 'LINE 登入未設定，請使用團員編號登入'
+          : 'LINE Login not configured, please use member ID'
+      });
+    }
+  };
+
+  // Handle LINE Logout
+  const handleLineLogout = () => {
+    if (window.liff && window.liff.isLoggedIn()) {
+      window.liff.logout();
+      setIsLoggedIn(false);
+      setLineUserId(null);
+      setLineProfile(null);
+      setMember(null);
+      setMemberId('');
+      navigate('/profile', { replace: true });
+    }
+  };
 
   const fetchMemberById = async (id) => {
     setLoading(true);
@@ -513,24 +612,160 @@ function Profile() {
       </div>
 
       {!member ? (
-        <div className="card">
-          <h3>{t('language') === 'zh' ? '請輸入您的團員編號 / LINE ID' : 'Please enter your member ID / LINE ID'}</h3>
-          <div className="member-id-input">
-            <input
-              type="text"
-              placeholder={t('language') === 'zh' ? '團員編號 / LINE ID' : 'Member ID / LINE ID'}
-              value={memberId}
-              onChange={(e) => setMemberId(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && fetchMember()}
-            />
-            <button onClick={fetchMember} className="btn btn-primary" disabled={loading}>
-              {loading ? t('loading') : t('language') === 'zh' ? '查詢' : 'Search'}
-            </button>
-          </div>
-          {message.text && <div className={`message ${message.type}`}>{message.text}</div>}
+        <div className="card" style={{ textAlign: 'center', padding: '40px 20px' }}>
+          <div style={{ fontSize: '64px', marginBottom: '20px' }}>🔐</div>
+          <h3 style={{ marginBottom: '30px', color: '#333' }}>
+            {t('language') === 'zh' ? '登入您的帳戶' : 'Login to Your Account'}
+          </h3>
+
+          {loading ? (
+            <div style={{ padding: '40px 0' }}>
+              <div style={{ fontSize: '48px', marginBottom: '20px' }}>⏳</div>
+              <p style={{ color: '#667eea', fontSize: '16px' }}>
+                {t('language') === 'zh' ? '載入中...' : 'Loading...'}
+              </p>
+            </div>
+          ) : (
+            <>
+              {/* LINE Login Button */}
+              {liffReady && (
+                <button
+                  onClick={handleLineLogin}
+                  style={{
+                    width: '100%',
+                    maxWidth: '400px',
+                    padding: '16px 24px',
+                    background: '#06C755',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '12px',
+                    fontSize: '18px',
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                    marginBottom: '20px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '12px',
+                    transition: 'all 0.3s ease',
+                    boxShadow: '0 4px 12px rgba(6, 199, 85, 0.3)'
+                  }}
+                  onMouseOver={(e) => {
+                    e.currentTarget.style.background = '#05b34b';
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                    e.currentTarget.style.boxShadow = '0 6px 16px rgba(6, 199, 85, 0.4)';
+                  }}
+                  onMouseOut={(e) => {
+                    e.currentTarget.style.background = '#06C755';
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(6, 199, 85, 0.3)';
+                  }}
+                >
+                  <span style={{ fontSize: '24px' }}>💬</span>
+                  {t('language') === 'zh' ? '使用 LINE 登入' : 'Login with LINE'}
+                </button>
+              )}
+
+              {/* Security notice */}
+              <div style={{
+                background: '#e7f3ff',
+                border: '2px solid #b3d9ff',
+                borderRadius: '8px',
+                padding: '15px',
+                marginTop: liffReady ? '20px' : '0',
+                marginBottom: '20px',
+                maxWidth: '400px',
+                margin: '20px auto'
+              }}>
+                <p style={{ margin: 0, fontSize: '14px', color: '#004085', lineHeight: '1.6' }}>
+                  {t('language') === 'zh'
+                    ? '🔒 安全提示：請使用 LINE 登入以確保帳戶安全。'
+                    : '🔒 Security: Please use LINE Login to ensure account security.'}
+                </p>
+              </div>
+
+              {/* Fallback: Manual Member ID input (collapsed by default) */}
+              <details style={{ maxWidth: '400px', margin: '0 auto', textAlign: 'left' }}>
+                <summary style={{
+                  cursor: 'pointer',
+                  padding: '12px',
+                  background: '#f8f9fa',
+                  borderRadius: '8px',
+                  marginBottom: '10px',
+                  fontSize: '14px',
+                  color: '#666',
+                  listStyle: 'none',
+                  textAlign: 'center'
+                }}>
+                  {t('language') === 'zh' ? '或使用團員編號登入（不安全）' : 'Or login with Member ID (Not Secure)'}
+                </summary>
+                <div style={{ padding: '20px', background: '#fff3cd', borderRadius: '8px', marginTop: '10px' }}>
+                  <p style={{ fontSize: '13px', color: '#856404', marginBottom: '15px' }}>
+                    ⚠️ {t('language') === 'zh'
+                      ? '此方式不安全，建議使用 LINE 登入'
+                      : 'This method is not secure, we recommend using LINE Login'}
+                  </p>
+                  <div className="member-id-input">
+                    <input
+                      type="text"
+                      placeholder={t('language') === 'zh' ? '團員編號' : 'Member ID'}
+                      value={memberId}
+                      onChange={(e) => setMemberId(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && fetchMember()}
+                      style={{
+                        width: '100%',
+                        padding: '10px',
+                        borderRadius: '6px',
+                        border: '1px solid #ccc',
+                        marginBottom: '10px'
+                      }}
+                    />
+                    <button onClick={fetchMember} className="btn btn-secondary" style={{ width: '100%' }}>
+                      {t('language') === 'zh' ? '查詢' : 'Search'}
+                    </button>
+                  </div>
+                </div>
+              </details>
+            </>
+          )}
+
+          {message.text && (
+            <div className={`message ${message.type}`} style={{ marginTop: '20px', maxWidth: '400px', margin: '20px auto 0' }}>
+              {message.text}
+            </div>
+          )}
         </div>
       ) : (
         <>
+          {/* Logout button (only show if logged in via LINE) */}
+          {isLoggedIn && lineUserId && (
+            <div style={{ textAlign: 'right', marginBottom: '15px' }}>
+              <button
+                onClick={handleLineLogout}
+                style={{
+                  padding: '8px 16px',
+                  background: '#f8f9fa',
+                  color: '#666',
+                  border: '1px solid #dee2e6',
+                  borderRadius: '6px',
+                  fontSize: '14px',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease'
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.background = '#e9ecef';
+                  e.currentTarget.style.color = '#495057';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.background = '#f8f9fa';
+                  e.currentTarget.style.color = '#666';
+                }}
+              >
+                🚪 {t('language') === 'zh' ? '登出' : 'Logout'}
+              </button>
+            </div>
+          )}
+
           <div className="profile-tabs">
             <button
               className={`tab-button ${activeTab === 'profile' ? 'active' : ''}`}
