@@ -148,13 +148,45 @@ module.exports = async (req, res) => {
 
       console.log('[API /register] Registration completed for member:', member.memberId);
 
-      // Send welcome message via LINE
+      // Create personalized rich menu and send welcome message
       if (member.line && member.line.userId) {
         try {
           const client = new line.messagingApi.MessagingApiClient({
             channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN
           });
 
+          // Determine base URL
+          const protocol = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split('://')[0] : 'https';
+          const host = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split('://')[1] : 'www.sunriseyouth.org';
+          const baseUrl = `${protocol}://${host}`;
+          const profileUrl = `${baseUrl}/profile/${member.memberId}`;
+
+          // Delete old rich menu if exists
+          if (member.line.richMenuId) {
+            try {
+              await client.unlinkRichMenuFromUser(member.line.userId);
+              await client.deleteRichMenu(member.line.richMenuId);
+            } catch (deleteError) {
+              console.log(`[API /register] Could not delete old rich menu: ${deleteError.message}`);
+            }
+          }
+
+          // Create new personalized rich menu
+          const richMenuId = await createPersonalizedRichMenu(
+            client,
+            member.line.userId,
+            member.memberId,
+            profileUrl,
+            member.line.displayName || member.name
+          );
+
+          // Save rich menu ID
+          member.line.richMenuId = richMenuId;
+          await member.save();
+
+          console.log(`[API /register] Rich menu created successfully: ${richMenuId}`);
+
+          // Send welcome message
           const welcomeMessage = {
             type: 'text',
             text: `🎉 恭喜！註冊完成\n\n您的會員編號：${member.memberId}\n\n現在您可以：\n✨ 報名課程和活動\n📝 編輯個人資料\n🎫 購買和使用優惠券\n🎁 查看積分和獎勵\n\n請點擊下方選單開始使用！`
@@ -166,9 +198,9 @@ module.exports = async (req, res) => {
           });
 
           console.log('[API /register] Welcome message sent to:', member.memberId);
-        } catch (messageError) {
-          console.error('[API /register] Error sending welcome message:', messageError);
-          // Don't fail registration if message sending fails
+        } catch (error) {
+          console.error('[API /register] Error creating rich menu or sending message:', error);
+          // Don't fail registration if rich menu or message fails
         }
       }
 
