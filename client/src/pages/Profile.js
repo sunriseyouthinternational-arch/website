@@ -80,6 +80,14 @@ function Profile() {
   });
   const [submittingRegistration, setSubmittingRegistration] = useState(false);
 
+  // Family member form state (single optional family member)
+  const [familyMember, setFamilyMember] = useState({
+    name: '',
+    englishAlias: '',
+    gender: '男',
+    birthDate: ''
+  });
+
   // Helper function to get image source (handles both base64 and file paths)
   const getImageSrc = (imagePath) => {
     if (!imagePath) return null;
@@ -286,17 +294,12 @@ function Profile() {
       // Member doesn't exist - show registration form
       if (!memberData || needsReg) {
         console.log('[Profile] Member needs to register');
-        console.log('[Profile] Setting LINE ID to:', userId);
         setNeedsRegistration(true);
-        // Pre-fill registration form with LINE display name and user ID
+        // Pre-fill registration form with LINE display name only
         setRegistrationData(prev => {
           const newData = {
             ...prev,
-            name: profile.displayName || '',
-            contact: {
-              ...prev.contact,
-              lineId: userId
-            }
+            name: profile.displayName || ''
           };
           console.log('[Profile] Registration data after update:', newData);
           return newData;
@@ -435,9 +438,17 @@ function Profile() {
     }
 
     try {
+      // Prepare registration data with optional family member
+      const dataToSubmit = { ...registrationData };
+
+      // Only include family member if name is filled
+      if (familyMember.name.trim()) {
+        dataToSubmit.familyMembers = [familyMember];
+      }
+
       const response = await axios.post('/api/members/register', {
         lineUserId,
-        ...registrationData
+        ...dataToSubmit
       });
 
       setMember(response.data.member);
@@ -853,14 +864,23 @@ function Profile() {
 
             <div style={{ marginBottom: '15px' }}>
               <label style={{ display: 'block', marginBottom: '5px', fontWeight: '600' }}>
-                {t('language') === 'zh' ? 'LINE ID（自動偵測）' : 'LINE ID (Auto-detected)'}
+                {t('language') === 'zh' ? 'LINE ID（選填）' : 'LINE ID (Optional)'}
               </label>
               <input
                 type="text"
                 value={registrationData.contact.lineId}
-                readOnly
-                style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ccc', backgroundColor: '#f5f5f5' }}
+                onChange={(e) => setRegistrationData({
+                  ...registrationData,
+                  contact: {...registrationData.contact, lineId: e.target.value}
+                })}
+                placeholder={t('language') === 'zh' ? '請輸入您的 LINE ID' : 'Enter your LINE ID'}
+                style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ccc' }}
               />
+              <small style={{ color: '#666', fontSize: '12px', display: 'block', marginTop: '5px' }}>
+                {t('language') === 'zh'
+                  ? '這是別人用來加您好友的 LINE ID，非必填'
+                  : 'This is the LINE ID others use to add you as a friend'}
+              </small>
             </div>
 
             <div style={{ marginBottom: '15px' }}>
@@ -873,6 +893,68 @@ function Profile() {
                 onChange={(e) => setRegistrationData({...registrationData, referralCode: e.target.value})}
                 style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ccc' }}
               />
+            </div>
+
+            {/* Family Member Section (Optional) */}
+            <div style={{ marginTop: '30px', marginBottom: '20px', padding: '20px', background: '#f8f9ff', borderRadius: '10px', border: '2px dashed #667eea' }}>
+              <h3 style={{ color: '#667eea', marginBottom: '15px', fontSize: '18px' }}>
+                {t('language') === 'zh' ? '家庭成員（選填）' : 'Family Member (Optional)'}
+              </h3>
+              <p style={{ color: '#666', fontSize: '14px', marginBottom: '20px' }}>
+                {t('language') === 'zh'
+                  ? '如有同住家人需要註冊，請填寫以下資料。此欄位為選填，若無則可跳過。'
+                  : 'If you have a family member to register, please fill in the information below. This is optional.'}
+              </p>
+
+              <div style={{ marginBottom: '15px' }}>
+                <label style={{ display: 'block', marginBottom: '5px', fontWeight: '600' }}>
+                  {t('language') === 'zh' ? '姓名' : 'Name'}
+                </label>
+                <input
+                  type="text"
+                  value={familyMember.name}
+                  onChange={(e) => setFamilyMember({...familyMember, name: e.target.value})}
+                  style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ccc' }}
+                />
+              </div>
+
+              <div style={{ marginBottom: '15px' }}>
+                <label style={{ display: 'block', marginBottom: '5px', fontWeight: '600' }}>
+                  {t('language') === 'zh' ? '英文別名' : 'English Alias'}
+                </label>
+                <input
+                  type="text"
+                  value={familyMember.englishAlias}
+                  onChange={(e) => setFamilyMember({...familyMember, englishAlias: e.target.value})}
+                  style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ccc' }}
+                />
+              </div>
+
+              <div style={{ marginBottom: '15px' }}>
+                <label style={{ display: 'block', marginBottom: '5px', fontWeight: '600' }}>
+                  {t('language') === 'zh' ? '性別' : 'Gender'}
+                </label>
+                <select
+                  value={familyMember.gender}
+                  onChange={(e) => setFamilyMember({...familyMember, gender: e.target.value})}
+                  style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ccc' }}
+                >
+                  <option value="男">男 / Male</option>
+                  <option value="女">女 / Female</option>
+                </select>
+              </div>
+
+              <div style={{ marginBottom: '15px' }}>
+                <label style={{ display: 'block', marginBottom: '5px', fontWeight: '600' }}>
+                  {t('language') === 'zh' ? '出生日期' : 'Birth Date'}
+                </label>
+                <input
+                  type="date"
+                  value={familyMember.birthDate}
+                  onChange={(e) => setFamilyMember({...familyMember, birthDate: e.target.value})}
+                  style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ccc' }}
+                />
+              </div>
             </div>
 
             {message.text && (
