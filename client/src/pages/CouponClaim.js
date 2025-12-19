@@ -14,6 +14,12 @@ function CouponClaim() {
   const [liffInitialized, setLiffInitialized] = useState(false);
   const [claiming, setClaiming] = useState(false);
 
+  // Debug: log the token
+  useEffect(() => {
+    console.log('CouponClaim - Token from URL:', token);
+    console.log('CouponClaim - Full URL:', window.location.href);
+  }, [token]);
+
   // Fetch coupon details
   const fetchCouponDetails = async () => {
     try {
@@ -98,6 +104,11 @@ function CouponClaim() {
 
     if (token) {
       initializeLiff();
+    } else {
+      // No token provided, show error
+      setError(t('language') === 'zh' ? '無效的優惠券連結' : 'Invalid coupon link');
+      setStatus('error');
+      setLoading(false);
     }
   }, [token]);
 

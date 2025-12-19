@@ -108,17 +108,6 @@ function Profile() {
     }
   };
 
-  const fetchMember = async () => {
-    if (!memberId) {
-      setMessage({ type: 'error', text: t('language') === 'zh' ? '請輸入團員編號 / LINE ID' : 'Please enter member ID / LINE ID' });
-      return;
-    }
-
-    // Update URL when searching manually
-    navigate(`/profile/${memberId}`);
-    await fetchMemberById(memberId);
-  };
-
   const fetchClassesAndActivities = async () => {
     try {
       const [classesRes, activitiesRes] = await Promise.all([
@@ -679,53 +668,10 @@ function Profile() {
               }}>
                 <p style={{ margin: 0, fontSize: '14px', color: '#004085', lineHeight: '1.6' }}>
                   {t('language') === 'zh'
-                    ? '🔒 安全提示：請使用 LINE 登入以確保帳戶安全。'
-                    : '🔒 Security: Please use LINE Login to ensure account security.'}
+                    ? '🔒 請使用您的 LINE 帳戶登入以存取個人資料。'
+                    : '🔒 Please login with your LINE account to access your profile.'}
                 </p>
               </div>
-
-              {/* Fallback: Manual Member ID input (collapsed by default) */}
-              <details style={{ maxWidth: '400px', margin: '0 auto', textAlign: 'left' }}>
-                <summary style={{
-                  cursor: 'pointer',
-                  padding: '12px',
-                  background: '#f8f9fa',
-                  borderRadius: '8px',
-                  marginBottom: '10px',
-                  fontSize: '14px',
-                  color: '#666',
-                  listStyle: 'none',
-                  textAlign: 'center'
-                }}>
-                  {t('language') === 'zh' ? '或使用團員編號登入（不安全）' : 'Or login with Member ID (Not Secure)'}
-                </summary>
-                <div style={{ padding: '20px', background: '#fff3cd', borderRadius: '8px', marginTop: '10px' }}>
-                  <p style={{ fontSize: '13px', color: '#856404', marginBottom: '15px' }}>
-                    ⚠️ {t('language') === 'zh'
-                      ? '此方式不安全，建議使用 LINE 登入'
-                      : 'This method is not secure, we recommend using LINE Login'}
-                  </p>
-                  <div className="member-id-input">
-                    <input
-                      type="text"
-                      placeholder={t('language') === 'zh' ? '團員編號' : 'Member ID'}
-                      value={memberId}
-                      onChange={(e) => setMemberId(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && fetchMember()}
-                      style={{
-                        width: '100%',
-                        padding: '10px',
-                        borderRadius: '6px',
-                        border: '1px solid #ccc',
-                        marginBottom: '10px'
-                      }}
-                    />
-                    <button onClick={fetchMember} className="btn btn-secondary" style={{ width: '100%' }}>
-                      {t('language') === 'zh' ? '查詢' : 'Search'}
-                    </button>
-                  </div>
-                </div>
-              </details>
             </>
           )}
 
