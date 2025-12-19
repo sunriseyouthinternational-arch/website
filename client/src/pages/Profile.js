@@ -333,15 +333,40 @@ function Profile() {
 
   // Initialize LINE Login (LIFF)
   const initializeLIFF = async () => {
-    const liffId = process.env.REACT_APP_LIFF_ID_PROFILE || process.env.REACT_APP_LIFF_ID;
+    console.log('[Profile] Starting LIFF initialization...');
 
-    if (!liffId || !window.liff) {
-      console.error('[Profile] LIFF not configured! Please set REACT_APP_LIFF_ID_PROFILE');
+    // Check if window.liff is available
+    if (!window.liff) {
+      console.error('[Profile] LIFF SDK not loaded! Waiting for SDK...');
+      // Wait a bit for SDK to load
+      setTimeout(() => {
+        if (window.liff) {
+          console.log('[Profile] LIFF SDK now available, retrying...');
+          initializeLIFF();
+        } else {
+          console.error('[Profile] LIFF SDK still not available after wait');
+          setMessage({
+            type: 'error',
+            text: t('language') === 'zh'
+              ? 'LINE SDK 載入失敗，請重新整理頁面'
+              : 'LINE SDK failed to load, please refresh the page'
+          });
+          setLoading(false);
+        }
+      }, 1000);
+      return;
+    }
+
+    const liffId = process.env.REACT_APP_LIFF_ID_PROFILE || process.env.REACT_APP_LIFF_ID;
+    console.log('[Profile] LIFF ID:', liffId);
+
+    if (!liffId) {
+      console.error('[Profile] LIFF ID not configured!');
       setMessage({
         type: 'error',
         text: t('language') === 'zh'
-          ? '系統設定錯誤，請聯繫管理員'
-          : 'System configuration error, please contact administrator'
+          ? '系統設定錯誤 (缺少 LIFF ID)，請聯繫管理員'
+          : 'System configuration error (missing LIFF ID), please contact administrator'
       });
       setLoading(false);
       return;
@@ -350,11 +375,15 @@ function Profile() {
     try {
       console.log('[Profile] Initializing LIFF with ID:', liffId);
       await window.liff.init({ liffId });
+      console.log('[Profile] LIFF initialized successfully');
       setLiffReady(true);
 
-      if (window.liff.isLoggedIn()) {
+      const isLoggedIn = window.liff.isLoggedIn();
+      console.log('[Profile] Login status:', isLoggedIn);
+
+      if (isLoggedIn) {
         const profile = await window.liff.getProfile();
-        console.log('[Profile] User logged in:', profile.displayName);
+        console.log('[Profile] User logged in:', profile.displayName, 'ID:', profile.userId);
         setLineUserId(profile.userId);
         setLineProfile(profile);
         setIsLoggedIn(true);
@@ -367,11 +396,12 @@ function Profile() {
       }
     } catch (error) {
       console.error('[Profile] LIFF initialization failed:', error);
+      console.error('[Profile] Error details:', error.message, error.stack);
       setMessage({
         type: 'error',
         text: t('language') === 'zh'
-          ? 'LINE 登入失敗，請重新整理頁面'
-          : 'LINE login failed, please refresh the page'
+          ? `LINE 登入失敗：${error.message || '未知錯誤'}`
+          : `LINE login failed: ${error.message || 'Unknown error'}`
       });
       setLoading(false);
     }
@@ -1982,7 +2012,39 @@ function Profile() {
             </div>
           )}
         </>
-      ) : null}
+      ) : (
+        /* Fallback: Show error message if something went wrong */
+        <div className="card" style={{ textAlign: 'center', padding: '60px 20px' }}>
+          <div style={{ fontSize: '64px', marginBottom: '20px' }}>⚠️</div>
+          <h3 style={{ color: '#667eea', marginBottom: '15px' }}>
+            {t('language') === 'zh' ? '載入失敗' : 'Failed to Load'}
+          </h3>
+          {message.text && (
+            <div className={`message ${message.type}`} style={{ marginBottom: '20px' }}>
+              {message.text}
+            </div>
+          )}
+          <p style={{ color: '#666', fontSize: '14px', marginBottom: '20px' }}>
+            {t('language') === 'zh'
+              ? '請重新整理頁面或聯繫管理員'
+              : 'Please refresh the page or contact administrator'}
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            style={{
+              padding: '12px 24px',
+              background: '#667eea',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontSize: '16px'
+            }}
+          >
+            {t('language') === 'zh' ? '重新整理' : 'Refresh Page'}
+          </button>
+        </div>
+      )}
 
       {/* Checkout Modal */}
       {showCheckout && checkoutData && (
