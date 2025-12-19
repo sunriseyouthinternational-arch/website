@@ -7,14 +7,12 @@ import './AdminDashboard.css';
 function AdminDashboard() {
   const { t } = useLanguage();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState('members');
   const [members, setMembers] = useState([]);
   const [classes, setClasses] = useState([]);
   const [classInfos, setClassInfos] = useState([]);
   const [activities, setActivities] = useState([]);
   const [teachers, setTeachers] = useState([]);
-  const [stats, setStats] = useState({});
-  const [referralLeaderboard, setReferralLeaderboard] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingStates, setLoadingStates] = useState({});
   const [message, setMessage] = useState({ type: '', text: '' });
@@ -100,14 +98,12 @@ function AdminDashboard() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [membersRes, classesRes, classInfosRes, activitiesRes, teachersRes, statsRes, leaderboardRes, profilesRes, forSaleRes] = await Promise.all([
+      const [membersRes, classesRes, classInfosRes, activitiesRes, teachersRes, profilesRes, forSaleRes] = await Promise.all([
         axios.get('/api/admin?resource=members'),
         axios.get('/api/classes'),
         axios.get('/api/class-info'),
         axios.get('/api/activities'),
         axios.get('/api/teachers'),
-        axios.get('/api/admin?resource=stats'),
-        axios.get('/api/admin?resource=referral-leaderboard'),
         axios.get('/api/coupon-profiles'),
         axios.get('/api/coupons-for-sale')
       ]);
@@ -117,8 +113,6 @@ function AdminDashboard() {
       setClassInfos(classInfosRes.data.classInfos);
       setActivities(activitiesRes.data.activities);
       setTeachers(teachersRes.data.teachers);
-      setStats(statsRes.data);
-      setReferralLeaderboard(leaderboardRes.data.leaderboard);
       setCouponProfiles(profilesRes.data.profiles);
       setCouponsForSale(forSaleRes.data.coupons);
     } catch (error) {
@@ -126,7 +120,6 @@ function AdminDashboard() {
         localStorage.removeItem('adminToken');
         navigate('/admin');
       }
-      console.error('Error fetching data:', error);
     } finally {
       setLoading(false);
     }
@@ -870,11 +863,6 @@ function AdminDashboard() {
     return new Date(dateString).toLocaleDateString('zh-TW');
   };
 
-  const getMemberReferralCount = (memberId) => {
-    const entry = referralLeaderboard.find(item => item.memberId === memberId);
-    return entry ? entry.referralCount : 0;
-  };
-
   if (loading && members.length === 0) {
     return <div className="container"><div className="loading">{t('loading')}</div></div>;
   }
@@ -891,71 +879,19 @@ function AdminDashboard() {
       {message.text && <div className={`message ${message.type}`}>{message.text}</div>}
 
       <div className="admin-tabs">
-        <button
-          className={`tab-button ${activeTab === 'dashboard' ? 'active' : ''}`}
-          onClick={() => setActiveTab('dashboard')}
-        >
-          {t('dashboard')}
-        </button>
-        <button
-          className={`tab-button ${activeTab === 'members' ? 'active' : ''}`}
-          onClick={() => setActiveTab('members')}
-        >
+        <button className={`tab-button ${activeTab === 'members' ? 'active' : ''}`} onClick={() => setActiveTab('members')}>
           {t('memberManagement')}
         </button>
-        <button
-          className={`tab-button ${activeTab === 'items' ? 'active' : ''}`}
-          onClick={() => setActiveTab('items')}
-        >
+        <button className={`tab-button ${activeTab === 'items' ? 'active' : ''}`} onClick={() => setActiveTab('items')}>
           {t('language') === 'zh' ? '課程與活動' : 'Classes & Activities'}
         </button>
-        <button
-          className={`tab-button ${activeTab === 'teachers' ? 'active' : ''}`}
-          onClick={() => setActiveTab('teachers')}
-        >
+        <button className={`tab-button ${activeTab === 'teachers' ? 'active' : ''}`} onClick={() => setActiveTab('teachers')}>
           {t('language') === 'zh' ? '主辦人管理' : 'Host Management'}
         </button>
-        <button
-          className={`tab-button ${activeTab === 'memberDetail' ? 'active' : ''}`}
-          onClick={() => setActiveTab('members')}
-          style={{ display: 'none' }}
-        >
-          {t('language') === 'zh' ? '會員詳情' : 'Member Details'}
-        </button>
-        <button
-          className={`tab-button ${activeTab === 'itemDetail' ? 'active' : ''}`}
-          onClick={() => setActiveTab('items')}
-          style={{ display: 'none' }}
-        >
-          {t('language') === 'zh' ? '詳細資料' : 'Item Details'}
+        <button className={`tab-button ${activeTab === 'coupons' ? 'active' : ''}`} onClick={() => setActiveTab('coupons')}>
+          {t('language') === 'zh' ? '優惠券管理' : 'Coupon Management'}
         </button>
       </div>
-
-      {activeTab === 'dashboard' && (
-        <div className="dashboard-stats">
-          <div className="stat-card">
-            <div className="stat-icon">👥</div>
-            <div className="stat-info">
-              <h3>{stats.totalMembers || 0}</h3>
-              <p>{t('totalMembers')}</p>
-            </div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-icon">📚</div>
-            <div className="stat-info">
-              <h3>{stats.activeClasses || 0}</h3>
-              <p>{t('activeClasses')}</p>
-            </div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-icon">🎉</div>
-            <div className="stat-info">
-              <h3>{stats.activeActivities || 0}</h3>
-              <p>{t('activeActivities')}</p>
-            </div>
-          </div>
-        </div>
-      )}
 
       {activeTab === 'members' && !selectedMember && (
         <div className="card">
@@ -988,31 +924,6 @@ function AdminDashboard() {
                 ))}
               </tbody>
             </table>
-          </div>
-
-          {/* Referral Leaderboard Box */}
-          <div className="referral-box">
-            <h4>{t('language') === 'zh' ? '推薦排行' : 'Top Referrers'}</h4>
-            {referralLeaderboard.length > 0 ? (
-              <div className="referral-list">
-                {referralLeaderboard.slice(0, 5).map((entry, index) => (
-                  <div key={entry.memberId} className="referral-item">
-                    <span className="referral-rank">
-                      {index === 0 && '🥇'}
-                      {index === 1 && '🥈'}
-                      {index === 2 && '🥉'}
-                      {index > 2 && `#${index + 1}`}
-                    </span>
-                    <span className="referral-name">{entry.name} ({entry.memberId})</span>
-                    <span className="referral-count">{entry.referralCount}</span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p style={{ textAlign: 'center', color: '#666', padding: '20px' }}>
-                {t('language') === 'zh' ? '目前沒有推薦記錄' : 'No referrals yet'}
-              </p>
-            )}
           </div>
         </div>
       )}
@@ -1076,15 +987,7 @@ function AdminDashboard() {
               </div>
               <div className="detail-row">
                 <strong>{t('yourReferralCode')}:</strong>
-                <span style={{ fontWeight: 'bold', color: '#1971c2' }}>
-                  {selectedMember.referralCode || 'N/A'}
-                </span>
-              </div>
-              <div className="detail-row">
-                <strong>{t('language') === 'zh' ? '已推薦人數' : 'Referrals'}:</strong>
-                <span style={{ fontWeight: 'bold', color: '#2b8a3e' }}>
-                  {getMemberReferralCount(selectedMember.memberId)}
-                </span>
+                <span>{selectedMember.referralCode || 'N/A'}</span>
               </div>
               <div className="detail-row">
                 <strong>{t('language') === 'zh' ? '報名項目' : 'Enrollments'}:</strong>
