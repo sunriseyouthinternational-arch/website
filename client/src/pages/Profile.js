@@ -1982,7 +1982,7 @@ function Profile() {
             </div>
           )}
         </>
-      )}
+      ) : null}
 
       {/* Checkout Modal */}
       {showCheckout && checkoutData && (
