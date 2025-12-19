@@ -65,6 +65,16 @@ module.exports = async (req, res) => {
 
       console.log('[API /register] Completing registration for userId:', userId);
 
+      // Server-side validation for phone number
+      if (contact && contact.mobile) {
+        const phoneNumber = contact.mobile.replace(/\D/g, ''); // Remove non-digits
+        if (phoneNumber.length < 9 || phoneNumber.length > 10) {
+          return res.status(400).json({
+            message: '請輸入有效的台灣手機號碼（9-10位數字） / Please enter a valid Taiwan phone number (9-10 digits)'
+          });
+        }
+      }
+
       let member = await Member.findOne({ 'line.userId': userId });
 
       // If member doesn't exist, create new one

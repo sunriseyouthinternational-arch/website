@@ -112,7 +112,7 @@ async function handleFollowEvent(event) {
     console.log('[handleFollowEvent] Checking if user exists...');
     const member = await Member.findOne({ 'line.userId': lineUserId });
 
-    const baseUrl = process.env.FRONTEND_URL || 'https://sunriseyouth.org';
+    const baseUrl = process.env.FRONTEND_URL || 'https://www.sunriseyouth.org';
 
     if (member) {
       console.log('[handleFollowEvent] Existing member re-followed:', member.memberId);

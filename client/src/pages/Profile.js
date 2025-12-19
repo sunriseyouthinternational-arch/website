@@ -286,16 +286,21 @@ function Profile() {
       // Member doesn't exist - show registration form
       if (!memberData || needsReg) {
         console.log('[Profile] Member needs to register');
+        console.log('[Profile] Setting LINE ID to:', userId);
         setNeedsRegistration(true);
         // Pre-fill registration form with LINE display name and user ID
-        setRegistrationData(prev => ({
-          ...prev,
-          name: profile.displayName || '',
-          contact: {
-            ...prev.contact,
-            lineId: userId
-          }
-        }));
+        setRegistrationData(prev => {
+          const newData = {
+            ...prev,
+            name: profile.displayName || '',
+            contact: {
+              ...prev.contact,
+              lineId: userId
+            }
+          };
+          console.log('[Profile] Registration data after update:', newData);
+          return newData;
+        });
         setLoading(false);
         return;
       }
