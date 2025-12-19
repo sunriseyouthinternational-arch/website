@@ -214,6 +214,38 @@ couponShareTokenSchema.index({ senderMemberId: 1 });
 couponShareTokenSchema.index({ status: 1 });
 couponShareTokenSchema.index({ expiresAt: 1 });
 
+// Coupon Profile Schema - Template for coupons
+const couponProfileSchema = new mongoose.Schema({
+  type: { type: String, enum: ['trial', 'discount'], required: true },
+  classInfoId: { type: mongoose.Schema.Types.ObjectId, ref: 'ClassInfo' }, // Required for trial coupons
+  discountPercent: { type: Number }, // Required for discount coupons
+  name: { type: String, required: true },
+  description: { type: String },
+  image: { type: String }, // Base64 or file path
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+});
+
+couponProfileSchema.pre('save', function(next) {
+  this.updatedAt = Date.now();
+  next();
+});
+
+// Coupon For Sale Schema - Coupons available for purchase
+const couponForSaleSchema = new mongoose.Schema({
+  couponProfileId: { type: mongoose.Schema.Types.ObjectId, ref: 'CouponProfile', required: true },
+  price: { type: Number, required: true }, // Price in currency
+  stock: { type: Number, default: -1 }, // -1 = unlimited, >= 0 = limited stock
+  active: { type: Boolean, default: true }, // Can be deactivated
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+});
+
+couponForSaleSchema.pre('save', function(next) {
+  this.updatedAt = Date.now();
+  next();
+});
+
 // Export models
 module.exports = {
   Admin: mongoose.models.Admin || mongoose.model('Admin', adminSchema),
@@ -222,5 +254,7 @@ module.exports = {
   Class: mongoose.models.Class || mongoose.model('Class', classSchema),
   Activity: mongoose.models.Activity || mongoose.model('Activity', activitySchema),
   Teacher: mongoose.models.Teacher || mongoose.model('Teacher', teacherSchema),
-  CouponShareToken: mongoose.models.CouponShareToken || mongoose.model('CouponShareToken', couponShareTokenSchema)
+  CouponShareToken: mongoose.models.CouponShareToken || mongoose.model('CouponShareToken', couponShareTokenSchema),
+  CouponProfile: mongoose.models.CouponProfile || mongoose.model('CouponProfile', couponProfileSchema),
+  CouponForSale: mongoose.models.CouponForSale || mongoose.model('CouponForSale', couponForSaleSchema)
 };

@@ -86,6 +86,25 @@ function AdminDashboard() {
     expiryDate: ''
   });
 
+  // Coupon Management states
+  const [couponProfiles, setCouponProfiles] = useState([]);
+  const [couponsForSale, setCouponsForSale] = useState([]);
+  const [showAddProfileForm, setShowAddProfileForm] = useState(false);
+  const [showAddForSaleForm, setShowAddForSaleForm] = useState(false);
+  const [newProfile, setNewProfile] = useState({
+    type: 'trial',
+    classInfoId: '',
+    discountPercent: '',
+    name: '',
+    description: '',
+    image: ''
+  });
+  const [newForSale, setNewForSale] = useState({
+    couponProfileId: '',
+    price: '',
+    stock: -1
+  });
+
   useEffect(() => {
     const token = localStorage.getItem('adminToken');
     if (!token) {
@@ -102,14 +121,16 @@ function AdminDashboard() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [membersRes, classesRes, classInfosRes, activitiesRes, teachersRes, statsRes, leaderboardRes] = await Promise.all([
+      const [membersRes, classesRes, classInfosRes, activitiesRes, teachersRes, statsRes, leaderboardRes, profilesRes, forSaleRes] = await Promise.all([
         axios.get('/api/admin?resource=members'),
         axios.get('/api/classes'),
         axios.get('/api/class-info'),
         axios.get('/api/activities'),
         axios.get('/api/teachers'),
         axios.get('/api/admin?resource=stats'),
-        axios.get('/api/admin?resource=referral-leaderboard')
+        axios.get('/api/admin?resource=referral-leaderboard'),
+        axios.get('/api/coupon-profiles'),
+        axios.get('/api/coupons-for-sale')
       ]);
 
       setMembers(membersRes.data.members);
@@ -119,6 +140,8 @@ function AdminDashboard() {
       setTeachers(teachersRes.data.teachers);
       setStats(statsRes.data);
       setReferralLeaderboard(leaderboardRes.data.leaderboard);
+      setCouponProfiles(profilesRes.data.profiles);
+      setCouponsForSale(forSaleRes.data.coupons);
     } catch (error) {
       if (error.response?.status === 401) {
         localStorage.removeItem('adminToken');
@@ -961,6 +984,12 @@ function AdminDashboard() {
           onClick={() => setActiveTab('teachers')}
         >
           {t('language') === 'zh' ? '主辦人管理' : 'Host Management'}
+        </button>
+        <button
+          className={`tab-button ${activeTab === 'coupons' ? 'active' : ''}`}
+          onClick={() => setActiveTab('coupons')}
+        >
+          {t('language') === 'zh' ? '優惠券管理' : 'Coupon Management'}
         </button>
         <button
           className={`tab-button ${activeTab === 'memberDetail' ? 'active' : ''}`}
@@ -2590,6 +2619,405 @@ function AdminDashboard() {
                 <span>{selectedTeacher.lineId || 'N/A'}</span>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Coupon Management Tab */}
+      {activeTab === 'coupons' && (
+        <div className="card">
+          <div className="section-header">
+            <h3>{t('language') === 'zh' ? '優惠券管理' : 'Coupon Management'}</h3>
+          </div>
+
+          <div style={{ marginBottom: '40px' }}>
+            <h4 style={{ marginBottom: '20px', color: '#667eea' }}>
+              {t('language') === 'zh' ? '優惠券資訊模板' : 'Coupon Information Profiles'}
+            </h4>
+            <p style={{ color: '#666', marginBottom: '20px', fontSize: '14px' }}>
+              {t('language') === 'zh'
+                ? '創建優惠券模板，可在「販售優惠券」和「會員管理」中使用。體驗券將使用此處上傳的圖片，不再自動使用課程橫幅。'
+                : 'Create coupon templates to use in "Coupons For Sale" and "Member Management". Trial coupons will use the image uploaded here instead of the class banner.'}
+            </p>
+
+            <button
+              onClick={() => setShowAddProfileForm(!showAddProfileForm)}
+              className="btn btn-primary"
+              style={{ marginBottom: '20px' }}
+            >
+              {showAddProfileForm
+                ? (t('language') === 'zh' ? '取消' : 'Cancel')
+                : (t('language') === 'zh' ? '+ 新增優惠券模板' : '+ Add Coupon Profile')}
+            </button>
+
+            {showAddProfileForm && (
+              <div style={{ padding: '20px', background: '#f8f9ff', borderRadius: '8px', marginBottom: '20px', border: '2px solid #667eea' }}>
+                <h5 style={{ marginBottom: '15px', color: '#667eea' }}>
+                  {t('language') === 'zh' ? '創建優惠券模板' : 'Create Coupon Profile'}
+                </h5>
+
+                <div style={{ marginBottom: '15px' }}>
+                  <label style={{ display: 'block', marginBottom: '5px', fontWeight: '600' }}>
+                    {t('language') === 'zh' ? '優惠券類型 *' : 'Coupon Type *'}
+                  </label>
+                  <select
+                    value={newProfile.type}
+                    onChange={(e) => setNewProfile({...newProfile, type: e.target.value, classInfoId: '', discountPercent: ''})}
+                    style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ccc' }}
+                  >
+                    <option value="trial">{t('language') === 'zh' ? '體驗券' : 'Trial Coupon'}</option>
+                    <option value="discount">{t('language') === 'zh' ? '折扣券' : 'Discount Coupon'}</option>
+                  </select>
+                </div>
+
+                {newProfile.type === 'trial' && (
+                  <div style={{ marginBottom: '15px' }}>
+                    <label style={{ display: 'block', marginBottom: '5px', fontWeight: '600' }}>
+                      {t('language') === 'zh' ? '選擇課程 *' : 'Select Class *'}
+                    </label>
+                    <select
+                      value={newProfile.classInfoId}
+                      onChange={(e) => {
+                        const classInfo = classInfos.find(c => c._id === e.target.value);
+                        setNewProfile({
+                          ...newProfile,
+                          classInfoId: e.target.value,
+                          name: classInfo ? `${classInfo.name} ${t('language') === 'zh' ? '體驗券' : 'Trial Coupon'}` : '',
+                          description: classInfo ? `${t('language') === 'zh' ? '此券可用於體驗' : 'This coupon can be used for a trial'} ${classInfo.name} ${t('language') === 'zh' ? '課程' : 'class'}` : ''
+                        });
+                      }}
+                      style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ccc' }}
+                    >
+                      <option value="">{t('language') === 'zh' ? '請選擇課程' : 'Please select a class'}</option>
+                      {classInfos.map(classInfo => (
+                        <option key={classInfo._id} value={classInfo._id}>{classInfo.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {newProfile.type === 'discount' && (
+                  <div style={{ marginBottom: '15px' }}>
+                    <label style={{ display: 'block', marginBottom: '5px', fontWeight: '600' }}>
+                      {t('language') === 'zh' ? '折扣百分比 (%) *' : 'Discount Percentage (%) *'}
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="100"
+                      value={newProfile.discountPercent}
+                      onChange={(e) => setNewProfile({
+                        ...newProfile,
+                        discountPercent: e.target.value,
+                        name: `${t('language') === 'zh' ? '折扣券' : 'Discount Coupon'} ${e.target.value}%`,
+                        description: `${t('language') === 'zh' ? '此券可用於所有課程，享' : 'This coupon can be used for all classes with'} ${e.target.value}% ${t('language') === 'zh' ? '折扣' : 'discount'}`
+                      })}
+                      style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ccc' }}
+                    />
+                  </div>
+                )}
+
+                <div style={{ marginBottom: '15px' }}>
+                  <label style={{ display: 'block', marginBottom: '5px', fontWeight: '600' }}>
+                    {t('language') === 'zh' ? '優惠券名稱 *' : 'Coupon Name *'}
+                  </label>
+                  <input
+                    type="text"
+                    value={newProfile.name}
+                    onChange={(e) => setNewProfile({...newProfile, name: e.target.value})}
+                    style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ccc' }}
+                  />
+                </div>
+
+                <div style={{ marginBottom: '15px' }}>
+                  <label style={{ display: 'block', marginBottom: '5px', fontWeight: '600' }}>
+                    {t('language') === 'zh' ? '優惠券描述' : 'Coupon Description'}
+                  </label>
+                  <textarea
+                    value={newProfile.description}
+                    onChange={(e) => setNewProfile({...newProfile, description: e.target.value})}
+                    style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ccc', minHeight: '80px' }}
+                  />
+                </div>
+
+                <div style={{ marginBottom: '15px' }}>
+                  <label style={{ display: 'block', marginBottom: '5px', fontWeight: '600' }}>
+                    {t('language') === 'zh' ? '優惠券圖片 *' : 'Coupon Image *'}
+                  </label>
+                  <p style={{ fontSize: '12px', color: '#999', marginBottom: '10px' }}>
+                    {t('language') === 'zh'
+                      ? '此圖片將用於所有使用此模板的優惠券（包括體驗券和折扣券）'
+                      : 'This image will be used for all coupons created from this profile (including trial and discount coupons)'}
+                  </p>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files[0];
+                      if (file) {
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                          setNewProfile({...newProfile, image: reader.result});
+                        };
+                        reader.readAsDataURL(file);
+                      }
+                    }}
+                    style={{ width: '100%', padding: '10px' }}
+                  />
+                  {newProfile.image && (
+                    <div style={{ marginTop: '10px' }}>
+                      <img src={newProfile.image} alt="Preview" style={{ maxWidth: '200px', borderRadius: '8px', border: '2px solid #ddd' }} />
+                    </div>
+                  )}
+                </div>
+
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button
+                    onClick={async () => {
+                      if (!newProfile.name) {
+                        setMessage({ type: 'error', text: t('language') === 'zh' ? '請填寫必填欄位' : 'Please fill required fields' });
+                        return;
+                      }
+                      try {
+                        await axios.post('/api/coupon-profiles', newProfile);
+                        setMessage({ type: 'success', text: t('language') === 'zh' ? '優惠券模板創建成功！' : 'Coupon profile created!' });
+                        setShowAddProfileForm(false);
+                        setNewProfile({ type: 'trial', classInfoId: '', discountPercent: '', name: '', description: '', image: '' });
+                        fetchData();
+                      } catch (error) {
+                        setMessage({ type: 'error', text: error.response?.data?.message || t('error') });
+                      }
+                    }}
+                    className="btn btn-primary"
+                  >
+                    {t('language') === 'zh' ? '創建模板' : 'Create Profile'}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowAddProfileForm(false);
+                      setNewProfile({ type: 'trial', classInfoId: '', discountPercent: '', name: '', description: '', image: '' });
+                    }}
+                    className="btn"
+                  >
+                    {t('language') === 'zh' ? '取消' : 'Cancel'}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {couponProfiles.length === 0 ? (
+              <p style={{ textAlign: 'center', color: '#999', padding: '40px' }}>
+                {t('language') === 'zh' ? '尚無優惠券模板' : 'No coupon profiles yet'}
+              </p>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' }}>
+                {couponProfiles.map(profile => (
+                  <div key={profile._id} style={{ border: '2px solid #ddd', borderRadius: '8px', padding: '15px', background: 'white' }}>
+                    {profile.image && (
+                      <img src={profile.image} alt={profile.name} style={{ width: '100%', height: '150px', objectFit: 'cover', borderRadius: '8px', marginBottom: '10px' }} />
+                    )}
+                    <h5 style={{ marginBottom: '5px' }}>{profile.name}</h5>
+                    <p style={{ color: '#666', fontSize: '13px', marginBottom: '10px' }}>{profile.description || 'No description'}</p>
+                    <p style={{ fontSize: '12px', color: '#999', marginBottom: '10px' }}>
+                      {profile.type === 'trial'
+                        ? `${t('language') === 'zh' ? '體驗券' : 'Trial'}: ${profile.classInfoId?.name || 'N/A'}`
+                        : `${t('language') === 'zh' ? '折扣券' : 'Discount'}: ${profile.discountPercent}%`}
+                    </p>
+                    <button
+                      onClick={async () => {
+                        if (window.confirm(t('language') === 'zh' ? '確定要刪除此模板嗎？' : 'Delete this profile?')) {
+                          try {
+                            await axios.delete(`/api/coupon-profiles?profileId=${profile._id}`);
+                            setMessage({ type: 'success', text: t('language') === 'zh' ? '模板刪除成功' : 'Profile deleted' });
+                            fetchData();
+                          } catch (error) {
+                            setMessage({ type: 'error', text: error.response?.data?.message || t('error') });
+                          }
+                        }
+                      }}
+                      className="btn btn-danger"
+                      style={{ width: '100%', fontSize: '13px', padding: '8px' }}
+                    >
+                      🗑️ {t('language') === 'zh' ? '刪除模板' : 'Delete'}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <hr style={{ margin: '40px 0', border: 'none', borderTop: '2px solid #e0e0e0' }} />
+
+          <div>
+            <h4 style={{ marginBottom: '20px', color: '#667eea' }}>
+              {t('language') === 'zh' ? '販售優惠券' : 'Coupons For Sale'}
+            </h4>
+            <p style={{ color: '#666', marginBottom: '20px', fontSize: '14px' }}>
+              {t('language') === 'zh'
+                ? '將優惠券模板上架販售，會員可在「我的優惠券」頁面購買'
+                : 'List coupon profiles for sale - members can purchase them in the "My Coupons" section'}
+            </p>
+
+            <button
+              onClick={() => setShowAddForSaleForm(!showAddForSaleForm)}
+              className="btn btn-primary"
+              style={{ marginBottom: '20px' }}
+            >
+              {showAddForSaleForm
+                ? (t('language') === 'zh' ? '取消' : 'Cancel')
+                : (t('language') === 'zh' ? '+ 上架優惠券' : '+ List Coupon For Sale')}
+            </button>
+
+            {showAddForSaleForm && (
+              <div style={{ padding: '20px', background: '#f8f9ff', borderRadius: '8px', marginBottom: '20px', border: '2px solid #667eea' }}>
+                <h5 style={{ marginBottom: '15px', color: '#667eea' }}>
+                  {t('language') === 'zh' ? '上架販售優惠券' : 'List Coupon For Sale'}
+                </h5>
+
+                <div style={{ marginBottom: '15px' }}>
+                  <label style={{ display: 'block', marginBottom: '5px', fontWeight: '600' }}>
+                    {t('language') === 'zh' ? '選擇優惠券模板 *' : 'Select Coupon Profile *'}
+                  </label>
+                  <select
+                    value={newForSale.couponProfileId}
+                    onChange={(e) => setNewForSale({...newForSale, couponProfileId: e.target.value})}
+                    style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ccc' }}
+                  >
+                    <option value="">{t('language') === 'zh' ? '請選擇模板' : 'Please select a profile'}</option>
+                    {couponProfiles.map(profile => (
+                      <option key={profile._id} value={profile._id}>
+                        {profile.name} - {profile.type === 'trial' ? profile.classInfoId?.name : `${profile.discountPercent}%`}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div style={{ marginBottom: '15px' }}>
+                  <label style={{ display: 'block', marginBottom: '5px', fontWeight: '600' }}>
+                    {t('language') === 'zh' ? '價格 (NTD) *' : 'Price (NTD) *'}
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={newForSale.price}
+                    onChange={(e) => setNewForSale({...newForSale, price: e.target.value})}
+                    placeholder="0"
+                    style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ccc' }}
+                  />
+                </div>
+
+                <div style={{ marginBottom: '15px' }}>
+                  <label style={{ display: 'block', marginBottom: '5px', fontWeight: '600' }}>
+                    {t('language') === 'zh' ? '庫存數量' : 'Stock Quantity'}
+                  </label>
+                  <input
+                    type="number"
+                    value={newForSale.stock}
+                    onChange={(e) => setNewForSale({...newForSale, stock: e.target.value})}
+                    style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ccc' }}
+                  />
+                  <p style={{ fontSize: '12px', color: '#999', marginTop: '5px' }}>
+                    {t('language') === 'zh' ? '設為 -1 表示無限庫存' : 'Set to -1 for unlimited stock'}
+                  </p>
+                </div>
+
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button
+                    onClick={async () => {
+                      if (!newForSale.couponProfileId || !newForSale.price) {
+                        setMessage({ type: 'error', text: t('language') === 'zh' ? '請填寫必填欄位' : 'Please fill required fields' });
+                        return;
+                      }
+                      try {
+                        await axios.post('/api/coupons-for-sale', newForSale);
+                        setMessage({ type: 'success', text: t('language') === 'zh' ? '優惠券上架成功！' : 'Coupon listed!' });
+                        setShowAddForSaleForm(false);
+                        setNewForSale({ couponProfileId: '', price: '', stock: -1 });
+                        fetchData();
+                      } catch (error) {
+                        setMessage({ type: 'error', text: error.response?.data?.message || t('error') });
+                      }
+                    }}
+                    className="btn btn-primary"
+                  >
+                    {t('language') === 'zh' ? '上架販售' : 'List For Sale'}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowAddForSaleForm(false);
+                      setNewForSale({ couponProfileId: '', price: '', stock: -1 });
+                    }}
+                    className="btn"
+                  >
+                    {t('language') === 'zh' ? '取消' : 'Cancel'}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {couponsForSale.length === 0 ? (
+              <p style={{ textAlign: 'center', color: '#999', padding: '40px' }}>
+                {t('language') === 'zh' ? '尚無販售中的優惠券' : 'No coupons for sale yet'}
+              </p>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' }}>
+                {couponsForSale.map(coupon => (
+                  <div key={coupon._id} style={{ border: '2px solid #ddd', borderRadius: '8px', padding: '15px', background: 'white' }}>
+                    {coupon.couponProfileId?.image && (
+                      <img src={coupon.couponProfileId.image} alt={coupon.couponProfileId.name} style={{ width: '100%', height: '150px', objectFit: 'cover', borderRadius: '8px', marginBottom: '10px' }} />
+                    )}
+                    <h5 style={{ marginBottom: '5px' }}>{coupon.couponProfileId?.name}</h5>
+                    <p style={{ color: '#666', fontSize: '13px', marginBottom: '10px' }}>{coupon.couponProfileId?.description || 'No description'}</p>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+                      <p style={{ fontSize: '16px', fontWeight: 'bold', color: '#667eea' }}>
+                        NT$ {coupon.price}
+                      </p>
+                      <p style={{ fontSize: '12px', color: '#999' }}>
+                        {t('language') === 'zh' ? '庫存' : 'Stock'}: {coupon.stock === -1 ? '∞' : coupon.stock}
+                      </p>
+                    </div>
+                    <p style={{ fontSize: '13px', fontWeight: '600', marginBottom: '10px', color: coupon.active ? '#28a745' : '#dc3545' }}>
+                      {coupon.active ? `✓ ${t('language') === 'zh' ? '上架中' : 'Active'}` : `✗ ${t('language') === 'zh' ? '已下架' : 'Inactive'}`}
+                    </p>
+                    <div style={{ display: 'flex', gap: '5px' }}>
+                      <button
+                        onClick={async () => {
+                          try {
+                            await axios.put(`/api/coupons-for-sale?couponId=${coupon._id}`, { active: !coupon.active });
+                            setMessage({ type: 'success', text: t('language') === 'zh' ? '狀態更新成功' : 'Status updated' });
+                            fetchData();
+                          } catch (error) {
+                            setMessage({ type: 'error', text: error.response?.data?.message || t('error') });
+                          }
+                        }}
+                        className="btn"
+                        style={{ flex: 1, fontSize: '13px', padding: '8px' }}
+                      >
+                        {coupon.active ? (t('language') === 'zh' ? '下架' : 'Deactivate') : (t('language') === 'zh' ? '上架' : 'Activate')}
+                      </button>
+                      <button
+                        onClick={async () => {
+                          if (window.confirm(t('language') === 'zh' ? '確定要刪除此販售優惠券嗎？' : 'Delete this listing?')) {
+                            try {
+                              await axios.delete(`/api/coupons-for-sale?couponId=${coupon._id}`);
+                              setMessage({ type: 'success', text: t('language') === 'zh' ? '販售優惠券刪除成功' : 'Listing deleted' });
+                              fetchData();
+                            } catch (error) {
+                              setMessage({ type: 'error', text: error.response?.data?.message || t('error') });
+                            }
+                          }
+                        }}
+                        className="btn btn-danger"
+                        style={{ flex: 1, fontSize: '13px', padding: '8px' }}
+                      >
+                        🗑️ {t('language') === 'zh' ? '刪除' : 'Delete'}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
