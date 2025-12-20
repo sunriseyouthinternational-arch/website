@@ -139,8 +139,23 @@ module.exports = async (req, res) => {
       if (!member) {
         console.log('[Coupon Claim POST] Member not found, creating placeholder with pending token');
 
+        // Generate sequential member ID for placeholder
+        const lastMember = await Member.findOne().sort({ createdAt: -1 }).select('memberId');
+        let nextNumber = 1;
+
+        if (lastMember && lastMember.memberId) {
+          const lastNumber = parseInt(lastMember.memberId.substring(1));
+          if (!isNaN(lastNumber)) {
+            nextNumber = lastNumber + 1;
+          }
+        }
+
+        const newMemberId = `M${nextNumber.toString().padStart(4, '0')}`;
+        console.log('[Coupon Claim POST] Generated placeholder member ID:', newMemberId);
+
         // Create a placeholder member record to store the pending coupon token
         const newMember = new Member({
+          memberId: newMemberId,
           line: {
             userId: lineUserId,
             linkedAt: new Date()
