@@ -274,19 +274,18 @@ function Profile() {
         pictureUrl: profile.pictureUrl
       });
 
-      const { member: memberData, needsRegistration: needsReg } = response.data;
+      const { member: memberData, needsRegistration: needsReg, senderReferralCode } = response.data;
 
       if (!memberData || needsReg) {
         console.log('[Profile] Member needs to register');
+        console.log('[Profile] Sender referral code from API:', senderReferralCode);
         setNeedsRegistration(true);
-
-        const pendingReferralCode = localStorage.getItem('pendingCouponSenderReferral');
 
         setRegistrationData(prev => {
           const newData = {
             ...prev,
             name: profile.displayName || '',
-            referralCode: pendingReferralCode || ''
+            referralCode: senderReferralCode || ''
           };
           console.log('[Profile] Registration data after update:', newData);
           return newData;
@@ -417,15 +416,10 @@ function Profile() {
     }
 
     try {
-      const pendingCouponToken = localStorage.getItem('pendingCouponToken');
       const response = await axios.post('/api/members/register', {
         lineUserId,
-        ...registrationData,
-        pendingCouponToken: pendingCouponToken || undefined
+        ...registrationData
       });
-
-      localStorage.removeItem('pendingCouponToken');
-      localStorage.removeItem('pendingCouponSenderReferral');
 
       setMember(response.data.member);
       setNeedsRegistration(false);

@@ -173,54 +173,11 @@ module.exports = async (req, res) => {
         });
       }
 
-      console.log('[Coupon Claim POST] Adding coupon to member');
-
-      // Add coupon to member
-      member.coupons.push({
-        type: shareToken.couponData.type,
-        classInfoId: shareToken.couponData.classInfoId,
-        discountPercent: shareToken.couponData.discountPercent,
-        name: shareToken.couponData.name,
-        description: shareToken.couponData.description,
-        image: shareToken.couponData.image,
-        expiryDate: shareToken.couponData.expiryDate,
-        quantity: 1,
-        usedCount: 0
-      });
-
-      console.log('[Coupon Claim POST] Decrementing sender coupon');
-
-      // Decrement sender's coupon (sender already looked up above)
-      if (sender) {
-        const senderCoupon = sender.coupons.id(shareToken.senderCouponId);
-        if (senderCoupon) {
-          const remainingUses = senderCoupon.quantity - senderCoupon.usedCount;
-          if (remainingUses === 1) {
-            sender.coupons.pull(shareToken.senderCouponId);
-          } else {
-            senderCoupon.quantity -= 1;
-          }
-          await sender.save();
-        }
-      }
-
-      console.log('[Coupon Claim POST] Marking token as claimed and saving');
-
-      // Mark token as claimed
-      shareToken.status = 'claimed';
-      shareToken.claimedBy = member.memberId;
-      shareToken.claimedAt = new Date();
-      await shareToken.save();
-      await member.save();
-
-      console.log('[Coupon Claim POST] Claim successful');
-
-      return res.status(200).json({
-        success: true,
-        message: '優惠券領取成功！ / Coupon claimed successfully!',
-        coupon: shareToken.couponData,
-        senderName: shareToken.senderName,
-        memberName: member.name
+      // Member is already registered - coupons can only be shared to new members
+      console.log('[Coupon Claim POST] Member already registered, rejecting claim');
+      return res.status(400).json({
+        message: '優惠券只能分享給新會員 / Coupons can only be shared to new members',
+        alreadyRegistered: true
       });
     }
 

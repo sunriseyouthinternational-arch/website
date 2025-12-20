@@ -133,13 +133,6 @@ async function handleFollowEvent(event) {
     console.log('[handleFollowEvent] New user, sending welcome message');
     const profile = await client.getProfile(lineUserId);
 
-    // Check for pending coupon token
-    const newMember = await Member.findOne({ 'line.userId': lineUserId });
-    console.log('[handleFollowEvent] Checking for pending coupon:', {
-      hasMember: !!newMember,
-      hasPendingToken: !!newMember?.pendingCouponToken
-    });
-
     await client.pushMessage({
       to: lineUserId,
       messages: [{
@@ -148,21 +141,6 @@ async function handleFollowEvent(event) {
       }]
     });
     console.log('[handleFollowEvent] Welcome message sent');
-
-    // If there's a pending coupon token, send the claim URL
-    if (newMember && newMember.pendingCouponToken) {
-      const claimUrl = `${baseUrl}/claim/${newMember.pendingCouponToken}`;
-      console.log('[handleFollowEvent] Sending coupon claim URL:', claimUrl);
-
-      await client.pushMessage({
-        to: lineUserId,
-        messages: [{
-          type: 'text',
-          text: `🎁 您有一張優惠券待領取！\n\n請點擊以下連結領取優惠券：\n${claimUrl}\n\n領取後即可在個人資料中查看和使用！`
-        }]
-      });
-      console.log('[handleFollowEvent] Coupon claim URL sent');
-    }
   } catch (error) {
     console.error('[handleFollowEvent] Error:', error);
 

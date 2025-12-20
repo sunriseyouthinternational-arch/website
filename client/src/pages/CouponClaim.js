@@ -62,16 +62,17 @@ function CouponClaim() {
     } catch (err) {
       console.error('Auto-claim error:', err);
 
+      // Check if already registered
+      if (err.response?.data?.alreadyRegistered) {
+        setError(err.response.data.message);
+        setStatus('already_registered');
+        setLoading(false);
+      }
       // Check if user needs to complete registration
-      if (err.response?.data?.needsRegistration) {
+      else if (err.response?.data?.needsRegistration) {
         setError(err.response.data.message);
         setStatus('needs_registration');
         setLoading(false);
-
-        // Save sender's referral code for registration autofill
-        if (err.response.data.senderReferralCode) {
-          localStorage.setItem('pendingCouponSenderReferral', err.response.data.senderReferralCode);
-        }
       } else {
         // For other errors, show manual flow
         fetchCouponDetails();
@@ -94,37 +95,27 @@ function CouponClaim() {
           return;
         }
 
-        // IMPORTANT: Save token to localStorage before LIFF processes anything
-        // This prevents losing the token during LIFF login redirect
-        if (token) {
-          localStorage.setItem('pendingCouponToken', token);
-          console.log('Saved coupon token to localStorage:', token);
+        if (!token) {
+          console.error('No token available for claiming');
+          setError(t('language') === 'zh' ? '無效的優惠券連結' : 'Invalid coupon link');
+          setStatus('error');
+          setLoading(false);
+          return;
         }
 
         await window.liff.init({ liffId });
         setLiffInitialized(true);
 
-        // After LIFF init, retrieve token from localStorage if not in URL
-        const actualToken = token || localStorage.getItem('pendingCouponToken');
-        console.log('Token for claiming:', actualToken);
-
-        if (!actualToken) {
-          console.error('No token available for claiming');
-          fetchCouponDetails();
-          return;
-        }
+        console.log('Token for claiming:', token);
 
         // Check if user is logged in to LINE
         if (window.liff.isLoggedIn()) {
           const profile = await window.liff.getProfile();
           console.log('User logged in via LIFF, attempting auto-claim');
-          // Automatically try to claim coupon with the actual token
-          await attemptAutoClaim(profile.userId, actualToken);
-          // Clear the saved token after successful attempt
-          localStorage.removeItem('pendingCouponToken');
+          // Automatically try to claim coupon
+          await attemptAutoClaim(profile.userId, token);
         } else {
           // If not logged in, redirect to LINE login
-          // Token is already saved in localStorage, will be retrieved after redirect
           console.log('User not logged in, redirecting to LINE login');
           window.liff.login();
         }
@@ -132,27 +123,15 @@ function CouponClaim() {
         console.error('LIFF initialization error:', err);
         // Fall back to manual claim flow
         fetchCouponDetails();
-        // Clear any saved token
-        localStorage.removeItem('pendingCouponToken');
       }
     };
 
     if (token) {
       initializeLiff();
     } else {
-      // Check if we have a saved token from previous redirect
-      const savedToken = localStorage.getItem('pendingCouponToken');
-      if (savedToken) {
-        console.log('Found saved token, initializing LIFF');
-        // Update the component state with the saved token
-        // (we can't modify useParams, but we can use it directly in functions)
-        initializeLiff();
-      } else {
-        // No token provided and none saved, show error
-        setError(t('language') === 'zh' ? '無效的優惠券連結' : 'Invalid coupon link');
-        setStatus('error');
-        setLoading(false);
-      }
+      setError(t('language') === 'zh' ? '無效的優惠券連結' : 'Invalid coupon link');
+      setStatus('error');
+      setLoading(false);
     }
   }, [token]);
 
@@ -250,6 +229,48 @@ function CouponClaim() {
     );
   }
 
+  if (status === 'already_registered') {
+    return (
+      <div className="container">
+        <div className="card" style={{ textAlign: 'center', padding: '60px 20px' }}>
+          <div style={{ fontSize: '64px', marginBottom: '20px' }}>ℹ️</div>
+          <h2 style={{ color: '#1971c2', marginBottom: '15px' }}>
+            {t('language') === 'zh' ? '優惠券僅供新會員' : 'Coupons for New Members Only'}
+          </h2>
+          <p style={{ color: '#666', fontSize: '16px', marginBottom: '25px' }}>
+            {error || (t('language') === 'zh'
+              ? '優惠券只能分享給新會員。您已經是會員了！'
+              : 'Coupons can only be shared to new members. You are already a member!')}
+          </p>
+          <a
+            href="/profile"
+            style={{
+              display: 'inline-block',
+              padding: '12px 30px',
+              background: '#667eea',
+              color: 'white',
+              borderRadius: '8px',
+              textDecoration: 'none',
+              fontWeight: 'bold',
+              fontSize: '16px',
+              transition: 'all 0.3s ease'
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.background = '#5568d3';
+              e.currentTarget.style.transform = 'translateY(-2px)';
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.background = '#667eea';
+              e.currentTarget.style.transform = 'translateY(0)';
+            }}
+          >
+            {t('language') === 'zh' ? '前往我的資料' : 'Go to My Profile'}
+          </a>
+        </div>
+      </div>
+    );
+  }
+
   if (status === 'needs_registration') {
     return (
       <div className="container">
@@ -292,8 +313,8 @@ function CouponClaim() {
           </a>
           <p style={{ color: '#999', fontSize: '13px', marginTop: '15px' }}>
             {t('language') === 'zh'
-              ? '註冊完成後，可以回到此頁面自動領取優惠券'
-              : 'After registration, return to this page to automatically claim the coupon'}
+              ? '註冊完成後，優惠券將自動加入您的帳戶'
+              : 'After registration, the coupon will be automatically added to your account'}
           </p>
         </div>
       </div>

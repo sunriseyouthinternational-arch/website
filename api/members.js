@@ -34,14 +34,34 @@ module.exports = async (req, res) => {
         });
       }
 
-      console.log('[API /auth] Found existing member:', member.memberId);
+      console.log('[API /auth] Found existing member:', member.memberId, 'Has pending coupon:', !!member.pendingCouponToken);
 
       // Update LINE profile info in case it changed
       member.line.displayName = displayName;
       member.line.pictureUrl = pictureUrl;
       await member.save();
 
-      return res.status(200).json({ member, needsRegistration: !member.registrationCompleted });
+      // If member has pending coupon, fetch sender's referral code
+      let senderReferralCode = null;
+      if (member.pendingCouponToken) {
+        try {
+          const { CouponShareToken } = require('../db/models');
+          const shareToken = await CouponShareToken.findOne({ token: member.pendingCouponToken });
+          if (shareToken) {
+            const sender = await Member.findOne({ memberId: shareToken.senderMemberId });
+            senderReferralCode = sender?.referralCode || null;
+            console.log('[API /auth] Found sender referral code:', senderReferralCode);
+          }
+        } catch (error) {
+          console.error('[API /auth] Error fetching sender referral:', error);
+        }
+      }
+
+      return res.status(200).json({
+        member,
+        needsRegistration: !member.registrationCompleted,
+        senderReferralCode
+      });
     }
 
     // POST /api/members/register - Complete registration
@@ -54,15 +74,12 @@ module.exports = async (req, res) => {
         birthDate,
         familyMembers,
         contact,
-        referralCode,
-        pendingCouponToken
+        referralCode
       } = req.body;
 
       console.log('[API /register] Received registration data:', {
         userId,
-        name,
-        hasPendingCouponToken: !!pendingCouponToken,
-        pendingCouponToken: pendingCouponToken
+        name
       });
 
       if (!userId) {
@@ -151,14 +168,63 @@ module.exports = async (req, res) => {
       member.contact = contact;
       member.referralCode = generatedCode;
       member.registrationCompleted = true;
+
+      // Check if member has pending coupon and auto-claim it
+      const pendingToken = member.pendingCouponToken;
+      if (pendingToken) {
+        console.log('[API /register] Found pending coupon token, auto-claiming:', pendingToken);
+        try {
+          const { CouponShareToken } = require('../db/models');
+          const shareToken = await CouponShareToken.findOne({ token: pendingToken });
+
+          if (shareToken && shareToken.status === 'pending' && new Date() <= shareToken.expiresAt) {
+            // Add coupon to member
+            member.coupons.push({
+              type: shareToken.couponData.type,
+              classInfoId: shareToken.couponData.classInfoId,
+              discountPercent: shareToken.couponData.discountPercent,
+              name: shareToken.couponData.name,
+              description: shareToken.couponData.description,
+              image: shareToken.couponData.image,
+              expiryDate: shareToken.couponData.expiryDate,
+              quantity: 1,
+              usedCount: 0
+            });
+
+            // Decrement sender's coupon
+            const sender = await Member.findOne({ memberId: shareToken.senderMemberId });
+            if (sender) {
+              const senderCoupon = sender.coupons.id(shareToken.senderCouponId);
+              if (senderCoupon) {
+                const remainingUses = senderCoupon.quantity - senderCoupon.usedCount;
+                if (remainingUses === 1) {
+                  sender.coupons.pull(shareToken.senderCouponId);
+                } else {
+                  senderCoupon.quantity -= 1;
+                }
+                await sender.save();
+              }
+            }
+
+            // Mark token as claimed
+            shareToken.status = 'claimed';
+            shareToken.claimedBy = member.memberId;
+            shareToken.claimedAt = new Date();
+            await shareToken.save();
+
+            console.log('[API /register] Coupon auto-claimed successfully');
+          }
+        } catch (couponError) {
+          console.error('[API /register] Error auto-claiming coupon:', couponError);
+        }
+
+        // Clear pending coupon token
+        member.pendingCouponToken = null;
+      }
+
       await member.save();
 
       console.log('[API /register] Registration completed for member:', member.memberId);
-      console.log('[API /register] Checking LINE message sending:', {
-        hasLineUserId: !!(member.line && member.line.userId),
-        lineUserId: member.line?.userId,
-        pendingCouponToken: pendingCouponToken
-      });
 
       if (member.line && member.line.userId) {
         try {
