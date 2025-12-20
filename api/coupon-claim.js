@@ -12,10 +12,19 @@ module.exports = async (req, res) => {
       const shareToken = await CouponShareToken.findOne({ token }).populate('couponData.classInfoId');
 
       if (!shareToken) {
+        console.log('[Coupon Claim] Token not found:', token);
         return res.status(404).json({
           message: '找不到優惠券 / Coupon not found'
         });
       }
+
+      console.log('[Coupon Claim] Token found:', {
+        token,
+        status: shareToken.status,
+        expiresAt: shareToken.expiresAt,
+        couponExpiryDate: shareToken.couponData.expiryDate,
+        currentDate: new Date()
+      });
 
       // Check if already claimed
       if (shareToken.status === 'claimed') {
@@ -27,6 +36,7 @@ module.exports = async (req, res) => {
 
       // Check if expired (link expiry)
       if (new Date() > shareToken.expiresAt) {
+        console.log('[Coupon Claim] Link expired - expiresAt:', shareToken.expiresAt, 'current:', new Date());
         shareToken.status = 'expired';
         await shareToken.save();
         return res.status(400).json({
@@ -37,6 +47,7 @@ module.exports = async (req, res) => {
 
       // Check if coupon itself is expired
       if (shareToken.couponData.expiryDate && new Date() > new Date(shareToken.couponData.expiryDate)) {
+        console.log('[Coupon Claim] Coupon expired - expiryDate:', shareToken.couponData.expiryDate, 'current:', new Date());
         return res.status(400).json({
           message: '此優惠券已過期 / This coupon has expired',
           status: 'expired'
