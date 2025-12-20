@@ -98,8 +98,8 @@ function AdminDashboard() {
         axios.get('/api/class-info'),
         axios.get('/api/activities'),
         axios.get('/api/teachers'),
-        axios.get('/api/coupon-profiles'),
-        axios.get('/api/coupons-for-sale')
+        axios.get('/api/coupons?resource=profiles'),
+        axios.get('/api/coupons?resource=for-sale')
       ]);
 
       setMembers(membersRes.data.members);

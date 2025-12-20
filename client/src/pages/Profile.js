@@ -153,7 +153,7 @@ function Profile() {
 
   const fetchCouponsForSale = async () => {
     try {
-      const response = await axios.get('/api/coupons-for-sale');
+      const response = await axios.get('/api/coupons?resource=for-sale');
       const activeCoupons = response.data.coupons.filter(c => c.active && (c.stock === -1 || c.stock > 0));
       setCouponsForSale(activeCoupons);
     } catch (error) {
