@@ -137,6 +137,21 @@ module.exports = async (req, res) => {
       console.log('[Coupon Claim POST] Member found:', !!member, 'Sender found:', !!sender);
 
       if (!member) {
+        console.log('[Coupon Claim POST] Member not found, creating placeholder with pending token');
+
+        // Create a placeholder member record to store the pending coupon token
+        const newMember = new Member({
+          line: {
+            userId: lineUserId,
+            linkedAt: new Date()
+          },
+          registrationCompleted: false,
+          pendingCouponToken: claimToken
+        });
+        await newMember.save();
+
+        console.log('[Coupon Claim POST] Placeholder member created with pending token');
+
         return res.status(404).json({
           message: '找不到會員，請先完成註冊 / Member not found, please complete registration first',
           needsRegistration: true,
@@ -145,6 +160,12 @@ module.exports = async (req, res) => {
       }
 
       if (!member.registrationCompleted) {
+        console.log('[Coupon Claim POST] Member exists but not registered, saving pending token');
+
+        // Save pending token to existing member
+        member.pendingCouponToken = claimToken;
+        await member.save();
+
         return res.status(400).json({
           message: '請先完成註冊 / Please complete registration first',
           needsRegistration: true,

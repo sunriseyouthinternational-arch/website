@@ -76,6 +76,7 @@ const memberSchema = new mongoose.Schema({
     expiryDate: { type: Date }, // Optional expiry date
     createdAt: { type: Date, default: Date.now }
   }],
+  pendingCouponToken: { type: String },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });
