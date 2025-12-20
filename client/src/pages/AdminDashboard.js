@@ -78,6 +78,8 @@ function AdminDashboard() {
   const [couponsForSale, setCouponsForSale] = useState([]);
   const [showAddProfileForm, setShowAddProfileForm] = useState(false);
   const [showAddForSaleForm, setShowAddForSaleForm] = useState(false);
+  const [deletingProfileId, setDeletingProfileId] = useState(null);
+  const [deletingForSaleId, setDeletingForSaleId] = useState(null);
   const [newProfile, setNewProfile] = useState({
     type: 'trial',
     classInfoId: '',
@@ -2556,19 +2558,25 @@ function AdminDashboard() {
                     <button
                       onClick={async () => {
                         if (window.confirm(t('language') === 'zh' ? '確定要刪除此模板嗎？' : 'Delete this profile?')) {
+                          setDeletingProfileId(profile._id);
                           try {
                             await axios.delete(`/api/coupons?resource=profiles&profileId=${profile._id}`);
                             setMessage({ type: 'success', text: t('language') === 'zh' ? '模板刪除成功' : 'Profile deleted' });
                             fetchData();
                           } catch (error) {
                             setMessage({ type: 'error', text: error.response?.data?.message || t('error') });
+                          } finally {
+                            setDeletingProfileId(null);
                           }
                         }
                       }}
                       className="btn btn-danger"
+                      disabled={deletingProfileId === profile._id}
                       style={{ width: '100%', fontSize: '13px', padding: '8px' }}
                     >
-                      🗑️ {t('language') === 'zh' ? '刪除模板' : 'Delete'}
+                      {deletingProfileId === profile._id
+                        ? (t('language') === 'zh' ? '⏳ 刪除中...' : '⏳ Deleting...')
+                        : `🗑️ ${t('language') === 'zh' ? '刪除模板' : 'Delete'}`}
                     </button>
                   </div>
                 ))}
@@ -2729,19 +2737,25 @@ function AdminDashboard() {
                       <button
                         onClick={async () => {
                           if (window.confirm(t('language') === 'zh' ? '確定要刪除此販售優惠券嗎？' : 'Delete this listing?')) {
+                            setDeletingForSaleId(coupon._id);
                             try {
                               await axios.delete(`/api/coupons?resource=for-sale&couponId=${coupon._id}`);
                               setMessage({ type: 'success', text: t('language') === 'zh' ? '販售優惠券刪除成功' : 'Listing deleted' });
                               fetchData();
                             } catch (error) {
                               setMessage({ type: 'error', text: error.response?.data?.message || t('error') });
+                            } finally {
+                              setDeletingForSaleId(null);
                             }
                           }
                         }}
                         className="btn btn-danger"
+                        disabled={deletingForSaleId === coupon._id}
                         style={{ flex: 1, fontSize: '13px', padding: '8px' }}
                       >
-                        🗑️ {t('language') === 'zh' ? '刪除' : 'Delete'}
+                        {deletingForSaleId === coupon._id
+                          ? (t('language') === 'zh' ? '⏳ 刪除中...' : '⏳ Deleting...')
+                          : `🗑️ ${t('language') === 'zh' ? '刪除' : 'Delete'}`}
                       </button>
                     </div>
                   </div>

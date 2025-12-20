@@ -144,11 +144,12 @@ module.exports = async (req, res) => {
       member.referralCode = generatedCode;
       member.registrationCompleted = true;
 
+      const pendingToken = member.pendingCouponToken;
+      member.pendingCouponToken = null;
       await member.save();
 
       console.log('[API /register] Registration completed for member:', member.memberId);
 
-      // Send welcome message via LINE
       if (member.line && member.line.userId) {
         try {
           const client = new line.messagingApi.MessagingApiClient({
@@ -168,7 +169,72 @@ module.exports = async (req, res) => {
           console.log('[API /register] Welcome message sent to:', member.memberId);
         } catch (messageError) {
           console.error('[API /register] Error sending welcome message:', messageError);
-          // Don't fail registration if message sending fails
+        }
+      }
+
+      if (pendingToken) {
+        console.log('[API /register] Found pending coupon token, auto-claiming:', pendingToken);
+        try {
+          const { CouponShareToken } = require('../db/models');
+          const shareToken = await CouponShareToken.findOne({ token: pendingToken });
+
+          if (shareToken && shareToken.status === 'pending' && new Date() <= shareToken.expiresAt) {
+            member.coupons.push({
+              type: shareToken.couponData.type,
+              classInfoId: shareToken.couponData.classInfoId,
+              discountPercent: shareToken.couponData.discountPercent,
+              name: shareToken.couponData.name,
+              description: shareToken.couponData.description,
+              image: shareToken.couponData.image,
+              expiryDate: shareToken.couponData.expiryDate,
+              quantity: 1,
+              usedCount: 0
+            });
+
+            const sender = await Member.findOne({ memberId: shareToken.senderMemberId });
+            if (sender) {
+              const senderCoupon = sender.coupons.id(shareToken.senderCouponId);
+              if (senderCoupon) {
+                const remainingUses = senderCoupon.quantity - senderCoupon.usedCount;
+                if (remainingUses === 1) {
+                  sender.coupons.pull(shareToken.senderCouponId);
+                } else {
+                  senderCoupon.quantity -= 1;
+                }
+                await sender.save();
+              }
+            }
+
+            shareToken.status = 'claimed';
+            shareToken.claimedBy = member.memberId;
+            shareToken.claimedAt = new Date();
+            await shareToken.save();
+            await member.save();
+
+            if (member.line && member.line.userId) {
+              try {
+                const client = new line.messagingApi.MessagingApiClient({
+                  channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN
+                });
+
+                const couponMessage = {
+                  type: 'text',
+                  text: `🎁 優惠券已自動領取！\n\n您收到了來自 ${shareToken.senderName} 的優惠券：\n${shareToken.couponData.name}\n\n請到「我的優惠券」查看！`
+                };
+
+                await client.pushMessage({
+                  to: member.line.userId,
+                  messages: [couponMessage]
+                });
+
+                console.log('[API /register] Coupon auto-claimed and notification sent');
+              } catch (msgError) {
+                console.error('[API /register] Error sending coupon notification:', msgError);
+              }
+            }
+          }
+        } catch (couponError) {
+          console.error('[API /register] Error auto-claiming coupon:', couponError);
         }
       }
 
