@@ -58,6 +58,13 @@ module.exports = async (req, res) => {
         pendingCouponToken
       } = req.body;
 
+      console.log('[API /register] Received registration data:', {
+        userId,
+        name,
+        hasPendingCouponToken: !!pendingCouponToken,
+        pendingCouponToken: pendingCouponToken
+      });
+
       if (!userId) {
         return res.status(400).json({
           message: '缺少 LINE 用戶 ID / Missing LINE user ID'
@@ -147,6 +154,11 @@ module.exports = async (req, res) => {
       await member.save();
 
       console.log('[API /register] Registration completed for member:', member.memberId);
+      console.log('[API /register] Checking LINE message sending:', {
+        hasLineUserId: !!(member.line && member.line.userId),
+        lineUserId: member.line?.userId,
+        pendingCouponToken: pendingCouponToken
+      });
 
       if (member.line && member.line.userId) {
         try {
@@ -156,33 +168,39 @@ module.exports = async (req, res) => {
 
           const welcomeText = `🎉 恭喜！註冊完成\n\n您的會員編號：${member.memberId}\n\n現在您可以：\n✨ 報名課程和活動\n📝 編輯個人資料\n🎫 購買和使用優惠券\n🎁 查看積分和獎勵\n\n請點擊下方選單開始使用！`;
 
-          const messages = [{
-            type: 'text',
-            text: welcomeText
-          }];
+          // Send welcome message
+          console.log('[API /register] Sending welcome message to:', member.line.userId);
+          await client.pushMessage({
+            to: member.line.userId,
+            messages: [{
+              type: 'text',
+              text: welcomeText
+            }]
+          });
+          console.log('[API /register] Welcome message sent successfully');
 
           // If there's a pending coupon, send the claim URL as a separate message
           if (pendingCouponToken) {
             const baseUrl = process.env.REACT_APP_API_URL || 'https://www.sunriseyouth.org';
             const claimUrl = `${baseUrl}/claim/${pendingCouponToken}`;
 
-            const couponMessage = {
-              type: 'text',
-              text: `🎁 您有一張優惠券待領取！\n\n請點擊以下連結領取優惠券：\n${claimUrl}\n\n領取後即可在個人資料中查看和使用！`
-            };
-
-            messages.push(couponMessage);
             console.log('[API /register] Sending coupon claim URL:', claimUrl);
+
+            await client.pushMessage({
+              to: member.line.userId,
+              messages: [{
+                type: 'text',
+                text: `🎁 您有一張優惠券待領取！\n\n請點擊以下連結領取優惠券：\n${claimUrl}\n\n領取後即可在個人資料中查看和使用！`
+              }]
+            });
+
+            console.log('[API /register] Coupon claim URL message sent successfully');
+          } else {
+            console.log('[API /register] No pendingCouponToken, skipping coupon message');
           }
-
-          await client.pushMessage({
-            to: member.line.userId,
-            messages
-          });
-
-          console.log('[API /register] Messages sent to:', member.memberId, `(${messages.length} message(s))`);
         } catch (messageError) {
-          console.error('[API /register] Error sending welcome message:', messageError);
+          console.error('[API /register] Error sending LINE message:', messageError);
+          console.error('[API /register] Error details:', messageError.message, messageError.stack);
         }
       }
 
