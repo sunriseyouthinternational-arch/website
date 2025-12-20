@@ -154,28 +154,33 @@ module.exports = async (req, res) => {
             channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN
           });
 
-          let welcomeText = `🎉 恭喜！註冊完成\n\n您的會員編號：${member.memberId}\n\n現在您可以：\n✨ 報名課程和活動\n📝 編輯個人資料\n🎫 購買和使用優惠券\n🎁 查看積分和獎勵`;
+          const welcomeText = `🎉 恭喜！註冊完成\n\n您的會員編號：${member.memberId}\n\n現在您可以：\n✨ 報名課程和活動\n📝 編輯個人資料\n🎫 購買和使用優惠券\n🎁 查看積分和獎勵\n\n請點擊下方選單開始使用！`;
 
+          const messages = [{
+            type: 'text',
+            text: welcomeText
+          }];
+
+          // If there's a pending coupon, send the claim URL as a separate message
           if (pendingCouponToken) {
             const baseUrl = process.env.REACT_APP_API_URL || 'https://www.sunriseyouth.org';
             const claimUrl = `${baseUrl}/claim/${pendingCouponToken}`;
-            welcomeText += `\n\n🎁 您有一張優惠券待領取！\n請點擊以下連結領取：\n${claimUrl}`;
-            console.log('[API /register] Including coupon claim URL in welcome message:', claimUrl);
+
+            const couponMessage = {
+              type: 'text',
+              text: `🎁 您有一張優惠券待領取！\n\n請點擊以下連結領取優惠券：\n${claimUrl}\n\n領取後即可在個人資料中查看和使用！`
+            };
+
+            messages.push(couponMessage);
+            console.log('[API /register] Sending coupon claim URL:', claimUrl);
           }
-
-          welcomeText += `\n\n請點擊下方選單開始使用！`;
-
-          const welcomeMessage = {
-            type: 'text',
-            text: welcomeText
-          };
 
           await client.pushMessage({
             to: member.line.userId,
-            messages: [welcomeMessage]
+            messages
           });
 
-          console.log('[API /register] Welcome message sent to:', member.memberId);
+          console.log('[API /register] Messages sent to:', member.memberId, `(${messages.length} message(s))`);
         } catch (messageError) {
           console.error('[API /register] Error sending welcome message:', messageError);
         }

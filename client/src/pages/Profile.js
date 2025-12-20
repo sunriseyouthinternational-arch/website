@@ -839,6 +839,22 @@ function Profile() {
 
             <div style={{ marginBottom: '15px' }}>
               <label style={{ display: 'block', marginBottom: '5px', fontWeight: '600' }}>
+                {t('language') === 'zh' ? 'LINE ID（選填）' : 'LINE ID (Optional)'}
+              </label>
+              <input
+                type="text"
+                value={registrationData.contact.lineId}
+                onChange={(e) => setRegistrationData({
+                  ...registrationData,
+                  contact: {...registrationData.contact, lineId: e.target.value}
+                })}
+                placeholder={t('language') === 'zh' ? '輸入您的 LINE ID' : 'Enter your LINE ID'}
+                style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ccc' }}
+              />
+            </div>
+
+            <div style={{ marginBottom: '15px' }}>
+              <label style={{ display: 'block', marginBottom: '5px', fontWeight: '600' }}>
                 {t('language') === 'zh' ? '推薦碼（選填）' : 'Referral Code (Optional)'}
               </label>
               <input
