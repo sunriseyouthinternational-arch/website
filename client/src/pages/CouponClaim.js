@@ -284,6 +284,19 @@ function CouponClaim() {
               ? '請先完成註冊才能領取優惠券。'
               : 'Please complete registration before claiming the coupon.')}
           </p>
+          <div style={{
+            background: '#e7f5ff',
+            border: '2px solid #74c0fc',
+            borderRadius: '12px',
+            padding: '20px',
+            marginBottom: '25px'
+          }}>
+            <p style={{ color: '#1971c2', fontSize: '15px', fontWeight: 'bold', margin: 0 }}>
+              {t('language') === 'zh'
+                ? '✨ 完成註冊後，優惠券將自動轉移到您的帳戶，無需再次掃描！'
+                : '✨ After registration, the coupon will be automatically transferred to your account - no need to scan again!'}
+            </p>
+          </div>
           <a
             href={getLineAddFriendUrl()}
             target="_blank"
@@ -311,11 +324,6 @@ function CouponClaim() {
           >
             {t('language') === 'zh' ? '➕ 加入 LINE 並註冊' : '➕ Add LINE & Register'}
           </a>
-          <p style={{ color: '#999', fontSize: '13px', marginTop: '15px' }}>
-            {t('language') === 'zh'
-              ? '註冊完成後，優惠券將自動加入您的帳戶'
-              : 'After registration, the coupon will be automatically added to your account'}
-          </p>
         </div>
       </div>
     );
