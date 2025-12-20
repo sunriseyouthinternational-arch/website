@@ -101,6 +101,13 @@ module.exports = async (req, res) => {
       }
 
       let member = await Member.findOne({ 'line.userId': userId });
+      console.log('[API /register] Member lookup result:', {
+        found: !!member,
+        memberId: member?.memberId,
+        registrationCompleted: member?.registrationCompleted,
+        hasPendingCoupon: !!member?.pendingCouponToken,
+        pendingToken: member?.pendingCouponToken
+      });
 
       // If member doesn't exist, create new one
       if (!member) {
