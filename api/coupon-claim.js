@@ -65,25 +65,38 @@ module.exports = async (req, res) => {
 
     // POST - Automatic coupon claiming via LIFF (with LINE user ID)
     if (req.method === 'POST') {
+      console.log('[Coupon Claim POST] Starting claim process');
       const { token: claimToken, lineUserId } = req.body;
 
       if (!claimToken || !lineUserId) {
+        console.log('[Coupon Claim POST] Missing fields:', { claimToken: !!claimToken, lineUserId: !!lineUserId });
         return res.status(400).json({
           message: '缺少必要欄位 / Missing required fields'
         });
       }
 
+      console.log('[Coupon Claim POST] Looking up token:', claimToken);
+
       // Find the share token
       const shareToken = await CouponShareToken.findOne({ token: claimToken });
 
       if (!shareToken) {
+        console.log('[Coupon Claim POST] Token not found');
         return res.status(404).json({
           message: '找不到優惠券 / Coupon not found'
         });
       }
 
+      console.log('[Coupon Claim POST] Token found:', {
+        status: shareToken.status,
+        expiresAt: shareToken.expiresAt,
+        couponExpiryDate: shareToken.couponData?.expiryDate,
+        senderMemberId: shareToken.senderMemberId
+      });
+
       // Check if already claimed
       if (shareToken.status === 'claimed') {
+        console.log('[Coupon Claim POST] Already claimed');
         return res.status(400).json({
           message: '此優惠券已被領取 / This coupon has already been claimed',
           status: 'claimed'
@@ -92,6 +105,7 @@ module.exports = async (req, res) => {
 
       // Check if expired (link expiry)
       if (new Date() > shareToken.expiresAt) {
+        console.log('[Coupon Claim POST] Link expired');
         shareToken.status = 'expired';
         await shareToken.save();
         return res.status(400).json({
@@ -102,18 +116,25 @@ module.exports = async (req, res) => {
 
       // Check if coupon itself is expired
       if (shareToken.couponData.expiryDate && new Date() > new Date(shareToken.couponData.expiryDate)) {
+        console.log('[Coupon Claim POST] Coupon expired');
         return res.status(400).json({
           message: '此優惠券已過期 / This coupon has expired',
           status: 'expired'
         });
       }
 
+      console.log('[Coupon Claim POST] Looking up member with LINE userId:', lineUserId);
+
       // Find member by LINE user ID
       const member = await Member.findOne({ 'line.userId': lineUserId });
+
+      console.log('[Coupon Claim POST] Looking up sender:', shareToken.senderMemberId);
 
       // Get sender's referral code for registration autofill
       const sender = await Member.findOne({ memberId: shareToken.senderMemberId });
       const senderReferralCode = sender?.referralCode || '';
+
+      console.log('[Coupon Claim POST] Member found:', !!member, 'Sender found:', !!sender);
 
       if (!member) {
         return res.status(404).json({
@@ -131,6 +152,8 @@ module.exports = async (req, res) => {
         });
       }
 
+      console.log('[Coupon Claim POST] Adding coupon to member');
+
       // Add coupon to member
       member.coupons.push({
         type: shareToken.couponData.type,
@@ -144,8 +167,9 @@ module.exports = async (req, res) => {
         usedCount: 0
       });
 
-      // Decrement sender's coupon
-      const sender = await Member.findOne({ memberId: shareToken.senderMemberId });
+      console.log('[Coupon Claim POST] Decrementing sender coupon');
+
+      // Decrement sender's coupon (sender already looked up above)
       if (sender) {
         const senderCoupon = sender.coupons.id(shareToken.senderCouponId);
         if (senderCoupon) {
@@ -159,12 +183,16 @@ module.exports = async (req, res) => {
         }
       }
 
+      console.log('[Coupon Claim POST] Marking token as claimed and saving');
+
       // Mark token as claimed
       shareToken.status = 'claimed';
       shareToken.claimedBy = member.memberId;
       shareToken.claimedAt = new Date();
       await shareToken.save();
       await member.save();
+
+      console.log('[Coupon Claim POST] Claim successful');
 
       return res.status(200).json({
         success: true,
@@ -177,10 +205,12 @@ module.exports = async (req, res) => {
 
     res.status(405).json({ message: 'Method not allowed' });
   } catch (error) {
-    console.error('Coupon claim error:', error);
+    console.error('[Coupon Claim] ERROR:', error);
+    console.error('[Coupon Claim] Stack:', error.stack);
     res.status(500).json({
       message: '服務器錯誤 / Server error',
-      error: error.message
+      error: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 };
