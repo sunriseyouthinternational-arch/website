@@ -67,6 +67,11 @@ function CouponClaim() {
         setError(err.response.data.message);
         setStatus('needs_registration');
         setLoading(false);
+
+        // Save sender's referral code for registration autofill
+        if (err.response.data.senderReferralCode) {
+          localStorage.setItem('pendingCouponSenderReferral', err.response.data.senderReferralCode);
+        }
       } else {
         // For other errors, show manual flow
         fetchCouponDetails();

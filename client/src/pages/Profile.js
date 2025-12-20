@@ -278,17 +278,15 @@ function Profile() {
 
       if (!memberData || needsReg) {
         console.log('[Profile] Member needs to register');
-        console.log('[Profile] Setting LINE ID to:', userId);
         setNeedsRegistration(true);
+
+        const pendingReferralCode = localStorage.getItem('pendingCouponSenderReferral');
 
         setRegistrationData(prev => {
           const newData = {
             ...prev,
             name: profile.displayName || '',
-            contact: {
-              ...prev.contact,
-              lineId: userId
-            }
+            referralCode: pendingReferralCode || ''
           };
           console.log('[Profile] Registration data after update:', newData);
           return newData;
@@ -419,10 +417,15 @@ function Profile() {
     }
 
     try {
+      const pendingCouponToken = localStorage.getItem('pendingCouponToken');
       const response = await axios.post('/api/members/register', {
         lineUserId,
-        ...registrationData
+        ...registrationData,
+        pendingCouponToken: pendingCouponToken || undefined
       });
+
+      localStorage.removeItem('pendingCouponToken');
+      localStorage.removeItem('pendingCouponSenderReferral');
 
       setMember(response.data.member);
       setNeedsRegistration(false);
@@ -831,18 +834,6 @@ function Profile() {
                   contact: {...registrationData.contact, mobile: e.target.value}
                 })}
                 style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ccc' }}
-              />
-            </div>
-
-            <div style={{ marginBottom: '15px' }}>
-              <label style={{ display: 'block', marginBottom: '5px', fontWeight: '600' }}>
-                {t('language') === 'zh' ? 'LINE ID（自動偵測）' : 'LINE ID (Auto-detected)'}
-              </label>
-              <input
-                type="text"
-                value={registrationData.contact.lineId}
-                readOnly
-                style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ccc', backgroundColor: '#f5f5f5' }}
               />
             </div>
 

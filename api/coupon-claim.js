@@ -100,19 +100,23 @@ module.exports = async (req, res) => {
       // Find member by LINE user ID
       const member = await Member.findOne({ 'line.userId': lineUserId });
 
+      // Get sender's referral code for registration autofill
+      const sender = await Member.findOne({ memberId: shareToken.senderMemberId });
+      const senderReferralCode = sender?.referralCode || '';
+
       if (!member) {
         return res.status(404).json({
           message: '找不到會員，請先完成註冊 / Member not found, please complete registration first',
-          needsRegistration: true
+          needsRegistration: true,
+          senderReferralCode
         });
       }
 
       if (!member.registrationCompleted) {
-        member.pendingCouponToken = claimToken;
-        await member.save();
         return res.status(400).json({
           message: '請先完成註冊 / Please complete registration first',
-          needsRegistration: true
+          needsRegistration: true,
+          senderReferralCode
         });
       }
 

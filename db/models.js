@@ -76,7 +76,6 @@ const memberSchema = new mongoose.Schema({
     expiryDate: { type: Date }, // Optional expiry date
     createdAt: { type: Date, default: Date.now }
   }],
-  pendingCouponToken: { type: String }, // Token for coupon to be claimed after registration
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });

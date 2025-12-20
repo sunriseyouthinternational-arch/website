@@ -54,7 +54,8 @@ module.exports = async (req, res) => {
         birthDate,
         familyMembers,
         contact,
-        referralCode
+        referralCode,
+        pendingCouponToken
       } = req.body;
 
       if (!userId) {
@@ -143,9 +144,6 @@ module.exports = async (req, res) => {
       member.contact = contact;
       member.referralCode = generatedCode;
       member.registrationCompleted = true;
-
-      const pendingToken = member.pendingCouponToken;
-      member.pendingCouponToken = null;
       await member.save();
 
       console.log('[API /register] Registration completed for member:', member.memberId);
@@ -156,9 +154,20 @@ module.exports = async (req, res) => {
             channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN
           });
 
+          let welcomeText = `🎉 恭喜！註冊完成\n\n您的會員編號：${member.memberId}\n\n現在您可以：\n✨ 報名課程和活動\n📝 編輯個人資料\n🎫 購買和使用優惠券\n🎁 查看積分和獎勵`;
+
+          if (pendingCouponToken) {
+            const baseUrl = process.env.REACT_APP_API_URL || 'https://www.sunriseyouth.org';
+            const claimUrl = `${baseUrl}/claim/${pendingCouponToken}`;
+            welcomeText += `\n\n🎁 您有一張優惠券待領取！\n請點擊以下連結領取：\n${claimUrl}`;
+            console.log('[API /register] Including coupon claim URL in welcome message:', claimUrl);
+          }
+
+          welcomeText += `\n\n請點擊下方選單開始使用！`;
+
           const welcomeMessage = {
             type: 'text',
-            text: `🎉 恭喜！註冊完成\n\n您的會員編號：${member.memberId}\n\n現在您可以：\n✨ 報名課程和活動\n📝 編輯個人資料\n🎫 購買和使用優惠券\n🎁 查看積分和獎勵\n\n請點擊下方選單開始使用！`
+            text: welcomeText
           };
 
           await client.pushMessage({
@@ -169,72 +178,6 @@ module.exports = async (req, res) => {
           console.log('[API /register] Welcome message sent to:', member.memberId);
         } catch (messageError) {
           console.error('[API /register] Error sending welcome message:', messageError);
-        }
-      }
-
-      if (pendingToken) {
-        console.log('[API /register] Found pending coupon token, auto-claiming:', pendingToken);
-        try {
-          const { CouponShareToken } = require('../db/models');
-          const shareToken = await CouponShareToken.findOne({ token: pendingToken });
-
-          if (shareToken && shareToken.status === 'pending' && new Date() <= shareToken.expiresAt) {
-            member.coupons.push({
-              type: shareToken.couponData.type,
-              classInfoId: shareToken.couponData.classInfoId,
-              discountPercent: shareToken.couponData.discountPercent,
-              name: shareToken.couponData.name,
-              description: shareToken.couponData.description,
-              image: shareToken.couponData.image,
-              expiryDate: shareToken.couponData.expiryDate,
-              quantity: 1,
-              usedCount: 0
-            });
-
-            const sender = await Member.findOne({ memberId: shareToken.senderMemberId });
-            if (sender) {
-              const senderCoupon = sender.coupons.id(shareToken.senderCouponId);
-              if (senderCoupon) {
-                const remainingUses = senderCoupon.quantity - senderCoupon.usedCount;
-                if (remainingUses === 1) {
-                  sender.coupons.pull(shareToken.senderCouponId);
-                } else {
-                  senderCoupon.quantity -= 1;
-                }
-                await sender.save();
-              }
-            }
-
-            shareToken.status = 'claimed';
-            shareToken.claimedBy = member.memberId;
-            shareToken.claimedAt = new Date();
-            await shareToken.save();
-            await member.save();
-
-            if (member.line && member.line.userId) {
-              try {
-                const client = new line.messagingApi.MessagingApiClient({
-                  channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN
-                });
-
-                const couponMessage = {
-                  type: 'text',
-                  text: `🎁 優惠券已自動領取！\n\n您收到了來自 ${shareToken.senderName} 的優惠券：\n${shareToken.couponData.name}\n\n請到「我的優惠券」查看！`
-                };
-
-                await client.pushMessage({
-                  to: member.line.userId,
-                  messages: [couponMessage]
-                });
-
-                console.log('[API /register] Coupon auto-claimed and notification sent');
-              } catch (msgError) {
-                console.error('[API /register] Error sending coupon notification:', msgError);
-              }
-            }
-          }
-        } catch (couponError) {
-          console.error('[API /register] Error auto-claiming coupon:', couponError);
         }
       }
 
@@ -351,62 +294,8 @@ module.exports = async (req, res) => {
       member.contact = contact;
       member.referralCode = generatedCode;
       member.registrationCompleted = true;
-      member.registrationToken = undefined; // Remove token after use
+      member.registrationToken = undefined;
       member.registrationTokenExpires = undefined;
-
-      // Check for pending coupon and claim it
-      if (member.pendingCouponToken) {
-        try {
-          const shareToken = await CouponShareToken.findOne({ token: member.pendingCouponToken });
-
-          if (shareToken && shareToken.status === 'pending' && new Date() <= shareToken.expiresAt) {
-            // Check if coupon itself is not expired
-            if (!shareToken.couponData.expiryDate || new Date() <= new Date(shareToken.couponData.expiryDate)) {
-              // Add coupon to recipient
-              member.coupons.push({
-                type: shareToken.couponData.type,
-                classInfoId: shareToken.couponData.classInfoId,
-                discountPercent: shareToken.couponData.discountPercent,
-                name: shareToken.couponData.name,
-                description: shareToken.couponData.description,
-                image: shareToken.couponData.image,
-                expiryDate: shareToken.couponData.expiryDate,
-                quantity: 1,
-                usedCount: 0
-              });
-
-              // Decrement sender's coupon now that it's been successfully claimed
-              const sender = await Member.findOne({ memberId: shareToken.senderMemberId });
-              if (sender) {
-                const senderCoupon = sender.coupons.id(shareToken.senderCouponId);
-                if (senderCoupon) {
-                  const remainingUses = senderCoupon.quantity - senderCoupon.usedCount;
-                  if (remainingUses === 1) {
-                    sender.coupons.pull(shareToken.senderCouponId);
-                  } else {
-                    senderCoupon.quantity -= 1;
-                  }
-                  await sender.save();
-                }
-              }
-
-              // Mark token as claimed
-              shareToken.status = 'claimed';
-              shareToken.claimedBy = member.memberId;
-              shareToken.claimedAt = new Date();
-              await shareToken.save();
-
-              console.log(`[Registration] Coupon auto-claimed for ${member.memberId}`);
-            }
-          }
-        } catch (couponError) {
-          console.error('[Registration] Error claiming pending coupon:', couponError);
-          // Don't block registration if coupon claim fails
-        }
-
-        // Clear pending coupon token regardless of success
-        member.pendingCouponToken = undefined;
-      }
 
       await member.save();
 
