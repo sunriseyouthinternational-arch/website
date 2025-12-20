@@ -2337,6 +2337,23 @@ function AdminDashboard() {
                 <span>{selectedTeacher.bio || 'N/A'}</span>
               </div>
             </div>
+
+
+            <div className="detail-section">
+              <h4>{t('language') === 'zh' ? '聯絡資料' : 'Contact Information'}</h4>
+              <div className="detail-row">
+                <strong>{t('language') === 'zh' ? '電話' : 'Phone'}:</strong>
+                <span>{selectedTeacher.phone || 'N/A'}</span>
+              </div>
+              <div className="detail-row">
+                <strong>LINE ID:</strong>
+                <span>{selectedTeacher.lineId || 'N/A'}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {activeTab === 'coupons' && (
         <div className="card">
           <div className="section-header">
@@ -2735,21 +2752,6 @@ function AdminDashboard() {
         </div>
       )}
 
-
-            <div className="detail-section">
-              <h4>{t('language') === 'zh' ? '聯絡資料' : 'Contact Information'}</h4>
-              <div className="detail-row">
-                <strong>{t('language') === 'zh' ? '電話' : 'Phone'}:</strong>
-                <span>{selectedTeacher.phone || 'N/A'}</span>
-              </div>
-              <div className="detail-row">
-                <strong>LINE ID:</strong>
-                <span>{selectedTeacher.lineId || 'N/A'}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
