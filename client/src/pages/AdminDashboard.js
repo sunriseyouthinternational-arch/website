@@ -2557,7 +2557,7 @@ function AdminDashboard() {
                       onClick={async () => {
                         if (window.confirm(t('language') === 'zh' ? '確定要刪除此模板嗎？' : 'Delete this profile?')) {
                           try {
-                            await axios.delete(`/api/coupon-profiles?profileId=${profile._id}`);
+                            await axios.delete(`/api/coupons?resource=profiles&profileId=${profile._id}`);
                             setMessage({ type: 'success', text: t('language') === 'zh' ? '模板刪除成功' : 'Profile deleted' });
                             fetchData();
                           } catch (error) {
@@ -2730,7 +2730,7 @@ function AdminDashboard() {
                         onClick={async () => {
                           if (window.confirm(t('language') === 'zh' ? '確定要刪除此販售優惠券嗎？' : 'Delete this listing?')) {
                             try {
-                              await axios.delete(`/api/coupons-for-sale?couponId=${coupon._id}`);
+                              await axios.delete(`/api/coupons?resource=for-sale&couponId=${coupon._id}`);
                               setMessage({ type: 'success', text: t('language') === 'zh' ? '販售優惠券刪除成功' : 'Listing deleted' });
                               fetchData();
                             } catch (error) {

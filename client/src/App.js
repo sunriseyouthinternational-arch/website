@@ -40,6 +40,7 @@ function AppContent() {
             <Route path="/" element={<Navigate to="/profile" replace />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/profile/:memberId" element={<Profile />} />
+            <Route path="/claim" element={<CouponClaim />} />
             <Route path="/claim/:token" element={<CouponClaim />} />
             <Route path="/admin" element={<AdminLogin />} />
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
