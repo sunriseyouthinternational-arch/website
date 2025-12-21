@@ -64,12 +64,19 @@ function CouponClaim() {
     }
 
     console.log('Attempting auto-claim with token:', tokenToUse);
+    console.log('Attempting auto-claim with lineUserId:', lineUserId);
     setClaiming(true);
     try {
       const response = await axios.post('/api/coupon-claim', {
         token: tokenToUse,
         lineUserId
+      }, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
       });
+
+      console.log('Auto-claim response:', response.data);
 
       if (response.data.success) {
         setStatus('claimed');
@@ -81,6 +88,9 @@ function CouponClaim() {
       }
     } catch (err) {
       console.error('Auto-claim error:', err);
+      console.error('Error response:', err.response);
+      console.error('Error status:', err.response?.status);
+      console.error('Error data:', err.response?.data);
 
       // Check if already registered
       if (err.response?.data?.alreadyRegistered) {
