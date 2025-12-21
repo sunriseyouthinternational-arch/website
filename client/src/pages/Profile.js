@@ -61,6 +61,10 @@ function Profile() {
   const [showPaymentConfirmation, setShowPaymentConfirmation] = useState(false);
   const [paymentConfirmationData, setPaymentConfirmationData] = useState(null);
 
+  const [showMembershipUpgrade, setShowMembershipUpgrade] = useState(false);
+  const [membershipPaymentType, setMembershipPaymentType] = useState('monthly'); // 'monthly' or 'onetime'
+  const [processingUpgrade, setProcessingUpgrade] = useState(false);
+
   const [liffReady, setLiffReady] = useState(false);
   const [lineUserId, setLineUserId] = useState(null);
   const [lineProfile, setLineProfile] = useState(null);
@@ -1002,6 +1006,58 @@ function Profile() {
                     <p><strong>{t('mobile')}:</strong> {member.contact?.mobile}</p>
                     {member.contact?.phone && <p><strong>{t('phone')}:</strong> {member.contact.phone}</p>}
                     {member.contact?.lineId && <p><strong>{t('lineId')}:</strong> {member.contact.lineId}</p>}
+                  </div>
+
+                  <div className="membership-status" style={{
+                    background: member.membershipStatus === '協會會員' ? '#e7f5ff' : '#f8f9fa',
+                    border: `2px solid ${member.membershipStatus === '協會會員' ? '#74c0fc' : '#dee2e6'}`,
+                    borderRadius: '12px',
+                    padding: '20px',
+                    marginTop: '20px'
+                  }}>
+                    <h3 style={{ marginBottom: '15px', color: '#495057' }}>
+                      {t('language') === 'zh' ? '會籍狀態' : 'Membership Status'}
+                    </h3>
+                    <div style={{ marginBottom: '12px' }}>
+                      <p style={{ fontSize: '16px', marginBottom: '8px' }}>
+                        <strong>{t('language') === 'zh' ? '目前狀態：' : 'Current Status: '}</strong>
+                        <span style={{
+                          padding: '4px 12px',
+                          background: member.membershipStatus === '協會會員' ? '#4dabf7' : '#868e96',
+                          color: 'white',
+                          borderRadius: '6px',
+                          fontSize: '14px',
+                          fontWeight: 'bold',
+                          marginLeft: '8px'
+                        }}>
+                          {member.membershipStatus || '會友'}
+                        </span>
+                      </p>
+                    </div>
+                    <p style={{ fontSize: '14px', color: '#666', marginBottom: '15px' }}>
+                      <strong>{t('language') === 'zh' ? '成為會員日期：' : 'Member Since: '}</strong>
+                      {formatDate(member.membershipStartDate || member.createdAt)}
+                    </p>
+                    {member.membershipStatus === '會友' && (
+                      <button
+                        onClick={() => setShowMembershipUpgrade(true)}
+                        className="btn btn-primary"
+                        style={{
+                          width: '100%',
+                          marginTop: '10px',
+                          padding: '12px',
+                          fontSize: '15px'
+                        }}
+                      >
+                        ⭐ {t('language') === 'zh' ? '升級為協會會員' : 'Upgrade to Association Member'}
+                      </button>
+                    )}
+                    {member.membershipStatus === '協會會員' && member.membershipUpgradedDate && (
+                      <p style={{ fontSize: '14px', color: '#666', marginTop: '10px' }}>
+                        <strong>{t('language') === 'zh' ? '升級日期：' : 'Upgraded On: '}</strong>
+                        {formatDate(member.membershipUpgradedDate)}
+                      </p>
+                    )}
                   </div>
 
                   {member.familyMembers && member.familyMembers.length > 0 && (
@@ -2837,6 +2893,240 @@ function Profile() {
               style={{ width: '100%', padding: '15px', fontSize: '16px' }}
             >
               {t('language') === 'zh' ? '完成' : 'Done'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Membership Upgrade Modal */}
+      {showMembershipUpgrade && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.7)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1003,
+          padding: '20px'
+        }}>
+          <div style={{
+            background: 'white',
+            borderRadius: '16px',
+            padding: '40px',
+            maxWidth: '700px',
+            width: '100%',
+            maxHeight: '90vh',
+            overflow: 'auto',
+            boxShadow: '0 10px 50px rgba(0, 0, 0, 0.3)'
+          }}>
+            <div style={{ textAlign: 'center', marginBottom: '30px' }}>
+              <div style={{ fontSize: '64px', marginBottom: '15px' }}>⭐</div>
+              <h2 style={{ color: '#667eea', marginBottom: '10px' }}>
+                {t('language') === 'zh' ? '升級為協會會員' : 'Upgrade to Association Member'}
+              </h2>
+              <p style={{ color: '#666', fontSize: '14px' }}>
+                {t('language') === 'zh'
+                  ? '選擇付款方式並完成升級'
+                  : 'Choose payment method and complete upgrade'}
+              </p>
+            </div>
+
+            <div style={{
+              background: '#f8f9ff',
+              padding: '25px',
+              borderRadius: '12px',
+              marginBottom: '25px',
+              border: '2px solid #d3e0ff'
+            }}>
+              <h3 style={{ color: '#667eea', marginBottom: '20px', fontSize: '18px' }}>
+                {t('language') === 'zh' ? '付款方案' : 'Payment Plan'}
+              </h3>
+
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: '15px',
+                  background: membershipPaymentType === 'monthly' ? '#e7f5ff' : 'white',
+                  border: `2px solid ${membershipPaymentType === 'monthly' ? '#4dabf7' : '#dee2e6'}`,
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  marginBottom: '15px'
+                }}>
+                  <input
+                    type="radio"
+                    name="paymentType"
+                    value="monthly"
+                    checked={membershipPaymentType === 'monthly'}
+                    onChange={(e) => setMembershipPaymentType(e.target.value)}
+                    style={{ marginRight: '12px' }}
+                  />
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 'bold', fontSize: '16px', marginBottom: '4px' }}>
+                      {t('language') === 'zh' ? '每月繳費' : 'Monthly Payment'}
+                    </div>
+                    <div style={{ fontSize: '14px', color: '#666' }}>
+                      NT$ 250 × 12 個月 = NT$ 3,000 / {t('language') === 'zh' ? '年' : 'year'}
+                    </div>
+                  </div>
+                </label>
+
+                <label style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: '15px',
+                  background: membershipPaymentType === 'onetime' ? '#e7f5ff' : 'white',
+                  border: `2px solid ${membershipPaymentType === 'onetime' ? '#4dabf7' : '#dee2e6'}`,
+                  borderRadius: '8px',
+                  cursor: 'pointer'
+                }}>
+                  <input
+                    type="radio"
+                    name="paymentType"
+                    value="onetime"
+                    checked={membershipPaymentType === 'onetime'}
+                    onChange={(e) => setMembershipPaymentType(e.target.value)}
+                    style={{ marginRight: '12px' }}
+                  />
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 'bold', fontSize: '16px', marginBottom: '4px' }}>
+                      {t('language') === 'zh' ? '一次付清' : 'One-time Payment'}
+                    </div>
+                    <div style={{ fontSize: '14px', color: '#666' }}>
+                      NT$ 3,000 / {t('language') === 'zh' ? '年' : 'year'}
+                    </div>
+                  </div>
+                </label>
+              </div>
+
+              <div style={{
+                background: '#fff3cd',
+                border: '2px solid #ffc107',
+                borderRadius: '12px',
+                padding: '15px',
+                marginTop: '20px'
+              }}>
+                <p style={{ margin: 0, fontSize: '14px', color: '#856404', fontWeight: 'bold', textAlign: 'center' }}>
+                  💰 {t('language') === 'zh' ? '應付金額：' : 'Amount to Pay: '}
+                  NT$ 3,000
+                </p>
+              </div>
+            </div>
+
+            <h3 style={{ marginBottom: '15px', fontSize: '16px', color: '#495057' }}>
+              {t('language') === 'zh' ? '選擇付款方式' : 'Choose Payment Method'}
+            </h3>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginBottom: '25px' }}>
+              <button
+                onClick={async () => {
+                  setProcessingUpgrade(true);
+                  try {
+                    const response = await axios.post('/api/members', {
+                      memberId: member.memberId,
+                      action: 'upgrade-membership',
+                      paymentMethod: 'in-person',
+                      paymentType: membershipPaymentType
+                    });
+
+                    setMember(response.data.member);
+                    setShowMembershipUpgrade(false);
+                    setMessage({
+                      type: 'success',
+                      text: t('language') === 'zh'
+                        ? '升級成功！請記得現場繳費'
+                        : 'Upgrade successful! Please remember to pay in person'
+                    });
+                  } catch (error) {
+                    setMessage({
+                      type: 'error',
+                      text: error.response?.data?.message || (t('language') === 'zh' ? '升級失敗' : 'Upgrade failed')
+                    });
+                  } finally {
+                    setProcessingUpgrade(false);
+                  }
+                }}
+                className="btn btn-primary"
+                disabled={processingUpgrade}
+                style={{
+                  padding: '18px',
+                  fontSize: '16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '10px'
+                }}
+              >
+                {processingUpgrade ? (
+                  t('language') === 'zh' ? '⏳ 處理中...' : '⏳ Processing...'
+                ) : (
+                  <>💵 {t('language') === 'zh' ? '現場付款' : 'Pay in Person'}</>
+                )}
+              </button>
+
+              <button
+                disabled
+                className="btn btn-secondary"
+                style={{
+                  padding: '18px',
+                  fontSize: '16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '10px',
+                  opacity: 0.5,
+                  cursor: 'not-allowed'
+                }}
+              >
+                💳 {t('language') === 'zh' ? '信用卡（施工中）' : 'Credit Card (Under Construction)'}
+              </button>
+
+              <button
+                disabled
+                className="btn btn-secondary"
+                style={{
+                  padding: '18px',
+                  fontSize: '16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '10px',
+                  opacity: 0.5,
+                  cursor: 'not-allowed'
+                }}
+              >
+                💚 {t('language') === 'zh' ? 'LINE Pay（施工中）' : 'LINE Pay (Under Construction)'}
+              </button>
+            </div>
+
+            <div style={{
+              background: '#e7f3ff',
+              border: '1px solid #b3d9ff',
+              borderRadius: '12px',
+              padding: '15px',
+              marginBottom: '20px'
+            }}>
+              <p style={{ margin: 0, fontSize: '13px', color: '#004085', lineHeight: '1.6' }}>
+                ℹ️ {t('language') === 'zh'
+                  ? '升級後將立即享有協會會員權益。請保存此確認資訊，並於現場出示繳費。'
+                  : 'You will immediately enjoy association member benefits after upgrading. Please save this confirmation and show it when paying in person.'}
+              </p>
+            </div>
+
+            <button
+              onClick={() => {
+                setShowMembershipUpgrade(false);
+                setMembershipPaymentType('monthly');
+              }}
+              className="btn btn-secondary"
+              style={{ width: '100%', padding: '12px', fontSize: '14px' }}
+              disabled={processingUpgrade}
+            >
+              {t('language') === 'zh' ? '取消' : 'Cancel'}
             </button>
           </div>
         </div>

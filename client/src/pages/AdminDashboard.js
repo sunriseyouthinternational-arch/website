@@ -929,6 +929,7 @@ function AdminDashboard() {
                 <tr>
                   <th>{t('memberId')}</th>
                   <th>{t('name')}</th>
+                  <th>{t('language') === 'zh' ? '會籍狀態' : 'Membership'}</th>
                   <th>{t('language') === 'zh' ? '操作' : 'Actions'}</th>
                 </tr>
               </thead>
@@ -937,6 +938,18 @@ function AdminDashboard() {
                   <tr key={member._id}>
                     <td>{member.memberId}</td>
                     <td>{member.name}</td>
+                    <td>
+                      <span style={{
+                        padding: '4px 10px',
+                        background: member.membershipStatus === '協會會員' ? '#4dabf7' : '#868e96',
+                        color: 'white',
+                        borderRadius: '6px',
+                        fontSize: '13px',
+                        fontWeight: 'bold'
+                      }}>
+                        {member.membershipStatus || '會友'}
+                      </span>
+                    </td>
                     <td>
                       <button
                         className="btn btn-small btn-primary"
@@ -1022,6 +1035,95 @@ function AdminDashboard() {
                 <strong>{t('language') === 'zh' ? '註冊日期' : 'Registered'}:</strong>
                 <span>{formatDate(selectedMember.createdAt)}</span>
               </div>
+            </div>
+
+            <div className="detail-section">
+              <h4>{t('language') === 'zh' ? '會籍狀態' : 'Membership Status'}</h4>
+              <div className="detail-row">
+                <strong>{t('language') === 'zh' ? '目前狀態：' : 'Current Status:'}</strong>
+                <select
+                  value={selectedMember.membershipStatus || '會友'}
+                  onChange={async (e) => {
+                    try {
+                      const response = await axios.put('/api/admin', {
+                        resource: 'membership-status',
+                        memberId: selectedMember._id,
+                        membershipStatus: e.target.value
+                      });
+
+                      // Update local state
+                      setSelectedMember({...selectedMember, membershipStatus: e.target.value});
+                      setMembers(members.map(m =>
+                        m._id === selectedMember._id
+                          ? {...m, membershipStatus: e.target.value}
+                          : m
+                      ));
+
+                      setMessage({
+                        type: 'success',
+                        text: t('language') === 'zh' ? '會籍狀態已更新' : 'Membership status updated'
+                      });
+                    } catch (error) {
+                      setMessage({
+                        type: 'error',
+                        text: error.response?.data?.message || t('error')
+                      });
+                    }
+                  }}
+                  style={{
+                    padding: '6px 12px',
+                    borderRadius: '6px',
+                    border: '1px solid #ddd',
+                    fontSize: '14px',
+                    fontWeight: 'bold',
+                    background: selectedMember.membershipStatus === '協會會員' ? '#e7f5ff' : '#f8f9fa',
+                    color: selectedMember.membershipStatus === '協會會員' ? '#1971c2' : '#495057',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <option value="會友">會友</option>
+                  <option value="協會會員">協會會員</option>
+                </select>
+              </div>
+              <div className="detail-row">
+                <strong>{t('language') === 'zh' ? '成為會員日期：' : 'Member Since:'}</strong>
+                <span>{formatDate(selectedMember.membershipStartDate || selectedMember.createdAt)}</span>
+              </div>
+              {selectedMember.membershipUpgradedDate && (
+                <div className="detail-row">
+                  <strong>{t('language') === 'zh' ? '升級日期：' : 'Upgraded On:'}</strong>
+                  <span>{formatDate(selectedMember.membershipUpgradedDate)}</span>
+                </div>
+              )}
+              {selectedMember.membershipPaymentMethod && (
+                <div className="detail-row">
+                  <strong>{t('language') === 'zh' ? '付款方式：' : 'Payment Method:'}</strong>
+                  <span>
+                    {selectedMember.membershipPaymentMethod === 'in-person'
+                      ? (t('language') === 'zh' ? '現場付款' : 'In Person')
+                      : selectedMember.membershipPaymentMethod === 'linepay'
+                      ? 'LINE Pay'
+                      : (t('language') === 'zh' ? '信用卡' : 'Credit Card')}
+                  </span>
+                </div>
+              )}
+              {selectedMember.membershipPaymentStatus && (
+                <div className="detail-row">
+                  <strong>{t('language') === 'zh' ? '付款狀態：' : 'Payment Status:'}</strong>
+                  <span style={{
+                    padding: '4px 10px',
+                    background: selectedMember.membershipPaymentStatus === 'paid' ? '#2b8a3e' : '#f59f00',
+                    color: 'white',
+                    borderRadius: '6px',
+                    fontSize: '12px',
+                    fontWeight: 'bold'
+                  }}>
+                    {selectedMember.membershipPaymentStatus === 'paid'
+                      ? (t('language') === 'zh' ? '已付款' : 'Paid')
+                      : (t('language') === 'zh' ? '未付款' : 'Pending')}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
 

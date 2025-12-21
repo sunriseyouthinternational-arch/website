@@ -176,6 +176,37 @@ module.exports = async (req, res) => {
       });
     }
 
+    // Update membership status
+    if (resource === 'membership-status' && req.method === 'PUT') {
+      const { memberId, membershipStatus } = req.body;
+
+      if (!memberId || !membershipStatus) {
+        return res.status(400).json({ message: '缺少必要欄位 / Missing required fields' });
+      }
+
+      const member = await Member.findById(memberId);
+
+      if (!member) {
+        return res.status(404).json({ message: '找不到會員 / Member not found' });
+      }
+
+      // Update membership status
+      const previousStatus = member.membershipStatus;
+      member.membershipStatus = membershipStatus;
+
+      // If upgrading to 協會會員 and not already upgraded, set upgrade date
+      if (membershipStatus === '協會會員' && previousStatus !== '協會會員') {
+        member.membershipUpgradedDate = new Date();
+      }
+
+      await member.save();
+
+      return res.status(200).json({
+        message: '會籍狀態更新成功 / Membership status updated successfully',
+        member
+      });
+    }
+
     res.status(405).json({ message: 'Method not allowed' });
   } catch (error) {
     console.error('Admin operation error:', error);

@@ -777,6 +777,44 @@ module.exports = async (req, res) => {
       });
     }
 
+    // Upgrade membership
+    if (req.method === 'POST' && action === 'upgrade-membership') {
+      const { memberId, paymentMethod, paymentType } = req.body;
+
+      if (!memberId || !paymentMethod || !paymentType) {
+        return res.status(400).json({
+          message: '缺少必要欄位 / Missing required fields'
+        });
+      }
+
+      const member = await Member.findOne({ memberId });
+
+      if (!member) {
+        return res.status(404).json({
+          message: '找不到團員 / Member not found'
+        });
+      }
+
+      if (member.membershipStatus === '協會會員') {
+        return res.status(400).json({
+          message: '您已經是協會會員 / You are already an association member'
+        });
+      }
+
+      // Update membership status
+      member.membershipStatus = '協會會員';
+      member.membershipUpgradedDate = new Date();
+      member.membershipPaymentStatus = paymentMethod === 'in-person' ? 'pending' : 'paid';
+      member.membershipPaymentMethod = paymentMethod;
+
+      await member.save();
+
+      return res.status(200).json({
+        message: '升級成功 / Upgrade successful',
+        member
+      });
+    }
+
     res.status(405).json({ message: 'Method not allowed' });
   } catch (error) {
     console.error('Member operation error:', error);
