@@ -2170,6 +2170,9 @@ function AdminDashboard() {
                             <option value="credit">
                               {t('language') === 'zh' ? '信用卡' : 'Credit Card'}
                             </option>
+                            <option value="linepay">
+                              {t('language') === 'zh' ? 'LINE Pay' : 'LINE Pay'}
+                            </option>
                           </select>
                         </td>
                         <td>

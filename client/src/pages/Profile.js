@@ -2245,6 +2245,23 @@ function Profile() {
               </button>
 
               <button
+                disabled
+                className="btn btn-secondary"
+                style={{
+                  padding: '20px',
+                  fontSize: '18px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '10px',
+                  opacity: 0.5,
+                  cursor: 'not-allowed'
+                }}
+              >
+                💚 {t('language') === 'zh' ? 'LINE Pay（施工中）' : 'LINE Pay (Under Construction)'}
+              </button>
+
+              <button
                 onClick={() => setShowCouponModal(true)}
                 className="btn"
                 style={{

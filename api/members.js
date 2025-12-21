@@ -177,6 +177,9 @@ module.exports = async (req, res) => {
 
       // Check if member has pending coupon and auto-claim it
       const pendingToken = member.pendingCouponToken;
+      let couponClaimed = false;
+      let claimedCouponName = '';
+
       if (pendingToken) {
         console.log('[API /register] Found pending coupon token, auto-claiming:', pendingToken);
         try {
@@ -196,6 +199,10 @@ module.exports = async (req, res) => {
               quantity: 1,
               usedCount: 0
             });
+
+            // Store coupon info for welcome message
+            couponClaimed = true;
+            claimedCouponName = shareToken.couponData.name;
 
             // Decrement sender's coupon
             const sender = await Member.findOne({ memberId: shareToken.senderMemberId });
@@ -238,7 +245,14 @@ module.exports = async (req, res) => {
             channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN
           });
 
-          const welcomeText = `🎉 恭喜！註冊完成\n\n您的會員編號：${member.memberId}\n\n現在您可以：\n✨ 報名課程和活動\n📝 編輯個人資料\n🎫 購買和使用優惠券\n🎁 查看積分和獎勵\n\n請點擊下方選單開始使用！`;
+          let welcomeText = `🎉 恭喜！註冊完成\n\n您的會員編號：${member.memberId}`;
+
+          // Add coupon claim notification if applicable
+          if (couponClaimed) {
+            welcomeText += `\n\n🎫 優惠券已成功領取！\n「${claimedCouponName}」已加入您的帳戶`;
+          }
+
+          welcomeText += `\n\n現在您可以：\n✨ 報名課程和活動\n📝 編輯個人資料\n🎫 購買和使用優惠券\n🎁 查看積分和獎勵\n\n歡迎加入晨光國際少年團！`;
 
           console.log('[API /register] Sending welcome message to:', member.line.userId);
           await client.pushMessage({

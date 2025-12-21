@@ -76,6 +76,11 @@ const memberSchema = new mongoose.Schema({
     createdAt: { type: Date, default: Date.now }
   }],
   pendingCouponToken: { type: String },
+  membershipStatus: { type: String, enum: ['會友', '協會會員'], default: '會友' },
+  membershipStartDate: { type: Date, default: Date.now },
+  membershipUpgradedDate: { type: Date },
+  membershipPaymentStatus: { type: String, enum: ['pending', 'paid'], default: 'paid' },
+  membershipPaymentMethod: { type: String, enum: ['in-person', 'linepay', 'credit'] },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });
