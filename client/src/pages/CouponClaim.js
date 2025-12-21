@@ -16,8 +16,15 @@ function CouponClaim() {
 
   // Debug: log the token
   useEffect(() => {
-    console.log('CouponClaim - Token from URL:', token);
-    console.log('CouponClaim - Full URL:', window.location.href);
+    console.log('=== CouponClaim Debug ===');
+    console.log('Token from URL:', token);
+    console.log('Token type:', typeof token);
+    console.log('Token length:', token ? token.length : 0);
+    console.log('Full URL:', window.location.href);
+    console.log('Path:', window.location.pathname);
+    console.log('LIFF available:', typeof window.liff !== 'undefined');
+    console.log('LIFF ID configured:', !!process.env.REACT_APP_LIFF_ID);
+    console.log('========================');
   }, [token]);
 
   // Fetch coupon details

@@ -911,7 +911,7 @@ function AdminDashboard() {
           {t('memberManagement')}
         </button>
         <button className={`tab-button ${activeTab === 'items' ? 'active' : ''}`} onClick={() => setActiveTab('items')}>
-          {t('language') === 'zh' ? '課程與活動' : 'Classes & Activities'}
+          {t('language') === 'zh' ? '課程與活動' : 'Class & Activity'}
         </button>
         <button className={`tab-button ${activeTab === 'teachers' ? 'active' : ''}`} onClick={() => setActiveTab('teachers')}>
           {t('language') === 'zh' ? '主辦人管理' : 'Host Management'}
@@ -1399,7 +1399,7 @@ function AdminDashboard() {
 
       {activeTab === 'items' && !selectedItem && !selectedClassInfo && (
         <div className="card">
-          <h3>{t('language') === 'zh' ? '課程與活動管理' : 'Classes & Activities Management'}</h3>          <div className="items-section" style={{ marginTop: '30px' }}>
+          <h3>{t('language') === 'zh' ? '課程與活動管理' : 'Class & Activity Management'}</h3>          <div className="items-section" style={{ marginTop: '30px' }}>
             <div className="section-header">
               <h4 style={{ color: '#667eea' }}>
                 {t('classInformation')} ({classInfos.length})
@@ -1685,7 +1685,7 @@ function AdminDashboard() {
                   <p style={{ margin: 0, color: '#1a5490', fontSize: '14px', lineHeight: '1.6' }}>
                     ℹ️ {t('language') === 'zh'
                       ? '會員可以在個人選單中點擊「課程與活動」來查看和報名此課程！'
-                      : 'Members can view and enroll in this class by clicking "Classes & Activities" in their profile menu!'}
+                      : 'Members can view and enroll in this class by clicking "Class & Activity" in their profile menu!'}
                   </p>
                 </div>
 
