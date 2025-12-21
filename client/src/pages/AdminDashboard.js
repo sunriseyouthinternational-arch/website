@@ -829,6 +829,63 @@ function AdminDashboard() {
     }
   };
 
+  const updatePaymentMethod = async (type, itemId, participantId, paymentMethod) => {
+    const key = `${type}-${itemId}-${participantId}-method`;
+
+    try {
+      setLoadingStates(prev => ({ ...prev, [key]: true }));
+
+      if (type === 'class') {
+        setClasses(prev => prev.map(c =>
+          c._id === itemId
+            ? {
+                ...c,
+                participants: c.participants.map(p =>
+                  p._id === participantId ? { ...p, paymentMethod } : p
+                )
+              }
+            : c
+        ));
+      } else {
+        setActivities(prev => prev.map(a =>
+          a._id === itemId
+            ? {
+                ...a,
+                participants: a.participants.map(p =>
+                  p._id === participantId ? { ...p, paymentMethod } : p
+                )
+              }
+            : a
+        ));
+      }
+
+      if (selectedItem && selectedItem._id === itemId) {
+        setSelectedItem(prev => ({
+          ...prev,
+          participants: prev.participants.map(p =>
+            p._id === participantId ? { ...p, paymentMethod } : p
+          )
+        }));
+      }
+
+      const resource = type === 'class' ? 'class-payment-method' : 'activity-payment-method';
+      const idParam = type === 'class' ? 'classId' : 'activityId';
+      const endpoint = `/api/admin?resource=${resource}&${idParam}=${itemId}&participantId=${participantId}`;
+
+      await axios.put(endpoint, { paymentMethod });
+      setMessage({
+        type: 'success',
+        text: t('language') === 'zh' ? '付款方式已更新' : 'Payment method updated'
+      });
+    } catch (error) {
+      console.error('[Payment Method Update] Error:', error);
+      setMessage({ type: 'error', text: error.response?.data?.message || t('error') });
+      fetchData();
+    } finally {
+      setLoadingStates(prev => ({ ...prev, [key]: false }));
+    }
+  };
+
   const formatDate = (dateString) => {
     if (!dateString) return '';
     return new Date(dateString).toLocaleDateString('zh-TW');
@@ -1480,7 +1537,7 @@ function AdminDashboard() {
           </div>          <div className="items-section" style={{ marginTop: '40px' }}>
             <div className="section-header">
               <h4 style={{ color: '#667eea' }}>
-                {t('hostClasses')} ({classes.length})
+                {t('hostClass')} ({classes.length})
               </h4>
               <button
                 onClick={() => setShowAddClassForm(!showAddClassForm)}
@@ -2077,6 +2134,7 @@ function AdminDashboard() {
                       <th>{t('memberId')}</th>
                       <th>{t('name')}</th>
                       <th>{t('language') === 'zh' ? '報名日期' : 'Enrolled Date'}</th>
+                      <th>{t('language') === 'zh' ? '付款方式' : 'Payment Method'}</th>
                       <th>{t('language') === 'zh' ? '付款狀態' : 'Payment'}</th>
                       <th>{t('language') === 'zh' ? '操作' : 'Action'}</th>
                     </tr>
@@ -2089,6 +2147,31 @@ function AdminDashboard() {
                         </td>
                         <td>{participant.memberName}</td>
                         <td>{formatDate(participant.enrolledAt)}</td>
+                        <td>
+                          <select
+                            value={participant.paymentMethod || 'in-person'}
+                            onChange={(e) => updatePaymentMethod(
+                              selectedItem.type,
+                              selectedItem._id,
+                              participant._id,
+                              e.target.value
+                            )}
+                            style={{
+                              padding: '6px 10px',
+                              borderRadius: '6px',
+                              border: '1px solid #ddd',
+                              fontSize: '14px',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            <option value="in-person">
+                              {t('language') === 'zh' ? '現場付款' : 'In Person'}
+                            </option>
+                            <option value="credit">
+                              {t('language') === 'zh' ? '信用卡' : 'Credit Card'}
+                            </option>
+                          </select>
+                        </td>
                         <td>
                           <span className={`status-badge ${participant.paid ? 'paid' : 'unpaid'}`}>
                             {participant.paid

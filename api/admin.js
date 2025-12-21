@@ -128,6 +128,54 @@ module.exports = async (req, res) => {
       });
     }
 
+    // Update class payment method
+    if (resource === 'class-payment-method' && req.method === 'PUT') {
+      const { paymentMethod } = req.body;
+      const classItem = await Class.findById(classId);
+
+      if (!classItem) {
+        return res.status(404).json({ message: '找不到課程 / Class not found' });
+      }
+
+      const participant = classItem.participants.id(participantId);
+
+      if (!participant) {
+        return res.status(404).json({ message: '找不到參與者 / Participant not found' });
+      }
+
+      participant.paymentMethod = paymentMethod;
+      await classItem.save();
+
+      return res.status(200).json({
+        message: '付款方式更新成功 / Payment method updated successfully',
+        class: classItem
+      });
+    }
+
+    // Update activity payment method
+    if (resource === 'activity-payment-method' && req.method === 'PUT') {
+      const { paymentMethod } = req.body;
+      const activity = await Activity.findById(activityId);
+
+      if (!activity) {
+        return res.status(404).json({ message: '找不到活動 / Activity not found' });
+      }
+
+      const participant = activity.participants.id(participantId);
+
+      if (!participant) {
+        return res.status(404).json({ message: '找不到參與者 / Participant not found' });
+      }
+
+      participant.paymentMethod = paymentMethod;
+      await activity.save();
+
+      return res.status(200).json({
+        message: '付款方式更新成功 / Payment method updated successfully',
+        activity
+      });
+    }
+
     res.status(405).json({ message: 'Method not allowed' });
   } catch (error) {
     console.error('Admin operation error:', error);

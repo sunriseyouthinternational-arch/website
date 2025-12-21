@@ -65,7 +65,8 @@ module.exports = async (req, res) => {
       activity.participants.push({
         memberId: member._id,
         memberName: member.name,
-        paid: false
+        paid: false,
+        paymentMethod: paymentMethod || 'in-person'
       });
 
       await activity.save();

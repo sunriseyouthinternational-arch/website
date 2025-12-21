@@ -44,7 +44,6 @@ const memberSchema = new mongoose.Schema({
     userId: { type: String, unique: true, sparse: true },
     displayName: { type: String },
     pictureUrl: { type: String },
-    richMenuId: { type: String },
     linkedAt: { type: Date }
   },
   registrationToken: { type: String, unique: true, sparse: true },

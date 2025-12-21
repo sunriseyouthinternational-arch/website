@@ -1,6 +1,5 @@
 const connectDB = require('../lib/mongodb');
 const { Member, CouponShareToken, CouponForSale } = require('../db/models');
-const { createPersonalizedRichMenu } = require('../lib/lineRichMenu');
 const line = require('@line/bot-sdk');
 const crypto = require('crypto');
 
@@ -374,67 +373,29 @@ module.exports = async (req, res) => {
 
       await member.save();
 
-      // Create personalized rich menu if user has LINE account
+      // Send welcome message if user has LINE account
       if (member.line && member.line.userId) {
         try {
-          console.log(`[Registration] Creating rich menu for ${member.memberId}`);
-
-          // Determine base URL
-          const protocol = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split('://')[0] : 'https';
-          const host = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split('://')[1] : 'www.sunriseyouth.org';
-          const baseUrl = `${protocol}://${host}`;
-          const profileUrl = `${baseUrl}/profile/${member.memberId}`;
-
           // Create LINE client
           const client = new line.messagingApi.MessagingApiClient({
             channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN
           });
 
-          // Delete old rich menu if exists
-          if (member.line.richMenuId) {
-            try {
-              await client.unlinkRichMenuFromUser(member.line.userId);
-              await client.deleteRichMenu(member.line.richMenuId);
-            } catch (deleteError) {
-              console.log(`[Registration] Could not delete old rich menu: ${deleteError.message}`);
-            }
-          }
-
-          // Create new personalized rich menu
-          const richMenuId = await createPersonalizedRichMenu(
-            client,
-            member.line.userId,
-            member.memberId,
-            profileUrl,
-            member.line.displayName || member.name
-          );
-
-          // Save rich menu ID
-          member.line.richMenuId = richMenuId;
-          await member.save();
-
-          console.log(`[Registration] Rich menu created successfully: ${richMenuId}`);
-
           // Send welcome message
-          try {
-            const welcomeMessage = {
-              type: 'text',
-              text: `🎉 恭喜！註冊完成\n\n您的會員編號：${member.memberId}\n\n現在您可以：\n✨ 報名課程和活動\n📝 編輯個人資料\n🎫 購買和使用優惠券\n🎁 查看積分和獎勵\n\n請點擊下方選單開始使用！`
-            };
+          const welcomeMessage = {
+            type: 'text',
+            text: `🎉 恭喜！註冊完成\n\n您的會員編號：${member.memberId}\n\n現在您可以：\n✨ 報名課程和活動\n📝 編輯個人資料\n🎫 購買和使用優惠券\n🎁 查看積分和獎勵\n\n歡迎加入晨光國際少年團！`
+          };
 
-            await client.pushMessage({
-              to: member.line.userId,
-              messages: [welcomeMessage]
-            });
+          await client.pushMessage({
+            to: member.line.userId,
+            messages: [welcomeMessage]
+          });
 
-            console.log('[Registration] Welcome message sent to:', member.memberId);
-          } catch (messageError) {
-            console.error('[Registration] Error sending welcome message:', messageError);
-            // Don't fail registration if message sending fails
-          }
-        } catch (richMenuError) {
-          console.error(`[Registration] Error creating rich menu:`, richMenuError);
-          // Don't fail registration if rich menu creation fails
+          console.log('[Registration] Welcome message sent to:', member.memberId);
+        } catch (messageError) {
+          console.error('[Registration] Error sending welcome message:', messageError);
+          // Don't fail registration if message sending fails
         }
       }
 

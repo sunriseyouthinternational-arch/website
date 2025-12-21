@@ -58,6 +58,8 @@ function Profile() {
   const [enrollingClass, setEnrollingClass] = useState(null);
   const [enrollingActivity, setEnrollingActivity] = useState(null);
   const [completingEnrollment, setCompletingEnrollment] = useState(false);
+  const [showPaymentConfirmation, setShowPaymentConfirmation] = useState(false);
+  const [paymentConfirmationData, setPaymentConfirmationData] = useState(null);
 
   const [liffReady, setLiffReady] = useState(false);
   const [lineUserId, setLineUserId] = useState(null);
@@ -596,7 +598,32 @@ function Profile() {
         couponId: coupon?._id
       });
 
-      setMessage({ type: 'success', text: response.data.message });
+      // Calculate final price
+      const originalCost = checkoutData.cost;
+      let finalCost = originalCost;
+      let discount = 0;
+
+      if (response.data.couponUsed) {
+        if (response.data.couponUsed.type === 'trial') {
+          finalCost = 0;
+          discount = originalCost;
+        } else {
+          discount = Math.round(originalCost * response.data.couponUsed.discountPercent / 100);
+          finalCost = originalCost - discount;
+        }
+      }
+
+      // Store payment confirmation data
+      setPaymentConfirmationData({
+        type: checkoutData.type,
+        item: checkoutData.type === 'class' ? response.data.class : response.data.activity,
+        itemName: checkoutData.name,
+        originalCost,
+        finalCost,
+        discount,
+        couponUsed: response.data.couponUsed,
+        paymentMethod
+      });
 
       const memberResponse = await axios.get(`/api/members?memberId=${member.memberId}`);
       setMember(memberResponse.data.member);
@@ -604,6 +631,9 @@ function Profile() {
       setShowCheckout(false);
       setCheckoutData(null);
       setSelectedCoupon(null);
+
+      // Show payment confirmation modal
+      setShowPaymentConfirmation(true);
     } catch (error) {
       setMessage({
         type: 'error',
@@ -2606,6 +2636,190 @@ function Profile() {
               style={{ width: '100%' }}
             >
               {t('language') === 'zh' ? '關閉' : 'Close'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Payment Confirmation Modal */}
+      {showPaymentConfirmation && paymentConfirmationData && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.7)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1003,
+          padding: '20px'
+        }}>
+          <div style={{
+            background: 'white',
+            borderRadius: '16px',
+            padding: '40px',
+            maxWidth: '600px',
+            width: '100%',
+            maxHeight: '90vh',
+            overflow: 'auto',
+            boxShadow: '0 10px 50px rgba(0, 0, 0, 0.3)'
+          }}>
+            <div style={{ textAlign: 'center', marginBottom: '30px' }}>
+              <div style={{ fontSize: '64px', marginBottom: '15px' }}>✅</div>
+              <h2 style={{ color: '#2b8a3e', marginBottom: '10px' }}>
+                {t('language') === 'zh' ? '報名成功！' : 'Enrollment Successful!'}
+              </h2>
+              <p style={{ color: '#666', fontSize: '14px' }}>
+                {t('language') === 'zh'
+                  ? '請保存以下資訊，並於課程當天出示'
+                  : 'Please save this information and show it on the class day'}
+              </p>
+            </div>
+
+            <div style={{
+              background: '#f8f9ff',
+              padding: '25px',
+              borderRadius: '12px',
+              marginBottom: '25px',
+              border: '2px solid #d3e0ff'
+            }}>
+              <h3 style={{ color: '#667eea', marginBottom: '20px', fontSize: '20px', textAlign: 'center' }}>
+                {t('language') === 'zh' ? '報名詳情' : 'Enrollment Details'}
+              </h3>
+
+              <div style={{ marginBottom: '15px', paddingBottom: '15px', borderBottom: '1px solid #e9ecef' }}>
+                <p style={{ fontSize: '14px', color: '#666', marginBottom: '5px' }}>
+                  {paymentConfirmationData.type === 'class'
+                    ? (t('language') === 'zh' ? '課程名稱' : 'Class Name')
+                    : (t('language') === 'zh' ? '活動名稱' : 'Activity Name')}
+                </p>
+                <p style={{ fontSize: '18px', fontWeight: 'bold', color: '#333' }}>
+                  {paymentConfirmationData.itemName}
+                </p>
+              </div>
+
+              {paymentConfirmationData.type === 'class' && paymentConfirmationData.item?.classInfoId && (
+                <>
+                  <div style={{ marginBottom: '15px', paddingBottom: '15px', borderBottom: '1px solid #e9ecef' }}>
+                    <p style={{ fontSize: '14px', color: '#666', marginBottom: '5px' }}>
+                      {t('language') === 'zh' ? '日期' : 'Date'}
+                    </p>
+                    <p style={{ fontSize: '16px', fontWeight: '600', color: '#333' }}>
+                      📅 {new Date(paymentConfirmationData.item.date).toLocaleDateString(
+                        t('language') === 'zh' ? 'zh-TW' : 'en-US',
+                        { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' }
+                      )}
+                    </p>
+                  </div>
+
+                  <div style={{ marginBottom: '15px', paddingBottom: '15px', borderBottom: '1px solid #e9ecef' }}>
+                    <p style={{ fontSize: '14px', color: '#666', marginBottom: '5px' }}>
+                      {t('language') === 'zh' ? '時間' : 'Time'}
+                    </p>
+                    <p style={{ fontSize: '16px', fontWeight: '600', color: '#333' }}>
+                      🕐 {paymentConfirmationData.item.time}
+                    </p>
+                  </div>
+
+                  {paymentConfirmationData.item.location && (
+                    <div style={{ marginBottom: '15px', paddingBottom: '15px', borderBottom: '1px solid #e9ecef' }}>
+                      <p style={{ fontSize: '14px', color: '#666', marginBottom: '5px' }}>
+                        {t('language') === 'zh' ? '地點' : 'Location'}
+                      </p>
+                      <p style={{ fontSize: '16px', fontWeight: '600', color: '#333' }}>
+                        📍 {paymentConfirmationData.item.location}
+                      </p>
+                    </div>
+                  )}
+                </>
+              )}
+
+              <div style={{ marginBottom: '15px', paddingBottom: '15px', borderBottom: '1px solid #e9ecef' }}>
+                <p style={{ fontSize: '14px', color: '#666', marginBottom: '5px' }}>
+                  {t('language') === 'zh' ? '付款方式' : 'Payment Method'}
+                </p>
+                <p style={{ fontSize: '16px', fontWeight: '600', color: '#333' }}>
+                  {paymentConfirmationData.paymentMethod === 'in-person'
+                    ? (t('language') === 'zh' ? '💵 現場付款' : '💵 Pay in Person')
+                    : (t('language') === 'zh' ? '💳 信用卡' : '💳 Credit Card')}
+                </p>
+              </div>
+
+              {paymentConfirmationData.discount > 0 && (
+                <div style={{ marginBottom: '15px', paddingBottom: '15px', borderBottom: '1px solid #e9ecef' }}>
+                  <p style={{ fontSize: '14px', color: '#666', marginBottom: '5px' }}>
+                    {t('language') === 'zh' ? '原價' : 'Original Price'}
+                  </p>
+                  <p style={{ fontSize: '16px', textDecoration: 'line-through', color: '#999' }}>
+                    NT$ {paymentConfirmationData.originalCost}
+                  </p>
+                  <p style={{ fontSize: '14px', color: '#c92a2a', fontWeight: 'bold', marginTop: '5px' }}>
+                    {paymentConfirmationData.couponUsed?.type === 'trial'
+                      ? (t('language') === 'zh' ? '✓ 體驗券已使用（免費）' : '✓ Trial Coupon Applied (Free)')
+                      : (t('language') === 'zh'
+                        ? `✓ 折扣券已使用 (-NT$ ${paymentConfirmationData.discount})`
+                        : `✓ Discount Applied (-NT$ ${paymentConfirmationData.discount})`)}
+                  </p>
+                </div>
+              )}
+
+              <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '2px solid #667eea' }}>
+                <p style={{ fontSize: '14px', color: '#666', marginBottom: '5px' }}>
+                  {paymentConfirmationData.finalCost === 0
+                    ? (t('language') === 'zh' ? '應付金額' : 'Amount Paid')
+                    : (paymentConfirmationData.paymentMethod === 'in-person'
+                      ? (t('language') === 'zh' ? '應付金額' : 'Amount to Pay')
+                      : (t('language') === 'zh' ? '已付金額' : 'Amount Paid'))}
+                </p>
+                <p style={{ fontSize: '28px', fontWeight: 'bold', color: paymentConfirmationData.finalCost === 0 ? '#2b8a3e' : '#667eea' }}>
+                  {paymentConfirmationData.finalCost === 0
+                    ? (t('language') === 'zh' ? '免費' : 'FREE')
+                    : `NT$ ${paymentConfirmationData.finalCost}`}
+                </p>
+              </div>
+            </div>
+
+            {paymentConfirmationData.paymentMethod === 'in-person' && paymentConfirmationData.finalCost > 0 && (
+              <div style={{
+                background: '#fff3cd',
+                border: '2px solid #ffc107',
+                borderRadius: '12px',
+                padding: '20px',
+                marginBottom: '25px'
+              }}>
+                <p style={{ margin: 0, fontSize: '15px', color: '#856404', fontWeight: 'bold', textAlign: 'center' }}>
+                  ⚠️ {t('language') === 'zh'
+                    ? '請記得於課程現場繳費'
+                    : 'Please remember to pay at the venue'}
+                </p>
+              </div>
+            )}
+
+            <div style={{
+              background: '#e7f3ff',
+              border: '1px solid #b3d9ff',
+              borderRadius: '12px',
+              padding: '20px',
+              marginBottom: '25px'
+            }}>
+              <p style={{ margin: 0, fontSize: '14px', color: '#004085', lineHeight: '1.6' }}>
+                💡 {t('language') === 'zh'
+                  ? '請於上課當天出示此確認資訊。您也可以在個人檔案的「我的課程」中查看報名記錄。'
+                  : 'Please show this confirmation when you arrive for class. You can also view your enrollment in "My Courses" in your profile.'}
+              </p>
+            </div>
+
+            <button
+              onClick={() => {
+                setShowPaymentConfirmation(false);
+                setPaymentConfirmationData(null);
+              }}
+              className="btn btn-primary"
+              style={{ width: '100%', padding: '15px', fontSize: '16px' }}
+            >
+              {t('language') === 'zh' ? '完成' : 'Done'}
             </button>
           </div>
         </div>

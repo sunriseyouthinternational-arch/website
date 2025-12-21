@@ -1,7 +1,6 @@
 const line = require('@line/bot-sdk');
 const connectDB = require('../lib/mongodb');
 const { Member, CouponShareToken } = require('../db/models');
-const { createPersonalizedRichMenu } = require('../lib/lineRichMenu');
 
 const config = {
   channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN,
