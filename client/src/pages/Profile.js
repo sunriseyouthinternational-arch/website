@@ -28,6 +28,7 @@ function Profile() {
   const [activeTab, setActiveTab] = useState(
     tabFromUrl === 'courses' ? 'courses' :
     tabFromUrl === 'points' ? 'points' :
+    tabFromUrl === 'association' ? 'association' :
     'profile'
   );
 
@@ -66,6 +67,11 @@ function Profile() {
   const [processingUpgrade, setProcessingUpgrade] = useState(false);
   const [showMembershipConfirmation, setShowMembershipConfirmation] = useState(false);
   const [membershipConfirmationData, setMembershipConfirmationData] = useState(null);
+
+  const [associationMeetings, setAssociationMeetings] = useState([]);
+  const [memberStats, setMemberStats] = useState(null);
+  const [registeringMeeting, setRegisteringMeeting] = useState(null);
+  const [selectedMeeting, setSelectedMeeting] = useState(null);
 
   const [liffReady, setLiffReady] = useState(false);
   const [lineUserId, setLineUserId] = useState(null);
@@ -268,6 +274,66 @@ function Profile() {
       fetchCouponsForSale();
     }
   }, [activeTab]);
+
+  useEffect(() => {
+    if (activeTab === 'association' && member && member.membershipStatus === '協會會員') {
+      fetchAssociationMeetings();
+      fetchMemberStats();
+    }
+  }, [activeTab, member]);
+
+  const fetchAssociationMeetings = async () => {
+    try {
+      const response = await axios.get('/api/association-meetings?status=upcoming');
+      setAssociationMeetings(response.data.meetings);
+    } catch (error) {
+      console.error('Failed to fetch association meetings:', error);
+    }
+  };
+
+  const fetchMemberStats = async () => {
+    if (!member) return;
+    try {
+      const response = await axios.get(`/api/association-meetings?action=member-stats&memberId=${member.memberId}`);
+      setMemberStats(response.data);
+    } catch (error) {
+      console.error('Failed to fetch member stats:', error);
+    }
+  };
+
+  const handleRegisterMeeting = async (meetingId) => {
+    if (!member) return;
+
+    setRegisteringMeeting(meetingId);
+    try {
+      await axios.post('/api/association-meetings?action=register', {
+        meetingId,
+        memberId: member.memberId
+      });
+
+      setMessage({
+        type: 'success',
+        text: t('language') === 'zh' ? '報名成功' : 'Registration successful'
+      });
+
+      // Refresh meetings
+      fetchAssociationMeetings();
+    } catch (error) {
+      setMessage({
+        type: 'error',
+        text: error.response?.data?.message || (t('language') === 'zh' ? '報名失敗' : 'Registration failed')
+      });
+    } finally {
+      setRegisteringMeeting(null);
+    }
+  };
+
+  const isMeetingRegistered = (meetingId) => {
+    if (!member) return false;
+    const meeting = associationMeetings.find(m => m._id === meetingId);
+    if (!meeting) return false;
+    return meeting.participants.some(p => p.memberIdString === member.memberId);
+  };
 
   const fetchOrCreateMember = async (userId, profile) => {
     setLoading(true);
@@ -973,6 +1039,14 @@ function Profile() {
             >
               {t('language') === 'zh' ? '點數與禮物' : 'Points & Gifts'}
             </button>
+            {member && member.membershipStatus === '協會會員' && (
+              <button
+                className={`tab-button ${activeTab === 'association' ? 'active' : ''}`}
+                onClick={() => setActiveTab('association')}
+              >
+                {t('language') === 'zh' ? '協會會議' : 'Association Meetings'}
+              </button>
+            )}
           </div>
 
           {message.text && <div className={`message ${message.type}`}>{message.text}</div>}
@@ -2135,6 +2209,114 @@ function Profile() {
                       : 'This feature is currently under development. Stay tuned!'}
                   </p>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'association' && member && member.membershipStatus === '協會會員' && (
+            <div className="card">
+              <h3>{t('language') === 'zh' ? '協會會議' : 'Association Meetings'}</h3>
+
+              {/* Member Stats */}
+              {memberStats && (
+                <div style={{
+                  background: '#e7f5ff',
+                  border: '2px solid #74c0fc',
+                  borderRadius: '12px',
+                  padding: '20px',
+                  marginBottom: '30px'
+                }}>
+                  <h4 style={{ marginBottom: '15px', color: '#1971c2' }}>
+                    {t('language') === 'zh' ? '會員統計' : 'Member Statistics'}
+                  </h4>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px' }}>
+                    <div>
+                      <p style={{ fontSize: '14px', color: '#666', marginBottom: '5px' }}>
+                        {t('language') === 'zh' ? '成為協會會員日期' : 'Member Since'}
+                      </p>
+                      <p style={{ fontSize: '18px', fontWeight: 'bold', color: '#1971c2' }}>
+                        {memberStats.memberSince ? new Date(memberStats.memberSince).toLocaleDateString('zh-TW') : 'N/A'}
+                      </p>
+                    </div>
+                    <div>
+                      <p style={{ fontSize: '14px', color: '#666', marginBottom: '5px' }}>
+                        {t('language') === 'zh' ? `${memberStats.currentYear}年參與會議` : `Meetings Attended in ${memberStats.currentYear}`}
+                      </p>
+                      <p style={{ fontSize: '18px', fontWeight: 'bold', color: '#1971c2' }}>
+                        {memberStats.meetingsAttendedThisYear} {t('language') === 'zh' ? '次' : 'times'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Registered Meetings */}
+              <h4 className="section-subtitle">{t('language') === 'zh' ? '已報名會議' : 'Registered Meetings'}</h4>
+              <div className="enrolled-list">
+                {associationMeetings.filter(m => isMeetingRegistered(m._id)).length > 0 ? (
+                  associationMeetings.filter(m => isMeetingRegistered(m._id)).map((meeting) => (
+                    <div key={meeting._id} className="enrolled-item">
+                      <p><strong>{meeting.agenda}</strong></p>
+                      <p style={{ fontSize: '14px', color: '#666' }}>
+                        {new Date(meeting.date).toLocaleDateString('zh-TW')} {meeting.time}
+                      </p>
+                      <span className="status-badge paid">
+                        {t('language') === 'zh' ? '已報名' : 'Registered'}
+                      </span>
+                    </div>
+                  ))
+                ) : (
+                  <p className="empty-message">{t('language') === 'zh' ? '尚未報名任何會議' : 'No registered meetings'}</p>
+                )}
+              </div>
+
+              {/* Upcoming Meetings */}
+              <h4 className="section-subtitle">{t('language') === 'zh' ? '即將舉行的會議' : 'Upcoming Meetings'}</h4>
+              <div className="grid">
+                {associationMeetings.filter(m => !isMeetingRegistered(m._id)).length > 0 ? (
+                  associationMeetings.filter(m => !isMeetingRegistered(m._id)).map((meeting) => (
+                    <div key={meeting._id} className="item-card">
+                      <h4>{meeting.agenda}</h4>
+                      <div className="item-details">
+                        <p><strong>{t('language') === 'zh' ? '日期' : 'Date'}:</strong> {new Date(meeting.date).toLocaleDateString('zh-TW')}</p>
+                        <p><strong>{t('language') === 'zh' ? '時間' : 'Time'}:</strong> {meeting.time}</p>
+                        {meeting.location && (
+                          <p><strong>{t('location')}:</strong> 📍 {meeting.location}</p>
+                        )}
+                        <p><strong>{t('language') === 'zh' ? '類型' : 'Type'}:</strong> {meeting.memberType}</p>
+                        <p>
+                          <strong>{t('language') === 'zh' ? '已報名人數' : 'Registered'}:</strong> {meeting.participants.length}
+                        </p>
+                      </div>
+                      {meeting.location && (
+                        <div style={{ marginTop: '10px', marginBottom: '10px' }}>
+                          <iframe
+                            src={`https://maps.google.com/maps?q=${encodeURIComponent(meeting.location)}&output=embed`}
+                            width="100%"
+                            height="200"
+                            style={{ border: '1px solid #ddd', borderRadius: '8px' }}
+                            allowFullScreen=""
+                            loading="lazy"
+                            referrerPolicy="no-referrer-when-downgrade"
+                            title="Meeting Location Map"
+                          />
+                        </div>
+                      )}
+                      <button
+                        onClick={() => handleRegisterMeeting(meeting._id)}
+                        className="btn btn-primary"
+                        disabled={registeringMeeting === meeting._id}
+                      >
+                        {registeringMeeting === meeting._id
+                          ? (t('language') === 'zh' ? '報名中...' : 'Registering...')
+                          : (t('language') === 'zh' ? '報名' : 'Register')
+                        }
+                      </button>
+                    </div>
+                  ))
+                ) : (
+                  <p className="empty-message">{t('language') === 'zh' ? '目前沒有可報名的會議' : 'No upcoming meetings available'}</p>
+                )}
               </div>
             </div>
           )}
