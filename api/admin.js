@@ -178,13 +178,14 @@ module.exports = async (req, res) => {
 
     // Update membership status
     if (resource === 'membership-status' && req.method === 'PUT') {
-      const { memberId, membershipStatus } = req.body;
+      const { membershipStatus } = req.body;
+      const memberIdToUpdate = memberId || req.body.memberId;
 
-      if (!memberId || !membershipStatus) {
+      if (!memberIdToUpdate || !membershipStatus) {
         return res.status(400).json({ message: '缺少必要欄位 / Missing required fields' });
       }
 
-      const member = await Member.findById(memberId);
+      const member = await Member.findById(memberIdToUpdate);
 
       if (!member) {
         return res.status(404).json({ message: '找不到會員 / Member not found' });
