@@ -1105,18 +1105,21 @@ function AdminDashboard() {
                   </span>
                 </div>
               )}
-              {selectedMember.membershipPaymentStatus && (
+              {(selectedMember.membershipStatus === '協會會員' || selectedMember.membershipPaymentStatus) && (
                 <div className="detail-row">
                   <strong>{t('language') === 'zh' ? '付款狀態：' : 'Payment Status:'}</strong>
                   <span style={{
                     padding: '4px 10px',
-                    background: selectedMember.membershipPaymentStatus === 'paid' ? '#2b8a3e' : '#f59f00',
+                    background: selectedMember.membershipStatus === '會友' ? '#868e96' :
+                                selectedMember.membershipPaymentStatus === 'paid' ? '#2b8a3e' : '#f59f00',
                     color: 'white',
                     borderRadius: '6px',
                     fontSize: '12px',
                     fontWeight: 'bold'
                   }}>
-                    {selectedMember.membershipPaymentStatus === 'paid'
+                    {selectedMember.membershipStatus === '會友'
+                      ? (t('language') === 'zh' ? '免費' : 'Free')
+                      : selectedMember.membershipPaymentStatus === 'paid'
                       ? (t('language') === 'zh' ? '已付款' : 'Paid')
                       : (t('language') === 'zh' ? '未付款' : 'Pending')}
                   </span>
