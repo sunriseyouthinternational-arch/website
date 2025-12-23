@@ -779,9 +779,9 @@ module.exports = async (req, res) => {
 
     // Upgrade membership
     if (req.method === 'POST' && action === 'upgrade-membership') {
-      const { memberId, paymentMethod, paymentType } = req.body;
+      const { memberId, paymentMethod } = req.body;
 
-      if (!memberId || !paymentMethod || !paymentType) {
+      if (!memberId || !paymentMethod) {
         return res.status(400).json({
           message: '缺少必要欄位 / Missing required fields'
         });

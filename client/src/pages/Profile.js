@@ -2943,74 +2943,31 @@ function Profile() {
               border: '2px solid #d3e0ff'
             }}>
               <h3 style={{ color: '#667eea', marginBottom: '20px', fontSize: '18px' }}>
-                {t('language') === 'zh' ? '付款方案' : 'Payment Plan'}
+                {t('language') === 'zh' ? '升級費用' : 'Upgrade Fee'}
               </h3>
 
-              <div style={{ marginBottom: '20px' }}>
-                <label style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  padding: '15px',
-                  background: membershipPaymentType === 'monthly' ? '#e7f5ff' : 'white',
-                  border: `2px solid ${membershipPaymentType === 'monthly' ? '#4dabf7' : '#dee2e6'}`,
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  marginBottom: '15px'
-                }}>
-                  <input
-                    type="radio"
-                    name="paymentType"
-                    value="monthly"
-                    checked={membershipPaymentType === 'monthly'}
-                    onChange={(e) => setMembershipPaymentType(e.target.value)}
-                    style={{ marginRight: '12px' }}
-                  />
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: 'bold', fontSize: '16px', marginBottom: '4px' }}>
-                      {t('language') === 'zh' ? '每月繳費' : 'Monthly Payment'}
-                    </div>
-                    <div style={{ fontSize: '14px', color: '#666' }}>
-                      NT$ 250 × 12 個月 = NT$ 3,000 / {t('language') === 'zh' ? '年' : 'year'}
-                    </div>
-                  </div>
-                </label>
-
-                <label style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  padding: '15px',
-                  background: membershipPaymentType === 'onetime' ? '#e7f5ff' : 'white',
-                  border: `2px solid ${membershipPaymentType === 'onetime' ? '#4dabf7' : '#dee2e6'}`,
-                  borderRadius: '8px',
-                  cursor: 'pointer'
-                }}>
-                  <input
-                    type="radio"
-                    name="paymentType"
-                    value="onetime"
-                    checked={membershipPaymentType === 'onetime'}
-                    onChange={(e) => setMembershipPaymentType(e.target.value)}
-                    style={{ marginRight: '12px' }}
-                  />
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: 'bold', fontSize: '16px', marginBottom: '4px' }}>
-                      {t('language') === 'zh' ? '一次付清' : 'One-time Payment'}
-                    </div>
-                    <div style={{ fontSize: '14px', color: '#666' }}>
-                      NT$ 3,000 / {t('language') === 'zh' ? '年' : 'year'}
-                    </div>
-                  </div>
-                </label>
+              <div style={{
+                padding: '20px',
+                background: 'white',
+                border: '2px solid #4dabf7',
+                borderRadius: '8px',
+                marginBottom: '20px'
+              }}>
+                <div style={{ fontWeight: 'bold', fontSize: '18px', marginBottom: '8px', color: '#495057' }}>
+                  {t('language') === 'zh' ? '年費' : 'Annual Fee'}
+                </div>
+                <div style={{ fontSize: '16px', color: '#666', marginBottom: '15px' }}>
+                  NT$ 3,000 / {t('language') === 'zh' ? '年' : 'year'}
+                </div>
               </div>
 
               <div style={{
                 background: '#fff3cd',
                 border: '2px solid #ffc107',
                 borderRadius: '12px',
-                padding: '15px',
-                marginTop: '20px'
+                padding: '15px'
               }}>
-                <p style={{ margin: 0, fontSize: '14px', color: '#856404', fontWeight: 'bold', textAlign: 'center' }}>
+                <p style={{ margin: 0, fontSize: '16px', color: '#856404', fontWeight: 'bold', textAlign: 'center' }}>
                   💰 {t('language') === 'zh' ? '應付金額：' : 'Amount to Pay: '}
                   NT$ 3,000
                 </p>
@@ -3026,22 +2983,24 @@ function Profile() {
                 onClick={async () => {
                   setProcessingUpgrade(true);
                   try {
-                    const response = await axios.post('/api/members', {
+                    const response = await axios.post('/api/members?action=upgrade-membership', {
                       memberId: member.memberId,
-                      action: 'upgrade-membership',
-                      paymentMethod: 'in-person',
-                      paymentType: membershipPaymentType
+                      paymentMethod: 'in-person'
                     });
 
-                    setMember(response.data.member);
+                    // Refresh member data
+                    const memberResponse = await axios.get(`/api/members?memberId=${member.memberId}`);
+                    setMember(memberResponse.data.member);
+
                     setShowMembershipUpgrade(false);
                     setMessage({
                       type: 'success',
                       text: t('language') === 'zh'
-                        ? '升級成功！請記得現場繳費'
-                        : 'Upgrade successful! Please remember to pay in person'
+                        ? '升級成功！請記得現場繳費 NT$ 3,000'
+                        : 'Upgrade successful! Please remember to pay NT$ 3,000 in person'
                     });
                   } catch (error) {
+                    console.error('Membership upgrade error:', error);
                     setMessage({
                       type: 'error',
                       text: error.response?.data?.message || (t('language') === 'zh' ? '升級失敗' : 'Upgrade failed')

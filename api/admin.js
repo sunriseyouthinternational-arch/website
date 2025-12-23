@@ -2,7 +2,7 @@ const connectDB = require('../lib/mongodb');
 const { Member, Class, Activity } = require('../db/models');
 
 module.exports = async (req, res) => {
-  const { resource, action, classId, activityId, participantId } = req.query;
+  const { resource, action, classId, activityId, participantId, memberId } = req.query;
 
   try {
     await connectDB();

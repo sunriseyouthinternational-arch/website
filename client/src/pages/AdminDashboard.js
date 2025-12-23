@@ -1045,9 +1045,7 @@ function AdminDashboard() {
                   value={selectedMember.membershipStatus || '會友'}
                   onChange={async (e) => {
                     try {
-                      const response = await axios.put('/api/admin', {
-                        resource: 'membership-status',
-                        memberId: selectedMember._id,
+                      const response = await axios.put(`/api/admin?resource=membership-status&memberId=${selectedMember._id}`, {
                         membershipStatus: e.target.value
                       });
 
