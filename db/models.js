@@ -248,6 +248,36 @@ couponForSaleSchema.pre('save', function(next) {
   next();
 });
 
+// Association Meeting Schema
+const associationMeetingSchema = new mongoose.Schema({
+  agenda: { type: String, required: true },
+  date: { type: Date, required: true },
+  time: { type: String, required: true },
+  location: { type: String },
+  memberType: { type: String, enum: ['一般會員', '理事會', '監事會'], required: true },
+  sendLineAnnouncement: { type: Boolean, default: false },
+  participants: [{
+    memberId: { type: mongoose.Schema.Types.ObjectId, ref: 'Member', required: true },
+    memberName: { type: String, required: true },
+    memberIdString: { type: String, required: true },
+    registeredAt: { type: Date, default: Date.now },
+    attended: { type: Boolean, default: false }
+  }],
+  status: { type: String, enum: ['upcoming', 'completed', 'cancelled'], default: 'upcoming' },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+});
+
+associationMeetingSchema.pre('save', function(next) {
+  this.updatedAt = Date.now();
+  next();
+});
+
+// Add indexes for faster queries
+associationMeetingSchema.index({ date: 1 });
+associationMeetingSchema.index({ status: 1 });
+associationMeetingSchema.index({ memberType: 1 });
+
 module.exports = {
   Admin: mongoose.models.Admin || mongoose.model('Admin', adminSchema),
   Member: mongoose.models.Member || mongoose.model('Member', memberSchema),
@@ -257,5 +287,6 @@ module.exports = {
   Teacher: mongoose.models.Teacher || mongoose.model('Teacher', teacherSchema),
   CouponShareToken: mongoose.models.CouponShareToken || mongoose.model('CouponShareToken', couponShareTokenSchema),
   CouponProfile: mongoose.models.CouponProfile || mongoose.model('CouponProfile', couponProfileSchema),
-  CouponForSale: mongoose.models.CouponForSale || mongoose.model('CouponForSale', couponForSaleSchema)
+  CouponForSale: mongoose.models.CouponForSale || mongoose.model('CouponForSale', couponForSaleSchema),
+  AssociationMeeting: mongoose.models.AssociationMeeting || mongoose.model('AssociationMeeting', associationMeetingSchema)
 };
