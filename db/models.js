@@ -81,6 +81,11 @@ const memberSchema = new mongoose.Schema({
   membershipUpgradedDate: { type: Date },
   membershipPaymentStatus: { type: String, enum: ['pending', 'paid'], default: 'paid' },
   membershipPaymentMethod: { type: String, enum: ['in-person', 'linepay', 'credit'] },
+  membershipUpgradeRequest: {
+    status: { type: String, enum: ['none', 'pending', 'approved', 'rejected'], default: 'none' },
+    requestedAt: { type: Date },
+    paymentMethod: { type: String }
+  },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });

@@ -64,6 +64,8 @@ function Profile() {
   const [showMembershipUpgrade, setShowMembershipUpgrade] = useState(false);
   const [membershipPaymentType, setMembershipPaymentType] = useState('monthly'); // 'monthly' or 'onetime'
   const [processingUpgrade, setProcessingUpgrade] = useState(false);
+  const [showMembershipConfirmation, setShowMembershipConfirmation] = useState(false);
+  const [membershipConfirmationData, setMembershipConfirmationData] = useState(null);
 
   const [liffReady, setLiffReady] = useState(false);
   const [lineUserId, setLineUserId] = useState(null);
@@ -2992,13 +2994,14 @@ function Profile() {
                     const memberResponse = await axios.get(`/api/members?memberId=${member.memberId}`);
                     setMember(memberResponse.data.member);
 
-                    setShowMembershipUpgrade(false);
-                    setMessage({
-                      type: 'success',
-                      text: t('language') === 'zh'
-                        ? '升級成功！請記得現場繳費 NT$ 3,000'
-                        : 'Upgrade successful! Please remember to pay NT$ 3,000 in person'
+                    // Show confirmation statement
+                    setMembershipConfirmationData({
+                      amount: 3000,
+                      paymentMethod: 'in-person',
+                      requiresApproval: response.data.requiresApproval
                     });
+                    setShowMembershipUpgrade(false);
+                    setShowMembershipConfirmation(true);
                   } catch (error) {
                     console.error('Membership upgrade error:', error);
                     setMessage({
@@ -3086,6 +3089,137 @@ function Profile() {
               disabled={processingUpgrade}
             >
               {t('language') === 'zh' ? '取消' : 'Cancel'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Membership Upgrade Confirmation Modal */}
+      {showMembershipConfirmation && membershipConfirmationData && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.7)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1003,
+          padding: '20px'
+        }}>
+          <div style={{
+            background: 'white',
+            borderRadius: '16px',
+            padding: '40px',
+            maxWidth: '600px',
+            width: '100%',
+            maxHeight: '90vh',
+            overflow: 'auto',
+            boxShadow: '0 10px 50px rgba(0, 0, 0, 0.3)'
+          }}>
+            <div style={{ textAlign: 'center', marginBottom: '30px' }}>
+              <div style={{ fontSize: '64px', marginBottom: '15px' }}>
+                {membershipConfirmationData.requiresApproval ? '📋' : '✅'}
+              </div>
+              <h2 style={{ color: membershipConfirmationData.requiresApproval ? '#f59f00' : '#2b8a3e', marginBottom: '10px' }}>
+                {t('language') === 'zh'
+                  ? (membershipConfirmationData.requiresApproval ? '升級申請已提交！' : '升級成功！')
+                  : (membershipConfirmationData.requiresApproval ? 'Upgrade Request Submitted!' : 'Upgrade Successful!')}
+              </h2>
+              <p style={{ color: '#666', fontSize: '14px' }}>
+                {t('language') === 'zh'
+                  ? (membershipConfirmationData.requiresApproval
+                      ? '請保存以下資訊，並於現場繳費後等待管理員確認'
+                      : '請保存以下確認資訊')
+                  : (membershipConfirmationData.requiresApproval
+                      ? 'Please save this information and wait for admin confirmation after paying in person'
+                      : 'Please save this confirmation information')}
+              </p>
+            </div>
+
+            <div style={{
+              background: '#f8f9ff',
+              padding: '25px',
+              borderRadius: '12px',
+              marginBottom: '25px',
+              border: '2px solid #d3e0ff'
+            }}>
+              <h3 style={{ color: '#667eea', marginBottom: '20px', fontSize: '20px', textAlign: 'center' }}>
+                {t('language') === 'zh' ? '升級詳情' : 'Upgrade Details'}
+              </h3>
+
+              <div style={{ marginBottom: '15px', paddingBottom: '15px', borderBottom: '1px solid #e9ecef' }}>
+                <p style={{ fontSize: '14px', color: '#666', marginBottom: '5px' }}>
+                  {t('language') === 'zh' ? '升級至' : 'Upgrade To'}
+                </p>
+                <p style={{ fontSize: '18px', fontWeight: 'bold', color: '#333' }}>
+                  ⭐ 協會會員
+                </p>
+              </div>
+
+              <div style={{ marginBottom: '15px', paddingBottom: '15px', borderBottom: '1px solid #e9ecef' }}>
+                <p style={{ fontSize: '14px', color: '#666', marginBottom: '5px' }}>
+                  {t('language') === 'zh' ? '付款方式' : 'Payment Method'}
+                </p>
+                <p style={{ fontSize: '16px', fontWeight: '600', color: '#333' }}>
+                  💵 {t('language') === 'zh' ? '現場付款' : 'Pay in Person'}
+                </p>
+              </div>
+
+              <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '2px solid #667eea' }}>
+                <p style={{ fontSize: '14px', color: '#666', marginBottom: '5px' }}>
+                  {t('language') === 'zh' ? '應付金額' : 'Amount to Pay'}
+                </p>
+                <p style={{ fontSize: '28px', fontWeight: 'bold', color: '#667eea' }}>
+                  NT$ {membershipConfirmationData.amount}
+                </p>
+              </div>
+            </div>
+
+            {membershipConfirmationData.requiresApproval && (
+              <div style={{
+                background: '#fff3cd',
+                border: '2px solid #ffc107',
+                borderRadius: '12px',
+                padding: '20px',
+                marginBottom: '25px'
+              }}>
+                <p style={{ margin: 0, fontSize: '15px', color: '#856404', fontWeight: 'bold', marginBottom: '10px' }}>
+                  ⚠️ {t('language') === 'zh' ? '重要提醒' : 'Important Notice'}
+                </p>
+                <p style={{ margin: 0, fontSize: '14px', color: '#856404', lineHeight: '1.6' }}>
+                  {t('language') === 'zh'
+                    ? '1. 請於現場繳費 NT$ 3,000\n2. 繳費後，管理員將確認並更新您的會員狀態\n3. 確認後您將享有協會會員權益'
+                    : '1. Please pay NT$ 3,000 in person\n2. After payment, admin will confirm and update your membership status\n3. You will enjoy association member benefits after confirmation'}
+                </p>
+              </div>
+            )}
+
+            <div style={{
+              background: '#e7f3ff',
+              border: '1px solid #b3d9ff',
+              borderRadius: '12px',
+              padding: '20px',
+              marginBottom: '25px'
+            }}>
+              <p style={{ margin: 0, fontSize: '14px', color: '#004085', lineHeight: '1.6' }}>
+                💡 {t('language') === 'zh'
+                  ? '您可以在個人檔案中查看會籍狀態。'
+                  : 'You can view your membership status in your profile.'}
+              </p>
+            </div>
+
+            <button
+              onClick={() => {
+                setShowMembershipConfirmation(false);
+                setMembershipConfirmationData(null);
+              }}
+              className="btn btn-primary"
+              style={{ width: '100%', padding: '15px', fontSize: '16px' }}
+            >
+              {t('language') === 'zh' ? '完成' : 'Done'}
             </button>
           </div>
         </div>

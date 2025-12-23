@@ -801,17 +801,41 @@ module.exports = async (req, res) => {
         });
       }
 
-      // Update membership status
+      if (member.membershipUpgradeRequest?.status === 'pending') {
+        return res.status(400).json({
+          message: '您已經提交過升級申請 / You have already submitted an upgrade request'
+        });
+      }
+
+      // For in-person payment, create upgrade request (requires admin approval)
+      if (paymentMethod === 'in-person') {
+        member.membershipUpgradeRequest = {
+          status: 'pending',
+          requestedAt: new Date(),
+          paymentMethod: 'in-person'
+        };
+
+        await member.save();
+
+        return res.status(200).json({
+          message: '升級申請已提交 / Upgrade request submitted',
+          member,
+          requiresApproval: true
+        });
+      }
+
+      // For other payment methods, upgrade immediately
       member.membershipStatus = '協會會員';
       member.membershipUpgradedDate = new Date();
-      member.membershipPaymentStatus = paymentMethod === 'in-person' ? 'pending' : 'paid';
+      member.membershipPaymentStatus = 'paid';
       member.membershipPaymentMethod = paymentMethod;
 
       await member.save();
 
       return res.status(200).json({
         message: '升級成功 / Upgrade successful',
-        member
+        member,
+        requiresApproval: false
       });
     }
 
