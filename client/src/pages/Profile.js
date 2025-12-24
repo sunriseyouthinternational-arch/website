@@ -393,8 +393,7 @@ function Profile() {
     setUploadingAbsenceForm(true);
 
     try {
-      const response = await axios.post('/api/google-drive-upload', {
-        meetingId: absenceMeetingId,
+      const response = await axios.post(`/api/association-meetings?action=submit-absence&meetingId=${absenceMeetingId}`, {
         formImage: absenceFormImage
       });
 

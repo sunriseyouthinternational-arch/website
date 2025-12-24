@@ -36,5 +36,4 @@ User-submitted completed forms will be stored in Google Drive:
 - Free: 15 GB storage
 - Secure and reliable
 - Easy sharing with admin team
-- Integrated with existing Google Workspace
-- See implementation in `/api/google-drive-upload.js`
+- See implementation in `/api/association-meetings.js` (action=submit-absence)
