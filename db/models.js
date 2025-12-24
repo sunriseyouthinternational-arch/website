@@ -261,8 +261,11 @@ const associationMeetingSchema = new mongoose.Schema({
   agenda: { type: String, required: true },
   date: { type: Date, required: true },
   time: { type: String, required: true },
-  location: { type: String },
+  meetingType: { type: String, enum: ['in-person', 'zoom'], default: 'in-person' },
+  location: { type: String }, // For in-person meetings
+  zoomUrl: { type: String }, // For zoom meetings
   memberType: { type: String, enum: ['協會會員', '董事會'], required: true },
+  mandatory: { type: Boolean, default: false },
   sendLineAnnouncement: { type: Boolean, default: false },
   participants: [{
     memberId: { type: mongoose.Schema.Types.ObjectId, ref: 'Member', required: true },
@@ -270,6 +273,13 @@ const associationMeetingSchema = new mongoose.Schema({
     memberIdString: { type: String, required: true },
     registeredAt: { type: Date, default: Date.now },
     attended: { type: Boolean, default: false }
+  }],
+  absences: [{
+    memberId: { type: mongoose.Schema.Types.ObjectId, ref: 'Member', required: true },
+    memberName: { type: String, required: true },
+    memberIdString: { type: String, required: true },
+    requestedAt: { type: Date, default: Date.now },
+    formImage: { type: String } // Base64 encoded image of filled form
   }],
   status: { type: String, enum: ['upcoming', 'completed', 'cancelled'], default: 'upcoming' },
   createdAt: { type: Date, default: Date.now },

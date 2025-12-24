@@ -103,8 +103,11 @@ function AdminDashboard() {
     agenda: '',
     date: '',
     time: '',
+    meetingType: 'in-person',
     location: '',
+    zoomUrl: '',
     memberType: '協會會員',
+    mandatory: false,
     sendLineAnnouncement: false
   });
 
@@ -673,8 +676,11 @@ function AdminDashboard() {
         agenda: '',
         date: '',
         time: '',
+        meetingType: 'in-person',
         location: '',
+        zoomUrl: '',
         memberType: '協會會員',
+        mandatory: false,
         sendLineAnnouncement: false
       });
       fetchData();
@@ -743,8 +749,11 @@ function AdminDashboard() {
         agenda: editMeetingData.agenda,
         date: editMeetingData.date,
         time: editMeetingData.time,
+        meetingType: editMeetingData.meetingType || 'in-person',
         location: editMeetingData.location,
-        memberType: editMeetingData.memberType
+        zoomUrl: editMeetingData.zoomUrl,
+        memberType: editMeetingData.memberType,
+        mandatory: editMeetingData.mandatory || false
       });
 
       setMessage({
@@ -1251,26 +1260,6 @@ function AdminDashboard() {
                       : selectedMember.membershipPaymentMethod === 'linepay'
                       ? 'LINE Pay'
                       : (t('language') === 'zh' ? '信用卡' : 'Credit Card')}
-                  </span>
-                </div>
-              )}
-              {(selectedMember.membershipStatus === '協會會員' || selectedMember.membershipPaymentStatus) && (
-                <div className="detail-row">
-                  <strong>{t('language') === 'zh' ? '付款狀態：' : 'Payment Status:'}</strong>
-                  <span style={{
-                    padding: '4px 10px',
-                    background: selectedMember.membershipStatus === '會友' ? '#868e96' :
-                                selectedMember.membershipPaymentStatus === 'paid' ? '#2b8a3e' : '#f59f00',
-                    color: 'white',
-                    borderRadius: '6px',
-                    fontSize: '12px',
-                    fontWeight: 'bold'
-                  }}>
-                    {selectedMember.membershipStatus === '會友'
-                      ? (t('language') === 'zh' ? '免費' : 'Free')
-                      : selectedMember.membershipPaymentStatus === 'paid'
-                      ? (t('language') === 'zh' ? '已付款' : 'Paid')
-                      : (t('language') === 'zh' ? '未付款' : 'Pending')}
                   </span>
                 </div>
               )}
@@ -3282,14 +3271,38 @@ function AdminDashboard() {
               </div>
 
               <div className="form-group">
-                <label>{t('location')}</label>
-                <input
-                  type="text"
-                  value={newMeeting.location}
-                  onChange={(e) => setNewMeeting({ ...newMeeting, location: e.target.value })}
-                  placeholder={t('language') === 'zh' ? '會議地點' : 'Meeting location'}
-                />
+                <label>{t('language') === 'zh' ? '會議類型' : 'Meeting Type'} *</label>
+                <select
+                  value={newMeeting.meetingType}
+                  onChange={(e) => setNewMeeting({ ...newMeeting, meetingType: e.target.value })}
+                  required
+                >
+                  <option value="in-person">{t('language') === 'zh' ? '實體會議' : 'In Person'}</option>
+                  <option value="zoom">{t('language') === 'zh' ? '線上會議 (Zoom)' : 'Online (Zoom)'}</option>
+                </select>
               </div>
+
+              {newMeeting.meetingType === 'in-person' ? (
+                <div className="form-group">
+                  <label>{t('location')}</label>
+                  <input
+                    type="text"
+                    value={newMeeting.location}
+                    onChange={(e) => setNewMeeting({ ...newMeeting, location: e.target.value })}
+                    placeholder={t('language') === 'zh' ? '會議地點' : 'Meeting location'}
+                  />
+                </div>
+              ) : (
+                <div className="form-group">
+                  <label>{t('language') === 'zh' ? 'Zoom 連結' : 'Zoom URL'}</label>
+                  <input
+                    type="url"
+                    value={newMeeting.zoomUrl}
+                    onChange={(e) => setNewMeeting({ ...newMeeting, zoomUrl: e.target.value })}
+                    placeholder="https://zoom.us/j/..."
+                  />
+                </div>
+              )}
 
               <div className="form-group">
                 <label>{t('language') === 'zh' ? '會員類型' : 'Member Type'} *</label>
@@ -3306,6 +3319,19 @@ function AdminDashboard() {
               <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <input
                   type="checkbox"
+                  id="mandatory"
+                  checked={newMeeting.mandatory}
+                  onChange={(e) => setNewMeeting({ ...newMeeting, mandatory: e.target.checked })}
+                  style={{ width: 'auto' }}
+                />
+                <label htmlFor="mandatory" style={{ margin: 0 }}>
+                  {t('language') === 'zh' ? '強制參加（會員必須出席或提交請假表）' : 'Mandatory (members must attend or submit absence form)'}
+                </label>
+              </div>
+
+              <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <input
+                  type="checkbox"
                   id="sendLineAnnouncement"
                   checked={newMeeting.sendLineAnnouncement}
                   onChange={(e) => setNewMeeting({ ...newMeeting, sendLineAnnouncement: e.target.checked })}
@@ -3316,7 +3342,7 @@ function AdminDashboard() {
                 </label>
               </div>
 
-              {newMeeting.location && (
+              {newMeeting.meetingType === 'in-person' && newMeeting.location && (
                 <div style={{ marginTop: '10px', marginBottom: '10px' }}>
                   <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
                     {t('language') === 'zh' ? '地圖預覽' : 'Map Preview'}
@@ -3340,7 +3366,7 @@ function AdminDashboard() {
                 </button>
                 <button type="button" className="btn btn-secondary" onClick={() => {
                   setShowAddMeetingForm(false);
-                  setNewMeeting({ agenda: '', date: '', time: '', location: '', memberType: '協會會員', sendLineAnnouncement: false });
+                  setNewMeeting({ agenda: '', date: '', time: '', meetingType: 'in-person', location: '', zoomUrl: '', memberType: '協會會員', mandatory: false, sendLineAnnouncement: false });
                 }}>
                   {t('cancel')}
                 </button>
@@ -3566,14 +3592,38 @@ function AdminDashboard() {
             </div>
 
             <div className="form-group">
-              <label>{t('location')}</label>
-              <input
-                type="text"
-                value={editMeetingData.location || ''}
-                onChange={(e) => setEditMeetingData({ ...editMeetingData, location: e.target.value })}
-                placeholder={t('language') === 'zh' ? '會議地點' : 'Meeting location'}
-              />
+              <label>{t('language') === 'zh' ? '會議類型' : 'Meeting Type'} *</label>
+              <select
+                value={editMeetingData.meetingType || 'in-person'}
+                onChange={(e) => setEditMeetingData({ ...editMeetingData, meetingType: e.target.value })}
+                required
+              >
+                <option value="in-person">{t('language') === 'zh' ? '實體會議' : 'In Person'}</option>
+                <option value="zoom">{t('language') === 'zh' ? '線上會議 (Zoom)' : 'Online (Zoom)'}</option>
+              </select>
             </div>
+
+            {(editMeetingData.meetingType || 'in-person') === 'in-person' ? (
+              <div className="form-group">
+                <label>{t('location')}</label>
+                <input
+                  type="text"
+                  value={editMeetingData.location || ''}
+                  onChange={(e) => setEditMeetingData({ ...editMeetingData, location: e.target.value })}
+                  placeholder={t('language') === 'zh' ? '會議地點' : 'Meeting location'}
+                />
+              </div>
+            ) : (
+              <div className="form-group">
+                <label>{t('language') === 'zh' ? 'Zoom 連結' : 'Zoom URL'}</label>
+                <input
+                  type="url"
+                  value={editMeetingData.zoomUrl || ''}
+                  onChange={(e) => setEditMeetingData({ ...editMeetingData, zoomUrl: e.target.value })}
+                  placeholder="https://zoom.us/j/..."
+                />
+              </div>
+            )}
 
             <div className="form-group">
               <label>{t('language') === 'zh' ? '會員類型' : 'Member Type'} *</label>
@@ -3587,7 +3637,20 @@ function AdminDashboard() {
               </select>
             </div>
 
-            {editMeetingData.location && (
+            <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '10px' }}>
+              <input
+                type="checkbox"
+                id="editMandatory"
+                checked={editMeetingData.mandatory || false}
+                onChange={(e) => setEditMeetingData({ ...editMeetingData, mandatory: e.target.checked })}
+                style={{ width: 'auto' }}
+              />
+              <label htmlFor="editMandatory" style={{ margin: 0 }}>
+                {t('language') === 'zh' ? '強制參加（會員必須出席或提交請假表）' : 'Mandatory (members must attend or submit absence form)'}
+              </label>
+            </div>
+
+            {(editMeetingData.meetingType || 'in-person') === 'in-person' && editMeetingData.location && (
               <div style={{ marginTop: '10px', marginBottom: '10px' }}>
                 <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
                   {t('language') === 'zh' ? '地圖預覽' : 'Map Preview'}

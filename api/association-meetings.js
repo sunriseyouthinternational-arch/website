@@ -202,8 +202,11 @@ module.exports = async (req, res) => {
       if (updates.agenda) meeting.agenda = updates.agenda;
       if (updates.date) meeting.date = new Date(updates.date);
       if (updates.time) meeting.time = updates.time;
+      if (updates.meetingType) meeting.meetingType = updates.meetingType;
       if (updates.location !== undefined) meeting.location = updates.location;
+      if (updates.zoomUrl !== undefined) meeting.zoomUrl = updates.zoomUrl;
       if (updates.memberType) meeting.memberType = updates.memberType;
+      if (updates.mandatory !== undefined) meeting.mandatory = updates.mandatory;
       if (updates.status) meeting.status = updates.status;
 
       await meeting.save();
