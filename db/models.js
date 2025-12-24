@@ -137,7 +137,7 @@ const classSchema = new mongoose.Schema({
     paid: { type: Boolean, default: false },
     paymentMethod: { type: String, enum: ['in-person', 'credit', 'linepay'], default: 'in-person' }
   }],
-  status: { type: String, enum: ['active', 'completed', 'cancelled'], default: 'active' },
+  status: { type: String, enum: ['upcoming', 'completed', 'cancelled'], default: 'upcoming' },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });
@@ -187,7 +187,7 @@ const activitySchema = new mongoose.Schema({
     paid: { type: Boolean, default: false },
     paymentMethod: { type: String, enum: ['in-person', 'credit', 'linepay'], default: 'in-person' }
   }],
-  status: { type: String, enum: ['active', 'completed', 'cancelled'], default: 'active' },
+  status: { type: String, enum: ['upcoming', 'completed', 'cancelled'], default: 'upcoming' },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });

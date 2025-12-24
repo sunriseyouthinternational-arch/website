@@ -37,7 +37,8 @@ function AdminDashboard() {
     teacher: '',
     time: '',
     date: '',
-    location: ''
+    location: '',
+    status: 'upcoming'
   });
 
   const [showAddActivityForm, setShowAddActivityForm] = useState(false);
@@ -51,7 +52,8 @@ function AdminDashboard() {
     teacherId: '',
     teacher: '',
     maxParticipants: '',
-    banner: ''
+    banner: '',
+    status: 'upcoming'
   });
 
   const [showAddTeacherForm, setShowAddTeacherForm] = useState(false);
@@ -108,8 +110,14 @@ function AdminDashboard() {
     zoomUrl: '',
     memberType: '協會會員',
     mandatory: false,
-    sendLineAnnouncement: false
+    sendLineAnnouncement: false,
+    status: 'upcoming'
   });
+
+  // Filter states for status
+  const [classStatusFilter, setClassStatusFilter] = useState('all');
+  const [activityStatusFilter, setActivityStatusFilter] = useState('all');
+  const [meetingStatusFilter, setMeetingStatusFilter] = useState('all');
 
   useEffect(() => {
     const token = localStorage.getItem('adminToken');
@@ -357,7 +365,8 @@ function AdminDashboard() {
         teacher: '',
         time: '',
         date: '',
-        location: ''
+        location: '',
+        status: 'upcoming'
       });
 
       const classesRes = await axios.get('/api/classes');
@@ -459,7 +468,8 @@ function AdminDashboard() {
         teacherId: '',
         teacher: '',
         maxParticipants: '',
-        banner: ''
+        banner: '',
+        status: 'upcoming'
       });
       fetchData();
     } catch (error) {
@@ -681,7 +691,8 @@ function AdminDashboard() {
         zoomUrl: '',
         memberType: '協會會員',
         mandatory: false,
-        sendLineAnnouncement: false
+        sendLineAnnouncement: false,
+        status: 'upcoming'
       });
       fetchData();
     } catch (error) {
@@ -753,7 +764,8 @@ function AdminDashboard() {
         location: editMeetingData.location,
         zoomUrl: editMeetingData.zoomUrl,
         memberType: editMeetingData.memberType,
-        mandatory: editMeetingData.mandatory || false
+        mandatory: editMeetingData.mandatory || false,
+        status: editMeetingData.status || 'upcoming'
       });
 
       setMessage({
@@ -1922,6 +1934,20 @@ function AdminDashboard() {
               </button>
             </div>
 
+            <div className="form-group" style={{ marginTop: '20px', maxWidth: '300px' }}>
+              <label>{t('language') === 'zh' ? '篩選狀態' : 'Filter by Status'}</label>
+              <select
+                value={classStatusFilter}
+                onChange={(e) => setClassStatusFilter(e.target.value)}
+                style={{ width: '100%' }}
+              >
+                <option value="all">{t('language') === 'zh' ? '全部' : 'All'}</option>
+                <option value="upcoming">{t('language') === 'zh' ? '即將到來' : 'Upcoming'}</option>
+                <option value="completed">{t('language') === 'zh' ? '已完成' : 'Completed'}</option>
+                <option value="cancelled">{t('language') === 'zh' ? '已取消' : 'Cancelled'}</option>
+              </select>
+            </div>
+
             {showAddClassForm && (
               <form onSubmit={handleAddClass} className="add-form" style={{ marginTop: '20px' }}>
                 <div className="form-group">
@@ -2080,12 +2106,27 @@ function AdminDashboard() {
                   </div>
                 )}
 
+                <div className="form-group">
+                  <label>{t('language') === 'zh' ? '狀態' : 'Status'} *</label>
+                  <select
+                    value={newClass.status}
+                    onChange={(e) => setNewClass({ ...newClass, status: e.target.value })}
+                    required
+                  >
+                    <option value="upcoming">{t('language') === 'zh' ? '即將到來' : 'Upcoming'}</option>
+                    <option value="completed">{t('language') === 'zh' ? '已完成' : 'Completed'}</option>
+                    <option value="cancelled">{t('language') === 'zh' ? '已取消' : 'Cancelled'}</option>
+                  </select>
+                </div>
+
                 <button type="submit" className="btn btn-primary">
                   {t('hostClass')}
                 </button>
               </form>
             )}            <div className="items-list" style={{ marginTop: '20px' }}>
-              {classes.map(classItem => (
+              {classes
+                .filter(classItem => classStatusFilter === 'all' || classItem.status === classStatusFilter)
+                .map(classItem => (
                 <div key={classItem._id} className="item-summary-card">
                   {classItem.classInfoId?.banner && (
                     <img src={classItem.classInfoId.banner} alt={classItem.classInfoId?.name} className="item-summary-banner" />
@@ -2132,6 +2173,20 @@ function AdminDashboard() {
               >
                 {showAddActivityForm ? t('cancel') : t('addNew')}
               </button>
+            </div>
+
+            <div className="form-group" style={{ marginTop: '20px', maxWidth: '300px' }}>
+              <label>{t('language') === 'zh' ? '篩選狀態' : 'Filter by Status'}</label>
+              <select
+                value={activityStatusFilter}
+                onChange={(e) => setActivityStatusFilter(e.target.value)}
+                style={{ width: '100%' }}
+              >
+                <option value="all">{t('language') === 'zh' ? '全部' : 'All'}</option>
+                <option value="upcoming">{t('language') === 'zh' ? '即將到來' : 'Upcoming'}</option>
+                <option value="completed">{t('language') === 'zh' ? '已完成' : 'Completed'}</option>
+                <option value="cancelled">{t('language') === 'zh' ? '已取消' : 'Cancelled'}</option>
+              </select>
             </div>
 
             {showAddActivityForm && (
@@ -2353,12 +2408,27 @@ function AdminDashboard() {
                   )}
                 </div>
 
+                <div className="form-group">
+                  <label>{t('language') === 'zh' ? '狀態' : 'Status'} *</label>
+                  <select
+                    value={newActivity.status}
+                    onChange={(e) => setNewActivity({ ...newActivity, status: e.target.value })}
+                    required
+                  >
+                    <option value="upcoming">{t('language') === 'zh' ? '即將到來' : 'Upcoming'}</option>
+                    <option value="completed">{t('language') === 'zh' ? '已完成' : 'Completed'}</option>
+                    <option value="cancelled">{t('language') === 'zh' ? '已取消' : 'Cancelled'}</option>
+                  </select>
+                </div>
+
                 <button type="submit" className="btn btn-primary">
                   {t('language') === 'zh' ? '添加活動' : 'Add Activity'}
                 </button>
               </form>
             )}            <div className="items-list" style={{ marginTop: '20px' }}>
-              {activities.map(activity => (
+              {activities
+                .filter(activity => activityStatusFilter === 'all' || activity.status === activityStatusFilter)
+                .map(activity => (
                 <div key={activity._id} className="item-summary-card">
                   {activity.banner && (
                     <img src={activity.banner} alt={activity.name} className="item-summary-banner" />
@@ -3236,6 +3306,20 @@ function AdminDashboard() {
             </button>
           </div>
 
+          <div className="form-group" style={{ marginTop: '20px', maxWidth: '300px' }}>
+            <label>{t('language') === 'zh' ? '篩選狀態' : 'Filter by Status'}</label>
+            <select
+              value={meetingStatusFilter}
+              onChange={(e) => setMeetingStatusFilter(e.target.value)}
+              style={{ width: '100%' }}
+            >
+              <option value="all">{t('language') === 'zh' ? '全部' : 'All'}</option>
+              <option value="upcoming">{t('language') === 'zh' ? '即將到來' : 'Upcoming'}</option>
+              <option value="completed">{t('language') === 'zh' ? '已完成' : 'Completed'}</option>
+              <option value="cancelled">{t('language') === 'zh' ? '已取消' : 'Cancelled'}</option>
+            </select>
+          </div>
+
           {showAddMeetingForm && (
             <form onSubmit={handleAddMeeting} className="form" style={{ marginTop: '20px', border: '2px solid #667eea', padding: '20px', borderRadius: '8px' }}>
               <h4>{t('language') === 'zh' ? '建立新會議' : 'Create New Meeting'}</h4>
@@ -3360,13 +3444,26 @@ function AdminDashboard() {
                 </div>
               )}
 
+              <div className="form-group">
+                <label>{t('language') === 'zh' ? '狀態' : 'Status'} *</label>
+                <select
+                  value={newMeeting.status || 'upcoming'}
+                  onChange={(e) => setNewMeeting({ ...newMeeting, status: e.target.value })}
+                  required
+                >
+                  <option value="upcoming">{t('language') === 'zh' ? '即將到來' : 'Upcoming'}</option>
+                  <option value="completed">{t('language') === 'zh' ? '已完成' : 'Completed'}</option>
+                  <option value="cancelled">{t('language') === 'zh' ? '已取消' : 'Cancelled'}</option>
+                </select>
+              </div>
+
               <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
                 <button type="submit" className="btn btn-primary" disabled={loading}>
                   {loading ? (t('language') === 'zh' ? '建立中...' : 'Creating...') : (t('language') === 'zh' ? '建立' : 'Create')}
                 </button>
                 <button type="button" className="btn btn-secondary" onClick={() => {
                   setShowAddMeetingForm(false);
-                  setNewMeeting({ agenda: '', date: '', time: '', meetingType: 'in-person', location: '', zoomUrl: '', memberType: '協會會員', mandatory: false, sendLineAnnouncement: false });
+                  setNewMeeting({ agenda: '', date: '', time: '', meetingType: 'in-person', location: '', zoomUrl: '', memberType: '協會會員', mandatory: false, sendLineAnnouncement: false, status: 'upcoming' });
                 }}>
                   {t('cancel')}
                 </button>
@@ -3388,7 +3485,9 @@ function AdminDashboard() {
                 </tr>
               </thead>
               <tbody>
-                {associationMeetings.map(meeting => (
+                {associationMeetings
+                  .filter(meeting => meetingStatusFilter === 'all' || meeting.status === meetingStatusFilter)
+                  .map(meeting => (
                   <tr key={meeting._id}>
                     <td>{meeting.agenda}</td>
                     <td>{new Date(meeting.date).toLocaleDateString('zh-TW')}</td>
@@ -3667,6 +3766,19 @@ function AdminDashboard() {
                 />
               </div>
             )}
+
+            <div className="form-group">
+              <label>{t('language') === 'zh' ? '狀態' : 'Status'} *</label>
+              <select
+                value={editMeetingData.status || 'upcoming'}
+                onChange={(e) => setEditMeetingData({ ...editMeetingData, status: e.target.value })}
+                required
+              >
+                <option value="upcoming">{t('language') === 'zh' ? '即將到來' : 'Upcoming'}</option>
+                <option value="completed">{t('language') === 'zh' ? '已完成' : 'Completed'}</option>
+                <option value="cancelled">{t('language') === 'zh' ? '已取消' : 'Cancelled'}</option>
+              </select>
+            </div>
 
             <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
               <button type="submit" className="btn btn-primary" disabled={loading}>
