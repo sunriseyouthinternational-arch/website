@@ -102,7 +102,7 @@ function AdminDashboard() {
     date: '',
     time: '',
     location: '',
-    memberType: '一般會員',
+    memberType: '協會會員',
     sendLineAnnouncement: false
   });
 
@@ -672,7 +672,7 @@ function AdminDashboard() {
         date: '',
         time: '',
         location: '',
-        memberType: '一般會員',
+        memberType: '協會會員',
         sendLineAnnouncement: false
       });
       fetchData();
@@ -1222,6 +1222,50 @@ function AdminDashboard() {
                 </div>
               )}
 
+              {/* Role Selection */}
+              <div className="detail-row">
+                <strong>{t('language') === 'zh' ? '角色：' : 'Role:'}</strong>
+                <select
+                  value={selectedMember.role || '一般會員'}
+                  onChange={async (e) => {
+                    try {
+                      const response = await axios.put(`/api/admin?resource=member-role&memberId=${selectedMember._id}`, {
+                        role: e.target.value
+                      });
+
+                      const updatedMember = response.data.member;
+                      setSelectedMember(updatedMember);
+                      setMembers(members.map(m =>
+                        m._id === selectedMember._id ? updatedMember : m
+                      ));
+
+                      setMessage({
+                        type: 'success',
+                        text: t('language') === 'zh' ? '角色已更新' : 'Role updated'
+                      });
+                    } catch (error) {
+                      setMessage({
+                        type: 'error',
+                        text: error.response?.data?.message || t('error')
+                      });
+                    }
+                  }}
+                  style={{
+                    padding: '6px 12px',
+                    borderRadius: '6px',
+                    border: '1px solid #ddd',
+                    fontSize: '14px',
+                    fontWeight: 'bold',
+                    background: selectedMember.role === '董事會' ? '#e7f5ff' : '#f8f9fa',
+                    color: selectedMember.role === '董事會' ? '#1971c2' : '#495057',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <option value="一般會員">{t('language') === 'zh' ? '一般會員' : 'General Member'}</option>
+                  <option value="董事會">{t('language') === 'zh' ? '董事會' : 'Board of Directors'}</option>
+                </select>
+              </div>
+
               {/* Pending Upgrade Request */}
               {selectedMember.membershipUpgradeRequest && selectedMember.membershipUpgradeRequest.status === 'pending' && (
                 <div style={{
@@ -1254,15 +1298,10 @@ function AdminDashboard() {
                       className="btn btn-primary"
                       onClick={async () => {
                         try {
-                          // Approve the upgrade request
-                          const response = await axios.put(`/api/admin?resource=membership-status&memberId=${selectedMember._id}`, {
-                            membershipStatus: '協會會員'
-                          });
+                          // Approve the upgrade request (this endpoint handles everything)
+                          const response = await axios.put(`/api/members?action=approve-upgrade-request&memberId=${selectedMember.memberId}`);
 
-                          // Update the member's upgrade request status
-                          const updateRequestResponse = await axios.put(`/api/members?action=approve-upgrade-request&memberId=${selectedMember.memberId}`);
-
-                          const updatedMember = updateRequestResponse.data.member;
+                          const updatedMember = response.data.member;
                           setSelectedMember(updatedMember);
                           setMembers(members.map(m =>
                             m._id === selectedMember._id ? updatedMember : m
@@ -3206,9 +3245,8 @@ function AdminDashboard() {
                   onChange={(e) => setNewMeeting({ ...newMeeting, memberType: e.target.value })}
                   required
                 >
-                  <option value="一般會員">{t('language') === 'zh' ? '一般會員' : 'General Members'}</option>
-                  <option value="理事會">{t('language') === 'zh' ? '理事會' : 'Board of Directors'}</option>
-                  <option value="監事會">{t('language') === 'zh' ? '監事會' : 'Board of Supervisors'}</option>
+                  <option value="協會會員">{t('language') === 'zh' ? '協會會員' : 'Association Members'}</option>
+                  <option value="董事會">{t('language') === 'zh' ? '董事會' : 'Board of Directors'}</option>
                 </select>
               </div>
 
@@ -3249,7 +3287,7 @@ function AdminDashboard() {
                 </button>
                 <button type="button" className="btn btn-secondary" onClick={() => {
                   setShowAddMeetingForm(false);
-                  setNewMeeting({ agenda: '', date: '', time: '', location: '', memberType: '一般會員', sendLineAnnouncement: false });
+                  setNewMeeting({ agenda: '', date: '', time: '', location: '', memberType: '協會會員', sendLineAnnouncement: false });
                 }}>
                   {t('cancel')}
                 </button>

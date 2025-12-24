@@ -208,6 +208,30 @@ module.exports = async (req, res) => {
       });
     }
 
+    // Update member role
+    if (resource === 'member-role' && req.method === 'PUT') {
+      const { role } = req.body;
+      const memberIdToUpdate = memberId || req.body.memberId;
+
+      if (!memberIdToUpdate || !role) {
+        return res.status(400).json({ message: '缺少必要欄位 / Missing required fields' });
+      }
+
+      const member = await Member.findById(memberIdToUpdate);
+
+      if (!member) {
+        return res.status(404).json({ message: '找不到會員 / Member not found' });
+      }
+
+      member.role = role;
+      await member.save();
+
+      return res.status(200).json({
+        message: '角色更新成功 / Role updated successfully',
+        member
+      });
+    }
+
     res.status(405).json({ message: 'Method not allowed' });
   } catch (error) {
     console.error('Admin operation error:', error);

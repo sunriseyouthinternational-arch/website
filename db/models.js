@@ -86,6 +86,7 @@ const memberSchema = new mongoose.Schema({
     requestedAt: { type: Date },
     paymentMethod: { type: String }
   },
+  role: { type: String, enum: ['一般會員', '董事會'], default: '一般會員' },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });
@@ -261,7 +262,7 @@ const associationMeetingSchema = new mongoose.Schema({
   date: { type: Date, required: true },
   time: { type: String, required: true },
   location: { type: String },
-  memberType: { type: String, enum: ['一般會員', '理事會', '監事會'], required: true },
+  memberType: { type: String, enum: ['協會會員', '董事會'], required: true },
   sendLineAnnouncement: { type: Boolean, default: false },
   participants: [{
     memberId: { type: mongoose.Schema.Types.ObjectId, ref: 'Member', required: true },
