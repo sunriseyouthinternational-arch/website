@@ -723,6 +723,27 @@ function AdminDashboard() {
     }
   };
 
+  const handleUpdateItemStatus = async (type, itemId, status) => {
+    try {
+      const endpoint = type === 'class' ? '/api/classes' : '/api/activities';
+      await axios.put(`${endpoint}?id=${itemId}`, { status });
+
+      setMessage({
+        type: 'success',
+        text: t('language') === 'zh' ? '狀態更新成功' : 'Status updated successfully'
+      });
+
+      if (selectedItem && selectedItem._id === itemId) {
+        setSelectedItem({ ...selectedItem, status });
+      }
+
+      fetchData();
+    } catch (error) {
+      console.error('Error updating item status:', error);
+      setMessage({ type: 'error', text: error.response?.data?.message || t('error') });
+    }
+  };
+
   const handleUpdateAttendance = async (meetingId, participantId, attended) => {
     try {
       await axios.put('/api/association-meetings?action=attendance', {
@@ -2106,19 +2127,6 @@ function AdminDashboard() {
                   </div>
                 )}
 
-                <div className="form-group">
-                  <label>{t('language') === 'zh' ? '狀態' : 'Status'} *</label>
-                  <select
-                    value={newClass.status}
-                    onChange={(e) => setNewClass({ ...newClass, status: e.target.value })}
-                    required
-                  >
-                    <option value="upcoming">{t('language') === 'zh' ? '即將到來' : 'Upcoming'}</option>
-                    <option value="completed">{t('language') === 'zh' ? '已完成' : 'Completed'}</option>
-                    <option value="cancelled">{t('language') === 'zh' ? '已取消' : 'Cancelled'}</option>
-                  </select>
-                </div>
-
                 <button type="submit" className="btn btn-primary">
                   {t('hostClass')}
                 </button>
@@ -2408,19 +2416,6 @@ function AdminDashboard() {
                   )}
                 </div>
 
-                <div className="form-group">
-                  <label>{t('language') === 'zh' ? '狀態' : 'Status'} *</label>
-                  <select
-                    value={newActivity.status}
-                    onChange={(e) => setNewActivity({ ...newActivity, status: e.target.value })}
-                    required
-                  >
-                    <option value="upcoming">{t('language') === 'zh' ? '即將到來' : 'Upcoming'}</option>
-                    <option value="completed">{t('language') === 'zh' ? '已完成' : 'Completed'}</option>
-                    <option value="cancelled">{t('language') === 'zh' ? '已取消' : 'Cancelled'}</option>
-                  </select>
-                </div>
-
                 <button type="submit" className="btn btn-primary">
                   {t('language') === 'zh' ? '添加活動' : 'Add Activity'}
                 </button>
@@ -2549,6 +2544,18 @@ function AdminDashboard() {
                 <span>
                   {selectedItem.currentParticipants} / {selectedItem.type === 'class' ? selectedItem.classInfoId?.maxParticipants : selectedItem.maxParticipants}
                 </span>
+              </div>
+              <div className="detail-row">
+                <strong>{t('language') === 'zh' ? '狀態' : 'Status'}:</strong>
+                <select
+                  value={selectedItem.status || 'upcoming'}
+                  onChange={(e) => handleUpdateItemStatus(selectedItem.type, selectedItem._id, e.target.value)}
+                  style={{ padding: '5px 10px', borderRadius: '4px' }}
+                >
+                  <option value="upcoming">{t('language') === 'zh' ? '即將到來' : 'Upcoming'}</option>
+                  <option value="completed">{t('language') === 'zh' ? '已完成' : 'Completed'}</option>
+                  <option value="cancelled">{t('language') === 'zh' ? '已取消' : 'Cancelled'}</option>
+                </select>
               </div>
             </div>
           </div>
@@ -3443,19 +3450,6 @@ function AdminDashboard() {
                   />
                 </div>
               )}
-
-              <div className="form-group">
-                <label>{t('language') === 'zh' ? '狀態' : 'Status'} *</label>
-                <select
-                  value={newMeeting.status || 'upcoming'}
-                  onChange={(e) => setNewMeeting({ ...newMeeting, status: e.target.value })}
-                  required
-                >
-                  <option value="upcoming">{t('language') === 'zh' ? '即將到來' : 'Upcoming'}</option>
-                  <option value="completed">{t('language') === 'zh' ? '已完成' : 'Completed'}</option>
-                  <option value="cancelled">{t('language') === 'zh' ? '已取消' : 'Cancelled'}</option>
-                </select>
-              </div>
 
               <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
                 <button type="submit" className="btn btn-primary" disabled={loading}>
