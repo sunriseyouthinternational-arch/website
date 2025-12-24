@@ -3644,6 +3644,71 @@ function AdminDashboard() {
               </p>
             )}
           </div>
+
+          {/* Absence Requests Section */}
+          {selectedMeeting.mandatory && (
+            <div className="detail-section">
+              <h4>
+                {t('language') === 'zh' ? '請假申請' : 'Absence Requests'}
+                {selectedMeeting.absences ? ` (${selectedMeeting.absences.length})` : ' (0)'}
+              </h4>
+              {selectedMeeting.absences && selectedMeeting.absences.length > 0 ? (
+                <div className="table-container">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>{t('language') === 'zh' ? '會員編號' : 'Member ID'}</th>
+                        <th>{t('memberName')}</th>
+                        <th>{t('language') === 'zh' ? '提交時間' : 'Submitted At'}</th>
+                        <th>{t('language') === 'zh' ? '請假表' : 'Form'}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {selectedMeeting.absences.map((absence, index) => (
+                        <tr key={index}>
+                          <td>{absence.memberIdString}</td>
+                          <td>{absence.memberName}</td>
+                          <td>{new Date(absence.requestedAt).toLocaleDateString('zh-TW')}</td>
+                          <td>
+                            {absence.formImageUrl ? (
+                              <a
+                                href={absence.formImageUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="btn btn-primary btn-small"
+                                style={{ padding: '5px 10px', fontSize: '12px' }}
+                              >
+                                📄 {t('language') === 'zh' ? '查看表格' : 'View Form'}
+                              </a>
+                            ) : absence.formImage ? (
+                              <button
+                                onClick={() => {
+                                  const newWindow = window.open();
+                                  newWindow.document.write(`<img src="${absence.formImage}" style="max-width:100%;height:auto;" />`);
+                                }}
+                                className="btn btn-primary btn-small"
+                                style={{ padding: '5px 10px', fontSize: '12px' }}
+                              >
+                                📄 {t('language') === 'zh' ? '查看表格' : 'View Form'}
+                              </button>
+                            ) : (
+                              <span style={{ color: '#666', fontStyle: 'italic' }}>
+                                {t('language') === 'zh' ? '無表格' : 'No form'}
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <p style={{ color: '#666', fontStyle: 'italic' }}>
+                  {t('language') === 'zh' ? '尚無請假申請' : 'No absence requests yet'}
+                </p>
+              )}
+            </div>
+          )}
         </div>
       )}
 

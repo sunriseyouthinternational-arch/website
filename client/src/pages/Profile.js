@@ -72,6 +72,10 @@ function Profile() {
   const [memberStats, setMemberStats] = useState(null);
   const [registeringMeeting, setRegisteringMeeting] = useState(null);
   const [selectedMeeting, setSelectedMeeting] = useState(null);
+  const [showAbsenceModal, setShowAbsenceModal] = useState(false);
+  const [absenceMeetingId, setAbsenceMeetingId] = useState(null);
+  const [absenceFormImage, setAbsenceFormImage] = useState(null);
+  const [uploadingAbsenceForm, setUploadingAbsenceForm] = useState(false);
 
   const [liffReady, setLiffReady] = useState(false);
   const [lineUserId, setLineUserId] = useState(null);
@@ -333,6 +337,87 @@ function Profile() {
     const meeting = associationMeetings.find(m => m._id === meetingId);
     if (!meeting) return false;
     return meeting.participants.some(p => p.memberIdString === member.memberId);
+  };
+
+  const hasSubmittedAbsence = (meetingId) => {
+    if (!member) return false;
+    const meeting = associationMeetings.find(m => m._id === meetingId);
+    if (!meeting || !meeting.absences) return false;
+    return meeting.absences.some(a => a.memberIdString === member.memberId);
+  };
+
+  const handleCannotAttend = (meetingId) => {
+    setAbsenceMeetingId(meetingId);
+    setShowAbsenceModal(true);
+  };
+
+  const handleAbsenceFormUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      setMessage({
+        type: 'error',
+        text: t('language') === 'zh' ? '請上傳圖片文件' : 'Please upload an image file'
+      });
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setMessage({
+        type: 'error',
+        text: t('language') === 'zh' ? '圖片大小不能超過 5MB' : 'Image size cannot exceed 5MB'
+      });
+      return;
+    }
+
+    // Convert to base64
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setAbsenceFormImage(reader.result);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleSubmitAbsenceForm = async () => {
+    if (!absenceFormImage) {
+      setMessage({
+        type: 'error',
+        text: t('language') === 'zh' ? '請上傳請假表' : 'Please upload the absence form'
+      });
+      return;
+    }
+
+    setUploadingAbsenceForm(true);
+
+    try {
+      const response = await axios.post('/api/google-drive-upload', {
+        meetingId: absenceMeetingId,
+        formImage: absenceFormImage
+      });
+
+      setMessage({
+        type: 'success',
+        text: response.data.message || (t('language') === 'zh' ? '請假申請提交成功' : 'Absence request submitted successfully')
+      });
+
+      // Close modal and reset
+      setShowAbsenceModal(false);
+      setAbsenceMeetingId(null);
+      setAbsenceFormImage(null);
+
+      // Refresh meetings
+      fetchAssociationMeetings();
+    } catch (error) {
+      setMessage({
+        type: 'error',
+        text: error.response?.data?.message || (t('language') === 'zh' ? '提交失敗' : 'Submission failed')
+      });
+    } finally {
+      setUploadingAbsenceForm(false);
+    }
   };
 
   const fetchOrCreateMember = async (userId, profile) => {
@@ -2302,16 +2387,62 @@ function Profile() {
                           />
                         </div>
                       )}
-                      <button
-                        onClick={() => handleRegisterMeeting(meeting._id)}
-                        className="btn btn-primary"
-                        disabled={registeringMeeting === meeting._id}
-                      >
-                        {registeringMeeting === meeting._id
-                          ? (t('language') === 'zh' ? '報名中...' : 'Registering...')
-                          : (t('language') === 'zh' ? '報名' : 'Register')
-                        }
-                      </button>
+                      {meeting.mandatory && (
+                        <div style={{
+                          background: '#fff3cd',
+                          border: '2px solid #ffc107',
+                          borderRadius: '8px',
+                          padding: '10px',
+                          marginTop: '10px',
+                          marginBottom: '10px'
+                        }}>
+                          <p style={{ margin: 0, color: '#856404', fontSize: '14px', fontWeight: 'bold' }}>
+                            ⚠️ {t('language') === 'zh' ? '強制參加會議' : 'Mandatory Meeting'}
+                          </p>
+                          <p style={{ margin: '5px 0 0 0', color: '#856404', fontSize: '12px' }}>
+                            {t('language') === 'zh'
+                              ? '會員必須出席或提交請假表'
+                              : 'Members must attend or submit absence form'}
+                          </p>
+                        </div>
+                      )}
+                      <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                        <button
+                          onClick={() => handleRegisterMeeting(meeting._id)}
+                          className="btn btn-primary"
+                          disabled={registeringMeeting === meeting._id || hasSubmittedAbsence(meeting._id)}
+                          style={{ flex: 1, minWidth: '120px' }}
+                        >
+                          {registeringMeeting === meeting._id
+                            ? (t('language') === 'zh' ? '報名中...' : 'Registering...')
+                            : (t('language') === 'zh' ? '報名' : 'Register')
+                          }
+                        </button>
+                        {meeting.mandatory && !hasSubmittedAbsence(meeting._id) && (
+                          <button
+                            onClick={() => handleCannotAttend(meeting._id)}
+                            className="btn btn-secondary"
+                            style={{ flex: 1, minWidth: '120px' }}
+                          >
+                            {t('language') === 'zh' ? '無法出席' : 'Cannot Attend'}
+                          </button>
+                        )}
+                        {hasSubmittedAbsence(meeting._id) && (
+                          <div style={{
+                            background: '#d1ecf1',
+                            border: '1px solid #bee5eb',
+                            borderRadius: '4px',
+                            padding: '8px 12px',
+                            flex: 1,
+                            minWidth: '120px',
+                            textAlign: 'center'
+                          }}>
+                            <span style={{ color: '#0c5460', fontSize: '14px', fontWeight: 'bold' }}>
+                              ✓ {t('language') === 'zh' ? '已提交請假' : 'Absence Submitted'}
+                            </span>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   ))
                 ) : (
@@ -3403,6 +3534,143 @@ function Profile() {
             >
               {t('language') === 'zh' ? '完成' : 'Done'}
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Absence Form Upload Modal */}
+      {showAbsenceModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          padding: '20px'
+        }}>
+          <div style={{
+            background: 'white',
+            borderRadius: '16px',
+            padding: '30px',
+            maxWidth: '500px',
+            width: '100%',
+            boxShadow: '0 10px 40px rgba(0,0,0,0.2)'
+          }}>
+            <h3 style={{ marginBottom: '20px', color: '#667eea' }}>
+              {t('language') === 'zh' ? '提交請假表' : 'Submit Absence Form'}
+            </h3>
+
+            <div style={{
+              background: '#fff3cd',
+              border: '1px solid #ffc107',
+              borderRadius: '8px',
+              padding: '15px',
+              marginBottom: '20px'
+            }}>
+              <p style={{ margin: 0, fontSize: '14px', color: '#856404', lineHeight: '1.6' }}>
+                <strong>{t('language') === 'zh' ? '請按照以下步驟：' : 'Please follow these steps:'}</strong>
+              </p>
+              <ol style={{ margin: '10px 0 0 20px', padding: 0, fontSize: '14px', color: '#856404' }}>
+                <li>
+                  {t('language') === 'zh' ? '下載請假表範本' : 'Download the absence form template'}
+                  <br />
+                  <a
+                    href="/forms/absence-form-template.pdf"
+                    download
+                    style={{
+                      color: '#667eea',
+                      textDecoration: 'underline',
+                      fontSize: '13px',
+                      marginTop: '5px',
+                      display: 'inline-block'
+                    }}
+                  >
+                    📥 {t('language') === 'zh' ? '點擊下載表格' : 'Click to download form'}
+                  </a>
+                </li>
+                <li>{t('language') === 'zh' ? '列印並填寫表格' : 'Print and fill out the form'}</li>
+                <li>{t('language') === 'zh' ? '拍攝填妥表格的清晰照片' : 'Take a clear photo of the completed form'}</li>
+                <li>{t('language') === 'zh' ? '上傳照片' : 'Upload the photo'}</li>
+              </ol>
+            </div>
+
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{
+                display: 'block',
+                marginBottom: '10px',
+                fontWeight: 'bold',
+                color: '#333'
+              }}>
+                {t('language') === 'zh' ? '上傳請假表照片' : 'Upload Form Photo'}
+              </label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleAbsenceFormUpload}
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  border: '2px dashed #667eea',
+                  borderRadius: '8px',
+                  cursor: 'pointer'
+                }}
+              />
+              <p style={{ fontSize: '12px', color: '#666', marginTop: '5px' }}>
+                {t('language') === 'zh'
+                  ? '支援格式：JPG, PNG｜最大 5MB'
+                  : 'Supported formats: JPG, PNG | Max 5MB'}
+              </p>
+            </div>
+
+            {absenceFormImage && (
+              <div style={{ marginBottom: '20px' }}>
+                <p style={{ fontWeight: 'bold', marginBottom: '10px' }}>
+                  {t('language') === 'zh' ? '預覽：' : 'Preview:'}
+                </p>
+                <img
+                  src={absenceFormImage}
+                  alt="Form preview"
+                  style={{
+                    width: '100%',
+                    maxHeight: '300px',
+                    objectFit: 'contain',
+                    border: '1px solid #ddd',
+                    borderRadius: '8px'
+                  }}
+                />
+              </div>
+            )}
+
+            <div style={{ display: 'flex', gap: '10px', marginTop: '25px' }}>
+              <button
+                onClick={handleSubmitAbsenceForm}
+                className="btn btn-primary"
+                disabled={uploadingAbsenceForm || !absenceFormImage}
+                style={{ flex: 1 }}
+              >
+                {uploadingAbsenceForm
+                  ? (t('language') === 'zh' ? '上傳中...' : 'Uploading...')
+                  : (t('language') === 'zh' ? '提交' : 'Submit')
+                }
+              </button>
+              <button
+                onClick={() => {
+                  setShowAbsenceModal(false);
+                  setAbsenceMeetingId(null);
+                  setAbsenceFormImage(null);
+                }}
+                className="btn btn-secondary"
+                disabled={uploadingAbsenceForm}
+                style={{ flex: 1 }}
+              >
+                {t('language') === 'zh' ? '取消' : 'Cancel'}
+              </button>
+            </div>
           </div>
         </div>
       )}

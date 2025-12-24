@@ -279,7 +279,8 @@ const associationMeetingSchema = new mongoose.Schema({
     memberName: { type: String, required: true },
     memberIdString: { type: String, required: true },
     requestedAt: { type: Date, default: Date.now },
-    formImage: { type: String } // Base64 encoded image of filled form
+    formImage: { type: String }, // Base64 encoded image (fallback)
+    formImageUrl: { type: String } // Google Drive URL (preferred)
   }],
   status: { type: String, enum: ['upcoming', 'completed', 'cancelled'], default: 'upcoming' },
   createdAt: { type: Date, default: Date.now },

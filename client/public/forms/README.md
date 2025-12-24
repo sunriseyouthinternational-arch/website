@@ -1,24 +1,26 @@
 # Association Meeting Absence Forms
 
-This directory contains form templates for association members who cannot attend mandatory meetings.
+## ⚠️ REMINDER: Upload Your Form Template!
+
+**ACTION REQUIRED**: Please upload your absence form template to this directory.
+
+### Steps:
+1. Create/prepare your absence form template (PDF recommended)
+2. Place the file in this directory: `client/public/forms/`
+3. Name it: `absence-form-template.pdf` (or `.png`, `.jpg`)
+4. Commit and push the file to the repository
 
 ## Directory Structure
 
 ```
 client/public/forms/
 ├── README.md (this file)
-└── absence-form-template.pdf (upload your form template here)
+└── absence-form-template.pdf ⚠️ UPLOAD THIS FILE!
 ```
-
-## How to Add Your Form Template
-
-1. Place your absence form PDF or image file in this directory
-2. Name it `absence-form-template.pdf` (or `.png`, `.jpg` as appropriate)
-3. Members will be able to download this form from the website when they need to submit an absence request
 
 ## Form Access
 
-Once uploaded, the form will be accessible at:
+Once uploaded, members can download the form at:
 - Development: `http://localhost:3000/forms/absence-form-template.pdf`
 - Production: `https://your-domain.com/forms/absence-form-template.pdf`
 
@@ -28,6 +30,11 @@ Once uploaded, the form will be accessible at:
 - PNG (.png) - For image-based forms
 - JPG (.jpg) - For image-based forms
 
-## File Size
+## User Upload Storage: Google Drive
 
-Keep form templates under 5MB for optimal loading times.
+User-submitted completed forms will be stored in Google Drive:
+- Free: 15 GB storage
+- Secure and reliable
+- Easy sharing with admin team
+- Integrated with existing Google Workspace
+- See implementation in `/api/google-drive-upload.js`
