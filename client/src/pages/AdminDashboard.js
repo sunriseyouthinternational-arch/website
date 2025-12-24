@@ -1144,11 +1144,12 @@ function AdminDashboard() {
                         membershipStatus: e.target.value
                       });
 
-                      // Update local state
-                      setSelectedMember({...selectedMember, membershipStatus: e.target.value});
+                      // Update local state with full member object from response
+                      const updatedMember = response.data.member;
+                      setSelectedMember(updatedMember);
                       setMembers(members.map(m =>
                         m._id === selectedMember._id
-                          ? {...m, membershipStatus: e.target.value}
+                          ? updatedMember
                           : m
                       ));
 
@@ -1218,6 +1219,101 @@ function AdminDashboard() {
                       ? (t('language') === 'zh' ? '已付款' : 'Paid')
                       : (t('language') === 'zh' ? '未付款' : 'Pending')}
                   </span>
+                </div>
+              )}
+
+              {/* Pending Upgrade Request */}
+              {selectedMember.membershipUpgradeRequest && selectedMember.membershipUpgradeRequest.status === 'pending' && (
+                <div style={{
+                  marginTop: '20px',
+                  padding: '20px',
+                  background: '#fff3cd',
+                  border: '2px solid #ffc107',
+                  borderRadius: '8px'
+                }}>
+                  <h4 style={{ color: '#856404', marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    ⚠️ {t('language') === 'zh' ? '待處理升級請求' : 'Pending Upgrade Request'}
+                  </h4>
+                  <div style={{ marginBottom: '15px' }}>
+                    <p style={{ marginBottom: '8px' }}>
+                      <strong>{t('language') === 'zh' ? '請求時間：' : 'Requested At:'}</strong>{' '}
+                      {formatDate(selectedMember.membershipUpgradeRequest.requestedAt)}
+                    </p>
+                    <p style={{ marginBottom: '8px' }}>
+                      <strong>{t('language') === 'zh' ? '付款方式：' : 'Payment Method:'}</strong>{' '}
+                      {selectedMember.membershipUpgradeRequest.paymentMethod === 'in-person'
+                        ? (t('language') === 'zh' ? '現場付款' : 'In Person')
+                        : selectedMember.membershipUpgradeRequest.paymentMethod}
+                    </p>
+                    <p style={{ marginBottom: '8px' }}>
+                      <strong>{t('language') === 'zh' ? '升級至：' : 'Upgrade To:'}</strong> 協會會員
+                    </p>
+                  </div>
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <button
+                      className="btn btn-primary"
+                      onClick={async () => {
+                        try {
+                          // Approve the upgrade request
+                          const response = await axios.put(`/api/admin?resource=membership-status&memberId=${selectedMember._id}`, {
+                            membershipStatus: '協會會員'
+                          });
+
+                          // Update the member's upgrade request status
+                          const updateRequestResponse = await axios.put(`/api/members?action=approve-upgrade-request&memberId=${selectedMember.memberId}`);
+
+                          const updatedMember = updateRequestResponse.data.member;
+                          setSelectedMember(updatedMember);
+                          setMembers(members.map(m =>
+                            m._id === selectedMember._id ? updatedMember : m
+                          ));
+
+                          setMessage({
+                            type: 'success',
+                            text: t('language') === 'zh' ? '升級請求已批准' : 'Upgrade request approved'
+                          });
+                        } catch (error) {
+                          setMessage({
+                            type: 'error',
+                            text: error.response?.data?.message || t('error')
+                          });
+                        }
+                      }}
+                      style={{ background: '#28a745' }}
+                    >
+                      ✓ {t('language') === 'zh' ? '批准升級' : 'Approve Upgrade'}
+                    </button>
+                    <button
+                      className="btn btn-secondary"
+                      onClick={async () => {
+                        if (!window.confirm(t('language') === 'zh' ? '確定要拒絕此升級請求嗎？' : 'Are you sure you want to reject this upgrade request?')) {
+                          return;
+                        }
+                        try {
+                          const response = await axios.put(`/api/members?action=reject-upgrade-request&memberId=${selectedMember.memberId}`);
+
+                          const updatedMember = response.data.member;
+                          setSelectedMember(updatedMember);
+                          setMembers(members.map(m =>
+                            m._id === selectedMember._id ? updatedMember : m
+                          ));
+
+                          setMessage({
+                            type: 'success',
+                            text: t('language') === 'zh' ? '升級請求已拒絕' : 'Upgrade request rejected'
+                          });
+                        } catch (error) {
+                          setMessage({
+                            type: 'error',
+                            text: error.response?.data?.message || t('error')
+                          });
+                        }
+                      }}
+                      style={{ background: '#dc3545' }}
+                    >
+                      ✗ {t('language') === 'zh' ? '拒絕' : 'Reject'}
+                    </button>
+                  </div>
                 </div>
               )}
             </div>

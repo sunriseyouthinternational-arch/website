@@ -839,6 +839,80 @@ module.exports = async (req, res) => {
       });
     }
 
+    // Approve upgrade request (Admin)
+    if (req.method === 'PUT' && action === 'approve-upgrade-request') {
+      const { memberId } = req.query;
+
+      if (!memberId) {
+        return res.status(400).json({
+          message: '缺少必要欄位 / Missing required fields'
+        });
+      }
+
+      const member = await Member.findOne({ memberId });
+
+      if (!member) {
+        return res.status(404).json({
+          message: '找不到團員 / Member not found'
+        });
+      }
+
+      if (member.membershipUpgradeRequest?.status !== 'pending') {
+        return res.status(400).json({
+          message: '沒有待處理的升級請求 / No pending upgrade request'
+        });
+      }
+
+      // Approve the upgrade
+      member.membershipStatus = '協會會員';
+      member.membershipUpgradedDate = new Date();
+      member.membershipPaymentStatus = 'paid';
+      member.membershipPaymentMethod = member.membershipUpgradeRequest.paymentMethod;
+      member.membershipUpgradeRequest.status = 'approved';
+
+      await member.save();
+
+      return res.status(200).json({
+        message: '升級請求已批准 / Upgrade request approved',
+        member
+      });
+    }
+
+    // Reject upgrade request (Admin)
+    if (req.method === 'PUT' && action === 'reject-upgrade-request') {
+      const { memberId } = req.query;
+
+      if (!memberId) {
+        return res.status(400).json({
+          message: '缺少必要欄位 / Missing required fields'
+        });
+      }
+
+      const member = await Member.findOne({ memberId });
+
+      if (!member) {
+        return res.status(404).json({
+          message: '找不到團員 / Member not found'
+        });
+      }
+
+      if (member.membershipUpgradeRequest?.status !== 'pending') {
+        return res.status(400).json({
+          message: '沒有待處理的升級請求 / No pending upgrade request'
+        });
+      }
+
+      // Reject the upgrade
+      member.membershipUpgradeRequest.status = 'rejected';
+
+      await member.save();
+
+      return res.status(200).json({
+        message: '升級請求已拒絕 / Upgrade request rejected',
+        member
+      });
+    }
+
     res.status(405).json({ message: 'Method not allowed' });
   } catch (error) {
     console.error('Member operation error:', error);

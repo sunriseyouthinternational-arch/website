@@ -133,7 +133,8 @@ const classSchema = new mongoose.Schema({
     memberId: { type: mongoose.Schema.Types.ObjectId, ref: 'Member', required: true },
     memberName: { type: String, required: true },
     enrolledAt: { type: Date, default: Date.now },
-    paid: { type: Boolean, default: false }
+    paid: { type: Boolean, default: false },
+    paymentMethod: { type: String, enum: ['in-person', 'credit', 'linepay'], default: 'in-person' }
   }],
   status: { type: String, enum: ['active', 'completed', 'cancelled'], default: 'active' },
   createdAt: { type: Date, default: Date.now },
@@ -182,7 +183,8 @@ const activitySchema = new mongoose.Schema({
     memberId: { type: mongoose.Schema.Types.ObjectId, ref: 'Member', required: true },
     memberName: { type: String, required: true },
     enrolledAt: { type: Date, default: Date.now },
-    paid: { type: Boolean, default: false }
+    paid: { type: Boolean, default: false },
+    paymentMethod: { type: String, enum: ['in-person', 'credit', 'linepay'], default: 'in-person' }
   }],
   status: { type: String, enum: ['active', 'completed', 'cancelled'], default: 'active' },
   createdAt: { type: Date, default: Date.now },
