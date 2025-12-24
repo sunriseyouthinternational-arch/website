@@ -494,7 +494,7 @@ module.exports = async (req, res) => {
     }
 
     // Update member profile
-    if (req.method === 'PUT' && memberId) {
+    if (req.method === 'PUT' && memberId && !action) {
       const { name, englishAlias, gender, birthDate, familyMembers, contact } = req.body;
 
       const member = await Member.findOne({ memberId });

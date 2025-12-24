@@ -243,7 +243,7 @@ module.exports = async (req, res) => {
       });
     }
 
-    // Cancel meeting (Admin only)
+    // Delete meeting (Admin only)
     if (req.method === 'DELETE' && meetingId) {
       const meeting = await AssociationMeeting.findById(meetingId);
 
@@ -251,12 +251,11 @@ module.exports = async (req, res) => {
         return res.status(404).json({ message: '找不到會議 / Meeting not found' });
       }
 
-      meeting.status = 'cancelled';
-      await meeting.save();
+      await AssociationMeeting.findByIdAndDelete(meetingId);
 
       return res.status(200).json({
-        message: '會議已取消 / Meeting cancelled',
-        meeting
+        message: '會議已刪除 / Meeting deleted successfully',
+        meetingId
       });
     }
 

@@ -97,6 +97,8 @@ function AdminDashboard() {
   const [associationMeetings, setAssociationMeetings] = useState([]);
   const [selectedMeeting, setSelectedMeeting] = useState(null);
   const [showAddMeetingForm, setShowAddMeetingForm] = useState(false);
+  const [editingMeeting, setEditingMeeting] = useState(false);
+  const [editMeetingData, setEditMeetingData] = useState(null);
   const [newMeeting, setNewMeeting] = useState({
     agenda: '',
     date: '',
@@ -728,6 +730,57 @@ function AdminDashboard() {
       fetchData();
     } catch (error) {
       console.error('Error updating attendance:', error);
+      setMessage({ type: 'error', text: error.response?.data?.message || t('error') });
+    }
+  };
+
+  const handleEditMeeting = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const response = await axios.put(`/api/association-meetings?meetingId=${editMeetingData._id}`, {
+        agenda: editMeetingData.agenda,
+        date: editMeetingData.date,
+        time: editMeetingData.time,
+        location: editMeetingData.location,
+        memberType: editMeetingData.memberType
+      });
+
+      setMessage({
+        type: 'success',
+        text: t('language') === 'zh' ? '會議更新成功' : 'Meeting updated successfully'
+      });
+
+      setEditingMeeting(false);
+      setEditMeetingData(null);
+      setSelectedMeeting(response.data.meeting);
+      fetchData();
+    } catch (error) {
+      console.error('Error updating meeting:', error);
+      setMessage({ type: 'error', text: error.response?.data?.message || t('error') });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteMeeting = async (meetingId) => {
+    if (!window.confirm(t('language') === 'zh' ? '確定要刪除此會議嗎？' : 'Are you sure you want to delete this meeting?')) {
+      return;
+    }
+
+    try {
+      await axios.delete(`/api/association-meetings?meetingId=${meetingId}`);
+
+      setMessage({
+        type: 'success',
+        text: t('language') === 'zh' ? '會議已刪除' : 'Meeting deleted successfully'
+      });
+
+      setSelectedMeeting(null);
+      fetchData();
+    } catch (error) {
+      console.error('Error deleting meeting:', error);
       setMessage({ type: 'error', text: error.response?.data?.message || t('error') });
     }
   };
@@ -3348,13 +3401,27 @@ function AdminDashboard() {
         </div>
       )}
 
-      {activeTab === 'association' && selectedMeeting && (
+      {activeTab === 'association' && selectedMeeting && !editingMeeting && (
         <div className="card">
           <div className="detail-header">
             <h3>{t('language') === 'zh' ? '會議詳情' : 'Meeting Details'}</h3>
-            <button className="btn btn-secondary" onClick={() => setSelectedMeeting(null)}>
-              {t('language') === 'zh' ? '← 返回列表' : '← Back to List'}
-            </button>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button className="btn btn-primary" onClick={() => {
+                setEditMeetingData({
+                  ...selectedMeeting,
+                  date: new Date(selectedMeeting.date).toISOString().split('T')[0]
+                });
+                setEditingMeeting(true);
+              }}>
+                ✏️ {t('language') === 'zh' ? '編輯' : 'Edit'}
+              </button>
+              <button className="btn btn-secondary" style={{ background: '#dc3545' }} onClick={() => handleDeleteMeeting(selectedMeeting._id)}>
+                🗑️ {t('language') === 'zh' ? '刪除' : 'Delete'}
+              </button>
+              <button className="btn btn-secondary" onClick={() => setSelectedMeeting(null)}>
+                {t('language') === 'zh' ? '← 返回列表' : '← Back to List'}
+              </button>
+            </div>
           </div>
 
           <div className="detail-section">
@@ -3452,6 +3519,104 @@ function AdminDashboard() {
               </p>
             )}
           </div>
+        </div>
+      )}
+
+      {activeTab === 'association' && editingMeeting && editMeetingData && (
+        <div className="card">
+          <div className="detail-header">
+            <h3>{t('language') === 'zh' ? '編輯會議' : 'Edit Meeting'}</h3>
+            <button className="btn btn-secondary" onClick={() => {
+              setEditingMeeting(false);
+              setEditMeetingData(null);
+            }}>
+              {t('language') === 'zh' ? '取消' : 'Cancel'}
+            </button>
+          </div>
+
+          <form onSubmit={handleEditMeeting} className="form">
+            <div className="form-group">
+              <label>{t('language') === 'zh' ? '議程' : 'Agenda'} *</label>
+              <input
+                type="text"
+                value={editMeetingData.agenda}
+                onChange={(e) => setEditMeetingData({ ...editMeetingData, agenda: e.target.value })}
+                required
+              />
+            </div>
+
+            <div className="form-group">
+              <label>{t('language') === 'zh' ? '日期' : 'Date'} *</label>
+              <input
+                type="date"
+                value={editMeetingData.date}
+                onChange={(e) => setEditMeetingData({ ...editMeetingData, date: e.target.value })}
+                required
+              />
+            </div>
+
+            <div className="form-group">
+              <label>{t('language') === 'zh' ? '時間' : 'Time'} *</label>
+              <input
+                type="time"
+                value={editMeetingData.time}
+                onChange={(e) => setEditMeetingData({ ...editMeetingData, time: e.target.value })}
+                required
+              />
+            </div>
+
+            <div className="form-group">
+              <label>{t('location')}</label>
+              <input
+                type="text"
+                value={editMeetingData.location || ''}
+                onChange={(e) => setEditMeetingData({ ...editMeetingData, location: e.target.value })}
+                placeholder={t('language') === 'zh' ? '會議地點' : 'Meeting location'}
+              />
+            </div>
+
+            <div className="form-group">
+              <label>{t('language') === 'zh' ? '會員類型' : 'Member Type'} *</label>
+              <select
+                value={editMeetingData.memberType}
+                onChange={(e) => setEditMeetingData({ ...editMeetingData, memberType: e.target.value })}
+                required
+              >
+                <option value="協會會員">{t('language') === 'zh' ? '協會會員' : 'Association Members'}</option>
+                <option value="董事會">{t('language') === 'zh' ? '董事會' : 'Board of Directors'}</option>
+              </select>
+            </div>
+
+            {editMeetingData.location && (
+              <div style={{ marginTop: '10px', marginBottom: '10px' }}>
+                <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+                  {t('language') === 'zh' ? '地圖預覽' : 'Map Preview'}
+                </label>
+                <iframe
+                  src={`https://maps.google.com/maps?q=${encodeURIComponent(editMeetingData.location)}&output=embed`}
+                  width="100%"
+                  height="200"
+                  style={{ border: '1px solid #ddd', borderRadius: '8px' }}
+                  allowFullScreen=""
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  title="Meeting Location Map"
+                />
+              </div>
+            )}
+
+            <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
+              <button type="submit" className="btn btn-primary" disabled={loading}>
+                {loading ? (t('language') === 'zh' ? '更新中...' : 'Updating...') : (t('language') === 'zh' ? '更新' : 'Update')}
+              </button>
+              <button type="button" className="btn btn-secondary" onClick={() => {
+                setEditingMeeting(false);
+                setEditMeetingData(null);
+              }}>
+                {t('cancel')}
+              </button>
+            </div>
+          </form>
         </div>
       )}
 
