@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -350,6 +350,27 @@ function Profile() {
     if (!meeting || !meeting.absences) return false;
     return meeting.absences.some(a => a.memberIdString === member.memberId);
   };
+
+  // Pre-compute registered and unregistered meetings to avoid O(N²) complexity
+  const { registeredMeetings, unregisteredMeetings } = useMemo(() => {
+    if (!member) {
+      return { registeredMeetings: [], unregisteredMeetings: associationMeetings };
+    }
+
+    const registered = [];
+    const unregistered = [];
+
+    associationMeetings.forEach(meeting => {
+      const isRegistered = meeting.participants.some(p => p.memberIdString === member.memberId);
+      if (isRegistered) {
+        registered.push(meeting);
+      } else {
+        unregistered.push(meeting);
+      }
+    });
+
+    return { registeredMeetings: registered, unregisteredMeetings: unregistered };
+  }, [associationMeetings, member]);
 
   const handleCannotAttend = (meetingId) => {
     setAbsenceMeetingId(meetingId);
@@ -2357,8 +2378,8 @@ function Profile() {
                 </div>
               ) : (
                 <div className="enrolled-list">
-                  {associationMeetings.filter(m => isMeetingRegistered(m._id)).length > 0 ? (
-                    associationMeetings.filter(m => isMeetingRegistered(m._id)).map((meeting) => (
+                  {registeredMeetings.length > 0 ? (
+                    registeredMeetings.map((meeting) => (
                       <div key={meeting._id} className="enrolled-item">
                         <p><strong>{meeting.agenda}</strong></p>
                         <p style={{ fontSize: '14px', color: '#666' }}>
@@ -2393,8 +2414,8 @@ function Profile() {
                 </div>
               ) : (
               <div className="grid">
-                {associationMeetings.filter(m => !isMeetingRegistered(m._id)).length > 0 ? (
-                  associationMeetings.filter(m => !isMeetingRegistered(m._id)).map((meeting) => (
+                {unregisteredMeetings.length > 0 ? (
+                  unregisteredMeetings.map((meeting) => (
                     <div key={meeting._id} className="item-card">
                       <h4>{meeting.agenda}</h4>
                       <div className="item-details">

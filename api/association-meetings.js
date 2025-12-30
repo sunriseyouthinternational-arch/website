@@ -332,10 +332,20 @@ module.exports = async (req, res) => {
         // Initialize Google Drive API
         let privateKey = process.env.GOOGLE_PRIVATE_KEY;
 
+        console.log('[Google Drive] Starting authentication...');
+        console.log('[Google Drive] Service account email:', process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL);
+        console.log('[Google Drive] Folder ID:', process.env.GOOGLE_DRIVE_FOLDER_ID);
+        console.log('[Google Drive] Private key starts with:', privateKey ? privateKey.substring(0, 30) + '...' : 'MISSING');
+        console.log('[Google Drive] Private key contains \\n:', privateKey ? privateKey.includes('\\n') : false);
+
         // Handle both escaped newlines and actual newlines
         if (privateKey.includes('\\n')) {
+          console.log('[Google Drive] Converting escaped \\n to actual newlines');
           privateKey = privateKey.replace(/\\n/g, '\n');
         }
+
+        console.log('[Google Drive] After conversion, key starts with:', privateKey.substring(0, 30) + '...');
+        console.log('[Google Drive] After conversion, contains actual newline:', privateKey.includes('\n'));
 
         const auth = new google.auth.JWT(
           process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
@@ -343,6 +353,8 @@ module.exports = async (req, res) => {
           privateKey,
           ['https://www.googleapis.com/auth/drive.file']
         );
+
+        console.log('[Google Drive] JWT auth object created, attempting to authorize...');
 
         const drive = google.drive({ version: 'v3', auth });
 
@@ -365,13 +377,18 @@ module.exports = async (req, res) => {
           body: require('stream').Readable.from(buffer)
         };
 
+        console.log('[Google Drive] Uploading file:', filename, 'to folder:', process.env.GOOGLE_DRIVE_FOLDER_ID);
+
         const file = await drive.files.create({
           resource: fileMetadata,
           media: media,
           fields: 'id, webViewLink, webContentLink'
         });
 
+        console.log('[Google Drive] File uploaded successfully! ID:', file.data.id);
+
         // Make file accessible
+        console.log('[Google Drive] Setting file permissions...');
         await drive.permissions.create({
           fileId: file.data.id,
           requestBody: {
@@ -399,8 +416,15 @@ module.exports = async (req, res) => {
           fileId: file.data.id
         });
       } catch (driveError) {
-        console.error('Google Drive upload failed:', driveError.message);
-        console.error('Full error:', driveError);
+        console.error('[Google Drive] Upload failed!');
+        console.error('[Google Drive] Error message:', driveError.message);
+        console.error('[Google Drive] Error code:', driveError.code);
+        console.error('[Google Drive] Error status:', driveError.status);
+        if (driveError.response) {
+          console.error('[Google Drive] Response status:', driveError.response.status);
+          console.error('[Google Drive] Response data:', driveError.response.data);
+        }
+        console.error('[Google Drive] Full error:', driveError);
 
         // Fallback to MongoDB storage
         meeting.absences.push({
