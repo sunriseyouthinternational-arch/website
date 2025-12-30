@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -349,6 +349,49 @@ function Profile() {
     const meeting = associationMeetings.find(m => m._id === meetingId);
     if (!meeting || !meeting.absences) return false;
     return meeting.absences.some(a => a.memberIdString === member.memberId);
+  };
+
+  // PERFORMANCE OPTIMIZATION: Pre-compute meeting lists and absence map
+  // This eliminates O(N²) complexity from repeated filter() + find() calls
+  const { registeredMeetings, unregisteredMeetings, absenceSubmissionMap } = useMemo(() => {
+    if (!member) {
+      return {
+        registeredMeetings: [],
+        unregisteredMeetings: associationMeetings,
+        absenceSubmissionMap: new Map()
+      };
+    }
+
+    const registered = [];
+    const unregistered = [];
+    const absenceMap = new Map();
+
+    associationMeetings.forEach(meeting => {
+      // Check registration status
+      const isRegistered = meeting.participants.some(p => p.memberIdString === member.memberId);
+
+      // Check absence submission status
+      const hasAbsence = meeting.absences && meeting.absences.some(a => a.memberIdString === member.memberId);
+      absenceMap.set(meeting._id, hasAbsence);
+
+      // Categorize meeting
+      if (isRegistered) {
+        registered.push(meeting);
+      } else {
+        unregistered.push(meeting);
+      }
+    });
+
+    return {
+      registeredMeetings: registered,
+      unregisteredMeetings: unregistered,
+      absenceSubmissionMap: absenceMap
+    };
+  }, [associationMeetings, member]);
+
+  // Use memoized absence map for O(1) lookup instead of O(N) find()
+  const hasSubmittedAbsenceFast = (meetingId) => {
+    return absenceSubmissionMap.get(meetingId) || false;
   };
 
   const handleCannotAttend = (meetingId) => {
@@ -2357,8 +2400,8 @@ function Profile() {
                 </div>
               ) : (
                 <div className="enrolled-list">
-                  {associationMeetings.filter(m => isMeetingRegistered(m._id)).length > 0 ? (
-                    associationMeetings.filter(m => isMeetingRegistered(m._id)).map((meeting) => (
+                  {registeredMeetings.length > 0 ? (
+                    registeredMeetings.map((meeting) => (
                       <div key={meeting._id} className="enrolled-item">
                         <p><strong>{meeting.agenda}</strong></p>
                         <p style={{ fontSize: '14px', color: '#666' }}>
@@ -2393,8 +2436,8 @@ function Profile() {
                 </div>
               ) : (
               <div className="grid">
-                {associationMeetings.filter(m => !isMeetingRegistered(m._id)).length > 0 ? (
-                  associationMeetings.filter(m => !isMeetingRegistered(m._id)).map((meeting) => (
+                {unregisteredMeetings.length > 0 ? (
+                  unregisteredMeetings.map((meeting) => (
                     <div key={meeting._id} className="item-card">
                       <h4>{meeting.agenda}</h4>
                       <div className="item-details">
@@ -2408,20 +2451,6 @@ function Profile() {
                           <strong>{t('language') === 'zh' ? '已報名人數' : 'Registered'}:</strong> {meeting.participants.length}
                         </p>
                       </div>
-                      {meeting.location && (
-                        <div style={{ marginTop: '10px', marginBottom: '10px' }}>
-                          <iframe
-                            src={`https://maps.google.com/maps?q=${encodeURIComponent(meeting.location)}&output=embed`}
-                            width="100%"
-                            height="200"
-                            style={{ border: '1px solid #ddd', borderRadius: '8px' }}
-                            allowFullScreen=""
-                            loading="lazy"
-                            referrerPolicy="no-referrer-when-downgrade"
-                            title="Meeting Location Map"
-                          />
-                        </div>
-                      )}
                       {meeting.mandatory && (
                         <div style={{
                           background: '#fff3cd',
@@ -2445,7 +2474,7 @@ function Profile() {
                         <button
                           onClick={() => handleRegisterMeeting(meeting._id)}
                           className="btn btn-primary"
-                          disabled={registeringMeeting === meeting._id || hasSubmittedAbsence(meeting._id)}
+                          disabled={registeringMeeting === meeting._id || hasSubmittedAbsenceFast(meeting._id)}
                           style={{ flex: 1, minWidth: '120px' }}
                         >
                           {registeringMeeting === meeting._id
@@ -2453,7 +2482,7 @@ function Profile() {
                             : (t('language') === 'zh' ? '報名' : 'Register')
                           }
                         </button>
-                        {meeting.mandatory && !hasSubmittedAbsence(meeting._id) && (
+                        {meeting.mandatory && !hasSubmittedAbsenceFast(meeting._id) && (
                           <button
                             onClick={() => handleCannotAttend(meeting._id)}
                             className="btn btn-secondary"
@@ -2462,7 +2491,7 @@ function Profile() {
                             {t('language') === 'zh' ? '無法出席' : 'Cannot Attend'}
                           </button>
                         )}
-                        {hasSubmittedAbsence(meeting._id) && (
+                        {hasSubmittedAbsenceFast(meeting._id) && (
                           <div style={{
                             background: '#d1ecf1',
                             border: '1px solid #bee5eb',

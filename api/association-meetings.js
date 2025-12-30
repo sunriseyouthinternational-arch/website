@@ -347,18 +347,13 @@ module.exports = async (req, res) => {
         console.log('[Google Drive] After conversion, key starts with:', privateKey.substring(0, 30) + '...');
         console.log('[Google Drive] After conversion, contains actual newline:', privateKey.includes('\n'));
 
-        const auth = new google.auth.JWT(
-          process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-          null,
-          privateKey,
-          ['https://www.googleapis.com/auth/drive']
-        );
+        const auth = new google.auth.JWT({
+          email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
+          key: privateKey,
+          scopes: ['https://www.googleapis.com/auth/drive']
+        });
 
-        console.log('[Google Drive] JWT auth object created, attempting to authorize...');
-
-        // Explicitly authorize the JWT client
-        await auth.authorize();
-        console.log('[Google Drive] JWT authorization successful!');
+        console.log('[Google Drive] JWT auth object created');
 
         const drive = google.drive({ version: 'v3', auth });
 
