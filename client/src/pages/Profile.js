@@ -76,6 +76,8 @@ function Profile() {
   const [absenceMeetingId, setAbsenceMeetingId] = useState(null);
   const [absenceFormImage, setAbsenceFormImage] = useState(null);
   const [uploadingAbsenceForm, setUploadingAbsenceForm] = useState(false);
+  const [loadingMeetings, setLoadingMeetings] = useState(false);
+  const [showMeetingDetails, setShowMeetingDetails] = useState(null);
 
   const [liffReady, setLiffReady] = useState(false);
   const [lineUserId, setLineUserId] = useState(null);
@@ -287,11 +289,14 @@ function Profile() {
   }, [activeTab, member]);
 
   const fetchAssociationMeetings = async () => {
+    setLoadingMeetings(true);
     try {
       const response = await axios.get('/api/association-meetings?status=upcoming');
       setAssociationMeetings(response.data.meetings);
     } catch (error) {
       console.error('Failed to fetch association meetings:', error);
+    } finally {
+      setLoadingMeetings(false);
     }
   };
 
@@ -2336,26 +2341,48 @@ function Profile() {
 
               {/* Registered Meetings */}
               <h4 className="section-subtitle">{t('language') === 'zh' ? '已報名會議' : 'Registered Meetings'}</h4>
-              <div className="enrolled-list">
-                {associationMeetings.filter(m => isMeetingRegistered(m._id)).length > 0 ? (
-                  associationMeetings.filter(m => isMeetingRegistered(m._id)).map((meeting) => (
-                    <div key={meeting._id} className="enrolled-item">
-                      <p><strong>{meeting.agenda}</strong></p>
-                      <p style={{ fontSize: '14px', color: '#666' }}>
-                        {new Date(meeting.date).toLocaleDateString('zh-TW')} {meeting.time}
-                      </p>
-                      <span className="status-badge paid">
-                        {t('language') === 'zh' ? '已報名' : 'Registered'}
-                      </span>
-                    </div>
-                  ))
-                ) : (
-                  <p className="empty-message">{t('language') === 'zh' ? '尚未報名任何會議' : 'No registered meetings'}</p>
-                )}
-              </div>
+              {loadingMeetings ? (
+                <div style={{ textAlign: 'center', padding: '40px' }}>
+                  <div style={{ fontSize: '24px', marginBottom: '10px' }}>⏳</div>
+                  <p style={{ color: '#666' }}>{t('language') === 'zh' ? '載入中...' : 'Loading...'}</p>
+                </div>
+              ) : (
+                <div className="enrolled-list">
+                  {associationMeetings.filter(m => isMeetingRegistered(m._id)).length > 0 ? (
+                    associationMeetings.filter(m => isMeetingRegistered(m._id)).map((meeting) => (
+                      <div key={meeting._id} className="enrolled-item">
+                        <p><strong>{meeting.agenda}</strong></p>
+                        <p style={{ fontSize: '14px', color: '#666' }}>
+                          {new Date(meeting.date).toLocaleDateString('zh-TW')} {meeting.time}
+                        </p>
+                        <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginTop: '10px' }}>
+                          <span className="status-badge paid">
+                            {t('language') === 'zh' ? '已報名' : 'Registered'}
+                          </span>
+                          <button
+                            onClick={() => setShowMeetingDetails(meeting)}
+                            className="btn btn-small btn-primary"
+                            style={{ padding: '5px 15px', fontSize: '13px' }}
+                          >
+                            {t('language') === 'zh' ? '查看詳情' : 'View Details'}
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="empty-message">{t('language') === 'zh' ? '尚未報名任何會議' : 'No registered meetings'}</p>
+                  )}
+                </div>
+              )}
 
               {/* Upcoming Meetings */}
               <h4 className="section-subtitle">{t('language') === 'zh' ? '即將舉行的會議' : 'Upcoming Meetings'}</h4>
+              {loadingMeetings ? (
+                <div style={{ textAlign: 'center', padding: '40px' }}>
+                  <div style={{ fontSize: '24px', marginBottom: '10px' }}>⏳</div>
+                  <p style={{ color: '#666' }}>{t('language') === 'zh' ? '載入中...' : 'Loading...'}</p>
+                </div>
+              ) : (
               <div className="grid">
                 {associationMeetings.filter(m => !isMeetingRegistered(m._id)).length > 0 ? (
                   associationMeetings.filter(m => !isMeetingRegistered(m._id)).map((meeting) => (
@@ -2448,6 +2475,7 @@ function Profile() {
                   <p className="empty-message">{t('language') === 'zh' ? '目前沒有可報名的會議' : 'No upcoming meetings available'}</p>
                 )}
               </div>
+              )}
             </div>
           )}
 
@@ -3532,6 +3560,114 @@ function Profile() {
               style={{ width: '100%', padding: '15px', fontSize: '16px' }}
             >
               {t('language') === 'zh' ? '完成' : 'Done'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Meeting Details Modal */}
+      {showMeetingDetails && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          padding: '20px',
+          overflowY: 'auto'
+        }}>
+          <div style={{
+            background: 'white',
+            borderRadius: '16px',
+            padding: '30px',
+            maxWidth: '600px',
+            width: '100%',
+            boxShadow: '0 10px 40px rgba(0,0,0,0.2)',
+            maxHeight: '90vh',
+            overflowY: 'auto'
+          }}>
+            <h3 style={{ marginBottom: '20px', color: '#667eea' }}>
+              {t('language') === 'zh' ? '會議詳情' : 'Meeting Details'}
+            </h3>
+
+            <div style={{ marginBottom: '20px' }}>
+              <h4 style={{ fontSize: '18px', marginBottom: '15px' }}>{showMeetingDetails.agenda}</h4>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <p><strong>{t('language') === 'zh' ? '日期' : 'Date'}:</strong> {new Date(showMeetingDetails.date).toLocaleDateString('zh-TW')}</p>
+                <p><strong>{t('language') === 'zh' ? '時間' : 'Time'}:</strong> {showMeetingDetails.time}</p>
+                <p><strong>{t('language') === 'zh' ? '類型' : 'Type'}:</strong> {showMeetingDetails.memberType}</p>
+
+                {showMeetingDetails.meetingType === 'in-person' && showMeetingDetails.location && (
+                  <>
+                    <p><strong>{t('location')}:</strong> 📍 {showMeetingDetails.location}</p>
+                    <div style={{ marginTop: '10px' }}>
+                      <iframe
+                        src={`https://maps.google.com/maps?q=${encodeURIComponent(showMeetingDetails.location)}&output=embed`}
+                        width="100%"
+                        height="250"
+                        style={{ border: '1px solid #ddd', borderRadius: '8px' }}
+                        allowFullScreen=""
+                        loading="lazy"
+                        referrerPolicy="no-referrer-when-downgrade"
+                        title="Meeting Location Map"
+                      />
+                    </div>
+                  </>
+                )}
+
+                {showMeetingDetails.meetingType === 'zoom' && showMeetingDetails.zoomUrl && (
+                  <div>
+                    <p><strong>{t('language') === 'zh' ? 'Zoom 連結' : 'Zoom URL'}:</strong></p>
+                    <a
+                      href={showMeetingDetails.zoomUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        color: '#667eea',
+                        textDecoration: 'underline',
+                        wordBreak: 'break-all',
+                        display: 'inline-block',
+                        marginTop: '5px'
+                      }}
+                    >
+                      {showMeetingDetails.zoomUrl}
+                    </a>
+                  </div>
+                )}
+
+                {showMeetingDetails.mandatory && (
+                  <div style={{
+                    background: '#fff3cd',
+                    border: '2px solid #ffc107',
+                    borderRadius: '8px',
+                    padding: '15px',
+                    marginTop: '10px'
+                  }}>
+                    <p style={{ margin: 0, color: '#856404', fontSize: '14px', fontWeight: 'bold' }}>
+                      ⚠️ {t('language') === 'zh' ? '強制參加會議' : 'Mandatory Meeting'}
+                    </p>
+                    <p style={{ margin: '5px 0 0 0', color: '#856404', fontSize: '12px' }}>
+                      {t('language') === 'zh'
+                        ? '會員必須出席或提交請假表'
+                        : 'Members must attend or submit absence form'}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <button
+              onClick={() => setShowMeetingDetails(null)}
+              className="btn btn-primary"
+              style={{ width: '100%' }}
+            >
+              {t('language') === 'zh' ? '關閉' : 'Close'}
             </button>
           </div>
         </div>
