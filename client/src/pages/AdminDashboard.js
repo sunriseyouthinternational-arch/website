@@ -101,6 +101,7 @@ function AdminDashboard() {
   const [showAddMeetingForm, setShowAddMeetingForm] = useState(false);
   const [editingMeeting, setEditingMeeting] = useState(false);
   const [editMeetingData, setEditMeetingData] = useState(null);
+  const [approvingAbsence, setApprovingAbsence] = useState(null);
   const [newMeeting, setNewMeeting] = useState({
     agenda: '',
     date: '',
@@ -773,6 +774,7 @@ function AdminDashboard() {
   };
 
   const handleApproveAbsence = async (meetingId, absenceId) => {
+    setApprovingAbsence(absenceId);
     try {
       await axios.post(`/api/association-meetings?action=approve-absence&meetingId=${meetingId}`, {
         absenceId
@@ -795,6 +797,8 @@ function AdminDashboard() {
     } catch (error) {
       console.error('Error approving absence:', error);
       setMessage({ type: 'error', text: error.response?.data?.message || t('error') });
+    } finally {
+      setApprovingAbsence(null);
     }
   };
 
@@ -3735,8 +3739,12 @@ function AdminDashboard() {
                                 onClick={() => handleApproveAbsence(selectedMeeting._id, absence._id)}
                                 className="btn btn-primary btn-small"
                                 style={{ padding: '5px 10px', fontSize: '12px', background: '#28a745' }}
+                                disabled={approvingAbsence === absence._id}
                               >
-                                {t('language') === 'zh' ? '核准' : 'Approve'}
+                                {approvingAbsence === absence._id
+                                  ? (t('language') === 'zh' ? '核准中...' : 'Approving...')
+                                  : (t('language') === 'zh' ? '核准' : 'Approve')
+                                }
                               </button>
                             )}
                           </td>
