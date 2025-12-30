@@ -1,7 +1,6 @@
 const connectDB = require('../lib/mongodb');
 const { AssociationMeeting, Member } = require('../db/models');
 const axios = require('axios');
-const { google } = require('googleapis');
 
 module.exports = async (req, res) => {
   const { action, meetingId, memberId } = req.query;
@@ -302,145 +301,20 @@ module.exports = async (req, res) => {
         });
       }
 
-      // Check if Google Drive is configured
-      if (!process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || !process.env.GOOGLE_PRIVATE_KEY || !process.env.GOOGLE_DRIVE_FOLDER_ID) {
-        console.warn('Google Drive not configured, storing image as Base64 in database');
-        console.warn('Missing:', {
-          hasEmail: !!process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-          hasKey: !!process.env.GOOGLE_PRIVATE_KEY,
-          hasFolder: !!process.env.GOOGLE_DRIVE_FOLDER_ID
-        });
+      // Store absence form in MongoDB
+      meeting.absences.push({
+        memberId: member._id,
+        memberName: member.name,
+        memberIdString: member.memberId,
+        requestedAt: new Date(),
+        formImage: formImage // Base64 encoded image
+      });
 
-        // Fallback: Store in MongoDB (not recommended for production)
-        meeting.absences.push({
-          memberId: member._id,
-          memberName: member.name,
-          memberIdString: member.memberId,
-          requestedAt: new Date(),
-          formImage: formImage // Base64 string
-        });
+      await meeting.save();
 
-        await meeting.save();
-
-        return res.status(200).json({
-          message: 'Absence request submitted successfully (stored locally)',
-          warning: 'Google Drive storage not configured'
-        });
-      }
-
-      try {
-        // Initialize Google Drive API
-        let privateKey = process.env.GOOGLE_PRIVATE_KEY;
-
-        console.log('[Google Drive] Starting authentication...');
-        console.log('[Google Drive] Service account email:', process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL);
-        console.log('[Google Drive] Folder ID:', process.env.GOOGLE_DRIVE_FOLDER_ID);
-        console.log('[Google Drive] Private key starts with:', privateKey ? privateKey.substring(0, 30) + '...' : 'MISSING');
-        console.log('[Google Drive] Private key contains \\n:', privateKey ? privateKey.includes('\\n') : false);
-
-        // Handle both escaped newlines and actual newlines
-        if (privateKey.includes('\\n')) {
-          console.log('[Google Drive] Converting escaped \\n to actual newlines');
-          privateKey = privateKey.replace(/\\n/g, '\n');
-        }
-
-        console.log('[Google Drive] After conversion, key starts with:', privateKey.substring(0, 30) + '...');
-        console.log('[Google Drive] After conversion, contains actual newline:', privateKey.includes('\n'));
-
-        const auth = new google.auth.JWT({
-          email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-          key: privateKey,
-          scopes: ['https://www.googleapis.com/auth/drive']
-        });
-
-        console.log('[Google Drive] JWT auth object created');
-
-        const drive = google.drive({ version: 'v3', auth });
-
-        // Convert base64 to buffer
-        const base64Data = formImage.replace(/^data:image\/\w+;base64,/, '');
-        const buffer = Buffer.from(base64Data, 'base64');
-
-        // Create unique filename
-        const timestamp = Date.now();
-        const filename = `absence-form-${member.memberId}-${timestamp}.jpg`;
-
-        // Upload to Google Drive
-        const fileMetadata = {
-          name: filename,
-          parents: [process.env.GOOGLE_DRIVE_FOLDER_ID]
-        };
-
-        const media = {
-          mimeType: 'image/jpeg',
-          body: require('stream').Readable.from(buffer)
-        };
-
-        console.log('[Google Drive] Uploading file:', filename, 'to folder:', process.env.GOOGLE_DRIVE_FOLDER_ID);
-
-        const file = await drive.files.create({
-          resource: fileMetadata,
-          media: media,
-          fields: 'id, webViewLink, webContentLink'
-        });
-
-        console.log('[Google Drive] File uploaded successfully! ID:', file.data.id);
-
-        // Make file accessible
-        console.log('[Google Drive] Setting file permissions...');
-        await drive.permissions.create({
-          fileId: file.data.id,
-          requestBody: {
-            role: 'reader',
-            type: 'anyone'
-          }
-        });
-
-        const fileUrl = file.data.webViewLink;
-
-        // Store absence request with Google Drive URL
-        meeting.absences.push({
-          memberId: member._id,
-          memberName: member.name,
-          memberIdString: member.memberId,
-          requestedAt: new Date(),
-          formImageUrl: fileUrl
-        });
-
-        await meeting.save();
-
-        return res.status(200).json({
-          message: 'Absence request submitted successfully',
-          fileUrl: fileUrl,
-          fileId: file.data.id
-        });
-      } catch (driveError) {
-        console.error('[Google Drive] Upload failed!');
-        console.error('[Google Drive] Error message:', driveError.message);
-        console.error('[Google Drive] Error code:', driveError.code);
-        console.error('[Google Drive] Error status:', driveError.status);
-        if (driveError.response) {
-          console.error('[Google Drive] Response status:', driveError.response.status);
-          console.error('[Google Drive] Response data:', driveError.response.data);
-        }
-        console.error('[Google Drive] Full error:', driveError);
-
-        // Fallback to MongoDB storage
-        meeting.absences.push({
-          memberId: member._id,
-          memberName: member.name,
-          memberIdString: member.memberId,
-          requestedAt: new Date(),
-          formImage: formImage
-        });
-
-        await meeting.save();
-
-        return res.status(200).json({
-          message: 'Absence request submitted (Google Drive upload failed, stored locally)',
-          warning: 'Google Drive authentication error. Please check your credentials in Vercel environment variables.'
-        });
-      }
+      return res.status(200).json({
+        message: 'Absence request submitted successfully'
+      });
     }
 
     res.status(405).json({ message: 'Method not allowed' });

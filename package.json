@@ -23,7 +23,6 @@
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
     "express-validator": "^7.0.1",
-    "googleapis": "^169.0.0",
     "jimp": "^0.22.10",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^7.5.0",

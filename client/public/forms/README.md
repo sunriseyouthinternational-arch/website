@@ -30,10 +30,9 @@ Once uploaded, members can download the form at:
 - PNG (.png) - For image-based forms
 - JPG (.jpg) - For image-based forms
 
-## User Upload Storage: Google Drive
+## User Upload Storage: MongoDB
 
-User-submitted completed forms will be stored in Google Drive:
-- Free: 15 GB storage
-- Secure and reliable
-- Easy sharing with admin team
+User-submitted completed forms are stored in MongoDB:
+- Forms are stored as base64 encoded images
+- Secure and integrated with existing database
 - See implementation in `/api/association-meetings.js` (action=submit-absence)

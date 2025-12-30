@@ -403,18 +403,10 @@ function Profile() {
         formImage: absenceFormImage
       });
 
-      // Check if there was a warning (e.g., Google Drive upload failed)
-      if (response.data.warning) {
-        setMessage({
-          type: 'error',
-          text: response.data.warning
-        });
-      } else {
-        setMessage({
-          type: 'success',
-          text: response.data.message || (t('language') === 'zh' ? '請假申請提交成功' : 'Absence request submitted successfully')
-        });
-      }
+      setMessage({
+        type: 'success',
+        text: response.data.message || (t('language') === 'zh' ? '請假申請提交成功' : 'Absence request submitted successfully')
+      });
 
       // Close modal and reset
       setShowAbsenceModal(false);
