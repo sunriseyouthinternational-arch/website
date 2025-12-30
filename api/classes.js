@@ -115,7 +115,7 @@ module.exports = async (req, res) => {
     // List all classes or create new
     if (!id) {
       if (req.method === 'GET') {
-        const classes = await Class.find({ status: 'active' })
+        const classes = await Class.find()
           .populate('classInfoId')
           .populate('teacherId')
           .sort({ createdAt: -1 });

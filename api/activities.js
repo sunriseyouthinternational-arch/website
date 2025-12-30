@@ -103,7 +103,7 @@ module.exports = async (req, res) => {
     // List all activities or create new
     if (!id) {
       if (req.method === 'GET') {
-        const activities = await Activity.find({ status: 'active' })
+        const activities = await Activity.find()
           .populate('teacherId')
           .sort({ createdAt: -1 });
         return res.status(200).json({ activities });
