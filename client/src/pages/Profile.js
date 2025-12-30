@@ -351,6 +351,13 @@ function Profile() {
     return meeting.absences.some(a => a.memberIdString === member.memberId);
   };
 
+  const getAbsenceStatus = (meetingId) => {
+    if (!member) return null;
+    const meeting = associationMeetings.find(m => m._id === meetingId);
+    if (!meeting || !meeting.absences) return null;
+    return meeting.absences.find(a => a.memberIdString === member.memberId);
+  };
+
   const handleCannotAttend = (meetingId) => {
     setAbsenceMeetingId(meetingId);
     setShowAbsenceModal(true);
@@ -2454,21 +2461,33 @@ function Profile() {
                             {t('language') === 'zh' ? '無法出席' : 'Cannot Attend'}
                           </button>
                         )}
-                        {hasSubmittedAbsence(meeting._id) && (
-                          <div style={{
-                            background: '#d1ecf1',
-                            border: '1px solid #bee5eb',
-                            borderRadius: '4px',
-                            padding: '8px 12px',
-                            flex: 1,
-                            minWidth: '120px',
-                            textAlign: 'center'
-                          }}>
-                            <span style={{ color: '#0c5460', fontSize: '14px', fontWeight: 'bold' }}>
-                              ✓ {t('language') === 'zh' ? '已提交請假' : 'Absence Submitted'}
-                            </span>
-                          </div>
-                        )}
+                        {hasSubmittedAbsence(meeting._id) && (() => {
+                          const absenceStatus = getAbsenceStatus(meeting._id);
+                          const isApproved = absenceStatus?.approved;
+
+                          return (
+                            <div style={{
+                              background: isApproved ? '#d4edda' : '#d1ecf1',
+                              border: `1px solid ${isApproved ? '#c3e6cb' : '#bee5eb'}`,
+                              borderRadius: '4px',
+                              padding: '8px 12px',
+                              flex: 1,
+                              minWidth: '120px',
+                              textAlign: 'center'
+                            }}>
+                              <span style={{
+                                color: isApproved ? '#155724' : '#0c5460',
+                                fontSize: '14px',
+                                fontWeight: 'bold'
+                              }}>
+                                {isApproved
+                                  ? `✓ ${t('language') === 'zh' ? '請假已核准' : 'Absence Approved'}`
+                                  : `⏳ ${t('language') === 'zh' ? '請假待審核' : 'Absence Pending'}`
+                                }
+                              </span>
+                            </div>
+                          );
+                        })()}
                       </div>
                     </div>
                   ))

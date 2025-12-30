@@ -279,7 +279,9 @@ const associationMeetingSchema = new mongoose.Schema({
     memberName: { type: String, required: true },
     memberIdString: { type: String, required: true },
     requestedAt: { type: Date, default: Date.now },
-    formImage: { type: String } // Base64 encoded image
+    formImage: { type: String }, // Base64 encoded image
+    approved: { type: Boolean, default: false },
+    approvedAt: { type: Date }
   }],
   status: { type: String, enum: ['upcoming', 'completed', 'cancelled'], default: 'upcoming' },
   createdAt: { type: Date, default: Date.now },

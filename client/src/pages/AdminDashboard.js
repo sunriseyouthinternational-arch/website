@@ -772,6 +772,32 @@ function AdminDashboard() {
     }
   };
 
+  const handleApproveAbsence = async (meetingId, absenceId) => {
+    try {
+      await axios.post(`/api/association-meetings?action=approve-absence&meetingId=${meetingId}`, {
+        absenceId
+      });
+
+      setMessage({
+        type: 'success',
+        text: t('language') === 'zh' ? '請假申請已核准' : 'Absence request approved successfully'
+      });
+
+      // Update selectedMeeting if it's the same meeting
+      if (selectedMeeting && selectedMeeting._id === meetingId) {
+        const updatedAbsences = selectedMeeting.absences.map(a =>
+          a._id === absenceId ? { ...a, approved: true, approvedAt: new Date() } : a
+        );
+        setSelectedMeeting({ ...selectedMeeting, absences: updatedAbsences });
+      }
+
+      fetchData();
+    } catch (error) {
+      console.error('Error approving absence:', error);
+      setMessage({ type: 'error', text: error.response?.data?.message || t('error') });
+    }
+  };
+
   const handleEditMeeting = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -3649,6 +3675,8 @@ function AdminDashboard() {
                         <th>{t('memberName')}</th>
                         <th>{t('language') === 'zh' ? '提交時間' : 'Submitted At'}</th>
                         <th>{t('language') === 'zh' ? '請假表' : 'Form'}</th>
+                        <th>{t('language') === 'zh' ? '狀態' : 'Status'}</th>
+                        <th>{t('language') === 'zh' ? '操作' : 'Actions'}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -3683,6 +3711,33 @@ function AdminDashboard() {
                               <span style={{ color: '#666', fontStyle: 'italic' }}>
                                 {t('language') === 'zh' ? '無表格' : 'No form'}
                               </span>
+                            )}
+                          </td>
+                          <td>
+                            <span style={{
+                              padding: '4px 8px',
+                              borderRadius: '4px',
+                              fontSize: '12px',
+                              fontWeight: 'bold',
+                              background: absence.approved ? '#d4edda' : '#fff3cd',
+                              color: absence.approved ? '#155724' : '#856404',
+                              border: `1px solid ${absence.approved ? '#c3e6cb' : '#ffc107'}`
+                            }}>
+                              {absence.approved
+                                ? (t('language') === 'zh' ? '✓ 已核准' : '✓ Approved')
+                                : (t('language') === 'zh' ? '⏳ 待審核' : '⏳ Pending')
+                              }
+                            </span>
+                          </td>
+                          <td>
+                            {!absence.approved && (
+                              <button
+                                onClick={() => handleApproveAbsence(selectedMeeting._id, absence._id)}
+                                className="btn btn-primary btn-small"
+                                style={{ padding: '5px 10px', fontSize: '12px', background: '#28a745' }}
+                              >
+                                {t('language') === 'zh' ? '核准' : 'Approve'}
+                              </button>
                             )}
                           </td>
                         </tr>

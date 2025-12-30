@@ -317,6 +317,35 @@ module.exports = async (req, res) => {
       });
     }
 
+    // Approve absence request (Admin only)
+    if (req.method === 'POST' && action === 'approve-absence') {
+      const { absenceId } = req.body;
+
+      if (!meetingId || !absenceId) {
+        return res.status(400).json({ message: 'Meeting ID and absence ID are required' });
+      }
+
+      const meeting = await AssociationMeeting.findById(meetingId);
+      if (!meeting) {
+        return res.status(404).json({ message: 'Meeting not found' });
+      }
+
+      const absence = meeting.absences.id(absenceId);
+      if (!absence) {
+        return res.status(404).json({ message: 'Absence request not found' });
+      }
+
+      absence.approved = true;
+      absence.approvedAt = new Date();
+
+      await meeting.save();
+
+      return res.status(200).json({
+        message: 'Absence request approved successfully',
+        absence
+      });
+    }
+
     res.status(405).json({ message: 'Method not allowed' });
   } catch (error) {
     console.error('Association meeting error:', error);
