@@ -311,8 +311,13 @@ module.exports = async (req, res) => {
       }
 
       // Check if Google Drive is configured
-      if (!process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || !process.env.GOOGLE_PRIVATE_KEY) {
+      if (!process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || !process.env.GOOGLE_PRIVATE_KEY || !process.env.GOOGLE_DRIVE_FOLDER_ID) {
         console.warn('Google Drive not configured, storing image as Base64 in database');
+        console.warn('Missing:', {
+          hasEmail: !!process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
+          hasKey: !!process.env.GOOGLE_PRIVATE_KEY,
+          hasFolder: !!process.env.GOOGLE_DRIVE_FOLDER_ID
+        });
 
         // Fallback: Store in MongoDB (not recommended for production)
         meeting.absences.push({
@@ -331,68 +336,96 @@ module.exports = async (req, res) => {
         });
       }
 
-      // Initialize Google Drive API
-      const auth = new google.auth.JWT(
-        process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-        null,
-        process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n'),
-        ['https://www.googleapis.com/auth/drive.file']
-      );
+      try {
+        // Initialize Google Drive API
+        let privateKey = process.env.GOOGLE_PRIVATE_KEY;
 
-      const drive = google.drive({ version: 'v3', auth });
-
-      // Convert base64 to buffer
-      const base64Data = formImage.replace(/^data:image\/\w+;base64,/, '');
-      const buffer = Buffer.from(base64Data, 'base64');
-
-      // Create unique filename
-      const timestamp = Date.now();
-      const filename = `absence-form-${decoded.memberId}-${timestamp}.jpg`;
-
-      // Upload to Google Drive
-      const fileMetadata = {
-        name: filename,
-        parents: [process.env.GOOGLE_DRIVE_FOLDER_ID || 'root']
-      };
-
-      const media = {
-        mimeType: 'image/jpeg',
-        body: require('stream').Readable.from(buffer)
-      };
-
-      const file = await drive.files.create({
-        resource: fileMetadata,
-        media: media,
-        fields: 'id, webViewLink, webContentLink'
-      });
-
-      // Make file accessible
-      await drive.permissions.create({
-        fileId: file.data.id,
-        requestBody: {
-          role: 'reader',
-          type: 'anyone'
+        // Handle both escaped newlines and actual newlines
+        if (privateKey.includes('\\n')) {
+          privateKey = privateKey.replace(/\\n/g, '\n');
         }
-      });
 
-      const fileUrl = file.data.webViewLink;
+        const auth = new google.auth.JWT(
+          process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
+          null,
+          privateKey,
+          ['https://www.googleapis.com/auth/drive.file']
+        );
 
-      // Store absence request with Google Drive URL
-      meeting.absences.push({
-        memberId: decoded.userId,
-        memberName: decoded.name,
-        memberIdString: decoded.memberId,
-        requestedAt: new Date(),
-        formImageUrl: fileUrl
-      });
+        const drive = google.drive({ version: 'v3', auth });
 
-      await meeting.save();
+        // Convert base64 to buffer
+        const base64Data = formImage.replace(/^data:image\/\w+;base64,/, '');
+        const buffer = Buffer.from(base64Data, 'base64');
 
-      return res.status(200).json({
-        message: 'Absence request submitted successfully',
-        fileUrl: fileUrl,
-        fileId: file.data.id
-      });
+        // Create unique filename
+        const timestamp = Date.now();
+        const filename = `absence-form-${decoded.memberId}-${timestamp}.jpg`;
+
+        // Upload to Google Drive
+        const fileMetadata = {
+          name: filename,
+          parents: [process.env.GOOGLE_DRIVE_FOLDER_ID]
+        };
+
+        const media = {
+          mimeType: 'image/jpeg',
+          body: require('stream').Readable.from(buffer)
+        };
+
+        const file = await drive.files.create({
+          resource: fileMetadata,
+          media: media,
+          fields: 'id, webViewLink, webContentLink'
+        });
+
+        // Make file accessible
+        await drive.permissions.create({
+          fileId: file.data.id,
+          requestBody: {
+            role: 'reader',
+            type: 'anyone'
+          }
+        });
+
+        const fileUrl = file.data.webViewLink;
+
+        // Store absence request with Google Drive URL
+        meeting.absences.push({
+          memberId: decoded.userId,
+          memberName: decoded.name,
+          memberIdString: decoded.memberId,
+          requestedAt: new Date(),
+          formImageUrl: fileUrl
+        });
+
+        await meeting.save();
+
+        return res.status(200).json({
+          message: 'Absence request submitted successfully',
+          fileUrl: fileUrl,
+          fileId: file.data.id
+        });
+      } catch (driveError) {
+        console.error('Google Drive upload failed:', driveError.message);
+        console.error('Full error:', driveError);
+
+        // Fallback to MongoDB storage
+        meeting.absences.push({
+          memberId: decoded.userId,
+          memberName: decoded.name,
+          memberIdString: decoded.memberId,
+          requestedAt: new Date(),
+          formImage: formImage
+        });
+
+        await meeting.save();
+
+        return res.status(200).json({
+          message: 'Absence request submitted (Google Drive upload failed, stored locally)',
+          warning: 'Google Drive authentication error. Please check your credentials in Vercel environment variables.'
+        });
+      }
     }
 
     res.status(405).json({ message: 'Method not allowed' });

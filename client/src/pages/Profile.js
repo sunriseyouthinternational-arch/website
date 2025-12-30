@@ -3715,7 +3715,7 @@ function Profile() {
                   {t('language') === 'zh' ? '下載請假表範本' : 'Download the absence form template'}
                   <br />
                   <a
-                    href="/forms/absence-form-template.pdf"
+                    href="/forms/absence-form-template.docx"
                     download
                     style={{
                       color: '#667eea',
