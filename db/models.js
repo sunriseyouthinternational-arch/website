@@ -292,10 +292,9 @@ associationMeetingSchema.pre('save', function(next) {
   next();
 });
 
-// Add indexes for faster queries
-associationMeetingSchema.index({ date: 1 });
-associationMeetingSchema.index({ status: 1 });
-associationMeetingSchema.index({ memberType: 1 });
+// Indexes for better query performance
+associationMeetingSchema.index({ status: 1, date: 1 });
+associationMeetingSchema.index({ memberType: 1, status: 1 });
 
 module.exports = {
   Admin: mongoose.models.Admin || mongoose.model('Admin', adminSchema),

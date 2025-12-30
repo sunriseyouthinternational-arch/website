@@ -399,6 +399,7 @@ function Profile() {
 
     try {
       const response = await axios.post(`/api/association-meetings?action=submit-absence&meetingId=${absenceMeetingId}`, {
+        memberId: member.memberId,
         formImage: absenceFormImage
       });
 

@@ -2,7 +2,6 @@ const connectDB = require('../lib/mongodb');
 const { AssociationMeeting, Member } = require('../db/models');
 const axios = require('axios');
 const { google } = require('googleapis');
-const jwt = require('jsonwebtoken');
 
 module.exports = async (req, res) => {
   const { action, meetingId, memberId } = req.query;
@@ -270,23 +269,10 @@ module.exports = async (req, res) => {
 
     // Submit absence form
     if (req.method === 'POST' && action === 'submit-absence') {
-      // Verify user authentication
-      const token = req.headers.authorization?.split(' ')[1];
-      if (!token) {
-        return res.status(401).json({ message: 'Unauthorized' });
-      }
+      const { memberId, formImage } = req.body;
 
-      let decoded;
-      try {
-        decoded = jwt.verify(token, process.env.JWT_SECRET);
-      } catch (error) {
-        return res.status(401).json({ message: 'Invalid token' });
-      }
-
-      const { formImage } = req.body;
-
-      if (!meetingId || !formImage) {
-        return res.status(400).json({ message: 'Meeting ID and form image are required' });
+      if (!meetingId || !memberId || !formImage) {
+        return res.status(400).json({ message: 'Meeting ID, member ID, and form image are required' });
       }
 
       // Verify the meeting exists and is mandatory
@@ -299,9 +285,15 @@ module.exports = async (req, res) => {
         return res.status(400).json({ message: 'This meeting is not mandatory' });
       }
 
+      // Get member info
+      const member = await Member.findOne({ memberId });
+      if (!member) {
+        return res.status(404).json({ message: 'Member not found' });
+      }
+
       // Check if user already submitted an absence request
       const existingAbsence = meeting.absences.find(
-        absence => absence.memberId.toString() === decoded.userId
+        absence => absence.memberIdString === memberId
       );
 
       if (existingAbsence) {
@@ -321,9 +313,9 @@ module.exports = async (req, res) => {
 
         // Fallback: Store in MongoDB (not recommended for production)
         meeting.absences.push({
-          memberId: decoded.userId,
-          memberName: decoded.name,
-          memberIdString: decoded.memberId,
+          memberId: member._id,
+          memberName: member.name,
+          memberIdString: member.memberId,
           requestedAt: new Date(),
           formImage: formImage // Base64 string
         });
@@ -360,7 +352,7 @@ module.exports = async (req, res) => {
 
         // Create unique filename
         const timestamp = Date.now();
-        const filename = `absence-form-${decoded.memberId}-${timestamp}.jpg`;
+        const filename = `absence-form-${member.memberId}-${timestamp}.jpg`;
 
         // Upload to Google Drive
         const fileMetadata = {
@@ -392,9 +384,9 @@ module.exports = async (req, res) => {
 
         // Store absence request with Google Drive URL
         meeting.absences.push({
-          memberId: decoded.userId,
-          memberName: decoded.name,
-          memberIdString: decoded.memberId,
+          memberId: member._id,
+          memberName: member.name,
+          memberIdString: member.memberId,
           requestedAt: new Date(),
           formImageUrl: fileUrl
         });
@@ -412,9 +404,9 @@ module.exports = async (req, res) => {
 
         // Fallback to MongoDB storage
         meeting.absences.push({
-          memberId: decoded.userId,
-          memberName: decoded.name,
-          memberIdString: decoded.memberId,
+          memberId: member._id,
+          memberName: member.name,
+          memberIdString: member.memberId,
           requestedAt: new Date(),
           formImage: formImage
         });
