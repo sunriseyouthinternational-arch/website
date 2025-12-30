@@ -65,7 +65,7 @@ module.exports = async (req, res) => {
 
     // Create new meeting (Admin only)
     if (req.method === 'POST' && !action) {
-      const { agenda, date, time, location, memberType, sendLineAnnouncement } = req.body;
+      const { agenda, date, time, location, memberType, sendLineAnnouncement, meetingType, zoomUrl, mandatory } = req.body;
 
       if (!agenda || !date || !time || !memberType) {
         return res.status(400).json({ message: '缺少必要欄位 / Missing required fields' });
@@ -75,10 +75,14 @@ module.exports = async (req, res) => {
         agenda,
         date: new Date(date),
         time,
+        meetingType: meetingType || 'in-person',
         location,
+        zoomUrl,
         memberType,
+        mandatory: mandatory || false,
         sendLineAnnouncement: sendLineAnnouncement || false,
         participants: [],
+        absences: [],
         status: 'upcoming'
       });
 
