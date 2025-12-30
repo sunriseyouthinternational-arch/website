@@ -1800,6 +1800,18 @@ function AdminDashboard() {
               >
                 {t('cancel')}
               </button>
+              <button
+                type="button"
+                className="btn btn-danger"
+                onClick={() => {
+                  if (window.confirm(t('language') === 'zh' ? '確定要刪除此課程資訊嗎？' : 'Are you sure you want to delete this class information?')) {
+                    handleDeleteClassInfo(selectedClassInfo._id);
+                  }
+                }}
+                style={{ marginLeft: 'auto' }}
+              >
+                {t('delete')}
+              </button>
             </div>
           </form>
         </div>
@@ -1931,12 +1943,6 @@ function AdminDashboard() {
                       onClick={() => setSelectedClassInfo(classInfo)}
                     >
                       {t('edit')}
-                    </button>
-                    <button
-                      className="btn btn-small btn-danger"
-                      onClick={() => handleDeleteClassInfo(classInfo._id)}
-                    >
-                      {t('delete')}
                     </button>
                   </div>
                 </div>
@@ -2159,12 +2165,6 @@ function AdminDashboard() {
                       onClick={() => setSelectedItem({ ...classItem, type: 'class' })}
                     >
                       {t('language') === 'zh' ? '查看詳情' : 'View Details'}
-                    </button>
-                    <button
-                      className="btn btn-small btn-danger"
-                      onClick={() => handleDeleteItem('class', classItem._id)}
-                    >
-                      {t('delete')}
                     </button>
                   </div>
                 </div>
@@ -2448,12 +2448,6 @@ function AdminDashboard() {
                       onClick={() => setSelectedItem({ ...activity, type: 'activity' })}
                     >
                       {t('language') === 'zh' ? '查看詳情' : 'View Details'}
-                    </button>
-                    <button
-                      className="btn btn-small btn-danger"
-                      onClick={() => handleDeleteItem('activity', activity._id)}
-                    >
-                      {t('delete')}
                     </button>
                   </div>
                 </div>
