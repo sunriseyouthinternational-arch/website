@@ -351,10 +351,14 @@ module.exports = async (req, res) => {
           process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
           null,
           privateKey,
-          ['https://www.googleapis.com/auth/drive.file']
+          ['https://www.googleapis.com/auth/drive']
         );
 
         console.log('[Google Drive] JWT auth object created, attempting to authorize...');
+
+        // Explicitly authorize the JWT client
+        await auth.authorize();
+        console.log('[Google Drive] JWT authorization successful!');
 
         const drive = google.drive({ version: 'v3', auth });
 
