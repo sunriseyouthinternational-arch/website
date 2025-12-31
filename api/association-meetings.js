@@ -202,6 +202,14 @@ module.exports = async (req, res) => {
         return res.status(404).json({ message: '找不到會議 / Meeting not found' });
       }
 
+      // If status is being changed to completed or cancelled, delete all absence forms
+      if (updates.status && (updates.status === 'completed' || updates.status === 'cancelled')) {
+        if (meeting.absences && meeting.absences.length > 0) {
+          console.log(`[Meeting Status Update] Deleting ${meeting.absences.length} absence forms for meeting ${meetingId} (status: ${updates.status})`);
+          meeting.absences = [];
+        }
+      }
+
       // Update allowed fields
       if (updates.agenda) meeting.agenda = updates.agenda;
       if (updates.date) meeting.date = new Date(updates.date);

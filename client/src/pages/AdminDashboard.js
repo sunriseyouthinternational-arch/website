@@ -705,6 +705,17 @@ function AdminDashboard() {
   };
 
   const handleUpdateMeetingStatus = async (meetingId, status) => {
+    // Show confirmation with disclaimer if status is being changed to completed or cancelled
+    if ((status === 'completed' || status === 'cancelled') && selectedMeeting && selectedMeeting.absences && selectedMeeting.absences.length > 0) {
+      const confirmMessage = t('language') === 'zh'
+        ? `⚠️ 警告：將會議狀態更改為「${status === 'completed' ? '已完成' : '已取消'}」將會永久刪除所有請假表格（${selectedMeeting.absences.length} 個）。\n\n此操作無法撤銷。確定要繼續嗎？`
+        : `⚠️ Warning: Changing meeting status to "${status === 'completed' ? 'Completed' : 'Cancelled'}" will permanently delete all absence forms (${selectedMeeting.absences.length} forms).\n\nThis action cannot be undone. Are you sure you want to continue?`;
+
+      if (!window.confirm(confirmMessage)) {
+        return;
+      }
+    }
+
     try {
       await axios.put(`/api/association-meetings?meetingId=${meetingId}`, { status });
 
@@ -714,7 +725,12 @@ function AdminDashboard() {
       });
 
       if (selectedMeeting && selectedMeeting._id === meetingId) {
-        setSelectedMeeting({ ...selectedMeeting, status });
+        // If status changed to completed or cancelled, clear absences
+        const updatedMeeting = { ...selectedMeeting, status };
+        if (status === 'completed' || status === 'cancelled') {
+          updatedMeeting.absences = [];
+        }
+        setSelectedMeeting(updatedMeeting);
       }
 
       fetchData();
