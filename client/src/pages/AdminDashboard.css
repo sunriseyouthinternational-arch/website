@@ -106,7 +106,7 @@
 }
 
 .data-table thead {
-  background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+  background: linear-gradient(135deg, #FFD700 0%, #F4C542 100%);
 }
 
 .data-table th,
@@ -118,7 +118,7 @@
 
 .data-table th {
   font-weight: 700;
-  color: #FFD700;
+  color: #0a0a0a;
   text-transform: uppercase;
   letter-spacing: 1px;
   font-size: 13px;
@@ -235,8 +235,8 @@
 }
 
 .participants-table th {
-  background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
-  color: #FFD700;
+  background: linear-gradient(135deg, #FFD700 0%, #F4C542 100%);
+  color: #0a0a0a;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 1px;
@@ -260,15 +260,15 @@
 }
 
 .status-badge.completed {
-  background: #1a1a1a;
-  color: #ffffff;
+  background: #ffffff;
+  color: #0a0a0a;
   padding: 6px 16px;
   border-radius: 8px;
   font-size: 13px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  border: 1px solid #2a2a2a;
+  border: 2px solid #0a0a0a;
 }
 
 .status-badge.cancelled {
@@ -525,15 +525,15 @@
 }
 
 .status-badge.unpaid {
-  background: #1a1a1a;
-  color: #ffffff;
+  background: #ffffff;
+  color: #ff4444;
   padding: 6px 16px;
   border-radius: 8px;
   font-size: 13px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  border: 1px solid #2a2a2a;
+  border: 2px solid #ff4444;
 }
 
 @media (max-width: 768px) {

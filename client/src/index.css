@@ -10,9 +10,9 @@ body {
     'Microsoft JhengHei', 'PingFang TC', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%);
+  background: linear-gradient(135deg, #fffbf0 0%, #fff8e1 100%);
   min-height: 100vh;
-  color: #ffffff;
+  color: #0a0a0a;
 }
 
 code {
@@ -75,8 +75,8 @@ code {
 }
 
 .btn-secondary {
-  background: #1a1a1a;
-  color: #FFD700;
+  background: #ffffff;
+  color: #0a0a0a;
   border: 2px solid #F4C542;
   font-weight: 700;
   letter-spacing: 0.5px;
@@ -85,13 +85,13 @@ code {
 }
 
 .btn-secondary:hover {
-  background: #2a2a2a;
+  background: #fffbf0;
   border-color: #FFD700;
   box-shadow: 0 5px 20px rgba(244, 197, 66, 0.3);
 }
 
 .btn-danger {
-  background: #1a1a1a;
+  background: #ffffff;
   color: #ff4444;
   border: 2px solid #ff4444;
   font-weight: 700;
@@ -225,12 +225,12 @@ code {
 .nav-link {
   padding: 12px 24px;
   text-decoration: none;
-  color: #FFD700;
-  background: #1a1a1a;
+  color: #0a0a0a;
+  background: #ffffff;
   border-radius: 8px;
   font-weight: 700;
   transition: all 0.3s ease;
-  border: 2px solid transparent;
+  border: 2px solid #F4C542;
   text-transform: uppercase;
   font-size: 13px;
   letter-spacing: 0.5px;

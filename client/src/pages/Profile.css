@@ -17,10 +17,10 @@
 
 .tab-button {
   padding: 14px 32px;
-  background: #1a1a1a;
+  background: #ffffff;
   border: 2px solid #F4C542;
   border-radius: 8px;
-  color: #FFD700;
+  color: #0a0a0a;
   font-size: 15px;
   font-weight: 700;
   cursor: pointer;
@@ -30,7 +30,7 @@
 }
 
 .tab-button:hover {
-  background: #2a2a2a;
+  background: #fffbf0;
   box-shadow: 0 3px 10px rgba(244, 197, 66, 0.3);
 }
 
@@ -73,8 +73,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%);
-  color: #FFD700;
+  background: linear-gradient(135deg, #FFD700 0%, #F4C542 100%);
+  color: #0a0a0a;
   font-size: 52px;
   font-weight: 800;
 }
@@ -209,9 +209,9 @@
 }
 
 .status-badge.unpaid {
-  background: #1a1a1a;
-  color: #ffffff;
-  border: 1px solid #2a2a2a;
+  background: #ffffff;
+  color: #ff4444;
+  border: 2px solid #ff4444;
 }
 
 .empty-message {
@@ -472,10 +472,10 @@
 
 .filter-button {
   padding: 12px 24px;
-  background: #1a1a1a;
+  background: #ffffff;
   border: 2px solid #F4C542;
   border-radius: 8px;
-  color: #FFD700;
+  color: #0a0a0a;
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
@@ -485,7 +485,7 @@
 }
 
 .filter-button:hover {
-  background: #2a2a2a;
+  background: #fffbf0;
   box-shadow: 0 3px 10px rgba(244, 197, 66, 0.3);
 }
 
@@ -503,15 +503,15 @@
 .points-display-large {
   text-align: center;
   padding: 70px 50px;
-  background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%);
+  background: linear-gradient(135deg, #FFD700 0%, #F4C542 100%);
   border-radius: 20px;
   margin-bottom: 40px;
-  box-shadow: 0 10px 40px rgba(244, 197, 66, 0.4);
-  border: 3px solid #FFD700;
+  box-shadow: 0 10px 40px rgba(244, 197, 66, 0.5);
+  border: 3px solid #FFBF00;
 }
 
 .points-display-large h3 {
-  color: #FFD700;
+  color: #0a0a0a;
   margin-bottom: 30px;
   font-size: 32px;
   font-weight: 800;
@@ -529,14 +529,14 @@
 .points-number-large {
   font-size: 110px;
   font-weight: 800;
-  color: #FFD700;
+  color: #ffffff;
   line-height: 1;
-  text-shadow: 0 5px 20px rgba(244, 197, 66, 0.5);
+  text-shadow: 0 3px 15px rgba(0, 0, 0, 0.2);
 }
 
 .points-label-large {
   font-size: 36px;
-  color: #F4C542;
+  color: #0a0a0a;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 1px;
