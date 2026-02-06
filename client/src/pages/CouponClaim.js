@@ -11,7 +11,8 @@ function CouponClaim() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [status, setStatus] = useState(null);
-  const [liffInitialized, setLiffInitialized] = useState(false);
+  // Tracking LIFF initialization - currently not used in UI but kept for future debugging
+  // const [liffInitialized, setLiffInitialized] = useState(false);
   const [claiming, setClaiming] = useState(false);
 
   // Debug: log the token
@@ -126,7 +127,7 @@ function CouponClaim() {
         }
 
         await window.liff.init({ liffId });
-        setLiffInitialized(true);
+        // setLiffInitialized(true);
 
         // Check if we have a token from URL or from localStorage
         let claimToken = token;
@@ -175,6 +176,7 @@ function CouponClaim() {
 
     // Run LIFF initialization regardless of token (to handle redirect-back scenario)
     initializeLiff();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
   const getLineAddFriendUrl = () => {

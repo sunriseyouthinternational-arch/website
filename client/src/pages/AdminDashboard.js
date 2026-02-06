@@ -130,6 +130,7 @@ function AdminDashboard() {
     axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navigate]);
 
   const fetchData = async () => {
@@ -351,7 +352,7 @@ function AdminDashboard() {
     const formattedTime = `${String(startHour).padStart(2, '0')}:${String(startMin).padStart(2, '0')} - ${String(endHour).padStart(2, '0')}:${String(endMin).padStart(2, '0')}`;
 
     try {
-      const response = await axios.post('/api/classes', { ...newClass, time: formattedTime }, {
+      await axios.post('/api/classes', { ...newClass, time: formattedTime }, {
         headers: { 'Content-Type': 'application/json' }
       });
 
@@ -873,16 +874,17 @@ function AdminDashboard() {
     }
   };
 
-  const handleCouponImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setNewCoupon(prev => ({ ...prev, image: reader.result }));
-      };
-      reader.readAsDataURL(file);
-    }
-  };
+  // Removed unused function - keeping for potential future use
+  // const handleCouponImageUpload = (e) => {
+  //   const file = e.target.files[0];
+  //   if (file) {
+  //     const reader = new FileReader();
+  //     reader.onloadend = () => {
+  //       setNewCoupon(prev => ({ ...prev, image: reader.result }));
+  //     };
+  //     reader.readAsDataURL(file);
+  //   }
+  // };
 
   const handleCouponTypeChange = (type) => {
     setNewCoupon({

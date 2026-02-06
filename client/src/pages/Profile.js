@@ -9,6 +9,7 @@ function Profile() {
   const { memberId: urlMemberId } = useParams();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  // eslint-disable-next-line no-unused-vars
   const [memberId, setMemberId] = useState(urlMemberId || '');
   const [member, setMember] = useState(null);
   const [classes, setClasses] = useState([]);
@@ -56,13 +57,16 @@ function Profile() {
   const [couponsForSale, setCouponsForSale] = useState([]);
   const [purchasingCoupon, setPurchasingCoupon] = useState(null);
 
+  // eslint-disable-next-line no-unused-vars
   const [enrollingClass, setEnrollingClass] = useState(null);
+  // eslint-disable-next-line no-unused-vars
   const [enrollingActivity, setEnrollingActivity] = useState(null);
   const [completingEnrollment, setCompletingEnrollment] = useState(false);
   const [showPaymentConfirmation, setShowPaymentConfirmation] = useState(false);
   const [paymentConfirmationData, setPaymentConfirmationData] = useState(null);
 
   const [showMembershipUpgrade, setShowMembershipUpgrade] = useState(false);
+  // eslint-disable-next-line no-unused-vars
   const [membershipPaymentType, setMembershipPaymentType] = useState('monthly'); // 'monthly' or 'onetime'
   const [processingUpgrade, setProcessingUpgrade] = useState(false);
   const [showMembershipConfirmation, setShowMembershipConfirmation] = useState(false);
@@ -71,6 +75,7 @@ function Profile() {
   const [associationMeetings, setAssociationMeetings] = useState([]);
   const [memberStats, setMemberStats] = useState(null);
   const [registeringMeeting, setRegisteringMeeting] = useState(null);
+  // eslint-disable-next-line no-unused-vars
   const [selectedMeeting, setSelectedMeeting] = useState(null);
   const [showAbsenceModal, setShowAbsenceModal] = useState(false);
   const [absenceMeetingId, setAbsenceMeetingId] = useState(null);
@@ -79,8 +84,10 @@ function Profile() {
   const [loadingMeetings, setLoadingMeetings] = useState(false);
   const [showMeetingDetails, setShowMeetingDetails] = useState(null);
 
+  // eslint-disable-next-line no-unused-vars
   const [liffReady, setLiffReady] = useState(false);
   const [lineUserId, setLineUserId] = useState(null);
+  // eslint-disable-next-line no-unused-vars
   const [lineProfile, setLineProfile] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [needsRegistration, setNeedsRegistration] = useState(false);
@@ -105,6 +112,7 @@ function Profile() {
     return `${apiUrl}${imagePath}`;
   };
 
+  // eslint-disable-next-line no-unused-vars
   const validateAndSaveSession = async (sessionToken, id) => {
     setLoading(true);
     setMessage({ type: '', text: '' });
@@ -253,6 +261,7 @@ function Profile() {
     fetchClassesAndActivities();
 
     initializeLIFF();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -286,6 +295,7 @@ function Profile() {
       fetchAssociationMeetings();
       fetchMemberStats();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, member]);
 
   const fetchAssociationMeetings = async () => {
@@ -626,6 +636,7 @@ function Profile() {
     }
   };
 
+  // eslint-disable-next-line no-unused-vars
   const fetchMemberById = async (id) => {
     setLoading(true);
     setMessage({ type: '', text: '' });
