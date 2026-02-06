@@ -6,11 +6,11 @@
 
 .app-header {
   background: #ffffff;
-  box-shadow: 0 4px 20px rgba(244, 197, 66, 0.3);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 2px 8px rgba(0, 0, 0, 0.08);
   position: sticky;
   top: 0;
   z-index: 1000;
-  border-bottom: 4px solid #FFD700;
+  border-bottom: 1px solid #E2E8F0;
 }
 
 .header-content {
@@ -21,69 +21,67 @@
 }
 
 .logo-section h1 {
-  color: #FFD700;
-  font-size: 32px;
+  color: #0F172A;
+  font-size: 28px;
   margin-bottom: 5px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 2px;
-  text-shadow: 0 2px 10px rgba(244, 197, 66, 0.3);
+  font-weight: 700;
+  letter-spacing: -0.5px;
 }
 
 .subtitle {
-  color: #666;
-  font-size: 16px;
+  color: #64748B;
+  font-size: 15px;
   font-weight: 500;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.2px;
 }
 
 .language-toggle {
-  padding: 12px 24px;
-  background: linear-gradient(135deg, #FFD700 0%, #F4C542 100%);
-  color: #0a0a0a;
+  padding: 9px 18px;
+  background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+  color: #ffffff;
   border: none;
   border-radius: 8px;
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
-  text-transform: uppercase;
-  letter-spacing: 1px;
+  transition: all 0.2s ease;
+  letter-spacing: 0.3px;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
 }
 
 .language-toggle:hover {
-  background: linear-gradient(135deg, #FFBF00 0%, #FFD700 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(244, 197, 66, 0.5);
+  background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.35);
 }
 
 .main-nav {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   padding: 15px 0;
-  border-top: 2px solid #F4C542;
+  border-top: 1px solid #E2E8F0;
   margin-top: 15px;
 }
 
 .nav-link {
-  padding: 12px 24px;
+  padding: 10px 20px;
   text-decoration: none;
-  color: #0a0a0a;
-  background: #fffbf0;
+  color: #475569;
+  background: #F8FAFC;
   border-radius: 8px;
-  font-weight: 700;
-  transition: all 0.3s ease;
-  border: 2px solid #F4C542;
-  text-transform: uppercase;
-  font-size: 13px;
-  letter-spacing: 0.5px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  border: 1.5px solid #E2E8F0;
+  font-size: 14px;
+  letter-spacing: 0.2px;
 }
 
 .nav-link:hover {
-  background: linear-gradient(135deg, #FFD700 0%, #F4C542 100%);
-  color: #0a0a0a;
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(244, 197, 66, 0.4);
+  background: #ffffff;
+  color: #3B82F6;
+  border-color: #CBD5E1;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .main-content {
@@ -95,32 +93,30 @@
   background: #ffffff;
   padding: 25px 0;
   text-align: center;
-  color: #0a0a0a;
+  color: #64748B;
   margin-top: 40px;
-  border-top: 4px solid #FFD700;
-  font-weight: 600;
+  border-top: 1px solid #E2E8F0;
+  font-weight: 500;
+  font-size: 14px;
 }
 
 .page-title {
   text-align: center;
-  color: #FFD700;
+  color: #0F172A;
   margin-bottom: 30px;
 }
 
 .page-title h2 {
-  font-size: 42px;
+  font-size: 36px;
   margin-bottom: 10px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 2px;
-  text-shadow: 0 2px 20px rgba(244, 197, 66, 0.4);
+  font-weight: 700;
+  letter-spacing: -1px;
 }
 
 .page-title p {
-  font-size: 18px;
-  opacity: 0.9;
-  color: #0a0a0a;
-  letter-spacing: 0.5px;
+  font-size: 16px;
+  color: #64748B;
+  letter-spacing: 0.2px;
 }
 
 @media (max-width: 768px) {
