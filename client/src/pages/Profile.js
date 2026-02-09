@@ -260,6 +260,35 @@ function Profile() {
   useEffect(() => {
     fetchClassesAndActivities();
 
+    // Check localStorage for cached LINE user first (for instant UX)
+    const cachedLineUser = localStorage.getItem('lineUserCache');
+    if (cachedLineUser) {
+      try {
+        const userData = JSON.parse(cachedLineUser);
+        console.log('[Profile] Found cached LINE user, restoring session:', userData.displayName);
+
+        setLineUserId(userData.userId);
+        setLineProfile({
+          userId: userData.userId,
+          displayName: userData.displayName,
+          pictureUrl: userData.pictureUrl
+        });
+        setIsLoggedIn(true);
+
+        // Fetch member data with cached userId
+        if (userData.userId) {
+          fetchOrCreateMember(userData.userId, {
+            displayName: userData.displayName,
+            pictureUrl: userData.pictureUrl
+          });
+        }
+      } catch (error) {
+        console.error('[Profile] Failed to parse cached user data:', error);
+        localStorage.removeItem('lineUserCache');
+      }
+    }
+
+    // Initialize LIFF in background to verify/update session
     initializeLIFF();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -546,13 +575,30 @@ function Profile() {
       if (isLoggedIn) {
         const profile = await window.liff.getProfile();
         console.log('[Profile] User logged in:', profile.displayName, 'ID:', profile.userId);
+
+        // Save to localStorage for persistent login
+        const userCache = {
+          userId: profile.userId,
+          displayName: profile.displayName,
+          pictureUrl: profile.pictureUrl,
+          lastUpdated: new Date().toISOString()
+        };
+        localStorage.setItem('lineUserCache', JSON.stringify(userCache));
+        console.log('[Profile] Saved user to cache');
+
         setLineUserId(profile.userId);
         setLineProfile(profile);
         setIsLoggedIn(true);
 
         await fetchOrCreateMember(profile.userId, profile);
       } else {
-        console.log('[Profile] User not logged in, showing login button');
+        console.log('[Profile] User not logged in, clearing cache');
+
+        // Clear cache if user is not logged in
+        localStorage.removeItem('lineUserCache');
+        setIsLoggedIn(false);
+        setLineUserId(null);
+        setLineProfile(null);
         setLoading(false);
       }
     } catch (error) {
@@ -624,6 +670,11 @@ function Profile() {
   };
 
   const handleLineLogout = () => {
+    console.log('[Profile] Logging out and clearing cache');
+
+    // Clear localStorage cache
+    localStorage.removeItem('lineUserCache');
+
     if (window.liff && window.liff.isLoggedIn()) {
       window.liff.logout();
       setIsLoggedIn(false);
