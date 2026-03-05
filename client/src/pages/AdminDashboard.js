@@ -1227,15 +1227,8 @@ function AdminDashboard() {
                       <button
                         className="btn btn-small btn-primary"
                         onClick={() => setSelectedMember(member)}
-                        style={{ marginRight: '8px' }}
                       >
                         {t('language') === 'zh' ? '查看詳情' : 'View Details'}
-                      </button>
-                      <button
-                        className="btn btn-small btn-danger"
-                        onClick={() => handleDeleteMember(member.memberId)}
-                      >
-                        {t('language') === 'zh' ? '刪除' : 'Delete'}
                       </button>
                     </td>
                   </tr>
