@@ -614,7 +614,6 @@ function Profile() {
     }
   };
 
-  };
 
   // Handler functions for managing family members during registration
   const handleRegistrationFamilyMemberChange = (index, field, value) => {
