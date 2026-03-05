@@ -631,7 +631,7 @@ function Profile() {
       ...registrationData,
       familyMembers: [
         ...registrationData.familyMembers,
-        { name: '', englishAlias: '', gender: ''男', birthDate: '' }
+        { name: '', englishAlias: '', gender: '男', birthDate: '' }
       ]
     });
   };
