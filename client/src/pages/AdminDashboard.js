@@ -171,6 +171,41 @@ function AdminDashboard() {
     navigate('/admin');
   };
 
+  const handleDeleteMember = async (memberIdToDelete) => {
+    const confirmMessage = t('language') === 'zh'
+      ? `確定要刪除會員 ${memberIdToDelete} 嗎？此操作無法撤銷。`
+      : `Are you sure you want to delete member ${memberIdToDelete}? This action cannot be undone.`;
+
+    if (!window.confirm(confirmMessage)) {
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await axios.delete(`/api/members?action=delete-member&memberId=${memberIdToDelete}`);
+
+      setMessage({
+        type: 'success',
+        text: t('language') === 'zh' ? '會員刪除成功' : 'Member deleted successfully'
+      });
+
+      // Refresh member list
+      await fetchData();
+
+      // Clear selected member if it was the deleted one
+      if (selectedMember && selectedMember.memberId === memberIdToDelete) {
+        setSelectedMember(null);
+      }
+    } catch (error) {
+      setMessage({
+        type: 'error',
+        text: error.response?.data?.message || (t('language') === 'zh' ? '刪除失敗' : 'Delete failed')
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleNewClassInfoBannerUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -1192,8 +1227,15 @@ function AdminDashboard() {
                       <button
                         className="btn btn-small btn-primary"
                         onClick={() => setSelectedMember(member)}
+                        style={{ marginRight: '8px' }}
                       >
                         {t('language') === 'zh' ? '查看詳情' : 'View Details'}
+                      </button>
+                      <button
+                        className="btn btn-small btn-danger"
+                        onClick={() => handleDeleteMember(member.memberId)}
+                      >
+                        {t('language') === 'zh' ? '刪除' : 'Delete'}
                       </button>
                     </td>
                   </tr>
@@ -1207,13 +1249,21 @@ function AdminDashboard() {
       {activeTab === 'members' && selectedMember && (
         <div className="card">
           <div className="detail-header">
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+              <button
+                className="btn btn-secondary"
+                onClick={() => setSelectedMember(null)}
+              >
+                ← {t('language') === 'zh' ? '返回列表' : 'Back to List'}
+              </button>
+              <h3 style={{ margin: 0 }}>{t('language') === 'zh' ? '會員詳細資料' : 'Member Details'}</h3>
+            </div>
             <button
-              className="btn btn-secondary"
-              onClick={() => setSelectedMember(null)}
+              className="btn btn-danger"
+              onClick={() => handleDeleteMember(selectedMember.memberId)}
             >
-              ← {t('language') === 'zh' ? '返回列表' : 'Back to List'}
+              {t('language') === 'zh' ? '刪除會員' : 'Delete Member'}
             </button>
-            <h3>{t('language') === 'zh' ? '會員詳細資料' : 'Member Details'}</h3>
           </div>
 
           <div className="member-detail-grid">
