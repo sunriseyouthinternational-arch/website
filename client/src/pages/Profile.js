@@ -676,8 +676,8 @@ function Profile() {
         const fm = registrationData.familyMembers[i];
         if (!fm.name || !fm.gender || !fm.birthDate) {
           setMessage({
-            type: ''error',
-            text: t(''language') === ''zh'
+            type: 'error',
+            text: t('language') === 'zh'
               ? `請完整填寫第 ${i + 1} 位家庭成員的必填資料（姓名、性別、生日）`
               : `Please complete required fields for family member ${i + 1} (name, gender, birthdate)`
           });
