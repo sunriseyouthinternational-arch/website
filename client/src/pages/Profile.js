@@ -1159,7 +1159,7 @@ function Profile() {
                 {t('language') === 'zh' ? '家庭成員資訊（選填）' : 'Family Members (Optional)'}
               </h4>
               <p style={{ fontSize: '14px', color: '#666', marginBottom: '15px' }}>
-                {t('language') === 'zh' ? '添加您的孩子資料' : 'Add your children'\''s information'}
+                {t('language') === 'zh' ? '添加您的孩子資料' : "Add your children's information"}
               </p>
 
               {registrationData.familyMembers.map((fm, index) => (
