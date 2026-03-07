@@ -135,93 +135,93 @@ module.exports = async (req, res) => {
           ]
         };
 
-        console.log('[admin] Creating rich menu:', JSON.stringify(richMenu, null, 2));
-
-        // Use LINE Messaging API v3 to create rich menu
         const https = require('https');
-        const richMenuResponse = await new Promise((resolve, reject) => {
-          const options = {
-            hostname: 'api.line.me',
-            port: 443,
-            path: '/v2/bot/richmenu',
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${process.env.LINE_CHANNEL_ACCESS_TOKEN}`,
-              'Content-Type': 'application/json',
-              'Content-Length': JSON.stringify(richMenu).length
-            }
-          };
-
-          const req = https.request(options, (res) => {
-            let data = '';
-            res.on('data', (chunk) => { data += chunk; });
-            res.on('end', () => {
-              if (res.statusCode === 200) {
-                console.log('[admin] Rich menu creation response:', data);
-                resolve(JSON.parse(data));
-              } else {
-                reject(new Error(`HTTP ${res.statusCode}: ${data}`));
-              }
-            });
-          });
-
-          req.on('error', reject);
-          req.write(JSON.stringify(richMenu));
-          req.end();
-        });
-
-        console.log('[admin] Rich menu response object:', JSON.stringify(richMenuResponse));
-        const richMenuId = richMenuResponse.richMenuId || richMenuResponse;
-        console.log('[admin] Rich menu created with ID:', richMenuId);
-
-        // Upload the rich menu image
         const fs = require('fs');
         const path = require('path');
-        const imagePath = path.join(process.cwd(), 'public/images/richmenu/richmenu.png');
 
-        if (fs.existsSync(imagePath)) {
-          const imageBuffer = fs.readFileSync(imagePath);
-
-          await new Promise((resolve, reject) => {
-            const imageOptions = {
-              hostname: 'api.line.me',
-              port: 443,
-              path: `/v2/bot/richmenu/${richMenuId}/image`,
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${process.env.LINE_CHANNEL_ACCESS_TOKEN}`,
-                'Content-Type': 'image/png',
-                'Content-Length': imageBuffer.length
-              }
-            };
-
-            const req = https.request(imageOptions, (res) => {
+        // Helper for HTTPS requests
+        function lineRequest(options, body) {
+          return new Promise((resolve, reject) => {
+            const req = https.request(options, (res) => {
               let data = '';
               res.on('data', (chunk) => { data += chunk; });
               res.on('end', () => {
-                console.log('[admin] Image upload response status:', res.statusCode);
+                console.log(`[admin] ${options.path} -> ${res.statusCode}: ${data || '(empty)'}`);
                 if (res.statusCode === 200) {
-                  resolve();
+                  resolve(data ? JSON.parse(data) : {});
                 } else {
-                  console.error('[admin] Image upload failed:', res.statusCode, data);
-                  reject(new Error(`HTTP ${res.statusCode}: ${data}`));
+                  reject(new Error(`${options.path} returned HTTP ${res.statusCode}: ${data}`));
                 }
               });
             });
-
             req.on('error', reject);
-            req.write(imageBuffer);
+            if (body) req.write(body);
             req.end();
           });
-
-          console.log('[admin] Rich menu image uploaded');
-        } else {
-          console.warn('[admin] Rich menu image not found at', imagePath);
         }
 
+        const token = process.env.LINE_CHANNEL_ACCESS_TOKEN;
+        const richMenuBody = JSON.stringify(richMenu);
+
+        // Step 1: Create rich menu
+        console.log('[admin] Step 1: Creating rich menu...');
+        const createResponse = await lineRequest({
+          hostname: 'api.line.me',
+          port: 443,
+          path: '/v2/bot/richmenu',
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+            'Content-Length': Buffer.byteLength(richMenuBody)
+          }
+        }, richMenuBody);
+
+        const richMenuId = createResponse.richMenuId;
+        console.log('[admin] Rich menu created:', richMenuId);
+
+        // Step 2: Upload image (uses api-data.line.me, path ends with /content)
+        const imagePath = path.join(process.cwd(), 'public/images/richmenu/richmenu.png');
+        if (!fs.existsSync(imagePath)) {
+          return res.status(500).json({
+            message: 'Rich menu created but image not found',
+            richMenuId,
+            imagePath
+          });
+        }
+
+        const imageBuffer = fs.readFileSync(imagePath);
+        console.log('[admin] Step 2: Uploading image (%d bytes)...', imageBuffer.length);
+        await lineRequest({
+          hostname: 'api-data.line.me',
+          port: 443,
+          path: `/v2/bot/richmenu/${richMenuId}/content`,
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'image/png',
+            'Content-Length': imageBuffer.length
+          }
+        }, imageBuffer);
+        console.log('[admin] Image uploaded successfully');
+
+        // Step 3: Set as default rich menu for all users
+        console.log('[admin] Step 3: Setting as default rich menu...');
+        await lineRequest({
+          hostname: 'api.line.me',
+          port: 443,
+          path: `/v2/bot/user/all/richmenu/${richMenuId}`,
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Length': 0
+          }
+        });
+        console.log('[admin] Default rich menu set');
+
         return res.status(200).json({
-          message: 'Rich menu created successfully',
-          richMenuId: richMenuId
+          message: 'Rich menu created, image uploaded, and set as default',
+          richMenuId
         });
       } catch (error) {
         console.error('[admin] Rich menu error:', error.message);
