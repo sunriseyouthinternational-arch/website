@@ -100,6 +100,11 @@ async function handleEvent(event) {
   if (event.type === 'message') {
     await handleMessageEvent(event);
   }
+
+  // Handle postback events (rich menu button clicks)
+  if (event.type === 'postback') {
+    await handlePostbackEvent(event);
+  }
 }
 
 async function handleFollowEvent(event) {
@@ -259,5 +264,77 @@ async function handleMessageEvent(event) {
 
   } catch (error) {
     console.error('Error handling message event:', error);
+  }
+}
+
+async function handlePostbackEvent(event) {
+  const lineUserId = event.source.userId;
+  const postbackData = event.postback.data;
+
+  console.log('[handlePostbackEvent] Postback data:', postbackData);
+
+  try {
+    // Find member
+    const member = await Member.findOne({ 'line.userId': lineUserId });
+
+    // Handle referral code share
+    if (postbackData === 'action=share_referral_code') {
+      if (!member || !member.registrationCompleted) {
+        // User not registered
+        await client.pushMessage({
+          to: lineUserId,
+          messages: [{
+            type: 'text',
+            text: '💬 請先完成註冊後即可分享推薦碼。\nPlease complete registration first to share your referral code.\n\n點擊以下連結開始註冊：\nClick the link below to register:\n\nhttps://www.sunriseyouth.org/profile'
+          }]
+        });
+        return;
+      }
+
+      // Generate referral code if member doesn't have one
+      if (!member.referralCode) {
+        console.log(`[handlePostbackEvent] Generating referral code for ${member.memberId}`);
+
+        // Generate unique 6-character referral code
+        let uniqueCode = false;
+        let generatedCode = '';
+
+        while (!uniqueCode) {
+          generatedCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+          const existing = await Member.findOne({ referralCode: generatedCode });
+          if (!existing) {
+            uniqueCode = true;
+          }
+        }
+
+        member.referralCode = generatedCode;
+        await member.save();
+        console.log(`[handlePostbackEvent] Generated referral code ${generatedCode} for ${member.memberId}`);
+      }
+
+      const referralCode = member.referralCode;
+      await client.pushMessage({
+        to: lineUserId,
+        messages: [{
+          type: 'text',
+          text: `🎯 您的推薦碼 Your Referral Code:\n\n${referralCode}\n\n分享此推薦碼邀請朋友加入！\nShare this code to invite friends!`
+        }]
+      });
+    }
+  } catch (error) {
+    console.error('[handlePostbackEvent] Error:', error);
+
+    // Send error message to user
+    try {
+      await client.pushMessage({
+        to: lineUserId,
+        messages: [{
+          type: 'text',
+          text: '抱歉，發生錯誤。請稍後再試。\nSorry, an error occurred. Please try again later.'
+        }]
+      });
+    } catch (pushError) {
+      console.error('[handlePostbackEvent] Error sending error message:', pushError);
+    }
   }
 }
