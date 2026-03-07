@@ -135,7 +135,40 @@ module.exports = async (req, res) => {
         };
 
         console.log('[admin] Creating rich menu:', JSON.stringify(richMenu, null, 2));
-        const richMenuId = await lineClient.createRichMenu(richMenu);
+
+        // Use LINE Messaging API v3 to create rich menu
+        const https = require('https');
+        const richMenuResponse = await new Promise((resolve, reject) => {
+          const options = {
+            hostname: 'api.line.biz',
+            port: 443,
+            path: '/v2/bot/richmenu',
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${process.env.LINE_CHANNEL_ACCESS_TOKEN}`,
+              'Content-Type': 'application/json',
+              'Content-Length': JSON.stringify(richMenu).length
+            }
+          };
+
+          const req = https.request(options, (res) => {
+            let data = '';
+            res.on('data', (chunk) => { data += chunk; });
+            res.on('end', () => {
+              if (res.statusCode === 200) {
+                resolve(JSON.parse(data));
+              } else {
+                reject(new Error(`HTTP ${res.statusCode}: ${data}`));
+              }
+            });
+          });
+
+          req.on('error', reject);
+          req.write(JSON.stringify(richMenu));
+          req.end();
+        });
+
+        const richMenuId = richMenuResponse.richMenuId;
         console.log('[admin] Rich menu created:', richMenuId);
 
         // Upload the rich menu image
@@ -145,7 +178,37 @@ module.exports = async (req, res) => {
 
         if (fs.existsSync(imagePath)) {
           const imageBuffer = fs.readFileSync(imagePath);
-          await lineClient.uploadRichMenuImage(richMenuId, imageBuffer, 'image/png');
+
+          await new Promise((resolve, reject) => {
+            const imageOptions = {
+              hostname: 'api.line.biz',
+              port: 443,
+              path: `/v2/bot/richmenu/${richMenuId}/image`,
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${process.env.LINE_CHANNEL_ACCESS_TOKEN}`,
+                'Content-Type': 'image/png',
+                'Content-Length': imageBuffer.length
+              }
+            };
+
+            const req = https.request(imageOptions, (res) => {
+              let data = '';
+              res.on('data', (chunk) => { data += chunk; });
+              res.on('end', () => {
+                if (res.statusCode === 200) {
+                  resolve();
+                } else {
+                  reject(new Error(`HTTP ${res.statusCode}: ${data}`));
+                }
+              });
+            });
+
+            req.on('error', reject);
+            req.write(imageBuffer);
+            req.end();
+          });
+
           console.log('[admin] Rich menu image uploaded');
         } else {
           console.warn('[admin] Rich menu image not found at', imagePath);
