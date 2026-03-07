@@ -29,8 +29,9 @@ function Profile() {
   const [activeTab, setActiveTab] = useState(
     tabFromUrl === 'courses' || tabFromUrl === 'classes' ? 'classes' :
     tabFromUrl === 'activities' ? 'activities' :
-    tabFromUrl === 'points' ? 'points' :
-    tabFromUrl === 'association' ? 'association' :
+    tabFromUrl === 'coupons' ? 'coupons' :
+    tabFromUrl === 'points' || tabFromUrl === 'gifts' ? 'points' :
+    tabFromUrl === 'association' || tabFromUrl === 'meetings' ? 'association' :
     'profile'
   );
 
@@ -299,8 +300,12 @@ function Profile() {
       setActiveTab('classes');
     } else if (tabFromUrl === 'activities') {
       setActiveTab('activities');
-    } else if (tabFromUrl === 'points') {
+    } else if (tabFromUrl === 'coupons') {
+      setActiveTab('coupons');
+    } else if (tabFromUrl === 'points' || tabFromUrl === 'gifts') {
       setActiveTab('points');
+    } else if (tabFromUrl === 'association' || tabFromUrl === 'meetings') {
+      setActiveTab('association');
     } else if (tabFromUrl === 'profile') {
       setActiveTab('profile');
     }
