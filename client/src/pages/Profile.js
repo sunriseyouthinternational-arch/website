@@ -27,7 +27,8 @@ function Profile() {
   const sessionFromUrl = searchParams.get('session');
   const classIdFromUrl = searchParams.get('classId');
   const [activeTab, setActiveTab] = useState(
-    tabFromUrl === 'courses' ? 'courses' :
+    tabFromUrl === 'courses' || tabFromUrl === 'classes' ? 'classes' :
+    tabFromUrl === 'activities' ? 'activities' :
     tabFromUrl === 'points' ? 'points' :
     tabFromUrl === 'association' ? 'association' :
     'profile'
@@ -294,8 +295,10 @@ function Profile() {
   }, []);
 
   useEffect(() => {
-    if (tabFromUrl === 'courses') {
-      setActiveTab('courses');
+    if (tabFromUrl === 'courses' || tabFromUrl === 'classes') {
+      setActiveTab('classes');
+    } else if (tabFromUrl === 'activities') {
+      setActiveTab('activities');
     } else if (tabFromUrl === 'points') {
       setActiveTab('points');
     } else if (tabFromUrl === 'profile') {
