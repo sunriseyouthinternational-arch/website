@@ -60,6 +60,13 @@ module.exports = async (req, res) => {
     // LINE Rich Menu setup
     if (resource === 'line-rich-menu' && action === 'setup') {
       try {
+        if (!process.env.LINE_CHANNEL_ACCESS_TOKEN) {
+          return res.status(500).json({
+            message: 'LINE_CHANNEL_ACCESS_TOKEN not configured',
+            error: 'Missing environment variable'
+          });
+        }
+
         const richMenu = {
           size: {
             width: 2500,
@@ -126,6 +133,7 @@ module.exports = async (req, res) => {
           ]
         };
 
+        console.log('[admin] Creating rich menu:', JSON.stringify(richMenu, null, 2));
         const response = await lineClient.createRichMenu(richMenu);
         console.log('[admin] Rich menu created:', response);
 
@@ -134,10 +142,12 @@ module.exports = async (req, res) => {
           richMenuId: response
         });
       } catch (error) {
-        console.error('[admin] Rich menu error:', error);
+        console.error('[admin] Rich menu error:', error.message);
+        console.error('[admin] Full error:', error);
         return res.status(500).json({
           message: 'Failed to create rich menu',
-          error: error.message
+          error: error.message,
+          details: error.response?.data || error.toString()
         });
       }
     }
