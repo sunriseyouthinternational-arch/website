@@ -68,6 +68,7 @@ module.exports = async (req, res) => {
         }
 
         const richMenu = {
+          name: 'Sunrise Youth Menu',
           size: {
             width: 2500,
             height: 1686
