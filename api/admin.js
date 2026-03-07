@@ -135,12 +135,25 @@ module.exports = async (req, res) => {
         };
 
         console.log('[admin] Creating rich menu:', JSON.stringify(richMenu, null, 2));
-        const response = await lineClient.createRichMenu(richMenu);
-        console.log('[admin] Rich menu created:', response);
+        const richMenuId = await lineClient.createRichMenu(richMenu);
+        console.log('[admin] Rich menu created:', richMenuId);
+
+        // Upload the rich menu image
+        const fs = require('fs');
+        const path = require('path');
+        const imagePath = path.join(process.cwd(), 'public/images/richmenu/richmenu.png');
+
+        if (fs.existsSync(imagePath)) {
+          const imageBuffer = fs.readFileSync(imagePath);
+          await lineClient.uploadRichMenuImage(richMenuId, imageBuffer, 'image/png');
+          console.log('[admin] Rich menu image uploaded');
+        } else {
+          console.warn('[admin] Rich menu image not found at', imagePath);
+        }
 
         return res.status(200).json({
           message: 'Rich menu created successfully',
-          richMenuId: response
+          richMenuId: richMenuId
         });
       } catch (error) {
         console.error('[admin] Rich menu error:', error.message);
