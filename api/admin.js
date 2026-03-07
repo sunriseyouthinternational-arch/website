@@ -74,6 +74,7 @@ module.exports = async (req, res) => {
             height: 1686
           },
           selected: true,
+          chatBarText: 'Menu',
           areas: [
             // Button 1: Profile - Top button (full width)
             {
