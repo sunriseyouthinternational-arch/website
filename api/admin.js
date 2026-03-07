@@ -1,5 +1,10 @@
 const connectDB = require('../lib/mongodb');
 const { Member, Class, Activity } = require('../db/models');
+const line = require('@line/bot-sdk');
+
+const lineClient = new line.messagingApi.MessagingApiClient({
+  channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN,
+});
 
 module.exports = async (req, res) => {
   const { resource, action, classId, activityId, participantId, memberId } = req.query;
@@ -50,6 +55,91 @@ module.exports = async (req, res) => {
         .sort((a, b) => b.referralCount - a.referralCount);
 
       return res.status(200).json({ leaderboard: rankedLeaderboard });
+    }
+
+    // LINE Rich Menu setup
+    if (resource === 'line-rich-menu' && action === 'setup') {
+      try {
+        const richMenu = {
+          size: {
+            width: 2500,
+            height: 1686
+          },
+          selected: true,
+          areas: [
+            // Button 1: Profile - Top button (full width)
+            {
+              bounds: {
+                x: 0,
+                y: 215,
+                width: 2500,
+                height: 735
+              },
+              action: {
+                type: 'uri',
+                label: 'Profile',
+                uri: 'https://www.sunriseyouth.org/profile'
+              }
+            },
+            // Button 2: Referral Code - Bottom left
+            {
+              bounds: {
+                x: 0,
+                y: 950,
+                width: 833,
+                height: 735
+              },
+              action: {
+                type: 'postback',
+                label: 'Referral Code',
+                data: 'action=share_referral_code'
+              }
+            },
+            // Button 3: Classes - Bottom middle
+            {
+              bounds: {
+                x: 833,
+                y: 950,
+                width: 834,
+                height: 735
+              },
+              action: {
+                type: 'uri',
+                label: 'Classes',
+                uri: 'https://www.sunriseyouth.org/profile?tab=classes'
+              }
+            },
+            // Button 4: Coupons - Bottom right
+            {
+              bounds: {
+                x: 1667,
+                y: 950,
+                width: 833,
+                height: 735
+              },
+              action: {
+                type: 'uri',
+                label: 'Coupons',
+                uri: 'https://www.sunriseyouth.org/profile?tab=coupons'
+              }
+            }
+          ]
+        };
+
+        const response = await lineClient.createRichMenu(richMenu);
+        console.log('[admin] Rich menu created:', response);
+
+        return res.status(200).json({
+          message: 'Rich menu created successfully',
+          richMenuId: response
+        });
+      } catch (error) {
+        console.error('[admin] Rich menu error:', error);
+        return res.status(500).json({
+          message: 'Failed to create rich menu',
+          error: error.message
+        });
+      }
     }
 
     // List all members
