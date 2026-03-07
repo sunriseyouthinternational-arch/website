@@ -157,6 +157,7 @@ module.exports = async (req, res) => {
             res.on('data', (chunk) => { data += chunk; });
             res.on('end', () => {
               if (res.statusCode === 200) {
+                console.log('[admin] Rich menu creation response:', data);
                 resolve(JSON.parse(data));
               } else {
                 reject(new Error(`HTTP ${res.statusCode}: ${data}`));
@@ -169,8 +170,9 @@ module.exports = async (req, res) => {
           req.end();
         });
 
-        const richMenuId = richMenuResponse.richMenuId;
-        console.log('[admin] Rich menu created:', richMenuId);
+        console.log('[admin] Rich menu response object:', JSON.stringify(richMenuResponse));
+        const richMenuId = richMenuResponse.richMenuId || richMenuResponse;
+        console.log('[admin] Rich menu created with ID:', richMenuId);
 
         // Upload the rich menu image
         const fs = require('fs');
@@ -197,9 +199,11 @@ module.exports = async (req, res) => {
               let data = '';
               res.on('data', (chunk) => { data += chunk; });
               res.on('end', () => {
+                console.log('[admin] Image upload response status:', res.statusCode);
                 if (res.statusCode === 200) {
                   resolve();
                 } else {
+                  console.error('[admin] Image upload failed:', res.statusCode, data);
                   reject(new Error(`HTTP ${res.statusCode}: ${data}`));
                 }
               });
