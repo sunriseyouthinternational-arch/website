@@ -140,7 +140,7 @@ module.exports = async (req, res) => {
         const https = require('https');
         const richMenuResponse = await new Promise((resolve, reject) => {
           const options = {
-            hostname: 'api.line.biz',
+            hostname: 'api.line.me',
             port: 443,
             path: '/v2/bot/richmenu',
             method: 'POST',
@@ -181,7 +181,7 @@ module.exports = async (req, res) => {
 
           await new Promise((resolve, reject) => {
             const imageOptions = {
-              hostname: 'api.line.biz',
+              hostname: 'api.line.me',
               port: 443,
               path: `/v2/bot/richmenu/${richMenuId}/image`,
               method: 'POST',
