@@ -589,6 +589,22 @@ module.exports = async (req, res) => {
       });
     }
 
+    // Delete member entirely (admin only)
+    if (req.method === 'DELETE' && action === 'delete-member' && memberId) {
+      const member = await Member.findOneAndDelete({ memberId });
+
+      if (!member) {
+        return res.status(404).json({
+          message: '找不到團員 / Member not found'
+        });
+      }
+
+      return res.status(200).json({
+        message: '會員刪除成功 / Member deleted successfully',
+        memberId
+      });
+    }
+
     // Delete coupon from member
     if (req.method === 'DELETE' && action === 'delete-coupon' && memberId && couponId) {
       const member = await Member.findOne({ memberId });

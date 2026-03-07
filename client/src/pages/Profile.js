@@ -9,6 +9,7 @@ function Profile() {
   const { memberId: urlMemberId } = useParams();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  // eslint-disable-next-line no-unused-vars
   const [memberId, setMemberId] = useState(urlMemberId || '');
   const [member, setMember] = useState(null);
   const [classes, setClasses] = useState([]);
@@ -56,13 +57,16 @@ function Profile() {
   const [couponsForSale, setCouponsForSale] = useState([]);
   const [purchasingCoupon, setPurchasingCoupon] = useState(null);
 
+  // eslint-disable-next-line no-unused-vars
   const [enrollingClass, setEnrollingClass] = useState(null);
+  // eslint-disable-next-line no-unused-vars
   const [enrollingActivity, setEnrollingActivity] = useState(null);
   const [completingEnrollment, setCompletingEnrollment] = useState(false);
   const [showPaymentConfirmation, setShowPaymentConfirmation] = useState(false);
   const [paymentConfirmationData, setPaymentConfirmationData] = useState(null);
 
   const [showMembershipUpgrade, setShowMembershipUpgrade] = useState(false);
+  // eslint-disable-next-line no-unused-vars
   const [membershipPaymentType, setMembershipPaymentType] = useState('monthly'); // 'monthly' or 'onetime'
   const [processingUpgrade, setProcessingUpgrade] = useState(false);
   const [showMembershipConfirmation, setShowMembershipConfirmation] = useState(false);
@@ -71,6 +75,7 @@ function Profile() {
   const [associationMeetings, setAssociationMeetings] = useState([]);
   const [memberStats, setMemberStats] = useState(null);
   const [registeringMeeting, setRegisteringMeeting] = useState(null);
+  // eslint-disable-next-line no-unused-vars
   const [selectedMeeting, setSelectedMeeting] = useState(null);
   const [showAbsenceModal, setShowAbsenceModal] = useState(false);
   const [absenceMeetingId, setAbsenceMeetingId] = useState(null);
@@ -79,8 +84,10 @@ function Profile() {
   const [loadingMeetings, setLoadingMeetings] = useState(false);
   const [showMeetingDetails, setShowMeetingDetails] = useState(null);
 
+  // eslint-disable-next-line no-unused-vars
   const [liffReady, setLiffReady] = useState(false);
   const [lineUserId, setLineUserId] = useState(null);
+  // eslint-disable-next-line no-unused-vars
   const [lineProfile, setLineProfile] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [needsRegistration, setNeedsRegistration] = useState(false);
@@ -105,6 +112,7 @@ function Profile() {
     return `${apiUrl}${imagePath}`;
   };
 
+  // eslint-disable-next-line no-unused-vars
   const validateAndSaveSession = async (sessionToken, id) => {
     setLoading(true);
     setMessage({ type: '', text: '' });
@@ -252,7 +260,37 @@ function Profile() {
   useEffect(() => {
     fetchClassesAndActivities();
 
+    // Check localStorage for cached LINE user first (for instant UX)
+    const cachedLineUser = localStorage.getItem('lineUserCache');
+    if (cachedLineUser) {
+      try {
+        const userData = JSON.parse(cachedLineUser);
+        console.log('[Profile] Found cached LINE user, restoring session:', userData.displayName);
+
+        setLineUserId(userData.userId);
+        setLineProfile({
+          userId: userData.userId,
+          displayName: userData.displayName,
+          pictureUrl: userData.pictureUrl
+        });
+        setIsLoggedIn(true);
+
+        // Fetch member data with cached userId
+        if (userData.userId) {
+          fetchOrCreateMember(userData.userId, {
+            displayName: userData.displayName,
+            pictureUrl: userData.pictureUrl
+          });
+        }
+      } catch (error) {
+        console.error('[Profile] Failed to parse cached user data:', error);
+        localStorage.removeItem('lineUserCache');
+      }
+    }
+
+    // Initialize LIFF in background to verify/update session
     initializeLIFF();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -286,6 +324,7 @@ function Profile() {
       fetchAssociationMeetings();
       fetchMemberStats();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, member]);
 
   const fetchAssociationMeetings = async () => {
@@ -536,13 +575,30 @@ function Profile() {
       if (isLoggedIn) {
         const profile = await window.liff.getProfile();
         console.log('[Profile] User logged in:', profile.displayName, 'ID:', profile.userId);
+
+        // Save to localStorage for persistent login
+        const userCache = {
+          userId: profile.userId,
+          displayName: profile.displayName,
+          pictureUrl: profile.pictureUrl,
+          lastUpdated: new Date().toISOString()
+        };
+        localStorage.setItem('lineUserCache', JSON.stringify(userCache));
+        console.log('[Profile] Saved user to cache');
+
         setLineUserId(profile.userId);
         setLineProfile(profile);
         setIsLoggedIn(true);
 
         await fetchOrCreateMember(profile.userId, profile);
       } else {
-        console.log('[Profile] User not logged in, showing login button');
+        console.log('[Profile] User not logged in, clearing cache');
+
+        // Clear cache if user is not logged in
+        localStorage.removeItem('lineUserCache');
+        setIsLoggedIn(false);
+        setLineUserId(null);
+        setLineProfile(null);
         setLoading(false);
       }
     } catch (error) {
@@ -558,12 +614,40 @@ function Profile() {
     }
   };
 
+
+  // Handler functions for managing family members during registration
+  const handleRegistrationFamilyMemberChange = (index, field, value) => {
+    const updatedMembers = [...registrationData.familyMembers];
+    updatedMembers[index][field] = value;
+    setRegistrationData({
+      ...registrationData,
+      familyMembers: updatedMembers
+    });
+  };
+
+  const addRegistrationFamilyMember = () => {
+    setRegistrationData({
+      ...registrationData,
+      familyMembers: [
+        ...registrationData.familyMembers,
+        { name: '', englishAlias: '', gender: '男', birthDate: '' }
+      ]
+    });
+  };
+
+  const removeRegistrationFamilyMember = (index) => {
+    setRegistrationData({
+      ...registrationData,
+      familyMembers: registrationData.familyMembers.filter((_, i) => i !== index)
+    });
+  };
+
   const handleRegistrationSubmit = async (e) => {
     e.preventDefault();
     setSubmittingRegistration(true);
     setMessage({ type: '', text: '' });
 
-    if (!registrationData.name || !registrationData.contact.mobile) {
+    if (!registrationData.name || !registrationData.contact.mobile || !registrationData.contact.lineId) {
       setMessage({
         type: 'error',
         text: t('language') === 'zh'
@@ -585,6 +669,23 @@ function Profile() {
       setSubmittingRegistration(false);
       return;
     }
+    // Validate family members if any exist
+    if (registrationData.familyMembers.length > 0) {
+      for (let i = 0; i < registrationData.familyMembers.length; i++) {
+        const fm = registrationData.familyMembers[i];
+        if (!fm.name || !fm.gender || !fm.birthDate) {
+          setMessage({
+            type: 'error',
+            text: t('language') === 'zh'
+              ? `請完整填寫第 ${i + 1} 位家庭成員的必填資料（姓名、性別、生日）`
+              : `Please complete required fields for family member ${i + 1} (name, gender, birthdate)`
+          });
+          setSubmittingRegistration(false);
+          return;
+        }
+      }
+    }
+
 
     try {
       const response = await axios.post('/api/members/register', {
@@ -614,6 +715,11 @@ function Profile() {
   };
 
   const handleLineLogout = () => {
+    console.log('[Profile] Logging out and clearing cache');
+
+    // Clear localStorage cache
+    localStorage.removeItem('lineUserCache');
+
     if (window.liff && window.liff.isLoggedIn()) {
       window.liff.logout();
       setIsLoggedIn(false);
@@ -626,6 +732,7 @@ function Profile() {
     }
   };
 
+  // eslint-disable-next-line no-unused-vars
   const fetchMemberById = async (id) => {
     setLoading(true);
     setMessage({ type: '', text: '' });
@@ -1032,7 +1139,7 @@ function Profile() {
 
             <div style={{ marginBottom: '15px' }}>
               <label style={{ display: 'block', marginBottom: '5px', fontWeight: '600' }}>
-                {t('language') === 'zh' ? 'LINE ID（選填）' : 'LINE ID (Optional)'}
+                {t('language') === 'zh' ? 'LINE ID *' : 'LINE ID *'}
               </label>
               <input
                 type="text"
@@ -1044,6 +1151,105 @@ function Profile() {
                 placeholder={t('language') === 'zh' ? '輸入您的 LINE ID' : 'Enter your LINE ID'}
                 style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ccc' }}
               />
+            </div>
+
+            {/* Family Members Section */}
+            <div style={{ marginBottom: '20px', marginTop: '25px' }}>
+              <h4 style={{ marginBottom: '10px', borderBottom: '2px solid #1976d2', paddingBottom: '8px' }}>
+                {t('language') === 'zh' ? '家庭成員資訊（選填）' : 'Family Members (Optional)'}
+              </h4>
+              <p style={{ fontSize: '14px', color: '#666', marginBottom: '15px' }}>
+                {t('language') === 'zh' ? '添加您的孩子資料' : "Add your children's information"}
+              </p>
+
+              {registrationData.familyMembers.map((fm, index) => (
+                <div key={index} className="family-member-form" style={{
+                  border: '1px solid #ddd',
+                  borderRadius: '8px',
+                  padding: '15px',
+                  marginBottom: '15px',
+                  backgroundColor: '#f9f9f9'
+                }}>
+                  <h5 style={{ marginBottom: '12px' }}>
+                    {t('language') === 'zh' ? `家庭成員 ${index + 1}` : `Family Member ${index + 1}`}
+                  </h5>
+
+                  <div className="form-group" style={{ marginBottom: '12px' }}>
+                    <label style={{ display: 'block', marginBottom: '5px', fontWeight: '600' }}>
+                      {t('language') === 'zh' ? '姓名 *' : 'Name *'}
+                    </label>
+                    <input
+                      type="text"
+                      value={fm.name}
+                      onChange={(e) => handleRegistrationFamilyMemberChange(index, 'name', e.target.value)}
+                      placeholder={t('language') === 'zh' ? '輸入姓名' : 'Enter name'}
+                      style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ccc' }}
+                    />
+                  </div>
+
+                  <div className="form-group" style={{ marginBottom: '12px' }}>
+                    <label style={{ display: 'block', marginBottom: '5px', fontWeight: '600' }}>
+                      {t('language') === 'zh' ? '英文名（選填）' : 'English Alias (Optional)'}
+                    </label>
+                    <input
+                      type="text"
+                      value={fm.englishAlias}
+                      onChange={(e) => handleRegistrationFamilyMemberChange(index, 'englishAlias', e.target.value)}
+                      placeholder={t('language') === 'zh' ? '輸入英文名' : 'Enter English name'}
+                      style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ccc' }}
+                    />
+                  </div>
+
+                  <div className="form-row" style={{ display: 'flex', gap: '15px', marginBottom: '12px' }}>
+                    <div className="form-group" style={{ flex: 1 }}>
+                      <label style={{ display: 'block', marginBottom: '5px', fontWeight: '600' }}>
+                        {t('language') === 'zh' ? '性別 *' : 'Gender *'}
+                      </label>
+                      <select
+                        value={fm.gender}
+                        onChange={(e) => handleRegistrationFamilyMemberChange(index, 'gender', e.target.value)}
+                        style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ccc' }}
+                      >
+                        <option value="男">{t('language') === 'zh' ? '男' : 'Male'}</option>
+                        <option value="女">{t('language') === 'zh' ? '女' : 'Female'}</option>
+                      </select>
+                    </div>
+
+                    <div className="form-group" style={{ flex: 1 }}>
+                      <label style={{ display: 'block', marginBottom: '5px', fontWeight: '600' }}>
+                        {t('language') === 'zh' ? '生日 *' : 'Birth Date *'}
+                      </label>
+                      <input
+                        type="date"
+                        value={fm.birthDate ? new Date(fm.birthDate).toISOString().split('T')[0] : ''}
+                        onChange={(e) => handleRegistrationFamilyMemberChange(index, 'birthDate', e.target.value)}
+                        style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ccc' }}
+                      />
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    className="btn btn-danger btn-small"
+                    onClick={() => removeRegistrationFamilyMember(index)}
+                    style={{ marginTop: '8px' }}
+                  >
+                    {t('language') === 'zh' ? '移除此成員' : 'Remove Member'}
+                  </button>
+                </div>
+              ))}
+
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={addRegistrationFamilyMember}
+                style={{ marginTop: '10px' }}
+              >
+                + {t('language') === 'zh' ? '新增家庭成員' : 'Add Family Member'}
+              </button>
+            </div>
+
+            <div style={{ marginBottom: '15px' }}>
             </div>
 
             <div style={{ marginBottom: '15px' }}>

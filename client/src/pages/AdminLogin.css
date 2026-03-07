@@ -16,20 +16,26 @@
 }
 
 .admin-login-header h2 {
-  color: #667eea;
+  color: #0F172A;
   font-size: 32px;
   margin-bottom: 10px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
 }
 
 .admin-login-header p {
-  color: #666;
-  font-size: 16px;
+  color: #64748B;
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: 0.2px;
 }
 
 .admin-info {
   margin-top: 20px;
   padding-top: 20px;
-  border-top: 1px solid #f0f0f0;
+  border-top: 1px solid #E2E8F0;
   text-align: center;
-  color: #999;
+  color: #64748B;
+  font-weight: 500;
+  font-size: 14px;
 }
