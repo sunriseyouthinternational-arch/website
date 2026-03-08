@@ -186,7 +186,7 @@ function AdminDashboard() {
 
       setMessage({
         type: 'success',
-        text: t('language') === 'zh' ? '會員刪除成功' : 'Member deleted successfully'
+        text: t('member_deleted_successfully')
       });
 
       // Refresh member list
@@ -199,7 +199,7 @@ function AdminDashboard() {
     } catch (error) {
       setMessage({
         type: 'error',
-        text: error.response?.data?.message || (t('language') === 'zh' ? '刪除失敗' : 'Delete failed')
+        text: error.response?.data?.message || (t('delete_failed'))
       });
     } finally {
       setLoading(false);
@@ -213,7 +213,7 @@ function AdminDashboard() {
     if (!file.type.startsWith('image/')) {
       setMessage({
         type: 'error',
-        text: t('language') === 'zh' ? '請上傳圖片檔案' : 'Please upload an image file'
+        text: t('please_upload_an_image_file')
       });
       return;
     }
@@ -223,13 +223,13 @@ function AdminDashboard() {
       setNewClassInfo({ ...newClassInfo, banner: reader.result });
       setMessage({
         type: 'success',
-        text: t('language') === 'zh' ? '圖片上傳成功' : 'Image uploaded successfully'
+        text: t('image_uploaded_successfully')
       });
     };
     reader.onerror = () => {
       setMessage({
         type: 'error',
-        text: t('language') === 'zh' ? '圖片上傳失敗' : 'Failed to upload image'
+        text: t('failed_to_upload_image')
       });
     };
     reader.readAsDataURL(file);
@@ -242,7 +242,7 @@ function AdminDashboard() {
     if (file.size > 2 * 1024 * 1024) {
       setMessage({
         type: 'error',
-        text: t('language') === 'zh' ? '圖片大小不能超過 2MB' : 'Image size must be less than 2MB'
+        text: t('image_size_must_be_less_than_2mb')
       });
       return;
     }
@@ -250,7 +250,7 @@ function AdminDashboard() {
     if (!file.type.startsWith('image/')) {
       setMessage({
         type: 'error',
-        text: t('language') === 'zh' ? '請上傳圖片檔案' : 'Please upload an image file'
+        text: t('please_upload_an_image_file')
       });
       return;
     }
@@ -273,7 +273,7 @@ function AdminDashboard() {
         setNewActivity({ ...newActivity, banner: event.target.result });
         setMessage({
           type: 'success',
-          text: t('language') === 'zh' ? '圖片上傳成功' : 'Image uploaded successfully'
+          text: t('image_uploaded_successfully')
         });
       };
       img.src = event.target.result;
@@ -282,7 +282,7 @@ function AdminDashboard() {
     reader.onerror = () => {
       setMessage({
         type: 'error',
-        text: t('language') === 'zh' ? '圖片上傳失敗' : 'Failed to upload image'
+        text: t('failed_to_upload_image')
       });
     };
 
@@ -322,7 +322,7 @@ function AdminDashboard() {
     if (timeParts.length !== 4) {
       setMessage({
         type: 'error',
-        text: t('language') === 'zh' ? '請填寫完整的時間' : 'Please fill in complete time'
+        text: t('please_fill_in_complete_time')
       });
       return;
     }
@@ -335,7 +335,7 @@ function AdminDashboard() {
     if (isNaN(startHour) || isNaN(startMin) || isNaN(endHour) || isNaN(endMin)) {
       setMessage({
         type: 'error',
-        text: t('language') === 'zh' ? '時間格式不正確' : 'Invalid time format'
+        text: t('invalid_time_format')
       });
       return;
     }
@@ -343,7 +343,7 @@ function AdminDashboard() {
     if (startHour < 0 || startHour > 23 || endHour < 0 || endHour > 23) {
       setMessage({
         type: 'error',
-        text: t('language') === 'zh' ? '小時必須在 0-23 之間' : 'Hours must be between 0-23'
+        text: t('hours_must_be_between_0_23')
       });
       return;
     }
@@ -351,7 +351,7 @@ function AdminDashboard() {
     if (startMin < 0 || startMin > 59 || endMin < 0 || endMin > 59) {
       setMessage({
         type: 'error',
-        text: t('language') === 'zh' ? '分鐘必須在 0-59 之間' : 'Minutes must be between 0-59'
+        text: t('minutes_must_be_between_0_59')
       });
       return;
     }
@@ -362,7 +362,7 @@ function AdminDashboard() {
     if (endTotalMin <= startTotalMin) {
       setMessage({
         type: 'error',
-        text: t('language') === 'zh' ? '結束時間必須晚於開始時間' : 'End time must be after start time'
+        text: t('end_time_must_be_after_start_time')
       });
       return;
     }
@@ -371,7 +371,7 @@ function AdminDashboard() {
     if (duration < 15) {
       setMessage({
         type: 'error',
-        text: t('language') === 'zh' ? '課程時間至少需要 15 分鐘' : 'Class must be at least 15 minutes long'
+        text: t('class_must_be_at_least_15_minutes_long')
       });
       return;
     }
@@ -379,7 +379,7 @@ function AdminDashboard() {
     if (duration > 720) { // 12 hours
       setMessage({
         type: 'error',
-        text: t('language') === 'zh' ? '課程時間不可超過 12 小時' : 'Class cannot exceed 12 hours'
+        text: t('class_cannot_exceed_12_hours')
       });
       return;
     }
@@ -393,7 +393,7 @@ function AdminDashboard() {
 
       setMessage({
         type: 'success',
-        text: t('language') === 'zh' ? '開課成功' : 'Class hosted successfully'
+        text: t('class_hosted_successfully')
       });
       setShowAddClassForm(false);
       setNewClass({
@@ -421,7 +421,7 @@ function AdminDashboard() {
     if (timeParts.length !== 4) {
       setMessage({
         type: 'error',
-        text: t('language') === 'zh' ? '請填寫完整的時間' : 'Please fill in complete time'
+        text: t('please_fill_in_complete_time')
       });
       return;
     }
@@ -434,7 +434,7 @@ function AdminDashboard() {
     if (isNaN(startHour) || isNaN(startMin) || isNaN(endHour) || isNaN(endMin)) {
       setMessage({
         type: 'error',
-        text: t('language') === 'zh' ? '時間格式不正確' : 'Invalid time format'
+        text: t('invalid_time_format')
       });
       return;
     }
@@ -442,7 +442,7 @@ function AdminDashboard() {
     if (startHour < 0 || startHour > 23 || endHour < 0 || endHour > 23) {
       setMessage({
         type: 'error',
-        text: t('language') === 'zh' ? '小時必須在 0-23 之間' : 'Hours must be between 0-23'
+        text: t('hours_must_be_between_0_23')
       });
       return;
     }
@@ -450,7 +450,7 @@ function AdminDashboard() {
     if (startMin < 0 || startMin > 59 || endMin < 0 || endMin > 59) {
       setMessage({
         type: 'error',
-        text: t('language') === 'zh' ? '分鐘必須在 0-59 之間' : 'Minutes must be between 0-59'
+        text: t('minutes_must_be_between_0_59')
       });
       return;
     }
@@ -461,7 +461,7 @@ function AdminDashboard() {
     if (endTotalMin <= startTotalMin) {
       setMessage({
         type: 'error',
-        text: t('language') === 'zh' ? '結束時間必須晚於開始時間' : 'End time must be after start time'
+        text: t('end_time_must_be_after_start_time')
       });
       return;
     }
@@ -470,7 +470,7 @@ function AdminDashboard() {
     if (duration < 15) {
       setMessage({
         type: 'error',
-        text: t('language') === 'zh' ? '活動時間至少需要 15 分鐘' : 'Activity must be at least 15 minutes long'
+        text: t('activity_must_be_at_least_15_minutes_long')
       });
       return;
     }
@@ -478,7 +478,7 @@ function AdminDashboard() {
     if (duration > 720) { // 12 hours
       setMessage({
         type: 'error',
-        text: t('language') === 'zh' ? '活動時間不可超過 12 小時' : 'Activity cannot exceed 12 hours'
+        text: t('activity_cannot_exceed_12_hours')
       });
       return;
     }
@@ -492,7 +492,7 @@ function AdminDashboard() {
 
       setMessage({
         type: 'success',
-        text: t('language') === 'zh' ? '活動添加成功' : 'Activity added successfully'
+        text: t('activity_added_successfully')
       });
       setShowAddActivityForm(false);
       setNewActivity({
@@ -524,7 +524,7 @@ function AdminDashboard() {
 
       setMessage({
         type: 'success',
-        text: t('language') === 'zh' ? '課程資訊更新成功' : 'Class info updated successfully'
+        text: t('class_info_updated_successfully')
       });
 
       const classInfosRes = await axios.get('/api/class-info');
@@ -537,7 +537,7 @@ function AdminDashboard() {
   };
 
   const handleDeleteClassInfo = async (id) => {
-    if (!window.confirm(t('language') === 'zh' ? '確定要刪除嗎？此操作將影響所有使用此課程資訊的開課。' : 'Are you sure you want to delete? This will affect all classes using this info.')) {
+    if (!window.confirm(t('are_you_sure_you_want_to_delete_this_will_affect_a'))) {
       return;
     }
 
@@ -550,7 +550,7 @@ function AdminDashboard() {
 
       setMessage({
         type: 'success',
-        text: t('language') === 'zh' ? '課程資訊刪除成功' : 'Class info deleted successfully'
+        text: t('class_info_deleted_successfully')
       });
     } catch (error) {
       console.error('Error deleting class info:', error);
@@ -568,7 +568,7 @@ function AdminDashboard() {
     if (file.size > 2 * 1024 * 1024) {
       setMessage({
         type: 'error',
-        text: t('language') === 'zh' ? '圖片大小不能超過 2MB' : 'Image size must be less than 2MB'
+        text: t('image_size_must_be_less_than_2mb')
       });
       return;
     }
@@ -576,7 +576,7 @@ function AdminDashboard() {
     if (!file.type.startsWith('image/')) {
       setMessage({
         type: 'error',
-        text: t('language') === 'zh' ? '請上傳圖片檔案' : 'Please upload an image file'
+        text: t('please_upload_an_image_file')
       });
       return;
     }
@@ -586,13 +586,13 @@ function AdminDashboard() {
       setNewTeacher({ ...newTeacher, photo: reader.result });
       setMessage({
         type: 'success',
-        text: t('language') === 'zh' ? '圖片上傳成功' : 'Image uploaded successfully'
+        text: t('image_uploaded_successfully')
       });
     };
     reader.onerror = () => {
       setMessage({
         type: 'error',
-        text: t('language') === 'zh' ? '圖片上傳失敗' : 'Failed to upload image'
+        text: t('failed_to_upload_image')
       });
     };
     reader.readAsDataURL(file);
@@ -605,7 +605,7 @@ function AdminDashboard() {
     if (!file.type.startsWith('image/')) {
       setMessage({
         type: 'error',
-        text: t('language') === 'zh' ? '請上傳圖片檔案' : 'Please upload an image file'
+        text: t('please_upload_an_image_file')
       });
       return;
     }
@@ -615,13 +615,13 @@ function AdminDashboard() {
       setSelectedClassInfo({ ...selectedClassInfo, banner: reader.result });
       setMessage({
         type: 'success',
-        text: t('language') === 'zh' ? '圖片上傳成功' : 'Image uploaded successfully'
+        text: t('image_uploaded_successfully')
       });
     };
     reader.onerror = () => {
       setMessage({
         type: 'error',
-        text: t('language') === 'zh' ? '圖片上傳失敗' : 'Failed to upload image'
+        text: t('failed_to_upload_image')
       });
     };
     reader.readAsDataURL(file);
@@ -636,7 +636,7 @@ function AdminDashboard() {
 
       setMessage({
         type: 'success',
-        text: t('language') === 'zh' ? '主辦人添加成功' : 'Host added successfully'
+        text: t('host_added_successfully')
       });
       setShowAddTeacherForm(false);
       setNewTeacher({
@@ -656,7 +656,7 @@ function AdminDashboard() {
   };
 
   const handleDeleteItem = async (type, id) => {
-    if (!window.confirm(t('language') === 'zh' ? '確定要刪除嗎？' : 'Are you sure you want to delete?')) {
+    if (!window.confirm(t('are_you_sure_you_want_to_delete'))) {
       return;
     }
 
@@ -687,7 +687,7 @@ function AdminDashboard() {
   };
 
   const handleDeleteTeacher = async (id) => {
-    if (!window.confirm(t('language') === 'zh' ? '確定要刪除嗎？' : 'Are you sure you want to delete?')) {
+    if (!window.confirm(t('are_you_sure_you_want_to_delete'))) {
       return;
     }
 
@@ -696,7 +696,7 @@ function AdminDashboard() {
 
       setMessage({
         type: 'success',
-        text: t('language') === 'zh' ? '主辦人刪除成功' : 'Host deleted successfully'
+        text: t('host_deleted_successfully')
       });
       setSelectedTeacher(null);
       fetchData();
@@ -715,7 +715,7 @@ function AdminDashboard() {
 
       setMessage({
         type: 'success',
-        text: response.data.message || (t('language') === 'zh' ? '會議建立成功' : 'Meeting created successfully')
+        text: response.data.message || (t('meeting_created_successfully'))
       });
 
       setShowAddMeetingForm(false);
@@ -757,7 +757,7 @@ function AdminDashboard() {
 
       setMessage({
         type: 'success',
-        text: t('language') === 'zh' ? '會議狀態更新成功' : 'Meeting status updated successfully'
+        text: t('meeting_status_updated_successfully')
       });
 
       if (selectedMeeting && selectedMeeting._id === meetingId) {
@@ -783,7 +783,7 @@ function AdminDashboard() {
 
       setMessage({
         type: 'success',
-        text: t('language') === 'zh' ? '狀態更新成功' : 'Status updated successfully'
+        text: t('status_updated_successfully')
       });
 
       if (selectedItem && selectedItem._id === itemId) {
@@ -807,7 +807,7 @@ function AdminDashboard() {
 
       setMessage({
         type: 'success',
-        text: t('language') === 'zh' ? '出席狀態更新成功' : 'Attendance updated successfully'
+        text: t('attendance_updated_successfully')
       });
 
       // Update selectedMeeting if it's the same meeting
@@ -834,7 +834,7 @@ function AdminDashboard() {
 
       setMessage({
         type: 'success',
-        text: t('language') === 'zh' ? '請假申請已核准' : 'Absence request approved successfully'
+        text: t('absence_request_approved_successfully')
       });
 
       // Update selectedMeeting if it's the same meeting
@@ -873,7 +873,7 @@ function AdminDashboard() {
 
       setMessage({
         type: 'success',
-        text: t('language') === 'zh' ? '會議更新成功' : 'Meeting updated successfully'
+        text: t('meeting_updated_successfully')
       });
 
       setEditingMeeting(false);
@@ -889,7 +889,7 @@ function AdminDashboard() {
   };
 
   const handleDeleteMeeting = async (meetingId) => {
-    if (!window.confirm(t('language') === 'zh' ? '確定要刪除此會議嗎？' : 'Are you sure you want to delete this meeting?')) {
+    if (!window.confirm(t('are_you_sure_you_want_to_delete_this_meeting'))) {
       return;
     }
 
@@ -898,7 +898,7 @@ function AdminDashboard() {
 
       setMessage({
         type: 'success',
-        text: t('language') === 'zh' ? '會議已刪除' : 'Meeting deleted successfully'
+        text: t('meeting_deleted_successfully')
       });
 
       setSelectedMeeting(null);
@@ -943,7 +943,7 @@ function AdminDashboard() {
     if (!newCoupon.profileId) {
       setMessage({
         type: 'error',
-        text: t('language') === 'zh' ? '請選擇優惠券模板' : 'Please select a coupon profile'
+        text: t('please_select_a_coupon_profile')
       });
       return;
     }
@@ -951,7 +951,7 @@ function AdminDashboard() {
     if (!newCoupon.quantity || newCoupon.quantity <= 0) {
       setMessage({
         type: 'error',
-        text: t('language') === 'zh' ? '請輸入有效的數量' : 'Please enter a valid quantity'
+        text: t('please_enter_a_valid_quantity')
       });
       return;
     }
@@ -987,7 +987,7 @@ function AdminDashboard() {
 
       setMessage({
         type: 'success',
-        text: t('language') === 'zh' ? '優惠券添加成功！' : 'Coupon added successfully!'
+        text: t('coupon_added_successfully')
       });
 
       setNewCoupon({
@@ -1010,7 +1010,7 @@ function AdminDashboard() {
   };
 
   const handleDeleteCoupon = async (couponId) => {
-    if (!window.confirm(t('language') === 'zh' ? '確定要刪除此優惠券嗎？' : 'Are you sure you want to delete this coupon?')) {
+    if (!window.confirm(t('are_you_sure_you_want_to_delete_this_coupon'))) {
       return;
     }
 
@@ -1020,7 +1020,7 @@ function AdminDashboard() {
 
       setMessage({
         type: 'success',
-        text: t('language') === 'zh' ? '優惠券刪除成功' : 'Coupon deleted successfully'
+        text: t('coupon_deleted_successfully')
       });
 
       const res = await axios.get(`/api/members?memberId=${selectedMember.memberId}`);
@@ -1145,7 +1145,7 @@ function AdminDashboard() {
       await axios.put(endpoint, { paymentMethod });
       setMessage({
         type: 'success',
-        text: t('language') === 'zh' ? '付款方式已更新' : 'Payment method updated'
+        text: t('payment_method_updated')
       });
     } catch (error) {
       console.error('[Payment Method Update] Error:', error);
@@ -1181,16 +1181,16 @@ function AdminDashboard() {
           {t('memberManagement')}
         </button>
         <button className={`tab-button ${activeTab === 'items' ? 'active' : ''}`} onClick={() => setActiveTab('items')}>
-          {t('language') === 'zh' ? '課程與活動' : 'Class & Activity'}
+          {t('class_and_activity')}
         </button>
         <button className={`tab-button ${activeTab === 'teachers' ? 'active' : ''}`} onClick={() => setActiveTab('teachers')}>
-          {t('language') === 'zh' ? '主辦人管理' : 'Host Management'}
+          {t('host_management')}
         </button>
         <button className={`tab-button ${activeTab === 'coupons' ? 'active' : ''}`} onClick={() => setActiveTab('coupons')}>
-          {t('language') === 'zh' ? '優惠券管理' : 'Coupon Management'}
+          {t('coupon_management')}
         </button>
         <button className={`tab-button ${activeTab === 'association' ? 'active' : ''}`} onClick={() => setActiveTab('association')}>
-          {t('language') === 'zh' ? '協會管理' : 'Association Management'}
+          {t('association_management')}
         </button>
       </div>
 
@@ -1202,8 +1202,8 @@ function AdminDashboard() {
                 <tr>
                   <th>{t('memberId')}</th>
                   <th>{t('name')}</th>
-                  <th>{t('language') === 'zh' ? '會籍狀態' : 'Membership'}</th>
-                  <th>{t('language') === 'zh' ? '操作' : 'Actions'}</th>
+                  <th>{t('membership')}</th>
+                  <th>{t('actions')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -1228,7 +1228,7 @@ function AdminDashboard() {
                         className="btn btn-small btn-primary"
                         onClick={() => setSelectedMember(member)}
                       >
-                        {t('language') === 'zh' ? '查看詳情' : 'View Details'}
+                        {t('view_details')}
                       </button>
                     </td>
                   </tr>
@@ -1247,21 +1247,21 @@ function AdminDashboard() {
                 className="btn btn-secondary"
                 onClick={() => setSelectedMember(null)}
               >
-                ← {t('language') === 'zh' ? '返回列表' : 'Back to List'}
+                ← {t('back_to_list')}
               </button>
-              <h3 style={{ margin: 0 }}>{t('language') === 'zh' ? '會員詳細資料' : 'Member Details'}</h3>
+              <h3 style={{ margin: 0 }}>{t('member_details')}</h3>
             </div>
             <button
               className="btn btn-danger"
               onClick={() => handleDeleteMember(selectedMember.memberId)}
             >
-              {t('language') === 'zh' ? '刪除會員' : 'Delete Member'}
+              {t('delete_member')}
             </button>
           </div>
 
           <div className="member-detail-grid">
             <div className="detail-section">
-              <h4>{t('language') === 'zh' ? '基本資料' : 'Basic Information'}</h4>
+              <h4>{t('basic_information')}</h4>
               <div className="detail-row">
                 <strong>{t('memberId')}:</strong>
                 <span>{selectedMember.memberId}</span>
@@ -1285,7 +1285,7 @@ function AdminDashboard() {
             </div>
 
             <div className="detail-section">
-              <h4>{t('language') === 'zh' ? '聯絡資料' : 'Contact Information'}</h4>
+              <h4>{t('contact_information')}</h4>
               <div className="detail-row">
                 <strong>{t('mobile')}:</strong>
                 <span>{selectedMember.contact?.mobile || 'N/A'}</span>
@@ -1297,9 +1297,9 @@ function AdminDashboard() {
             </div>
 
             <div className="detail-section">
-              <h4>{t('language') === 'zh' ? '會員資訊' : 'Membership Info'}</h4>
+              <h4>{t('membership_info')}</h4>
               <div className="detail-row">
-                <strong>{t('language') === 'zh' ? '點數' : 'Points'}:</strong>
+                <strong>{t('points')}:</strong>
                 <span style={{ fontSize: '1.2em', color: '#667eea', fontWeight: 'bold' }}>
                   {selectedMember.points || 0}
                 </span>
@@ -1309,7 +1309,7 @@ function AdminDashboard() {
                 <span>{selectedMember.referralCode || 'N/A'}</span>
               </div>
               <div className="detail-row">
-                <strong>{t('language') === 'zh' ? '報名項目' : 'Enrollments'}:</strong>
+                <strong>{t('enrollments')}:</strong>
                 <span>{selectedMember.enrollments?.length || 0}</span>
               </div>
               <div className="detail-row">
@@ -1319,9 +1319,9 @@ function AdminDashboard() {
             </div>
 
             <div className="detail-section">
-              <h4>{t('language') === 'zh' ? '會籍狀態' : 'Membership Status'}</h4>
+              <h4>{t('membership_status')}</h4>
               <div className="detail-row">
-                <strong>{t('language') === 'zh' ? '目前狀態：' : 'Current Status:'}</strong>
+                <strong>{t('current_status')}</strong>
                 <select
                   value={selectedMember.membershipStatus || '會友'}
                   onChange={async (e) => {
@@ -1341,7 +1341,7 @@ function AdminDashboard() {
 
                       setMessage({
                         type: 'success',
-                        text: t('language') === 'zh' ? '會籍狀態已更新' : 'Membership status updated'
+                        text: t('membership_status_updated')
                       });
                     } catch (error) {
                       setMessage({
@@ -1361,36 +1361,36 @@ function AdminDashboard() {
                     cursor: 'pointer'
                   }}
                 >
-                  <option value="會友">{t('language') === 'zh' ? '會友' : 'Association Friend'}</option>
-                  <option value="協會會員">{t('language') === 'zh' ? '協會會員' : 'Association Member'}</option>
+                  <option value="會友">{t('association_friend')}</option>
+                  <option value="協會會員">{t('association_member')}</option>
                 </select>
               </div>
               <div className="detail-row">
-                <strong>{t('language') === 'zh' ? '成為會員日期：' : 'Member Since:'}</strong>
+                <strong>{t('member_since')}</strong>
                 <span>{formatDate(selectedMember.membershipStartDate || selectedMember.createdAt)}</span>
               </div>
               {selectedMember.membershipUpgradedDate && (
                 <div className="detail-row">
-                  <strong>{t('language') === 'zh' ? '升級日期：' : 'Upgraded On:'}</strong>
+                  <strong>{t('upgraded_on')}</strong>
                   <span>{formatDate(selectedMember.membershipUpgradedDate)}</span>
                 </div>
               )}
               {selectedMember.membershipPaymentMethod && (
                 <div className="detail-row">
-                  <strong>{t('language') === 'zh' ? '付款方式：' : 'Payment Method:'}</strong>
+                  <strong>{t('payment_method')}</strong>
                   <span>
                     {selectedMember.membershipPaymentMethod === 'in-person'
-                      ? (t('language') === 'zh' ? '現場付款' : 'In Person')
+                      ? (t('in_person'))
                       : selectedMember.membershipPaymentMethod === 'linepay'
                       ? 'LINE Pay'
-                      : (t('language') === 'zh' ? '信用卡' : 'Credit Card')}
+                      : (t('credit_card'))}
                   </span>
                 </div>
               )}
 
               {/* Role Selection */}
               <div className="detail-row">
-                <strong>{t('language') === 'zh' ? '角色：' : 'Role:'}</strong>
+                <strong>{t('role')}</strong>
                 <select
                   value={selectedMember.role || '一般會員'}
                   onChange={async (e) => {
@@ -1407,7 +1407,7 @@ function AdminDashboard() {
 
                       setMessage({
                         type: 'success',
-                        text: t('language') === 'zh' ? '角色已更新' : 'Role updated'
+                        text: t('role_updated')
                       });
                     } catch (error) {
                       setMessage({
@@ -1427,8 +1427,8 @@ function AdminDashboard() {
                     cursor: 'pointer'
                   }}
                 >
-                  <option value="一般會員">{t('language') === 'zh' ? '一般會員' : 'General Member'}</option>
-                  <option value="董事會">{t('language') === 'zh' ? '董事會' : 'Board of Directors'}</option>
+                  <option value="一般會員">{t('general_member')}</option>
+                  <option value="董事會">{t('board_of_directors')}</option>
                 </select>
               </div>
 
@@ -1442,21 +1442,21 @@ function AdminDashboard() {
                   borderRadius: '8px'
                 }}>
                   <h4 style={{ color: '#856404', marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    ⚠️ {t('language') === 'zh' ? '待處理升級請求' : 'Pending Upgrade Request'}
+                    ⚠️ {t('pending_upgrade_request')}
                   </h4>
                   <div style={{ marginBottom: '15px' }}>
                     <p style={{ marginBottom: '8px' }}>
-                      <strong>{t('language') === 'zh' ? '請求時間：' : 'Requested At:'}</strong>{' '}
+                      <strong>{t('requested_at')}</strong>{' '}
                       {formatDate(selectedMember.membershipUpgradeRequest.requestedAt)}
                     </p>
                     <p style={{ marginBottom: '8px' }}>
-                      <strong>{t('language') === 'zh' ? '付款方式：' : 'Payment Method:'}</strong>{' '}
+                      <strong>{t('payment_method')}</strong>{' '}
                       {selectedMember.membershipUpgradeRequest.paymentMethod === 'in-person'
-                        ? (t('language') === 'zh' ? '現場付款' : 'In Person')
+                        ? (t('in_person'))
                         : selectedMember.membershipUpgradeRequest.paymentMethod}
                     </p>
                     <p style={{ marginBottom: '8px' }}>
-                      <strong>{t('language') === 'zh' ? '升級至：' : 'Upgrade To:'}</strong> 協會會員
+                      <strong>{t('upgrade_to')}</strong> 協會會員
                     </p>
                   </div>
                   <div style={{ display: 'flex', gap: '10px' }}>
@@ -1475,7 +1475,7 @@ function AdminDashboard() {
 
                           setMessage({
                             type: 'success',
-                            text: t('language') === 'zh' ? '升級請求已批准' : 'Upgrade request approved'
+                            text: t('upgrade_request_approved')
                           });
                         } catch (error) {
                           setMessage({
@@ -1486,12 +1486,12 @@ function AdminDashboard() {
                       }}
                       style={{ background: '#28a745' }}
                     >
-                      ✓ {t('language') === 'zh' ? '批准升級' : 'Approve Upgrade'}
+                      ✓ {t('approve_upgrade')}
                     </button>
                     <button
                       className="btn btn-secondary"
                       onClick={async () => {
-                        if (!window.confirm(t('language') === 'zh' ? '確定要拒絕此升級請求嗎？' : 'Are you sure you want to reject this upgrade request?')) {
+                        if (!window.confirm(t('are_you_sure_you_want_to_reject_this_upgrade_reque'))) {
                           return;
                         }
                         try {
@@ -1505,7 +1505,7 @@ function AdminDashboard() {
 
                           setMessage({
                             type: 'success',
-                            text: t('language') === 'zh' ? '升級請求已拒絕' : 'Upgrade request rejected'
+                            text: t('upgrade_request_rejected')
                           });
                         } catch (error) {
                           setMessage({
@@ -1516,7 +1516,7 @@ function AdminDashboard() {
                       }}
                       style={{ background: '#dc3545' }}
                     >
-                      ✗ {t('language') === 'zh' ? '拒絕' : 'Reject'}
+                      ✗ {t('reject')}
                     </button>
                   </div>
                 </div>
@@ -1526,15 +1526,15 @@ function AdminDashboard() {
 
           {selectedMember.enrollments && selectedMember.enrollments.length > 0 && (
             <div className="detail-section" style={{ marginTop: '30px' }}>
-              <h4>{t('language') === 'zh' ? '報名記錄' : 'Enrollment History'}</h4>
+              <h4>{t('enrollment_history')}</h4>
               <div className="table-container">
                 <table className="data-table">
                   <thead>
                     <tr>
-                      <th>{t('language') === 'zh' ? '類型' : 'Type'}</th>
+                      <th>{t('type')}</th>
                       <th>{t('name')}</th>
-                      <th>{t('language') === 'zh' ? '報名日期' : 'Enrolled'}</th>
-                      <th>{t('language') === 'zh' ? '狀態' : 'Status'}</th>
+                      <th>{t('enrolled')}</th>
+                      <th>{t('status_')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1556,42 +1556,42 @@ function AdminDashboard() {
             </div>
           )}          <div className="detail-section" style={{ marginTop: '30px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <h4 style={{ margin: 0 }}>{t('language') === 'zh' ? '優惠券管理' : 'Coupon Management'}</h4>
+              <h4 style={{ margin: 0 }}>{t('coupon_management')}</h4>
               <button
                 className="btn btn-primary"
                 onClick={() => setShowAddCouponForm(!showAddCouponForm)}
                 style={{ fontSize: '14px', padding: '8px 16px' }}
               >
                 {showAddCouponForm
-                  ? (t('language') === 'zh' ? '取消' : 'Cancel')
-                  : (t('language') === 'zh' ? '+ 添加優惠券' : '+ Add Coupon')}
+                  ? (t('cancel'))
+                  : (t('_add_coupon'))}
               </button>
             </div>
 
             {showAddCouponForm && (
               <form onSubmit={handleAddCoupon} className="add-form" style={{ marginBottom: '30px', background: '#f8f9ff', padding: '20px', borderRadius: '8px' }}>
                 <div className="form-group">
-                  <label>{t('language') === 'zh' ? '優惠券類型' : 'Coupon Type'}</label>
+                  <label>{t('coupon_type')}</label>
                   <select
                     value={newCoupon.type}
                     onChange={(e) => handleCouponTypeChange(e.target.value)}
                     className="form-control"
                     required
                   >
-                    <option value="trial">{t('language') === 'zh' ? '體驗券' : 'Trial Coupon'}</option>
-                    <option value="discount">{t('language') === 'zh' ? '折扣券' : 'Discount Coupon'}</option>
+                    <option value="trial">{t('trial_coupon')}</option>
+                    <option value="discount">{t('discount_coupon')}</option>
                   </select>
                 </div>
 
                 <div className="form-group">
-                  <label>{t('language') === 'zh' ? '選擇優惠券模板' : 'Select Coupon Profile'}</label>
+                  <label>{t('select_coupon_profile')}</label>
                   <select
                     value={newCoupon.profileId}
                     onChange={(e) => handleCouponProfileChange(e.target.value)}
                     className="form-control"
                     required
                   >
-                    <option value="">{t('language') === 'zh' ? '-- 選擇模板 --' : '-- Select Profile --'}</option>
+                    <option value="">{t('select_profile')}</option>
                     {couponProfiles
                       .filter(profile => profile.type === newCoupon.type)
                       .map(profile => (
@@ -1603,9 +1603,7 @@ function AdminDashboard() {
                       ))}
                   </select>
                   <small style={{ color: '#666' }}>
-                    {t('language') === 'zh'
-                      ? '選擇後將自動填入優惠券資訊'
-                      : 'Coupon information will be auto-filled based on profile'}
+                    {t('coupon_information_will_be_auto_filled_based_on_pr')}
                   </small>
                 </div>
 
@@ -1616,7 +1614,7 @@ function AdminDashboard() {
                   return (
                     <div style={{ padding: '15px', background: '#e7f3ff', borderRadius: '8px', marginBottom: '15px' }}>
                       <h5 style={{ marginTop: 0, marginBottom: '10px', color: '#004085' }}>
-                        {t('language') === 'zh' ? '📋 模板預覽' : '📋 Profile Preview'}
+                        {t('profile_preview')}
                       </h5>
                       {selectedProfile.image && (
                         <img
@@ -1626,22 +1624,22 @@ function AdminDashboard() {
                         />
                       )}
                       <p style={{ margin: '5px 0', color: '#004085' }}>
-                        <strong>{t('language') === 'zh' ? '名稱：' : 'Name: '}</strong>
+                        <strong>{t('name')}</strong>
                         {selectedProfile.name}
                       </p>
                       <p style={{ margin: '5px 0', color: '#004085' }}>
-                        <strong>{t('language') === 'zh' ? '描述：' : 'Description: '}</strong>
+                        <strong>{t('description')}</strong>
                         {selectedProfile.description}
                       </p>
                       {selectedProfile.type === 'trial' && selectedProfile.classInfoId && (
                         <p style={{ margin: '5px 0', color: '#004085' }}>
-                          <strong>{t('language') === 'zh' ? '課程：' : 'Class: '}</strong>
+                          <strong>{t('class_')}</strong>
                           {selectedProfile.classInfoId.name}
                         </p>
                       )}
                       {selectedProfile.type === 'discount' && (
                         <p style={{ margin: '5px 0', color: '#004085' }}>
-                          <strong>{t('language') === 'zh' ? '折扣：' : 'Discount: '}</strong>
+                          <strong>{t('discount_')}</strong>
                           {selectedProfile.discountPercent}%
                         </p>
                       )}
@@ -1650,7 +1648,7 @@ function AdminDashboard() {
                 })()}
 
                 <div className="form-group">
-                  <label>{t('language') === 'zh' ? '數量' : 'Quantity'}</label>
+                  <label>{t('quantity')}</label>
                   <input
                     type="number"
                     value={newCoupon.quantity}
@@ -1662,7 +1660,7 @@ function AdminDashboard() {
                 </div>
 
                 <div className="form-group">
-                  <label>{t('language') === 'zh' ? '有效期限（可選）' : 'Expiry Date (Optional)'}</label>
+                  <label>{t('expiry_date_optional')}</label>
                   <input
                     type="date"
                     value={newCoupon.expiryDate}
@@ -1671,14 +1669,14 @@ function AdminDashboard() {
                     min={new Date().toISOString().split('T')[0]}
                   />
                   <small style={{ color: '#666' }}>
-                    {t('language') === 'zh' ? '留空表示永久有效' : 'Leave empty for no expiration'}
+                    {t('leave_empty_for_no_expiration')}
                   </small>
                 </div>
 
                 <button type="submit" className="btn btn-primary" disabled={addingCoupon}>
                   {addingCoupon
-                    ? (t('language') === 'zh' ? '⏳ 添加中...' : '⏳ Adding...')
-                    : (t('language') === 'zh' ? '添加優惠券' : 'Add Coupon')}
+                    ? (t('adding'))
+                    : (t('add_coupon'))}
                 </button>
               </form>
             )}            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
@@ -1723,8 +1721,8 @@ function AdminDashboard() {
                           }}
                         >
                           {coupon.type === 'trial'
-                            ? (t('language') === 'zh' ? '體驗券' : 'Trial')
-                            : (t('language') === 'zh' ? '折扣券' : 'Discount')}
+                            ? (t('trial'))
+                            : (t('discount'))}
                         </span>
                       </div>
                       <h5 style={{ color: '#667eea', marginBottom: '10px' }}>{coupon.name}</h5>
@@ -1733,22 +1731,22 @@ function AdminDashboard() {
                       </p>
                       {coupon.type === 'trial' && classInfo && (
                         <p style={{ fontSize: '13px', color: '#1971c2', marginBottom: '8px' }}>
-                          <strong>{t('language') === 'zh' ? '適用課程：' : 'Valid for: '}</strong>
+                          <strong>{t('valid_for')}</strong>
                           {classInfo.name}
                         </p>
                       )}
                       {coupon.type === 'discount' && (
                         <p style={{ fontSize: '13px', color: '#c92a2a', marginBottom: '8px' }}>
-                          <strong>{t('language') === 'zh' ? '折扣：' : 'Discount: '}</strong>
+                          <strong>{t('discount_')}</strong>
                           {coupon.discountPercent}%
                         </p>
                       )}
                       <p style={{ fontSize: '14px', marginBottom: '8px' }}>
-                        <strong>{t('language') === 'zh' ? '數量：' : 'Quantity: '}</strong>
+                        <strong>{t('quantity')}</strong>
                         {coupon.quantity - coupon.usedCount} / {coupon.quantity}
                       </p>
                       <p style={{ fontSize: '12px', color: '#999' }}>
-                        {t('language') === 'zh' ? '創建於 ' : 'Created '}{formatDate(coupon.createdAt)}
+                        {t('created')}{formatDate(coupon.createdAt)}
                       </p>
                       <button
                         onClick={() => handleDeleteCoupon(coupon._id)}
@@ -1762,15 +1760,15 @@ function AdminDashboard() {
                         }}
                       >
                         {deletingCouponId === coupon._id
-                          ? (t('language') === 'zh' ? '⏳ 刪除中...' : '⏳ Deleting...')
-                          : (t('language') === 'zh' ? '🗑️ 刪除' : '🗑️ Delete')}
+                          ? (t('deleting'))
+                          : (t('delete'))}
                       </button>
                     </div>
                   );
                 })
               ) : (
                 <p style={{ color: '#999', gridColumn: '1 / -1', textAlign: 'center', padding: '20px' }}>
-                  {t('language') === 'zh' ? '此會員尚無優惠券' : 'No coupons for this member'}
+                  {t('no_coupons_for_this_member')}
                 </p>
               )}
             </div>
@@ -1785,9 +1783,9 @@ function AdminDashboard() {
               className="btn btn-secondary"
               onClick={() => setSelectedClassInfo(null)}
             >
-              ← {t('language') === 'zh' ? '返回列表' : 'Back to List'}
+              ← {t('back_to_list')}
             </button>
-            <h3>{t('language') === 'zh' ? '編輯課程資訊' : 'Edit Class Information'}</h3>
+            <h3>{t('edit_class_information')}</h3>
           </div>
 
           <form onSubmit={handleUpdateClassInfo} className="add-form">
@@ -1806,14 +1804,12 @@ function AdminDashboard() {
                 }}
               />
               <small style={{ color: '#666', display: 'block', marginTop: '5px' }}>
-                {t('language') === 'zh'
-                  ? '上傳橫幅圖片（建議尺寸 1000x600）'
-                  : 'Upload banner image (recommended size 1000x600)'}
+                {t('upload_banner_image_recommended_size_1000x600')}
               </small>
               {selectedClassInfo.banner && (
                 <div style={{ marginTop: '15px' }}>
                   <p style={{ fontWeight: 'bold', marginBottom: '10px' }}>
-                    {t('language') === 'zh' ? '預覽：' : 'Preview:'}
+                    {t('preview')}
                   </p>
                   <img
                     src={selectedClassInfo.banner}
@@ -1833,7 +1829,7 @@ function AdminDashboard() {
                     onClick={() => setSelectedClassInfo({ ...selectedClassInfo, banner: '' })}
                     style={{ marginTop: '10px', display: 'block' }}
                   >
-                    {t('language') === 'zh' ? '移除圖片' : 'Remove Image'}
+                    {t('remove_image')}
                   </button>
                 </div>
               )}
@@ -1882,7 +1878,7 @@ function AdminDashboard() {
 
             <div style={{ display: 'flex', gap: '15px', marginTop: '20px' }}>
               <button type="submit" className="btn btn-primary">
-                {t('language') === 'zh' ? '保存更改' : 'Save Changes'}
+                {t('save_changes')}
               </button>
               <button
                 type="button"
@@ -1895,7 +1891,7 @@ function AdminDashboard() {
                 type="button"
                 className="btn btn-danger"
                 onClick={() => {
-                  if (window.confirm(t('language') === 'zh' ? '確定要刪除此課程資訊嗎？' : 'Are you sure you want to delete this class information?')) {
+                  if (window.confirm(t('are_you_sure_you_want_to_delete_this_class_informa'))) {
                     handleDeleteClassInfo(selectedClassInfo._id);
                   }
                 }}
@@ -1910,7 +1906,7 @@ function AdminDashboard() {
 
       {activeTab === 'items' && !selectedItem && !selectedClassInfo && (
         <div className="card">
-          <h3>{t('language') === 'zh' ? '課程與活動管理' : 'Class & Activity Management'}</h3>          <div className="items-section" style={{ marginTop: '30px' }}>
+          <h3>{t('class_and_activity_management')}</h3>          <div className="items-section" style={{ marginTop: '30px' }}>
             <div className="section-header">
               <h4 style={{ color: '#667eea' }}>
                 {t('classInformation')} ({classInfos.length})
@@ -1965,7 +1961,7 @@ function AdminDashboard() {
                     />
                   </div>
                 </div>                <div className="form-group">
-                  <label>{t('language') === 'zh' ? '宣傳圖片 (選填)' : 'Banner Image (Optional)'}</label>
+                  <label>{t('banner_image_optional')}</label>
                   <input
                     type="file"
                     accept="image/*"
@@ -1979,14 +1975,12 @@ function AdminDashboard() {
                     }}
                   />
                   <small style={{ color: '#666', display: 'block', marginTop: '5px' }}>
-                    {t('language') === 'zh'
-                      ? '上傳圖片（建議尺寸：1000x600px）'
-                      : 'Upload image (recommended size: 1000x600px)'}
+                    {t('upload_image_recommended_size_1000x600px')}
                   </small>
                   {newClassInfo.banner && (
                     <div style={{ marginTop: '15px' }}>
                       <p style={{ fontWeight: 'bold', marginBottom: '10px' }}>
-                        {t('language') === 'zh' ? '預覽：' : 'Preview:'}
+                        {t('preview')}
                       </p>
                       <img
                         src={newClassInfo.banner}
@@ -2006,7 +2000,7 @@ function AdminDashboard() {
                         onClick={() => setNewClassInfo({ ...newClassInfo, banner: '' })}
                         style={{ marginTop: '10px' }}
                       >
-                        {t('language') === 'zh' ? '移除圖片' : 'Remove Image'}
+                        {t('remove_image')}
                       </button>
                     </div>
                   )}
@@ -2053,16 +2047,16 @@ function AdminDashboard() {
             </div>
 
             <div className="form-group" style={{ marginTop: '20px', maxWidth: '300px' }}>
-              <label>{t('language') === 'zh' ? '篩選狀態' : 'Filter by Status'}</label>
+              <label>{t('filter_by_status')}</label>
               <select
                 value={classStatusFilter}
                 onChange={(e) => setClassStatusFilter(e.target.value)}
                 style={{ width: '100%' }}
               >
-                <option value="all">{t('language') === 'zh' ? '全部' : 'All'}</option>
-                <option value="upcoming">{t('language') === 'zh' ? '即將到來' : 'Upcoming'}</option>
-                <option value="completed">{t('language') === 'zh' ? '已完成' : 'Completed'}</option>
-                <option value="cancelled">{t('language') === 'zh' ? '已取消' : 'Cancelled'}</option>
+                <option value="all">{t('all')}</option>
+                <option value="upcoming">{t('upcoming')}</option>
+                <option value="completed">{t('completed')}</option>
+                <option value="cancelled">{t('cancelled')}</option>
               </select>
             </div>
 
@@ -2075,7 +2069,7 @@ function AdminDashboard() {
                     onChange={(e) => setNewClass({ ...newClass, classInfoId: e.target.value })}
                     required
                   >
-                    <option value="">{t('language') === 'zh' ? '選擇課程' : 'Select Class'}</option>
+                    <option value="">{t('select_class')}</option>
                     {classInfos.map(classInfo => (
                       <option key={classInfo._id} value={classInfo._id}>
                         {classInfo.name}
@@ -2098,7 +2092,7 @@ function AdminDashboard() {
                     }}
                     required
                   >
-                    <option value="">{t('language') === 'zh' ? '選擇主辦人' : 'Select Host'}</option>
+                    <option value="">{t('select_host')}</option>
                     {teachers.map(teacher => (
                       <option key={teacher._id} value={teacher._id}>
                         {teacher.name}
@@ -2185,7 +2179,7 @@ function AdminDashboard() {
                       />
                     </div>
                     <small style={{ color: '#666', display: 'block', marginTop: '5px' }}>
-                      {t('language') === 'zh' ? '開始時間 - 結束時間' : 'Start Time - End Time'}
+                      {t('start_time_end_time')}
                     </small>
                   </div>
                 </div>
@@ -2196,15 +2190,13 @@ function AdminDashboard() {
                     type="text"
                     value={newClass.location}
                     onChange={(e) => setNewClass({ ...newClass, location: e.target.value })}
-                    placeholder={t('language') === 'zh' ? '例如：台北市大安區復興南路一段' : 'e.g., No. 1, Section 1, Fuxing S Rd, Da\'an District, Taipei City'}
+                    placeholder={t('example_address_taipei')}
                   />
                 </div>
 
                 <div className="form-group" style={{ background: '#f0f8ff', padding: '15px', borderRadius: '8px', border: '1px solid #d0e8ff' }}>
                   <p style={{ margin: 0, color: '#1a5490', fontSize: '14px', lineHeight: '1.6' }}>
-                    ℹ️ {t('language') === 'zh'
-                      ? '會員可以在個人選單中點擊「課程與活動」來查看和報名此課程！'
-                      : 'Members can view and enroll in this class by clicking "Class & Activity" in their profile menu!'}
+                    ℹ️ {t('members_can_view_and_enroll_in_this_class_by_clicking_class_and_activity')}
                   </p>
                 </div>
 
@@ -2255,7 +2247,7 @@ function AdminDashboard() {
                       className="btn btn-small btn-primary"
                       onClick={() => setSelectedItem({ ...classItem, type: 'class' })}
                     >
-                      {t('language') === 'zh' ? '查看詳情' : 'View Details'}
+                      {t('view_details')}
                     </button>
                   </div>
                 </div>
@@ -2275,16 +2267,16 @@ function AdminDashboard() {
             </div>
 
             <div className="form-group" style={{ marginTop: '20px', maxWidth: '300px' }}>
-              <label>{t('language') === 'zh' ? '篩選狀態' : 'Filter by Status'}</label>
+              <label>{t('filter_by_status')}</label>
               <select
                 value={activityStatusFilter}
                 onChange={(e) => setActivityStatusFilter(e.target.value)}
                 style={{ width: '100%' }}
               >
-                <option value="all">{t('language') === 'zh' ? '全部' : 'All'}</option>
-                <option value="upcoming">{t('language') === 'zh' ? '即將到來' : 'Upcoming'}</option>
-                <option value="completed">{t('language') === 'zh' ? '已完成' : 'Completed'}</option>
-                <option value="cancelled">{t('language') === 'zh' ? '已取消' : 'Cancelled'}</option>
+                <option value="all">{t('all')}</option>
+                <option value="upcoming">{t('upcoming')}</option>
+                <option value="completed">{t('completed')}</option>
+                <option value="cancelled">{t('cancelled')}</option>
               </select>
             </div>
 
@@ -2324,7 +2316,7 @@ function AdminDashboard() {
                     }}
                     required
                   >
-                    <option value="">{t('language') === 'zh' ? '選擇主辦人' : 'Select Host'}</option>
+                    <option value="">{t('select_host')}</option>
                     {teachers.map(teacher => (
                       <option key={teacher._id} value={teacher._id}>
                         {teacher.name}
@@ -2335,7 +2327,7 @@ function AdminDashboard() {
 
                 <div className="form-row">
                   <div className="form-group">
-                    <label>{t('language') === 'zh' ? '活動日期' : 'Activity Date'}</label>
+                    <label>{t('activity_date')}</label>
                     <input
                       type="date"
                       value={newActivity.date}
@@ -2410,7 +2402,7 @@ function AdminDashboard() {
                       />
                     </div>
                     <small style={{ color: '#666', display: 'block', marginTop: '5px' }}>
-                      {t('language') === 'zh' ? '開始時間 - 結束時間' : 'Start Time - End Time'}
+                      {t('start_time_end_time')}
                     </small>
                   </div>
                 </div>
@@ -2442,7 +2434,7 @@ function AdminDashboard() {
                     type="text"
                     value={newActivity.location}
                     onChange={(e) => setNewActivity({ ...newActivity, location: e.target.value })}
-                    placeholder={t('language') === 'zh' ? '例如：台北市大安區復興南路一段' : 'e.g., No. 1, Section 1, Fuxing S Rd, Da\'an District, Taipei City'}
+                    placeholder={t('example_address_taipei')}
                   />
                 </div>
 
@@ -2461,7 +2453,7 @@ function AdminDashboard() {
                     />
                   </div>
                 )}                <div className="form-group">
-                  <label>{t('language') === 'zh' ? '宣傳圖片 (選填)' : 'Banner Image (Optional)'}</label>
+                  <label>{t('banner_image_optional')}</label>
                   <input
                     type="file"
                     accept="image/*"
@@ -2475,14 +2467,12 @@ function AdminDashboard() {
                     }}
                   />
                   <small style={{ color: '#666', display: 'block', marginTop: '5px' }}>
-                    {t('language') === 'zh'
-                      ? '上傳圖片（最大 2MB，尺寸必須：500x300px）'
-                      : 'Upload image (max 2MB, dimensions must be: 500x300px)'}
+                    {t('upload_image_max_2mb_dimensions_must_be_500x300px')}
                   </small>
                   {newActivity.banner && (
                     <div style={{ marginTop: '15px' }}>
                       <p style={{ fontWeight: 'bold', marginBottom: '10px' }}>
-                        {t('language') === 'zh' ? '預覽：' : 'Preview:'}
+                        {t('preview')}
                       </p>
                       <img
                         src={newActivity.banner}
@@ -2501,14 +2491,14 @@ function AdminDashboard() {
                         onClick={() => setNewActivity({ ...newActivity, banner: '' })}
                         style={{ marginTop: '10px' }}
                       >
-                        {t('language') === 'zh' ? '移除圖片' : 'Remove Image'}
+                        {t('remove_image')}
                       </button>
                     </div>
                   )}
                 </div>
 
                 <button type="submit" className="btn btn-primary">
-                  {t('language') === 'zh' ? '添加活動' : 'Add Activity'}
+                  {t('add_activity')}
                 </button>
               </form>
             )}            <div className="items-list" style={{ marginTop: '20px' }}>
@@ -2538,7 +2528,7 @@ function AdminDashboard() {
                       className="btn btn-small btn-primary"
                       onClick={() => setSelectedItem({ ...activity, type: 'activity' })}
                     >
-                      {t('language') === 'zh' ? '查看詳情' : 'View Details'}
+                      {t('view_details')}
                     </button>
                   </div>
                 </div>
@@ -2555,7 +2545,7 @@ function AdminDashboard() {
               className="btn btn-secondary"
               onClick={() => setSelectedItem(null)}
             >
-              ← {t('language') === 'zh' ? '返回列表' : 'Back to List'}
+              ← {t('back_to_list')}
             </button>
             <h3>
               {selectedItem.type === 'class' ? t('classes') : t('activities')} - {selectedItem.type === 'class' ? selectedItem.classInfoId?.name : selectedItem.name}
@@ -2565,7 +2555,7 @@ function AdminDashboard() {
               onClick={() => handleDeleteItem(selectedItem.type, selectedItem._id)}
               style={{ marginLeft: 'auto' }}
             >
-              {t('language') === 'zh' ? '刪除' : 'Delete'}
+              {t('delete_')}
             </button>
           </div>
 
@@ -2585,7 +2575,7 @@ function AdminDashboard() {
 
           <div className="item-detail-grid">
             <div className="detail-section">
-              <h4>{t('language') === 'zh' ? '基本資料' : 'Basic Information'}</h4>
+              <h4>{t('basic_information')}</h4>
               <div className="detail-row">
                 <strong>{t('name')}:</strong>
                 <span>{selectedItem.type === 'class' ? selectedItem.classInfoId?.name : selectedItem.name}</span>
@@ -2602,7 +2592,7 @@ function AdminDashboard() {
               )}
               {selectedItem.date && selectedItem.type === 'activity' && (
                 <div className="detail-row">
-                  <strong>{t('language') === 'zh' ? '活動日期' : 'Activity Date'}:</strong>
+                  <strong>{t('activity_date')}:</strong>
                   <span>{formatDate(selectedItem.date)}</span>
                 </div>
               )}
@@ -2631,15 +2621,15 @@ function AdminDashboard() {
                 </span>
               </div>
               <div className="detail-row">
-                <strong>{t('language') === 'zh' ? '狀態' : 'Status'}:</strong>
+                <strong>{t('status_')}:</strong>
                 <select
                   value={selectedItem.status || 'upcoming'}
                   onChange={(e) => handleUpdateItemStatus(selectedItem.type, selectedItem._id, e.target.value)}
                   style={{ padding: '5px 10px', borderRadius: '4px' }}
                 >
-                  <option value="upcoming">{t('language') === 'zh' ? '即將到來' : 'Upcoming'}</option>
-                  <option value="completed">{t('language') === 'zh' ? '已完成' : 'Completed'}</option>
-                  <option value="cancelled">{t('language') === 'zh' ? '已取消' : 'Cancelled'}</option>
+                  <option value="upcoming">{t('upcoming')}</option>
+                  <option value="completed">{t('completed')}</option>
+                  <option value="cancelled">{t('cancelled')}</option>
                 </select>
               </div>
             </div>
@@ -2662,7 +2652,7 @@ function AdminDashboard() {
           )}
 
           <div className="detail-section" style={{ marginTop: '30px' }}>
-            <h4>{t('language') === 'zh' ? '已報名會員' : 'Enrolled Members'}</h4>
+            <h4>{t('enrolled_members')}</h4>
             {selectedItem.participants && selectedItem.participants.length > 0 ? (
               <div className="table-container">
                 <table className="data-table">
@@ -2670,10 +2660,10 @@ function AdminDashboard() {
                     <tr>
                       <th>{t('memberId')}</th>
                       <th>{t('name')}</th>
-                      <th>{t('language') === 'zh' ? '報名日期' : 'Enrolled Date'}</th>
-                      <th>{t('language') === 'zh' ? '付款方式' : 'Payment Method'}</th>
-                      <th>{t('language') === 'zh' ? '付款狀態' : 'Payment'}</th>
-                      <th>{t('language') === 'zh' ? '操作' : 'Action'}</th>
+                      <th>{t('enrolled_date')}</th>
+                      <th>{t('payment_method')}</th>
+                      <th>{t('payment')}</th>
+                      <th>{t('action')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -2702,21 +2692,21 @@ function AdminDashboard() {
                             }}
                           >
                             <option value="in-person">
-                              {t('language') === 'zh' ? '現場付款' : 'In Person'}
+                              {t('in_person')}
                             </option>
                             <option value="credit">
-                              {t('language') === 'zh' ? '信用卡' : 'Credit Card'}
+                              {t('credit_card')}
                             </option>
                             <option value="linepay">
-                              {t('language') === 'zh' ? 'LINE Pay' : 'LINE Pay'}
+                              {t('line_pay')}
                             </option>
                           </select>
                         </td>
                         <td>
                           <span className={`status-badge ${participant.paid ? 'paid' : 'unpaid'}`}>
                             {participant.paid
-                              ? (t('language') === 'zh' ? '已付款' : 'Paid')
-                              : (t('language') === 'zh' ? '未付款' : 'Unpaid')}
+                              ? (t('paid'))
+                              : (t('unpaid'))}
                           </span>
                         </td>
                         <td>
@@ -2735,8 +2725,8 @@ function AdminDashboard() {
                             {loadingStates[`${selectedItem.type}-${selectedItem._id}-${participant._id}`]
                               ? t('processing')
                               : participant.paid
-                                ? (t('language') === 'zh' ? '標記未付' : 'Mark Unpaid')
-                                : (t('language') === 'zh' ? '標記已付' : 'Mark Paid')}
+                                ? (t('mark_unpaid'))
+                                : (t('mark_paid'))}
                           </button>
                         </td>
                       </tr>
@@ -2746,7 +2736,7 @@ function AdminDashboard() {
               </div>
             ) : (
               <p style={{ textAlign: 'center', color: '#666', padding: '20px' }}>
-                {t('language') === 'zh' ? '目前尚無會員報名' : 'No enrollments yet'}
+                {t('no_enrollments_yet')}
               </p>
             )}
           </div>
@@ -2756,7 +2746,7 @@ function AdminDashboard() {
       {activeTab === 'teachers' && !selectedTeacher && (
         <div className="card">
           <div className="section-header">
-            <h3>{t('language') === 'zh' ? '主辦人管理' : 'Host Management'}</h3>
+            <h3>{t('host_management')}</h3>
             <button
               onClick={() => setShowAddTeacherForm(!showAddTeacherForm)}
               className="btn btn-primary"
@@ -2768,7 +2758,7 @@ function AdminDashboard() {
           {showAddTeacherForm && (
             <form onSubmit={handleAddTeacher} className="add-form">
               <div className="form-group">
-                <label>{t('language') === 'zh' ? '姓名 *' : 'Name *'}</label>
+                <label>{t('name_')}</label>
                 <input
                   type="text"
                   value={newTeacher.name}
@@ -2778,7 +2768,7 @@ function AdminDashboard() {
               </div>
 
               <div className="form-group">
-                <label>{t('language') === 'zh' ? '簡介' : 'Bio'}</label>
+                <label>{t('bio')}</label>
                 <textarea
                   value={newTeacher.bio}
                   onChange={(e) => setNewTeacher({ ...newTeacher, bio: e.target.value })}
@@ -2788,28 +2778,28 @@ function AdminDashboard() {
 
               <div className="form-row">
                 <div className="form-group">
-                  <label>{t('language') === 'zh' ? '專長' : 'Specialties'}</label>
+                  <label>{t('specialties')}</label>
                   <input
                     type="text"
                     value={newTeacher.specialties}
                     onChange={(e) => setNewTeacher({ ...newTeacher, specialties: e.target.value })}
-                    placeholder={t('language') === 'zh' ? '例如：鋼琴、聲樂' : 'e.g., Piano, Vocal'}
+                    placeholder={t('eg_piano_vocal')}
                   />
                 </div>
                 <div className="form-group">
-                  <label>{t('language') === 'zh' ? '學歷' : 'Education'}</label>
+                  <label>{t('education')}</label>
                   <input
                     type="text"
                     value={newTeacher.education}
                     onChange={(e) => setNewTeacher({ ...newTeacher, education: e.target.value })}
-                    placeholder={t('language') === 'zh' ? '例如：台灣大學音樂系' : 'e.g., NTU Music Dept.'}
+                    placeholder={t('eg_ntu_music_dept')}
                   />
                 </div>
               </div>
 
               <div className="form-row">
                 <div className="form-group">
-                  <label>{t('language') === 'zh' ? '電話' : 'Phone'}</label>
+                  <label>{t('phone')}</label>
                   <input
                     type="tel"
                     value={newTeacher.phone}
@@ -2825,7 +2815,7 @@ function AdminDashboard() {
                   />
                 </div>
               </div>              <div className="form-group">
-                <label>{t('language') === 'zh' ? '個人照片' : 'Profile Picture'}</label>
+                <label>{t('profile_picture')}</label>
                 <input
                   type="file"
                   accept="image/*"
@@ -2839,14 +2829,12 @@ function AdminDashboard() {
                   }}
                 />
                 <small style={{ color: '#666', display: 'block', marginTop: '5px' }}>
-                  {t('language') === 'zh'
-                    ? '上傳圖片（最大 2MB）'
-                    : 'Upload image (max 2MB)'}
+                  {t('upload_image_max_2mb')}
                 </small>
                 {newTeacher.photo && (
                   <div style={{ marginTop: '15px' }}>
                     <p style={{ fontWeight: 'bold', marginBottom: '10px' }}>
-                      {t('language') === 'zh' ? '預覽：' : 'Preview:'}
+                      {t('preview')}
                     </p>
                     <img
                       src={newTeacher.photo}
@@ -2865,24 +2853,24 @@ function AdminDashboard() {
                       onClick={() => setNewTeacher({ ...newTeacher, photo: '' })}
                       style={{ marginTop: '10px', display: 'block' }}
                     >
-                      {t('language') === 'zh' ? '移除圖片' : 'Remove Image'}
+                      {t('remove_image')}
                     </button>
                   </div>
                 )}
               </div>
 
               <button type="submit" className="btn btn-primary">
-                {t('language') === 'zh' ? '添加主辦人' : 'Add Host'}
+                {t('add_host')}
               </button>
             </form>
           )}          <div className="table-container" style={{ marginTop: '30px' }}>
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>{t('language') === 'zh' ? '姓名' : 'Name'}</th>
-                  <th>{t('language') === 'zh' ? '專長' : 'Specialties'}</th>
-                  <th>{t('language') === 'zh' ? '學歷' : 'Education'}</th>
-                  <th>{t('language') === 'zh' ? '操作' : 'Actions'}</th>
+                  <th>{t('name')}</th>
+                  <th>{t('specialties')}</th>
+                  <th>{t('education')}</th>
+                  <th>{t('actions')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -2896,7 +2884,7 @@ function AdminDashboard() {
                         className="btn btn-small btn-primary"
                         onClick={() => setSelectedTeacher(teacher)}
                       >
-                        {t('language') === 'zh' ? '查看' : 'View'}
+                        {t('view')}
                       </button>
                     </td>
                   </tr>
@@ -2914,15 +2902,15 @@ function AdminDashboard() {
               className="btn btn-secondary"
               onClick={() => setSelectedTeacher(null)}
             >
-              ← {t('language') === 'zh' ? '返回列表' : 'Back to List'}
+              ← {t('back_to_list')}
             </button>
-            <h3>{t('language') === 'zh' ? '主辦人詳情' : 'Host Details'}</h3>
+            <h3>{t('host_details')}</h3>
             <button
               className="btn btn-danger"
               onClick={() => handleDeleteTeacher(selectedTeacher._id)}
               style={{ marginLeft: 'auto' }}
             >
-              {t('language') === 'zh' ? '刪除' : 'Delete'}
+              {t('delete_')}
             </button>
           </div>
 
@@ -2944,30 +2932,30 @@ function AdminDashboard() {
 
           <div className="member-detail-grid">
             <div className="detail-section">
-              <h4>{t('language') === 'zh' ? '基本資料' : 'Basic Information'}</h4>
+              <h4>{t('basic_information')}</h4>
               <div className="detail-row">
-                <strong>{t('language') === 'zh' ? '姓名' : 'Name'}:</strong>
+                <strong>{t('name')}:</strong>
                 <span>{selectedTeacher.name}</span>
               </div>
               <div className="detail-row">
-                <strong>{t('language') === 'zh' ? '專長' : 'Specialties'}:</strong>
+                <strong>{t('specialties')}:</strong>
                 <span>{selectedTeacher.specialties || 'N/A'}</span>
               </div>
               <div className="detail-row">
-                <strong>{t('language') === 'zh' ? '學歷' : 'Education'}:</strong>
+                <strong>{t('education')}:</strong>
                 <span>{selectedTeacher.education || 'N/A'}</span>
               </div>
               <div className="detail-row">
-                <strong>{t('language') === 'zh' ? '簡介' : 'Bio'}:</strong>
+                <strong>{t('bio')}:</strong>
                 <span>{selectedTeacher.bio || 'N/A'}</span>
               </div>
             </div>
 
 
             <div className="detail-section">
-              <h4>{t('language') === 'zh' ? '聯絡資料' : 'Contact Information'}</h4>
+              <h4>{t('contact_information')}</h4>
               <div className="detail-row">
-                <strong>{t('language') === 'zh' ? '電話' : 'Phone'}:</strong>
+                <strong>{t('phone')}:</strong>
                 <span>{selectedTeacher.phone || 'N/A'}</span>
               </div>
               <div className="detail-row">
@@ -2982,17 +2970,15 @@ function AdminDashboard() {
       {activeTab === 'coupons' && (
         <div className="card">
           <div className="section-header">
-            <h3>{t('language') === 'zh' ? '優惠券管理' : 'Coupon Management'}</h3>
+            <h3>{t('coupon_management')}</h3>
           </div>
 
           <div style={{ marginBottom: '40px' }}>
             <h4 style={{ marginBottom: '20px', color: '#667eea' }}>
-              {t('language') === 'zh' ? '優惠券資訊模板' : 'Coupon Information Profiles'}
+              {t('coupon_information_profiles')}
             </h4>
             <p style={{ color: '#666', marginBottom: '20px', fontSize: '14px' }}>
-              {t('language') === 'zh'
-                ? '創建優惠券模板，可在「販售優惠券」和「會員管理」中使用。體驗券將使用此處上傳的圖片，不再自動使用課程橫幅。'
-                : 'Create coupon templates to use in "Coupons For Sale" and "Member Management". Trial coupons will use the image uploaded here instead of the class banner.'}
+              {t('create_coupon_templates_to_use_in_coupons_for_sale_and_member_management')}
             </p>
 
             <button
@@ -3001,34 +2987,34 @@ function AdminDashboard() {
               style={{ marginBottom: '20px' }}
             >
               {showAddProfileForm
-                ? (t('language') === 'zh' ? '取消' : 'Cancel')
-                : (t('language') === 'zh' ? '+ 新增優惠券模板' : '+ Add Coupon Profile')}
+                ? (t('cancel'))
+                : (t('add_coupon_profile'))}
             </button>
 
             {showAddProfileForm && (
               <div style={{ padding: '20px', background: '#f8f9ff', borderRadius: '8px', marginBottom: '20px', border: '2px solid #667eea' }}>
                 <h5 style={{ marginBottom: '15px', color: '#667eea' }}>
-                  {t('language') === 'zh' ? '創建優惠券模板' : 'Create Coupon Profile'}
+                  {t('create_coupon_profile')}
                 </h5>
 
                 <div style={{ marginBottom: '15px' }}>
                   <label style={{ display: 'block', marginBottom: '5px', fontWeight: '600' }}>
-                    {t('language') === 'zh' ? '優惠券類型 *' : 'Coupon Type *'}
+                    {t('coupon_type')}
                   </label>
                   <select
                     value={newProfile.type}
                     onChange={(e) => setNewProfile({...newProfile, type: e.target.value, classInfoId: '', discountPercent: ''})}
                     style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ccc' }}
                   >
-                    <option value="trial">{t('language') === 'zh' ? '體驗券' : 'Trial Coupon'}</option>
-                    <option value="discount">{t('language') === 'zh' ? '折扣券' : 'Discount Coupon'}</option>
+                    <option value="trial">{t('trial_coupon')}</option>
+                    <option value="discount">{t('discount_coupon')}</option>
                   </select>
                 </div>
 
                 {newProfile.type === 'trial' && (
                   <div style={{ marginBottom: '15px' }}>
                     <label style={{ display: 'block', marginBottom: '5px', fontWeight: '600' }}>
-                      {t('language') === 'zh' ? '選擇課程 *' : 'Select Class *'}
+                      {t('select_class')}
                     </label>
                     <select
                       value={newProfile.classInfoId}
@@ -3037,13 +3023,13 @@ function AdminDashboard() {
                         setNewProfile({
                           ...newProfile,
                           classInfoId: e.target.value,
-                          name: classInfo ? `${classInfo.name} ${t('language') === 'zh' ? '體驗券' : 'Trial Coupon'}` : '',
-                          description: classInfo ? `${t('language') === 'zh' ? '此券可用於體驗' : 'This coupon can be used for a trial'} ${classInfo.name} ${t('language') === 'zh' ? '課程' : 'class'}` : ''
+                          name: classInfo ? `${classInfo.name} ${t('trial_coupon')}` : '',
+                          description: classInfo ? `${t('this_coupon_can_be_used_for_a_trial')} ${classInfo.name} ${t('class')}` : ''
                         });
                       }}
                       style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ccc' }}
                     >
-                      <option value="">{t('language') === 'zh' ? '請選擇課程' : 'Please select a class'}</option>
+                      <option value="">{t('please_select_a_class')}</option>
                       {classInfos.map(classInfo => (
                         <option key={classInfo._id} value={classInfo._id}>{classInfo.name}</option>
                       ))}
@@ -3054,7 +3040,7 @@ function AdminDashboard() {
                 {newProfile.type === 'discount' && (
                   <div style={{ marginBottom: '15px' }}>
                     <label style={{ display: 'block', marginBottom: '5px', fontWeight: '600' }}>
-                      {t('language') === 'zh' ? '折扣百分比 (%) *' : 'Discount Percentage (%) *'}
+                      {t('discount_percentage')}
                     </label>
                     <input
                       type="number"
@@ -3064,8 +3050,8 @@ function AdminDashboard() {
                       onChange={(e) => setNewProfile({
                         ...newProfile,
                         discountPercent: e.target.value,
-                        name: `${t('language') === 'zh' ? '折扣券' : 'Discount Coupon'} ${e.target.value}%`,
-                        description: `${t('language') === 'zh' ? '此券可用於所有課程，享' : 'This coupon can be used for all classes with'} ${e.target.value}% ${t('language') === 'zh' ? '折扣' : 'discount'}`
+                        name: `${t('discount_coupon')} ${e.target.value}%`,
+                        description: `${t('this_coupon_can_be_used_for_all_classes_with')} ${e.target.value}% ${t('discount')}`
                       })}
                       style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ccc' }}
                     />
@@ -3074,7 +3060,7 @@ function AdminDashboard() {
 
                 <div style={{ marginBottom: '15px' }}>
                   <label style={{ display: 'block', marginBottom: '5px', fontWeight: '600' }}>
-                    {t('language') === 'zh' ? '優惠券名稱 *' : 'Coupon Name *'}
+                    {t('coupon_name')}
                   </label>
                   <input
                     type="text"
@@ -3086,7 +3072,7 @@ function AdminDashboard() {
 
                 <div style={{ marginBottom: '15px' }}>
                   <label style={{ display: 'block', marginBottom: '5px', fontWeight: '600' }}>
-                    {t('language') === 'zh' ? '優惠券描述' : 'Coupon Description'}
+                    {t('coupon_description')}
                   </label>
                   <textarea
                     value={newProfile.description}
@@ -3097,12 +3083,10 @@ function AdminDashboard() {
 
                 <div style={{ marginBottom: '15px' }}>
                   <label style={{ display: 'block', marginBottom: '5px', fontWeight: '600' }}>
-                    {t('language') === 'zh' ? '優惠券圖片 *' : 'Coupon Image *'}
+                    {t('coupon_image')}
                   </label>
                   <p style={{ fontSize: '12px', color: '#999', marginBottom: '10px' }}>
-                    {t('language') === 'zh'
-                      ? '此圖片將用於所有使用此模板的優惠券（包括體驗券和折扣券）'
-                      : 'This image will be used for all coupons created from this profile (including trial and discount coupons)'}
+                    {t('this_image_will_be_used_for_all_coupons_created_fr')}
                   </p>
                   <input
                     type="file"
@@ -3130,12 +3114,12 @@ function AdminDashboard() {
                   <button
                     onClick={async () => {
                       if (!newProfile.name) {
-                        setMessage({ type: 'error', text: t('language') === 'zh' ? '請填寫必填欄位' : 'Please fill required fields' });
+                        setMessage({ type: 'error', text: t('please_fill_required_fields') });
                         return;
                       }
                       try {
                         await axios.post('/api/coupons?resource=profiles', newProfile);
-                        setMessage({ type: 'success', text: t('language') === 'zh' ? '優惠券模板創建成功！' : 'Coupon profile created!' });
+                        setMessage({ type: 'success', text: t('coupon_profile_created') });
                         setShowAddProfileForm(false);
                         setNewProfile({ type: 'trial', classInfoId: '', discountPercent: '', name: '', description: '', image: '' });
                         fetchData();
@@ -3145,7 +3129,7 @@ function AdminDashboard() {
                     }}
                     className="btn btn-primary"
                   >
-                    {t('language') === 'zh' ? '創建模板' : 'Create Profile'}
+                    {t('create_profile')}
                   </button>
                   <button
                     onClick={() => {
@@ -3154,7 +3138,7 @@ function AdminDashboard() {
                     }}
                     className="btn"
                   >
-                    {t('language') === 'zh' ? '取消' : 'Cancel'}
+                    {t('cancel')}
                   </button>
                 </div>
               </div>
@@ -3162,7 +3146,7 @@ function AdminDashboard() {
 
             {couponProfiles.length === 0 ? (
               <p style={{ textAlign: 'center', color: '#999', padding: '40px' }}>
-                {t('language') === 'zh' ? '尚無優惠券模板' : 'No coupon profiles yet'}
+                {t('no_coupon_profiles_yet')}
               </p>
             ) : (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' }}>
@@ -3175,16 +3159,16 @@ function AdminDashboard() {
                     <p style={{ color: '#666', fontSize: '13px', marginBottom: '10px' }}>{profile.description || 'No description'}</p>
                     <p style={{ fontSize: '12px', color: '#999', marginBottom: '10px' }}>
                       {profile.type === 'trial'
-                        ? `${t('language') === 'zh' ? '體驗券' : 'Trial'}: ${profile.classInfoId?.name || 'N/A'}`
-                        : `${t('language') === 'zh' ? '折扣券' : 'Discount'}: ${profile.discountPercent}%`}
+                        ? `${t('trial')}: ${profile.classInfoId?.name || 'N/A'}`
+                        : `${t('discount')}: ${profile.discountPercent}%`}
                     </p>
                     <button
                       onClick={async () => {
-                        if (window.confirm(t('language') === 'zh' ? '確定要刪除此模板嗎？' : 'Delete this profile?')) {
+                        if (window.confirm(t('delete_this_profile'))) {
                           setDeletingProfileId(profile._id);
                           try {
                             await axios.delete(`/api/coupons?resource=profiles&profileId=${profile._id}`);
-                            setMessage({ type: 'success', text: t('language') === 'zh' ? '模板刪除成功' : 'Profile deleted' });
+                            setMessage({ type: 'success', text: t('profile_deleted') });
                             fetchData();
                           } catch (error) {
                             setMessage({ type: 'error', text: error.response?.data?.message || t('error') });
@@ -3198,7 +3182,7 @@ function AdminDashboard() {
                       style={{ width: '100%', fontSize: '13px', padding: '8px' }}
                     >
                       {deletingProfileId === profile._id
-                        ? (t('language') === 'zh' ? '⏳ 刪除中...' : '⏳ Deleting...')
+                        ? (t('deleting'))
                         : `🗑️ ${t('language') === 'zh' ? '刪除模板' : 'Delete'}`}
                     </button>
                   </div>
@@ -3211,12 +3195,10 @@ function AdminDashboard() {
 
           <div>
             <h4 style={{ marginBottom: '20px', color: '#667eea' }}>
-              {t('language') === 'zh' ? '販售優惠券' : 'Coupons For Sale'}
+              {t('coupons_for_sale')}
             </h4>
             <p style={{ color: '#666', marginBottom: '20px', fontSize: '14px' }}>
-              {t('language') === 'zh'
-                ? '將優惠券模板上架販售，會員可在「我的優惠券」頁面購買'
-                : 'List coupon profiles for sale - members can purchase them in the "My Coupons" section'}
+              {t('list_coupon_profiles_for_sale_members_can_purchase_in_my_coupons_section')}
             </p>
 
             <button
@@ -3225,26 +3207,26 @@ function AdminDashboard() {
               style={{ marginBottom: '20px' }}
             >
               {showAddForSaleForm
-                ? (t('language') === 'zh' ? '取消' : 'Cancel')
-                : (t('language') === 'zh' ? '+ 上架優惠券' : '+ List Coupon For Sale')}
+                ? (t('cancel'))
+                : (t('_list_coupon_for_sale'))}
             </button>
 
             {showAddForSaleForm && (
               <div style={{ padding: '20px', background: '#f8f9ff', borderRadius: '8px', marginBottom: '20px', border: '2px solid #667eea' }}>
                 <h5 style={{ marginBottom: '15px', color: '#667eea' }}>
-                  {t('language') === 'zh' ? '上架販售優惠券' : 'List Coupon For Sale'}
+                  {t('list_coupon_for_sale')}
                 </h5>
 
                 <div style={{ marginBottom: '15px' }}>
                   <label style={{ display: 'block', marginBottom: '5px', fontWeight: '600' }}>
-                    {t('language') === 'zh' ? '選擇優惠券模板 *' : 'Select Coupon Profile *'}
+                    {t('select_coupon_profile')}
                   </label>
                   <select
                     value={newForSale.couponProfileId}
                     onChange={(e) => setNewForSale({...newForSale, couponProfileId: e.target.value})}
                     style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ccc' }}
                   >
-                    <option value="">{t('language') === 'zh' ? '請選擇模板' : 'Please select a profile'}</option>
+                    <option value="">{t('please_select_a_profile')}</option>
                     {couponProfiles.map(profile => (
                       <option key={profile._id} value={profile._id}>
                         {profile.name} - {profile.type === 'trial' ? profile.classInfoId?.name : `${profile.discountPercent}%`}
@@ -3255,7 +3237,7 @@ function AdminDashboard() {
 
                 <div style={{ marginBottom: '15px' }}>
                   <label style={{ display: 'block', marginBottom: '5px', fontWeight: '600' }}>
-                    {t('language') === 'zh' ? '價格 (NTD) *' : 'Price (NTD) *'}
+                    {t('price_ntd')}
                   </label>
                   <input
                     type="number"
@@ -3270,7 +3252,7 @@ function AdminDashboard() {
 
                 <div style={{ marginBottom: '15px' }}>
                   <label style={{ display: 'block', marginBottom: '5px', fontWeight: '600' }}>
-                    {t('language') === 'zh' ? '庫存數量' : 'Stock Quantity'}
+                    {t('stock_quantity')}
                   </label>
                   <input
                     type="number"
@@ -3279,7 +3261,7 @@ function AdminDashboard() {
                     style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ccc' }}
                   />
                   <p style={{ fontSize: '12px', color: '#999', marginTop: '5px' }}>
-                    {t('language') === 'zh' ? '設為 -1 表示無限庫存' : 'Set to -1 for unlimited stock'}
+                    {t('set_to_1_for_unlimited_stock')}
                   </p>
                 </div>
 
@@ -3287,12 +3269,12 @@ function AdminDashboard() {
                   <button
                     onClick={async () => {
                       if (!newForSale.couponProfileId || !newForSale.price) {
-                        setMessage({ type: 'error', text: t('language') === 'zh' ? '請填寫必填欄位' : 'Please fill required fields' });
+                        setMessage({ type: 'error', text: t('please_fill_required_fields') });
                         return;
                       }
                       try {
                         await axios.post('/api/coupons?resource=for-sale', newForSale);
-                        setMessage({ type: 'success', text: t('language') === 'zh' ? '優惠券上架成功！' : 'Coupon listed!' });
+                        setMessage({ type: 'success', text: t('coupon_listed') });
                         setShowAddForSaleForm(false);
                         setNewForSale({ couponProfileId: '', price: '', stock: -1 });
                         fetchData();
@@ -3302,7 +3284,7 @@ function AdminDashboard() {
                     }}
                     className="btn btn-primary"
                   >
-                    {t('language') === 'zh' ? '上架販售' : 'List For Sale'}
+                    {t('list_for_sale')}
                   </button>
                   <button
                     onClick={() => {
@@ -3311,7 +3293,7 @@ function AdminDashboard() {
                     }}
                     className="btn"
                   >
-                    {t('language') === 'zh' ? '取消' : 'Cancel'}
+                    {t('cancel')}
                   </button>
                 </div>
               </div>
@@ -3319,7 +3301,7 @@ function AdminDashboard() {
 
             {couponsForSale.length === 0 ? (
               <p style={{ textAlign: 'center', color: '#999', padding: '40px' }}>
-                {t('language') === 'zh' ? '尚無販售中的優惠券' : 'No coupons for sale yet'}
+                {t('no_coupons_for_sale_yet')}
               </p>
             ) : (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' }}>
@@ -3335,18 +3317,18 @@ function AdminDashboard() {
                         NT$ {coupon.price}
                       </p>
                       <p style={{ fontSize: '12px', color: '#999' }}>
-                        {t('language') === 'zh' ? '庫存' : 'Stock'}: {coupon.stock === -1 ? '∞' : coupon.stock}
+                        {t('stock')}: {coupon.stock === -1 ? '∞' : coupon.stock}
                       </p>
                     </div>
                     <p style={{ fontSize: '13px', fontWeight: '600', marginBottom: '10px', color: coupon.active ? '#28a745' : '#dc3545' }}>
-                      {coupon.active ? `✓ ${t('language') === 'zh' ? '上架中' : 'Active'}` : `✗ ${t('language') === 'zh' ? '已下架' : 'Inactive'}`}
+                      {coupon.active ? `✓ ${t('active')}` : `✗ ${t('inactive')}`}
                     </p>
                     <div style={{ display: 'flex', gap: '5px' }}>
                       <button
                         onClick={async () => {
                           try {
                             await axios.put(`/api/coupons-for-sale?couponId=${coupon._id}`, { active: !coupon.active });
-                            setMessage({ type: 'success', text: t('language') === 'zh' ? '狀態更新成功' : 'Status updated' });
+                            setMessage({ type: 'success', text: t('status_updated') });
                             fetchData();
                           } catch (error) {
                             setMessage({ type: 'error', text: error.response?.data?.message || t('error') });
@@ -3355,15 +3337,15 @@ function AdminDashboard() {
                         className="btn"
                         style={{ flex: 1, fontSize: '13px', padding: '8px' }}
                       >
-                        {coupon.active ? (t('language') === 'zh' ? '下架' : 'Deactivate') : (t('language') === 'zh' ? '上架' : 'Activate')}
+                        {coupon.active ? (t('deactivate')) : (t('activate'))}
                       </button>
                       <button
                         onClick={async () => {
-                          if (window.confirm(t('language') === 'zh' ? '確定要刪除此販售優惠券嗎？' : 'Delete this listing?')) {
+                          if (window.confirm(t('delete_this_listing'))) {
                             setDeletingForSaleId(coupon._id);
                             try {
                               await axios.delete(`/api/coupons?resource=for-sale&couponId=${coupon._id}`);
-                              setMessage({ type: 'success', text: t('language') === 'zh' ? '販售優惠券刪除成功' : 'Listing deleted' });
+                              setMessage({ type: 'success', text: t('listing_deleted') });
                               fetchData();
                             } catch (error) {
                               setMessage({ type: 'error', text: error.response?.data?.message || t('error') });
@@ -3377,8 +3359,8 @@ function AdminDashboard() {
                         style={{ flex: 1, fontSize: '13px', padding: '8px' }}
                       >
                         {deletingForSaleId === coupon._id
-                          ? (t('language') === 'zh' ? '⏳ 刪除中...' : '⏳ Deleting...')
-                          : `🗑️ ${t('language') === 'zh' ? '刪除' : 'Delete'}`}
+                          ? (t('deleting'))
+                          : `🗑️ ${t('delete_')}`}
                       </button>
                     </div>
                   </div>
@@ -3392,32 +3374,32 @@ function AdminDashboard() {
       {activeTab === 'association' && !selectedMeeting && (
         <div className="card">
           <div className="section-header">
-            <h3>{t('language') === 'zh' ? '協會會議管理' : 'Association Meeting Management'}</h3>
+            <h3>{t('association_meeting_management')}</h3>
             <button className="btn btn-primary" onClick={() => setShowAddMeetingForm(true)}>
-              {t('language') === 'zh' ? '+ 建立會議' : '+ Create Meeting'}
+              {t('create_meeting')}
             </button>
           </div>
 
           <div className="form-group" style={{ marginTop: '20px', maxWidth: '300px' }}>
-            <label>{t('language') === 'zh' ? '篩選狀態' : 'Filter by Status'}</label>
+            <label>{t('filter_by_status')}</label>
             <select
               value={meetingStatusFilter}
               onChange={(e) => setMeetingStatusFilter(e.target.value)}
               style={{ width: '100%' }}
             >
-              <option value="all">{t('language') === 'zh' ? '全部' : 'All'}</option>
-              <option value="upcoming">{t('language') === 'zh' ? '即將到來' : 'Upcoming'}</option>
-              <option value="completed">{t('language') === 'zh' ? '已完成' : 'Completed'}</option>
-              <option value="cancelled">{t('language') === 'zh' ? '已取消' : 'Cancelled'}</option>
+              <option value="all">{t('all')}</option>
+              <option value="upcoming">{t('upcoming')}</option>
+              <option value="completed">{t('completed')}</option>
+              <option value="cancelled">{t('cancelled')}</option>
             </select>
           </div>
 
           {showAddMeetingForm && (
             <form onSubmit={handleAddMeeting} className="form" style={{ marginTop: '20px', border: '2px solid #667eea', padding: '20px', borderRadius: '8px' }}>
-              <h4>{t('language') === 'zh' ? '建立新會議' : 'Create New Meeting'}</h4>
+              <h4>{t('create_new_meeting')}</h4>
 
               <div className="form-group">
-                <label>{t('language') === 'zh' ? '議程' : 'Agenda'} *</label>
+                <label>{t('agenda')} *</label>
                 <input
                   type="text"
                   value={newMeeting.agenda}
@@ -3427,7 +3409,7 @@ function AdminDashboard() {
               </div>
 
               <div className="form-group">
-                <label>{t('language') === 'zh' ? '日期' : 'Date'} *</label>
+                <label>{t('date')} *</label>
                 <input
                   type="date"
                   value={newMeeting.date}
@@ -3437,7 +3419,7 @@ function AdminDashboard() {
               </div>
 
               <div className="form-group">
-                <label>{t('language') === 'zh' ? '時間' : 'Time'} *</label>
+                <label>{t('time')} *</label>
                 <input
                   type="time"
                   value={newMeeting.time}
@@ -3447,14 +3429,14 @@ function AdminDashboard() {
               </div>
 
               <div className="form-group">
-                <label>{t('language') === 'zh' ? '會議類型' : 'Meeting Type'} *</label>
+                <label>{t('meeting_type')} *</label>
                 <select
                   value={newMeeting.meetingType}
                   onChange={(e) => setNewMeeting({ ...newMeeting, meetingType: e.target.value })}
                   required
                 >
-                  <option value="in-person">{t('language') === 'zh' ? '實體會議' : 'In Person'}</option>
-                  <option value="zoom">{t('language') === 'zh' ? '線上會議 (Zoom)' : 'Online (Zoom)'}</option>
+                  <option value="in-person">{t('in_person')}</option>
+                  <option value="zoom">{t('online_zoom')}</option>
                 </select>
               </div>
 
@@ -3465,12 +3447,12 @@ function AdminDashboard() {
                     type="text"
                     value={newMeeting.location}
                     onChange={(e) => setNewMeeting({ ...newMeeting, location: e.target.value })}
-                    placeholder={t('language') === 'zh' ? '會議地點' : 'Meeting location'}
+                    placeholder={t('meeting_location')}
                   />
                 </div>
               ) : (
                 <div className="form-group">
-                  <label>{t('language') === 'zh' ? 'Zoom 連結' : 'Zoom URL'}</label>
+                  <label>{t('zoom_url')}</label>
                   <input
                     type="url"
                     value={newMeeting.zoomUrl}
@@ -3481,14 +3463,14 @@ function AdminDashboard() {
               )}
 
               <div className="form-group">
-                <label>{t('language') === 'zh' ? '會員類型' : 'Member Type'} *</label>
+                <label>{t('member_type')} *</label>
                 <select
                   value={newMeeting.memberType}
                   onChange={(e) => setNewMeeting({ ...newMeeting, memberType: e.target.value })}
                   required
                 >
-                  <option value="協會會員">{t('language') === 'zh' ? '協會會員' : 'Association Members'}</option>
-                  <option value="董事會">{t('language') === 'zh' ? '董事會' : 'Board of Directors'}</option>
+                  <option value="協會會員">{t('association_members')}</option>
+                  <option value="董事會">{t('board_of_directors')}</option>
                 </select>
               </div>
 
@@ -3501,7 +3483,7 @@ function AdminDashboard() {
                   style={{ width: 'auto' }}
                 />
                 <label htmlFor="mandatory" style={{ margin: 0 }}>
-                  {t('language') === 'zh' ? '強制參加（會員必須出席或提交請假表）' : 'Mandatory (members must attend or submit absence form)'}
+                  {t('mandatory_members_must_attend_or_submit_absence_fo')}
                 </label>
               </div>
 
@@ -3514,14 +3496,14 @@ function AdminDashboard() {
                   style={{ width: 'auto' }}
                 />
                 <label htmlFor="sendLineAnnouncement" style={{ margin: 0 }}>
-                  {t('language') === 'zh' ? '發送 LINE 公告給所有協會會員' : 'Send LINE announcement to all association members'}
+                  {t('send_line_announcement_to_all_association_members')}
                 </label>
               </div>
 
               {newMeeting.meetingType === 'in-person' && newMeeting.location && (
                 <div style={{ marginTop: '10px', marginBottom: '10px' }}>
                   <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-                    {t('language') === 'zh' ? '地圖預覽' : 'Map Preview'}
+                    {t('map_preview')}
                   </label>
                   <iframe
                     src={`https://maps.google.com/maps?q=${encodeURIComponent(newMeeting.location)}&output=embed`}
@@ -3538,7 +3520,7 @@ function AdminDashboard() {
 
               <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
                 <button type="submit" className="btn btn-primary" disabled={loading}>
-                  {loading ? (t('language') === 'zh' ? '建立中...' : 'Creating...') : (t('language') === 'zh' ? '建立' : 'Create')}
+                  {loading ? (t('creating')) : (t('create'))}
                 </button>
                 <button type="button" className="btn btn-secondary" onClick={() => {
                   setShowAddMeetingForm(false);
@@ -3554,13 +3536,13 @@ function AdminDashboard() {
             <table>
               <thead>
                 <tr>
-                  <th>{t('language') === 'zh' ? '議程' : 'Agenda'}</th>
-                  <th>{t('language') === 'zh' ? '日期' : 'Date'}</th>
-                  <th>{t('language') === 'zh' ? '時間' : 'Time'}</th>
-                  <th>{t('language') === 'zh' ? '類型' : 'Type'}</th>
-                  <th>{t('language') === 'zh' ? '報名人數' : 'Registered'}</th>
-                  <th>{t('language') === 'zh' ? '狀態' : 'Status'}</th>
-                  <th>{t('language') === 'zh' ? '操作' : 'Actions'}</th>
+                  <th>{t('agenda')}</th>
+                  <th>{t('date')}</th>
+                  <th>{t('time')}</th>
+                  <th>{t('type')}</th>
+                  <th>{t('registered')}</th>
+                  <th>{t('status_')}</th>
+                  <th>{t('actions')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -3582,14 +3564,14 @@ function AdminDashboard() {
                         fontSize: '12px',
                         fontWeight: 'bold'
                       }}>
-                        {meeting.status === 'upcoming' ? (t('language') === 'zh' ? '即將舉行' : 'Upcoming') :
-                         meeting.status === 'completed' ? (t('language') === 'zh' ? '已完成' : 'Completed') :
-                         (t('language') === 'zh' ? '已取消' : 'Cancelled')}
+                        {meeting.status === 'upcoming' ? (t('upcoming')) :
+                         meeting.status === 'completed' ? (t('completed')) :
+                         (t('cancelled'))}
                       </span>
                     </td>
                     <td>
                       <button className="btn btn-secondary" onClick={() => setSelectedMeeting(meeting)}>
-                        {t('language') === 'zh' ? '查看詳情' : 'View Details'}
+                        {t('view_details')}
                       </button>
                     </td>
                   </tr>
@@ -3598,7 +3580,7 @@ function AdminDashboard() {
             </table>
             {associationMeetings.length === 0 && (
               <p style={{ textAlign: 'center', padding: '20px', color: '#666' }}>
-                {t('language') === 'zh' ? '尚無會議' : 'No meetings yet'}
+                {t('no_meetings_yet')}
               </p>
             )}
           </div>
@@ -3608,7 +3590,7 @@ function AdminDashboard() {
       {activeTab === 'association' && selectedMeeting && !editingMeeting && (
         <div className="card">
           <div className="detail-header">
-            <h3>{t('language') === 'zh' ? '會議詳情' : 'Meeting Details'}</h3>
+            <h3>{t('meeting_details')}</h3>
             <div style={{ display: 'flex', gap: '10px' }}>
               <button className="btn btn-primary" onClick={() => {
                 setEditMeetingData({
@@ -3617,29 +3599,29 @@ function AdminDashboard() {
                 });
                 setEditingMeeting(true);
               }}>
-                ✏️ {t('language') === 'zh' ? '編輯' : 'Edit'}
+                ✏️ {t('edit')}
               </button>
               <button className="btn btn-secondary" style={{ background: '#dc3545' }} onClick={() => handleDeleteMeeting(selectedMeeting._id)}>
-                🗑️ {t('language') === 'zh' ? '刪除' : 'Delete'}
+                🗑️ {t('delete_')}
               </button>
               <button className="btn btn-secondary" onClick={() => setSelectedMeeting(null)}>
-                {t('language') === 'zh' ? '← 返回列表' : '← Back to List'}
+                {t('back_to_list')}
               </button>
             </div>
           </div>
 
           <div className="detail-section">
-            <h4>{t('language') === 'zh' ? '基本資訊' : 'Basic Information'}</h4>
+            <h4>{t('basic_information')}</h4>
             <div className="detail-row">
-              <strong>{t('language') === 'zh' ? '議程：' : 'Agenda:'}</strong>
+              <strong>{t('agenda')}</strong>
               <span>{selectedMeeting.agenda}</span>
             </div>
             <div className="detail-row">
-              <strong>{t('language') === 'zh' ? '日期：' : 'Date:'}</strong>
+              <strong>{t('date')}</strong>
               <span>{new Date(selectedMeeting.date).toLocaleDateString('zh-TW')}</span>
             </div>
             <div className="detail-row">
-              <strong>{t('language') === 'zh' ? '時間：' : 'Time:'}</strong>
+              <strong>{t('time')}</strong>
               <span>{selectedMeeting.time}</span>
             </div>
             {selectedMeeting.location && (
@@ -3649,26 +3631,26 @@ function AdminDashboard() {
               </div>
             )}
             <div className="detail-row">
-              <strong>{t('language') === 'zh' ? '會員類型：' : 'Member Type:'}</strong>
+              <strong>{t('member_type')}</strong>
               <span>{selectedMeeting.memberType}</span>
             </div>
             <div className="detail-row">
-              <strong>{t('language') === 'zh' ? '狀態：' : 'Status:'}</strong>
+              <strong>{t('status')}</strong>
               <select
                 value={selectedMeeting.status}
                 onChange={(e) => handleUpdateMeetingStatus(selectedMeeting._id, e.target.value)}
                 style={{ padding: '5px 10px', borderRadius: '4px' }}
               >
-                <option value="upcoming">{t('language') === 'zh' ? '即將舉行' : 'Upcoming'}</option>
-                <option value="completed">{t('language') === 'zh' ? '已完成' : 'Completed'}</option>
-                <option value="cancelled">{t('language') === 'zh' ? '已取消' : 'Cancelled'}</option>
+                <option value="upcoming">{t('upcoming')}</option>
+                <option value="completed">{t('completed')}</option>
+                <option value="cancelled">{t('cancelled')}</option>
               </select>
             </div>
           </div>
 
           {selectedMeeting.location && (
             <div style={{ marginTop: '20px', marginBottom: '20px' }}>
-              <h4>{t('language') === 'zh' ? '會議地點' : 'Meeting Location'}</h4>
+              <h4>{t('meeting_location')}</h4>
               <iframe
                 src={`https://maps.google.com/maps?q=${encodeURIComponent(selectedMeeting.location)}&output=embed`}
                 width="100%"
@@ -3683,16 +3665,16 @@ function AdminDashboard() {
           )}
 
           <div className="detail-section">
-            <h4>{t('language') === 'zh' ? '報名成員' : 'Registered Members'} ({selectedMeeting.participants.length})</h4>
+            <h4>{t('registered_members')} ({selectedMeeting.participants.length})</h4>
             {selectedMeeting.participants.length > 0 ? (
               <div className="table-container">
                 <table>
                   <thead>
                     <tr>
-                      <th>{t('language') === 'zh' ? '會員編號' : 'Member ID'}</th>
+                      <th>{t('member_id')}</th>
                       <th>{t('memberName')}</th>
-                      <th>{t('language') === 'zh' ? '報名時間' : 'Registration Time'}</th>
-                      <th>{t('language') === 'zh' ? '出席狀態' : 'Attendance'}</th>
+                      <th>{t('registration_time')}</th>
+                      <th>{t('attendance')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -3709,7 +3691,7 @@ function AdminDashboard() {
                             style={{ cursor: 'pointer' }}
                           />
                           <span style={{ marginLeft: '5px' }}>
-                            {participant.attended ? (t('language') === 'zh' ? '已出席' : 'Attended') : (t('language') === 'zh' ? '未出席' : 'Not attended')}
+                            {participant.attended ? (t('attended')) : (t('not_attended'))}
                           </span>
                         </td>
                       </tr>
@@ -3719,7 +3701,7 @@ function AdminDashboard() {
               </div>
             ) : (
               <p style={{ color: '#666', fontStyle: 'italic' }}>
-                {t('language') === 'zh' ? '尚無成員報名' : 'No members registered yet'}
+                {t('no_members_registered_yet')}
               </p>
             )}
           </div>
@@ -3728,7 +3710,7 @@ function AdminDashboard() {
           {selectedMeeting.mandatory && (
             <div className="detail-section">
               <h4>
-                {t('language') === 'zh' ? '請假申請' : 'Absence Requests'}
+                {t('absence_requests')}
                 {selectedMeeting.absences ? ` (${selectedMeeting.absences.length})` : ' (0)'}
               </h4>
               {selectedMeeting.absences && selectedMeeting.absences.length > 0 ? (
@@ -3736,12 +3718,12 @@ function AdminDashboard() {
                   <table>
                     <thead>
                       <tr>
-                        <th>{t('language') === 'zh' ? '會員編號' : 'Member ID'}</th>
+                        <th>{t('member_id')}</th>
                         <th>{t('memberName')}</th>
-                        <th>{t('language') === 'zh' ? '提交時間' : 'Submitted At'}</th>
-                        <th>{t('language') === 'zh' ? '請假表' : 'Form'}</th>
-                        <th>{t('language') === 'zh' ? '狀態' : 'Status'}</th>
-                        <th>{t('language') === 'zh' ? '操作' : 'Actions'}</th>
+                        <th>{t('submitted_at')}</th>
+                        <th>{t('form')}</th>
+                        <th>{t('status_')}</th>
+                        <th>{t('actions')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -3759,7 +3741,7 @@ function AdminDashboard() {
                                 className="btn btn-primary btn-small"
                                 style={{ padding: '5px 10px', fontSize: '12px' }}
                               >
-                                📄 {t('language') === 'zh' ? '查看表格' : 'View Form'}
+                                📄 {t('view_form')}
                               </a>
                             ) : absence.formImage ? (
                               <button
@@ -3770,11 +3752,11 @@ function AdminDashboard() {
                                 className="btn btn-primary btn-small"
                                 style={{ padding: '5px 10px', fontSize: '12px' }}
                               >
-                                📄 {t('language') === 'zh' ? '查看表格' : 'View Form'}
+                                📄 {t('view_form')}
                               </button>
                             ) : (
                               <span style={{ color: '#666', fontStyle: 'italic' }}>
-                                {t('language') === 'zh' ? '無表格' : 'No form'}
+                                {t('no_form')}
                               </span>
                             )}
                           </td>
@@ -3789,8 +3771,8 @@ function AdminDashboard() {
                               border: `1px solid ${absence.approved ? '#c3e6cb' : '#ffc107'}`
                             }}>
                               {absence.approved
-                                ? (t('language') === 'zh' ? '✓ 已核准' : '✓ Approved')
-                                : (t('language') === 'zh' ? '⏳ 待審核' : '⏳ Pending')
+                                ? (t('approved'))
+                                : (t('pending'))
                               }
                             </span>
                           </td>
@@ -3803,8 +3785,8 @@ function AdminDashboard() {
                                 disabled={approvingAbsence === absence._id}
                               >
                                 {approvingAbsence === absence._id
-                                  ? (t('language') === 'zh' ? '核准中...' : 'Approving...')
-                                  : (t('language') === 'zh' ? '核准' : 'Approve')
+                                  ? (t('approving'))
+                                  : (t('approve'))
                                 }
                               </button>
                             )}
@@ -3816,7 +3798,7 @@ function AdminDashboard() {
                 </div>
               ) : (
                 <p style={{ color: '#666', fontStyle: 'italic' }}>
-                  {t('language') === 'zh' ? '尚無請假申請' : 'No absence requests yet'}
+                  {t('no_absence_requests_yet')}
                 </p>
               )}
             </div>
@@ -3827,18 +3809,18 @@ function AdminDashboard() {
       {activeTab === 'association' && editingMeeting && editMeetingData && (
         <div className="card">
           <div className="detail-header">
-            <h3>{t('language') === 'zh' ? '編輯會議' : 'Edit Meeting'}</h3>
+            <h3>{t('edit_meeting')}</h3>
             <button className="btn btn-secondary" onClick={() => {
               setEditingMeeting(false);
               setEditMeetingData(null);
             }}>
-              {t('language') === 'zh' ? '取消' : 'Cancel'}
+              {t('cancel')}
             </button>
           </div>
 
           <form onSubmit={handleEditMeeting} className="form">
             <div className="form-group">
-              <label>{t('language') === 'zh' ? '議程' : 'Agenda'} *</label>
+              <label>{t('agenda')} *</label>
               <input
                 type="text"
                 value={editMeetingData.agenda}
@@ -3848,7 +3830,7 @@ function AdminDashboard() {
             </div>
 
             <div className="form-group">
-              <label>{t('language') === 'zh' ? '日期' : 'Date'} *</label>
+              <label>{t('date')} *</label>
               <input
                 type="date"
                 value={editMeetingData.date}
@@ -3858,7 +3840,7 @@ function AdminDashboard() {
             </div>
 
             <div className="form-group">
-              <label>{t('language') === 'zh' ? '時間' : 'Time'} *</label>
+              <label>{t('time')} *</label>
               <input
                 type="time"
                 value={editMeetingData.time}
@@ -3868,14 +3850,14 @@ function AdminDashboard() {
             </div>
 
             <div className="form-group">
-              <label>{t('language') === 'zh' ? '會議類型' : 'Meeting Type'} *</label>
+              <label>{t('meeting_type')} *</label>
               <select
                 value={editMeetingData.meetingType || 'in-person'}
                 onChange={(e) => setEditMeetingData({ ...editMeetingData, meetingType: e.target.value })}
                 required
               >
-                <option value="in-person">{t('language') === 'zh' ? '實體會議' : 'In Person'}</option>
-                <option value="zoom">{t('language') === 'zh' ? '線上會議 (Zoom)' : 'Online (Zoom)'}</option>
+                <option value="in-person">{t('in_person')}</option>
+                <option value="zoom">{t('online_zoom')}</option>
               </select>
             </div>
 
@@ -3886,12 +3868,12 @@ function AdminDashboard() {
                   type="text"
                   value={editMeetingData.location || ''}
                   onChange={(e) => setEditMeetingData({ ...editMeetingData, location: e.target.value })}
-                  placeholder={t('language') === 'zh' ? '會議地點' : 'Meeting location'}
+                  placeholder={t('meeting_location')}
                 />
               </div>
             ) : (
               <div className="form-group">
-                <label>{t('language') === 'zh' ? 'Zoom 連結' : 'Zoom URL'}</label>
+                <label>{t('zoom_url')}</label>
                 <input
                   type="url"
                   value={editMeetingData.zoomUrl || ''}
@@ -3902,14 +3884,14 @@ function AdminDashboard() {
             )}
 
             <div className="form-group">
-              <label>{t('language') === 'zh' ? '會員類型' : 'Member Type'} *</label>
+              <label>{t('member_type')} *</label>
               <select
                 value={editMeetingData.memberType}
                 onChange={(e) => setEditMeetingData({ ...editMeetingData, memberType: e.target.value })}
                 required
               >
-                <option value="協會會員">{t('language') === 'zh' ? '協會會員' : 'Association Members'}</option>
-                <option value="董事會">{t('language') === 'zh' ? '董事會' : 'Board of Directors'}</option>
+                <option value="協會會員">{t('association_members')}</option>
+                <option value="董事會">{t('board_of_directors')}</option>
               </select>
             </div>
 
@@ -3922,14 +3904,14 @@ function AdminDashboard() {
                 style={{ width: 'auto' }}
               />
               <label htmlFor="editMandatory" style={{ margin: 0 }}>
-                {t('language') === 'zh' ? '強制參加（會員必須出席或提交請假表）' : 'Mandatory (members must attend or submit absence form)'}
+                {t('mandatory_members_must_attend_or_submit_absence_fo')}
               </label>
             </div>
 
             {(editMeetingData.meetingType || 'in-person') === 'in-person' && editMeetingData.location && (
               <div style={{ marginTop: '10px', marginBottom: '10px' }}>
                 <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-                  {t('language') === 'zh' ? '地圖預覽' : 'Map Preview'}
+                  {t('map_preview')}
                 </label>
                 <iframe
                   src={`https://maps.google.com/maps?q=${encodeURIComponent(editMeetingData.location)}&output=embed`}
@@ -3945,21 +3927,21 @@ function AdminDashboard() {
             )}
 
             <div className="form-group">
-              <label>{t('language') === 'zh' ? '狀態' : 'Status'} *</label>
+              <label>{t('status_')} *</label>
               <select
                 value={editMeetingData.status || 'upcoming'}
                 onChange={(e) => setEditMeetingData({ ...editMeetingData, status: e.target.value })}
                 required
               >
-                <option value="upcoming">{t('language') === 'zh' ? '即將到來' : 'Upcoming'}</option>
-                <option value="completed">{t('language') === 'zh' ? '已完成' : 'Completed'}</option>
-                <option value="cancelled">{t('language') === 'zh' ? '已取消' : 'Cancelled'}</option>
+                <option value="upcoming">{t('upcoming')}</option>
+                <option value="completed">{t('completed')}</option>
+                <option value="cancelled">{t('cancelled')}</option>
               </select>
             </div>
 
             <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
               <button type="submit" className="btn btn-primary" disabled={loading}>
-                {loading ? (t('language') === 'zh' ? '更新中...' : 'Updating...') : (t('language') === 'zh' ? '更新' : 'Update')}
+                {loading ? (t('updating')) : (t('update'))}
               </button>
               <button type="button" className="btn btn-secondary" onClick={() => {
                 setEditingMeeting(false);

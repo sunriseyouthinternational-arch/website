@@ -38,7 +38,7 @@ function CouponClaim() {
       }
 
       if (!claimToken) {
-        setError(t('language') === 'zh' ? '無效的優惠券連結' : 'Invalid coupon link');
+        setError(t('invalid_coupon_link'));
         setStatus('error');
         setLoading(false);
         return;
@@ -48,7 +48,7 @@ function CouponClaim() {
       setCouponData(response.data);
       setStatus(response.data.status);
     } catch (err) {
-      setError(err.response?.data?.message || (t('language') === 'zh' ? '載入失敗' : 'Failed to load'));
+      setError(err.response?.data?.message || (t('failed_to_load')));
       setStatus(err.response?.data?.status || 'error');
     } finally {
       setLoading(false);
@@ -145,7 +145,7 @@ function CouponClaim() {
 
         if (!claimToken) {
           console.error('No token available for claiming');
-          setError(t('language') === 'zh' ? '無效的優惠券連結' : 'Invalid coupon link');
+          setError(t('invalid_coupon_link'));
           setStatus('error');
           setLoading(false);
           return;
@@ -193,15 +193,13 @@ function CouponClaim() {
           <div style={{ fontSize: '64px', marginBottom: '20px' }}>⏳</div>
           <h3 style={{ color: '#667eea' }}>
             {claiming
-              ? (t('language') === 'zh' ? '自動領取中...' : 'Auto-claiming...')
-              : (t('language') === 'zh' ? '載入中...' : 'Loading...')
+              ? (t('auto_claiming'))
+              : (t('loading'))
             }
           </h3>
           {claiming && (
             <p style={{ color: '#666', marginTop: '10px', fontSize: '14px' }}>
-              {t('language') === 'zh'
-                ? '正在自動為您領取優惠券，請稍候...'
-                : 'Automatically claiming your coupon, please wait...'}
+              {t('automatically_claiming_your_coupon_please_wait')}
             </p>
           )}
         </div>
@@ -215,7 +213,7 @@ function CouponClaim() {
         <div className="card" style={{ textAlign: 'center', padding: '60px 20px' }}>
           <div style={{ fontSize: '64px', marginBottom: '20px' }}>✅</div>
           <h2 style={{ color: '#2b8a3e', marginBottom: '15px' }}>
-            {t('language') === 'zh' ? '優惠券領取成功！' : 'Coupon Claimed Successfully!'}
+            {t('coupon_claimed_successfully')}
           </h2>
 
           {couponData && couponData.coupon && (
@@ -238,9 +236,7 @@ function CouponClaim() {
           )}
 
           <p style={{ color: '#666', fontSize: '16px', marginBottom: '25px' }}>
-            {t('language') === 'zh'
-              ? '優惠券已自動加入您的帳戶。您可以在個人資料頁面查看所有優惠券。'
-              : 'The coupon has been automatically added to your account. You can view all your coupons in your profile page.'}
+            {t('the_coupon_has_been_automatically_added_to_your_ac')}
           </p>
 
           <a
@@ -266,7 +262,7 @@ function CouponClaim() {
               e.currentTarget.style.transform = 'translateY(0)';
             }}
           >
-            {t('language') === 'zh' ? '查看我的優惠券' : 'View My Coupons'}
+            {t('view_my_coupons')}
           </a>
         </div>
       </div>
@@ -279,12 +275,10 @@ function CouponClaim() {
         <div className="card" style={{ textAlign: 'center', padding: '60px 20px' }}>
           <div style={{ fontSize: '64px', marginBottom: '20px' }}>ℹ️</div>
           <h2 style={{ color: '#1971c2', marginBottom: '15px' }}>
-            {t('language') === 'zh' ? '優惠券僅供新會員' : 'Coupons for New Members Only'}
+            {t('coupons_for_new_members_only')}
           </h2>
           <p style={{ color: '#666', fontSize: '16px', marginBottom: '25px' }}>
-            {error || (t('language') === 'zh'
-              ? '優惠券只能分享給新會員。您已經是會員了！'
-              : 'Coupons can only be shared to new members. You are already a member!')}
+            {error || (t('coupons_can_only_be_shared_to_new_members_you_are_'))}
           </p>
           <a
             href="/profile"
@@ -308,7 +302,7 @@ function CouponClaim() {
               e.currentTarget.style.transform = 'translateY(0)';
             }}
           >
-            {t('language') === 'zh' ? '前往我的資料' : 'Go to My Profile'}
+            {t('go_to_my_profile')}
           </a>
         </div>
       </div>
@@ -321,12 +315,10 @@ function CouponClaim() {
         <div className="card" style={{ textAlign: 'center', padding: '60px 20px' }}>
           <div style={{ fontSize: '64px', marginBottom: '20px' }}>📝</div>
           <h2 style={{ color: '#f59f00', marginBottom: '15px' }}>
-            {t('language') === 'zh' ? '需要完成註冊' : 'Registration Required'}
+            {t('registration_required')}
           </h2>
           <p style={{ color: '#666', fontSize: '16px', marginBottom: '25px' }}>
-            {error || (t('language') === 'zh'
-              ? '請先完成註冊才能領取優惠券。'
-              : 'Please complete registration before claiming the coupon.')}
+            {error || (t('please_complete_registration_before_claiming_the_c'))}
           </p>
           <div style={{
             background: '#e7f5ff',
@@ -336,9 +328,7 @@ function CouponClaim() {
             marginBottom: '25px'
           }}>
             <p style={{ color: '#1971c2', fontSize: '15px', fontWeight: 'bold', margin: 0 }}>
-              {t('language') === 'zh'
-                ? '✨ 完成註冊後，優惠券將自動轉移到您的帳戶，無需再次掃描！'
-                : '✨ After registration, the coupon will be automatically transferred to your account - no need to scan again!'}
+              {t('after_registration_the_coupon_will_be_automaticall')}
             </p>
           </div>
           <a
@@ -366,7 +356,7 @@ function CouponClaim() {
               e.currentTarget.style.transform = 'translateY(0)';
             }}
           >
-            {t('language') === 'zh' ? '➕ 加入 LINE 並註冊' : '➕ Add LINE & Register'}
+            {t('add_line_and_register')}
           </a>
         </div>
       </div>
@@ -379,12 +369,10 @@ function CouponClaim() {
         <div className="card" style={{ textAlign: 'center', padding: '60px 20px' }}>
           <div style={{ fontSize: '64px', marginBottom: '20px' }}>⚠️</div>
           <h2 style={{ color: '#c92a2a', marginBottom: '15px' }}>
-            {t('language') === 'zh' ? '優惠券已過期' : 'Coupon Expired'}
+            {t('coupon_expired')}
           </h2>
           <p style={{ color: '#666', fontSize: '16px' }}>
-            {error || (t('language') === 'zh'
-              ? '此優惠券或分享連結已過期。'
-              : 'This coupon or share link has expired.')}
+            {error || (t('this_coupon_or_share_link_has_expired'))}
           </p>
         </div>
       </div>
@@ -397,7 +385,7 @@ function CouponClaim() {
     return (
       <div className="container">
         <div className="page-title">
-          <h2>🎁 {t('language') === 'zh' ? '您收到了優惠券！' : 'You Received a Coupon!'}</h2>
+          <h2>🎁 {t('you_received_a_coupon')}</h2>
         </div>
 
         <div className="card" style={{ maxWidth: '600px', margin: '0 auto' }}>
@@ -411,7 +399,7 @@ function CouponClaim() {
             border: '2px solid #d3e0ff'
           }}>
             <p style={{ margin: 0, color: '#667eea', fontSize: '15px' }}>
-              {t('language') === 'zh' ? '來自：' : 'From: '}<strong>{senderName}</strong>
+              {t('from')}<strong>{senderName}</strong>
             </p>
           </div>
 
@@ -452,8 +440,8 @@ function CouponClaim() {
                 textTransform: 'uppercase'
               }}>
                 {coupon.type === 'trial'
-                  ? (t('language') === 'zh' ? '體驗券' : 'Trial Coupon')
-                  : (t('language') === 'zh' ? '折扣券' : 'Discount Coupon')}
+                  ? (t('trial_coupon'))
+                  : (t('discount_coupon'))}
               </span>
             </div>
 
@@ -473,15 +461,15 @@ function CouponClaim() {
                 marginBottom: '15px'
               }}>
                 <p style={{ margin: 0, fontSize: '20px', fontWeight: 'bold', color: '#c92a2a' }}>
-                  {coupon.discountPercent}% {t('language') === 'zh' ? '折扣' : 'OFF'}
+                  {coupon.discountPercent}% {t('off')}
                 </p>
               </div>
             )}
 
             {coupon.expiryDate && (
               <p style={{ fontSize: '14px', color: '#856404', margin: 0 }}>
-                ⏰ {t('language') === 'zh' ? '優惠券有效期至：' : 'Valid until: '}
-                {new Date(coupon.expiryDate).toLocaleDateString(t('language') === 'zh' ? 'zh-TW' : 'en-US')}
+                ⏰ {t('valid_until')}
+                {new Date(coupon.expiryDate).toLocaleDateString(t('en_us'))}
               </p>
             )}
           </div>
@@ -495,28 +483,20 @@ function CouponClaim() {
             marginBottom: '30px'
           }}>
             <h3 style={{ color: '#004085', marginBottom: '15px', fontSize: '18px' }}>
-              {t('language') === 'zh' ? '📋 如何領取' : '📋 How to Claim'}
+              {t('how_to_claim')}
             </h3>
             <ol style={{ margin: 0, paddingLeft: '20px', color: '#004085', lineHeight: '1.8' }}>
               <li>
-                {t('language') === 'zh'
-                  ? '點擊下方「加入 LINE」按鈕加入晨光國際少年團官方帳號'
-                  : 'Click "Add LINE Account" button below to add our official account'}
+                {t('click_add_line_account_button_below_to_add_our_official_account')}
               </li>
               <li>
-                {t('language') === 'zh'
-                  ? '按照 LINE 訊息中的指示完成註冊'
-                  : 'Follow the instructions in LINE messages to complete registration'}
+                {t('follow_the_instructions_in_line_messages_to_comple')}
               </li>
               <li>
-                {t('language') === 'zh'
-                  ? '註冊完成後，將此頁面的連結傳送給 LINE 官方帳號'
-                  : 'After registration, send this page\'s URL to our LINE Official Account'}
+                {t('after_registration_send_this_page_url_to_our_line_official_account')}
               </li>
               <li>
-                {t('language') === 'zh'
-                  ? '我們會為您領取優惠券！'
-                  : 'We will claim the coupon for you!'}
+                {t('we_will_claim_the_coupon_for_you')}
               </li>
             </ol>
             <div style={{
@@ -527,9 +507,7 @@ function CouponClaim() {
               fontSize: '13px',
               color: '#856404'
             }}>
-              💡 {t('language') === 'zh'
-                ? '建議：將此頁面加入書籤，以便稍後傳送連結'
-                : 'Tip: Bookmark this page to easily send the link later'}
+              💡 {t('tip_bookmark_this_page_to_easily_send_the_link_lat')}
             </div>
           </div>
 
@@ -563,7 +541,7 @@ function CouponClaim() {
               e.currentTarget.style.boxShadow = '0 4px 12px rgba(6, 199, 85, 0.3)';
             }}
           >
-            {t('language') === 'zh' ? '➕ 加入 LINE 官方帳號' : '➕ Add LINE Official Account'}
+            {t('add_line_official_account')}
           </a>
 
           {/* Expiry Warning */}
