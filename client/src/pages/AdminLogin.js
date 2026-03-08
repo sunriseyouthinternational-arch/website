@@ -48,12 +48,12 @@ function AdminLogin() {
         <div className="card admin-login-card">
           <div className="admin-login-header">
             <h2>{t('adminPanel')}</h2>
-            <p>{t('language') === 'zh' ? '請登入以訪問管理員控制面板' : 'Please login to access admin control panel'}</p>
+            <p>{t('adminPanelTitle')}</p>
           </div>
 
           <form onSubmit={handleSubmit}>
             <div className="form-group">
-              <label>{t('language') === 'zh' ? '用戶名' : 'Username'}</label>
+              <label>{t('username')}</label>
               <input
                 type="text"
                 name="username"
@@ -65,7 +65,7 @@ function AdminLogin() {
             </div>
 
             <div className="form-group">
-              <label>{t('language') === 'zh' ? '密碼' : 'Password'}</label>
+              <label>{t('password')}</label>
               <input
                 type="password"
                 name="password"
@@ -88,7 +88,7 @@ function AdminLogin() {
           </form>
 
           <div className="admin-info">
-            <p><small>{t('language') === 'zh' ? '默認用戶名: admin, 密碼: admin123' : 'Default username: admin, password: admin123'}</small></p>
+            <p><small>{t('defaultLoginCredentials')}</small></p>
           </div>
         </div>
       </div>

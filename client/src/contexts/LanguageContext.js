@@ -143,6 +143,9 @@ export const translations = {
     noEnrolledActivities: '尚無報名活動',
 
     // Admin
+    adminPanelTitle: '請登入以訪問管理員控制面板',
+    username: '用戶名',
+    password: '密碼',
     classAddSuccess: '課程添加成功',
     activityAddSuccess: '活動添加成功',
     paymentStatusUpdated: '付款狀態已更新',
@@ -346,6 +349,9 @@ export const translations = {
     noEnrolledActivities: 'No enrolled activities',
 
     // Admin
+    adminPanelTitle: 'Please login to access admin control panel',
+    username: 'Username',
+    password: 'Password',
     classAddSuccess: 'Class added successfully',
     activityAddSuccess: 'Activity added successfully',
     paymentStatusUpdated: 'Payment status updated',
