@@ -1361,8 +1361,8 @@ function AdminDashboard() {
                     cursor: 'pointer'
                   }}
                 >
-                  <option value="會友">會友</option>
-                  <option value="協會會員">協會會員</option>
+                  <option value="會友">{t('language') === 'zh' ? '會友' : 'Association Friend'}</option>
+                  <option value="協會會員">{t('language') === 'zh' ? '協會會員' : 'Association Member'}</option>
                 </select>
               </div>
               <div className="detail-row">
@@ -1990,7 +1990,7 @@ function AdminDashboard() {
                       </p>
                       <img
                         src={newClassInfo.banner}
-                        alt="Banner preview"
+                        alt={t('bannerPreview')}
                         style={{
                           width: '1000px',
                           height: '600px',
@@ -2486,7 +2486,7 @@ function AdminDashboard() {
                       </p>
                       <img
                         src={newActivity.banner}
-                        alt="Banner preview"
+                        alt={t('bannerPreview')}
                         style={{
                           width: '100%',
                           maxHeight: '200px',
@@ -2850,7 +2850,7 @@ function AdminDashboard() {
                     </p>
                     <img
                       src={newTeacher.photo}
-                      alt="Teacher preview"
+                      alt={t('teacherPreview')}
                       style={{
                         width: '150px',
                         height: '150px',

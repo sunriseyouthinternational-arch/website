@@ -34,6 +34,7 @@ export const translations = {
     gender: '性別',
     male: '男',
     female: '女',
+    preferNotToSay: '不願透露',
     birthDate: '出生日期',
     familyMembers: '家庭團員',
     addFamilyMember: '添加家庭團員',
@@ -174,7 +175,36 @@ export const translations = {
     filterByClass: '按課程篩選',
     filterByDate: '按日期篩選',
     selectFromCalendar: '從日曆選擇',
-    allClasses: '所有課程'
+    allClasses: '所有課程',
+
+    // Status values
+    upcoming: '即將開始',
+    completed: '已完成',
+    cancelled: '已取消',
+    inPerson: '現場',
+    zoom: '線上',
+    profilePicture: '個人照片',
+    memberProfile: '成員檔案',
+    bannerPreview: '橫幅預覽',
+    teacherPreview: '教師預覽',
+    formPreview: '表單預覽',
+    qrCodeImage: 'QR碼',
+    noDescription: '無描述',
+    noData: '無',
+
+    // Membership status
+    associationFriend: '會友',
+    associationMember: '協會會員',
+    boardOfDirectors: '董事會',
+
+    // Admin dashboard
+    classesAndActivities: '課程與活動',
+    hostManagement: '主辦人管理',
+    couponManagement: '優惠券管理',
+    associationManagement: '協會管理',
+    zoomUrl: 'Zoom連結',
+    zoomUrlPlaceholder: 'https://zoom.us/j/123456789',
+    defaultLoginCredentials: '預設用戶名: admin, 密碼: admin123'
   },
   en: {
     // Common
@@ -207,6 +237,7 @@ export const translations = {
     gender: 'Gender',
     male: 'Male',
     female: 'Female',
+    preferNotToSay: 'Prefer not to say',
     birthDate: 'Birth Date',
     familyMembers: 'Family Members',
     addFamilyMember: 'Add Family Member',
@@ -347,7 +378,36 @@ export const translations = {
     filterByClass: 'Filter by Class',
     filterByDate: 'Filter by Date',
     selectFromCalendar: 'Select from Calendar',
-    allClasses: 'All Classes'
+    allClasses: 'All Classes',
+
+    // Status values
+    upcoming: 'Upcoming',
+    completed: 'Completed',
+    cancelled: 'Cancelled',
+    inPerson: 'In-person',
+    zoom: 'Zoom',
+    profilePicture: 'Profile Picture',
+    memberProfile: 'Member Profile',
+    bannerPreview: 'Banner Preview',
+    teacherPreview: 'Teacher Preview',
+    formPreview: 'Form Preview',
+    qrCodeImage: 'QR Code',
+    noDescription: 'No description',
+    noData: 'N/A',
+
+    // Membership status
+    associationFriend: 'Association Friend',
+    associationMember: 'Association Member',
+    boardOfDirectors: 'Board of Directors',
+
+    // Admin dashboard
+    classesAndActivities: 'Classes & Activities',
+    hostManagement: 'Host Management',
+    couponManagement: 'Coupon Management',
+    associationManagement: 'Association Management',
+    zoomUrl: 'Zoom URL',
+    zoomUrlPlaceholder: 'https://zoom.us/j/123456789',
+    defaultLoginCredentials: 'Default username: admin, password: admin123'
   }
 };
 

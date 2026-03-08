@@ -1111,9 +1111,9 @@ function Profile() {
                 onChange={(e) => setRegistrationData({...registrationData, gender: e.target.value})}
                 style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ccc' }}
               >
-                <option value="男">男 / Male</option>
-                <option value="女">女 / Female</option>
-                <option value="prefer-not-to-say">{t('language') === 'zh' ? '不願透露' : 'Prefer not to say'}</option>
+                <option value="男">{t('language') === 'zh' ? '男' : 'Male'}</option>
+                <option value="女">{t('language') === 'zh' ? '女' : 'Female'}</option>
+                <option value="prefer-not-to-say">{t('preferNotToSay')}</option>
               </select>
             </div>
 
@@ -1233,7 +1233,7 @@ function Profile() {
                       >
                         <option value="男">{t('language') === 'zh' ? '男' : 'Male'}</option>
                         <option value="女">{t('language') === 'zh' ? '女' : 'Female'}</option>
-                        <option value="prefer-not-to-say">{t('language') === 'zh' ? '不願透露' : 'Prefer not to say'}</option>
+                        <option value="prefer-not-to-say">{t('preferNotToSay')}</option>
                       </select>
                     </div>
 
@@ -1368,7 +1368,7 @@ function Profile() {
                   <div className="profile-header">
                     <div className="profile-picture-section">
                       {member.profilePicture ? (
-                        <img src={getImageSrc(member.profilePicture)} alt="Profile" className="profile-picture" />
+                        <img src={getImageSrc(member.profilePicture)} alt={t('memberProfile')} className="profile-picture" />
                       ) : (
                         <div className="profile-picture-placeholder">
                           <span>{member.name[0]}</span>
@@ -1501,7 +1501,7 @@ function Profile() {
                     <select name="gender" value={editFormData.gender} onChange={handleEditChange}>
                       <option value="男">{t('language') === 'zh' ? '男' : 'Male'}</option>
                       <option value="女">{t('language') === 'zh' ? '女' : 'Female'}</option>
-                      <option value="prefer-not-to-say">{t('language') === 'zh' ? '不願透露' : 'Prefer not to say'}</option>
+                      <option value="prefer-not-to-say">{t('preferNotToSay')}</option>
                     </select>
                   </div>
 
@@ -1581,7 +1581,7 @@ function Profile() {
                           >
                             <option value="男">{t('language') === 'zh' ? '男' : 'Male'}</option>
                             <option value="女">{t('language') === 'zh' ? '女' : 'Female'}</option>
-                            <option value="prefer-not-to-say">{t('language') === 'zh' ? '不願透露' : 'Prefer not to say'}</option>
+                            <option value="prefer-not-to-say">{t('preferNotToSay')}</option>
                           </select>
                         </div>
 
@@ -1633,7 +1633,7 @@ function Profile() {
                 ← {t('back')}
               </button>
 
-              <h2>{selectedClass.classInfoId?.name || 'N/A'}</h2>
+              <h2>{selectedClass.classInfoId?.name || t('noData')}</h2>
 
               {selectedClass.classInfoId?.banner && (
                 <img
@@ -1993,7 +1993,7 @@ function Profile() {
                 <div className="grid">
                   {getFilteredClasses().map((classItem) => (
                     <div key={classItem._id} className="item-card">
-                      <h4>{classItem.classInfoId?.name || 'N/A'}</h4>
+                      <h4>{classItem.classInfoId?.name || t('noData')}</h4>
                       {classItem.classInfoId?.banner && (
                         <img
                           src={getImageSrc(classItem.classInfoId.banner)}
@@ -3171,7 +3171,7 @@ function Profile() {
                   </p>
                   <img
                     src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(shareLink.claimUrl)}`}
-                    alt="QR Code"
+                    alt={t('qrCodeImage')}
                     style={{
                       width: '200px',
                       height: '200px',
@@ -4004,7 +4004,7 @@ function Profile() {
                 </p>
                 <img
                   src={absenceFormImage}
-                  alt="Form preview"
+                  alt={t('formPreview')}
                   style={{
                     width: '100%',
                     maxHeight: '300px',
