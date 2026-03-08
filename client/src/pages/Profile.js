@@ -1350,7 +1350,7 @@ function Profile() {
                   <div className="profile-header">
                     <div className="profile-picture-section">
                       {member.profilePicture ? (
-                        <img src={getImageSrc(member.profilePicture)} alt={t('memberProfile')} className="profile-picture" />
+                        <img src={getImageSrc(member.profilePicture)} alt={t('profile_picture')} className="profile-picture" />
                       ) : (
                         <div className="profile-picture-placeholder">
                           <span>{member.name[0]}</span>
@@ -1363,14 +1363,14 @@ function Profile() {
                       {member.englishAlias && (
                         <p><strong>{t('englishAlias')}:</strong> {member.englishAlias}</p>
                       )}
-                      <p><strong>{t('memberId')}:</strong> {member.memberId}</p>
+                      <p><strong>{t('member_id')}:</strong> {member.memberId}</p>
                       <p><strong>{t('gender')}:</strong> {member.gender}</p>
                       <p><strong>{t('birthDate')}:</strong> {formatDate(member.birthDate)}</p>
                     </div>
                   </div>
 
                   <div className="contact-info">
-                    <h3>{t('contactInfo')}</h3>
+                    <h3>{t('contact_information')}</h3>
                     <p><strong>{t('mobile')}:</strong> {member.contact?.mobile}</p>
                     {member.contact?.phone && <p><strong>{t('phone')}:</strong> {member.contact.phone}</p>}
                     {member.contact?.lineId && <p><strong>{t('lineId')}:</strong> {member.contact.lineId}</p>}
@@ -1498,7 +1498,7 @@ function Profile() {
                     />
                   </div>
 
-                  <h4>{t('contactInfo')}</h4>
+                  <h4>{t('contact_information')}</h4>
 
                   <div className="form-group">
                     <label>{t('mobile')} *</label>
@@ -1812,7 +1812,7 @@ function Profile() {
                                 className="btn btn-small"
                                 style={{ padding: '6px 12px', fontSize: '14px' }}
                               >
-                                {t('viewDetails')}
+                                {t('view_details')}
                               </button>
                             )}
                           </div>
@@ -2006,7 +2006,7 @@ function Profile() {
                           className="btn btn-secondary"
                           style={{ flex: 1 }}
                         >
-                          {t('viewDetails')}
+                          {t('view_details')}
                         </button>
                         {isEnrolled('class', classItem._id) ? (
                           <button className="btn btn-secondary" disabled style={{ flex: 1 }}>{t('enrolled')}</button>

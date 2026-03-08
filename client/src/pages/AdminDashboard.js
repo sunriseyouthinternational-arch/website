@@ -1200,7 +1200,7 @@ function AdminDashboard() {
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>{t('memberId')}</th>
+                  <th>{t('member_id')}</th>
                   <th>{t('name')}</th>
                   <th>{t('membership')}</th>
                   <th>{t('actions')}</th>
@@ -1263,7 +1263,7 @@ function AdminDashboard() {
             <div className="detail-section">
               <h4>{t('basic_information')}</h4>
               <div className="detail-row">
-                <strong>{t('memberId')}:</strong>
+                <strong>{t('member_id')}:</strong>
                 <span>{selectedMember.memberId}</span>
               </div>
               <div className="detail-row">
@@ -2202,7 +2202,7 @@ function AdminDashboard() {
 
                 {newClass.location && (
                   <div className="form-group">
-                    <label>{t('mapPreview')}</label>
+                    <label>{t('map_preview')}</label>
                     <iframe
                       src={`https://maps.google.com/maps?q=${encodeURIComponent(newClass.location)}&output=embed`}
                       width="100%"
@@ -2440,7 +2440,7 @@ function AdminDashboard() {
 
                 {newActivity.location && (
                   <div className="form-group">
-                    <label>{t('mapPreview')}</label>
+                    <label>{t('map_preview')}</label>
                     <iframe
                       src={`https://maps.google.com/maps?q=${encodeURIComponent(newActivity.location)}&output=embed`}
                       width="100%"
@@ -2658,7 +2658,7 @@ function AdminDashboard() {
                 <table className="data-table">
                   <thead>
                     <tr>
-                      <th>{t('memberId')}</th>
+                      <th>{t('member_id')}</th>
                       <th>{t('name')}</th>
                       <th>{t('enrolled_date')}</th>
                       <th>{t('payment_method')}</th>
