@@ -182,11 +182,8 @@ export const translations = {
 
     // Status values
     upcoming: '即將開始',
-    completed: '已完成',
-    cancelled: '已取消',
     inPerson: '現場',
     zoom: '線上',
-    profilePicture: '個人照片',
     memberProfile: '成員檔案',
     bannerPreview: '橫幅預覽',
     teacherPreview: '教師預覽',
@@ -388,11 +385,8 @@ export const translations = {
 
     // Status values
     upcoming: 'Upcoming',
-    completed: 'Completed',
-    cancelled: 'Cancelled',
     inPerson: 'In-person',
     zoom: 'Zoom',
-    profilePicture: 'Profile Picture',
     memberProfile: 'Member Profile',
     bannerPreview: 'Banner Preview',
     teacherPreview: 'Teacher Preview',
