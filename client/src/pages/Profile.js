@@ -1091,7 +1091,7 @@ function Profile() {
 
             <div style={{ marginBottom: '15px' }}>
               <label style={{ display: 'block', marginBottom: '5px', fontWeight: '600' }}>
-                {t('language') === 'zh' ? '英文別名' : 'English Alias'}
+                {t('language') === 'zh' ? '英文名' : 'English Name'}
               </label>
               <input
                 type="text"
@@ -1113,6 +1113,7 @@ function Profile() {
               >
                 <option value="男">男 / Male</option>
                 <option value="女">女 / Female</option>
+                <option value="prefer-not-to-say">{t('language') === 'zh' ? '不願透露' : 'Prefer not to say'}</option>
               </select>
             </div>
 
@@ -1161,6 +1162,18 @@ function Profile() {
               />
             </div>
 
+            <div style={{ marginBottom: '15px' }}>
+              <label style={{ display: 'block', marginBottom: '5px', fontWeight: '600' }}>
+                {t('language') === 'zh' ? '推薦碼（選填）' : 'Referral Code (Optional)'}
+              </label>
+              <input
+                type="text"
+                value={registrationData.referralCode}
+                onChange={(e) => setRegistrationData({...registrationData, referralCode: e.target.value})}
+                style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ccc' }}
+              />
+            </div>
+
             {/* Family Members Section */}
             <div style={{ marginBottom: '20px', marginTop: '25px' }}>
               <h4 style={{ marginBottom: '10px', borderBottom: '2px solid #1976d2', paddingBottom: '8px' }}>
@@ -1197,7 +1210,7 @@ function Profile() {
 
                   <div className="form-group" style={{ marginBottom: '12px' }}>
                     <label style={{ display: 'block', marginBottom: '5px', fontWeight: '600' }}>
-                      {t('language') === 'zh' ? '英文名（選填）' : 'English Alias (Optional)'}
+                      {t('language') === 'zh' ? '英文名（選填）' : 'English Name (Optional)'}
                     </label>
                     <input
                       type="text"
@@ -1220,6 +1233,7 @@ function Profile() {
                       >
                         <option value="男">{t('language') === 'zh' ? '男' : 'Male'}</option>
                         <option value="女">{t('language') === 'zh' ? '女' : 'Female'}</option>
+                        <option value="prefer-not-to-say">{t('language') === 'zh' ? '不願透露' : 'Prefer not to say'}</option>
                       </select>
                     </div>
 
@@ -1255,21 +1269,6 @@ function Profile() {
               >
                 + {t('language') === 'zh' ? '新增家庭成員' : 'Add Family Member'}
               </button>
-            </div>
-
-            <div style={{ marginBottom: '15px' }}>
-            </div>
-
-            <div style={{ marginBottom: '15px' }}>
-              <label style={{ display: 'block', marginBottom: '5px', fontWeight: '600' }}>
-                {t('language') === 'zh' ? '推薦碼（選填）' : 'Referral Code (Optional)'}
-              </label>
-              <input
-                type="text"
-                value={registrationData.referralCode}
-                onChange={(e) => setRegistrationData({...registrationData, referralCode: e.target.value})}
-                style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ccc' }}
-              />
             </div>
 
             {message.text && (
@@ -1502,6 +1501,7 @@ function Profile() {
                     <select name="gender" value={editFormData.gender} onChange={handleEditChange}>
                       <option value="男">{t('language') === 'zh' ? '男' : 'Male'}</option>
                       <option value="女">{t('language') === 'zh' ? '女' : 'Female'}</option>
+                      <option value="prefer-not-to-say">{t('language') === 'zh' ? '不願透露' : 'Prefer not to say'}</option>
                     </select>
                   </div>
 
@@ -1581,6 +1581,7 @@ function Profile() {
                           >
                             <option value="男">{t('language') === 'zh' ? '男' : 'Male'}</option>
                             <option value="女">{t('language') === 'zh' ? '女' : 'Female'}</option>
+                            <option value="prefer-not-to-say">{t('language') === 'zh' ? '不願透露' : 'Prefer not to say'}</option>
                           </select>
                         </div>
 

@@ -30,7 +30,7 @@ export const translations = {
     // Registration
     memberRegistration: '團員資料',
     applicantName: '申請人姓名',
-    englishAlias: '英文別名',
+    englishAlias: '英文名',
     gender: '性別',
     male: '男',
     female: '女',
@@ -203,7 +203,7 @@ export const translations = {
     // Registration
     memberRegistration: 'Member Registration',
     applicantName: 'Applicant Name',
-    englishAlias: 'English Alias',
+    englishAlias: 'English Name',
     gender: 'Gender',
     male: 'Male',
     female: 'Female',
