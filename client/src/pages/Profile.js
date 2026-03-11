@@ -262,36 +262,51 @@ function Profile() {
   useEffect(() => {
     fetchClassesAndActivities();
 
-    // Check localStorage for cached LINE user first (for instant UX)
-    const cachedLineUser = localStorage.getItem('lineUserCache');
-    if (cachedLineUser) {
-      try {
-        const userData = JSON.parse(cachedLineUser);
-        console.log('[Profile] Found cached LINE user, restoring session:', userData.displayName);
+    // Unified initialization that properly coordinates cache check and LIFF init
+    const initializeAuth = async () => {
+      setLoading(true);
+      setMessage({ type: '', text: '' });
 
-        setLineUserId(userData.userId);
-        setLineProfile({
-          userId: userData.userId,
-          displayName: userData.displayName,
-          pictureUrl: userData.pictureUrl
-        });
-        setIsLoggedIn(true);
+      // Check localStorage for cached LINE user first (for instant UX)
+      const cachedLineUser = localStorage.getItem('lineUserCache');
+      let hasCachedUser = false;
 
-        // Fetch member data with cached userId
-        if (userData.userId) {
-          fetchOrCreateMember(userData.userId, {
+      if (cachedLineUser) {
+        try {
+          const userData = JSON.parse(cachedLineUser);
+          console.log('[Profile] Found cached LINE user, restoring session:', userData.displayName);
+
+          setLineUserId(userData.userId);
+          setLineProfile({
+            userId: userData.userId,
             displayName: userData.displayName,
             pictureUrl: userData.pictureUrl
           });
-        }
-      } catch (error) {
-        console.error('[Profile] Failed to parse cached user data:', error);
-        localStorage.removeItem('lineUserCache');
-      }
-    }
+          setIsLoggedIn(true);
+          hasCachedUser = true;
 
-    // Initialize LIFF in background to verify/update session
-    initializeLIFF();
+          // Fetch member data with cached userId
+          if (userData.userId) {
+            await fetchOrCreateMember(userData.userId, {
+              displayName: userData.displayName,
+              pictureUrl: userData.pictureUrl
+            });
+          }
+        } catch (error) {
+          console.error('[Profile] Failed to parse cached user data:', error);
+          localStorage.removeItem('lineUserCache');
+          hasCachedUser = false;
+        }
+      }
+
+      // If we used cached user successfully, skip LIFF init (cache implies already logged in)
+      // Otherwise, initialize LIFF to check/refresh session
+      if (!hasCachedUser) {
+        await initializeLIFF();
+      }
+    };
+
+    initializeAuth();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -592,6 +607,7 @@ function Profile() {
         setLineProfile(profile);
         setIsLoggedIn(true);
 
+        // fetchOrCreateMember will manage loading state
         await fetchOrCreateMember(profile.userId, profile);
       } else {
         console.log('[Profile] User not logged in, clearing cache');
@@ -601,6 +617,8 @@ function Profile() {
         setIsLoggedIn(false);
         setLineUserId(null);
         setLineProfile(null);
+        // Only set loading=false if we're managing it from initializeLIFF
+        // If called from initializeAuth parent, loading is already handled
         setLoading(false);
       }
     } catch (error) {
