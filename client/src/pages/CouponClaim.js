@@ -80,12 +80,47 @@ function CouponClaim() {
       console.log('Auto-claim response:', response.data);
 
       if (response.data.success) {
-        setStatus('claimed');
-        setCouponData({
-          coupon: response.data.coupon,
-          senderName: response.data.senderName
-        });
-        setLoading(false);
+        // For registered members with 0 completed classes, need to call the claim-pending-coupon action
+        try {
+          console.log('Calling claim-pending-coupon action to finalize coupon claim');
+          const sessionToken = localStorage.getItem('sessionToken');
+          const memberId = response.data.member?.memberId;
+
+          if (memberId) {
+            const claimResponse = await axios.post(`/api/members?memberId=${memberId}&action=claim-pending-coupon`, {
+              pendingToken: response.data.couponToken || token
+            }, {
+              headers: {
+                'Content-Type': 'application/json',
+                ...(sessionToken && { 'Authorization': `Bearer ${sessionToken}` })
+              }
+            });
+
+            console.log('Pending coupon claimed successfully');
+            setStatus('claimed');
+            setCouponData({
+              coupon: claimResponse.data.coupon,
+              senderName: response.data.senderName
+            });
+            setLoading(false);
+          } else {
+            // Fallback if no member ID in response
+            setStatus('claimed');
+            setCouponData({
+              coupon: response.data.coupon,
+              senderName: response.data.senderName
+            });
+            setLoading(false);
+          }
+        } catch (claimError) {
+          console.error('Error finalizing coupon claim:', claimError);
+          setStatus('claimed');
+          setCouponData({
+            coupon: response.data.coupon,
+            senderName: response.data.senderName
+          });
+          setLoading(false);
+        }
       }
     } catch (err) {
       console.error('Auto-claim error:', err);

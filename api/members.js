@@ -589,7 +589,152 @@ module.exports = async (req, res) => {
       });
     }
 
+    // Claim pending coupon for registered member
+    if (req.method === 'POST' && action === 'claim-pending-coupon' && memberId) {
+      const { pendingToken } = req.body;
+
+      const member = await Member.findOne({ memberId });
+
+      if (!member) {
+        return res.status(404).json({
+          message: '找不到團員 / Member not found'
+        });
+      }
+
+      // Check if member has completed any classes
+      const completedClasses = member.enrollments.filter(
+        e => e.type === 'class' && e.status === 'completed'
+      );
+
+      if (completedClasses.length > 0) {
+        console.log('[API /claim-pending-coupon] Member has completed classes, rejecting claim');
+        return res.status(400).json({
+          message: '優惠券只能分享給未修過課程的會員 / Coupons can only be shared to members who have not completed any classes',
+          hasCompletedClasses: true,
+          completedClassCount: completedClasses.length
+        });
+      }
+
+      try {
+        const { CouponShareToken } = require('../db/models');
+        const shareToken = await CouponShareToken.findOne({ token: pendingToken });
+
+        if (!shareToken) {
+          return res.status(404).json({
+            message: '找不到優惠券 / Coupon not found'
+          });
+        }
+
+        if (shareToken.status === 'claimed') {
+          return res.status(400).json({
+            message: '此優惠券已被領取 / This coupon has already been claimed'
+          });
+        }
+
+        if (new Date() > shareToken.expiresAt) {
+          return res.status(400).json({
+            message: '此連結已過期 / This link has expired'
+          });
+        }
+
+        if (shareToken.couponData.expiryDate && new Date() > new Date(shareToken.couponData.expiryDate)) {
+          return res.status(400).json({
+            message: '此優惠券已過期 / This coupon has expired'
+          });
+        }
+
+        // Add coupon to member
+        member.coupons.push({
+          type: shareToken.couponData.type,
+          classInfoId: shareToken.couponData.classInfoId,
+          discountPercent: shareToken.couponData.discountPercent,
+          name: shareToken.couponData.name,
+          description: shareToken.couponData.description,
+          image: shareToken.couponData.image,
+          expiryDate: shareToken.couponData.expiryDate,
+          quantity: 1,
+          usedCount: 0
+        });
+
+        const claimedCouponName = shareToken.couponData.name;
+
+        // Decrement sender's coupon
+        const sender = await Member.findOne({ memberId: shareToken.senderMemberId });
+        if (sender) {
+          const senderCoupon = sender.coupons.id(shareToken.senderCouponId);
+          if (senderCoupon) {
+            const remainingUses = senderCoupon.quantity - senderCoupon.usedCount;
+            if (remainingUses === 1) {
+              sender.coupons.pull(shareToken.senderCouponId);
+            } else {
+              senderCoupon.quantity -= 1;
+            }
+            await sender.save();
+          }
+        }
+
+        // Mark token as claimed
+        shareToken.status = 'claimed';
+        shareToken.claimedBy = member.memberId;
+        shareToken.claimedAt = new Date();
+        await shareToken.save();
+
+        // Clear pending coupon token
+        member.pendingCouponToken = null;
+        await member.save();
+
+        // Send confirmation message
+        if (member.line && member.line.userId) {
+          try {
+            const client = new line.messagingApi.MessagingApiClient({
+              channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN
+            });
+
+            const confirmationText = `🎫 優惠券領取成功！\n「${claimedCouponName}」已加入您的帳戶\n\n現在您可以報名課程時使用此優惠券。`;
+
+            console.log('[API /claim-pending-coupon] Sending coupon confirmation message to:', member.line.userId);
+            await client.pushMessage({
+              to: member.line.userId,
+              messages: [{
+                type: 'text',
+                text: confirmationText
+              }]
+            });
+            console.log('[API /claim-pending-coupon] Coupon confirmation message sent successfully');
+          } catch (messageError) {
+            console.error('[API /claim-pending-coupon] Error sending LINE message:', messageError);
+          }
+        }
+
+        return res.status(200).json({
+          message: '優惠券領取成功 / Coupon claimed successfully',
+          coupon: shareToken.couponData,
+          member
+        });
+      } catch (claimError) {
+        console.error('[API /claim-pending-coupon] Error claiming coupon:', claimError);
+        return res.status(500).json({
+          message: '優惠券領取失敗 / Failed to claim coupon',
+          error: claimError.message
+        });
+      }
+    }
+
     // Delete member entirely (admin only)
+    if (req.method === 'DELETE' && action === 'delete-member' && memberId) {
+      const member = await Member.findOneAndDelete({ memberId });
+
+      if (!member) {
+        return res.status(404).json({
+          message: '找不到團員 / Member not found'
+        });
+      }
+
+      return res.status(200).json({
+        message: '會員刪除成功 / Member deleted successfully',
+        memberId
+      });
+    }
     if (req.method === 'DELETE' && action === 'delete-member' && memberId) {
       const member = await Member.findOneAndDelete({ memberId });
 

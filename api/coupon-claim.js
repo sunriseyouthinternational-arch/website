@@ -212,62 +212,24 @@ module.exports = async (req, res) => {
         });
       }
 
-      // Member qualifies - has completed 0 classes, proceed with claim
-      console.log('[Coupon Claim POST] Member qualifies for coupon (0 completed classes), processing claim');
+      // Member qualifies - has completed 0 classes
+      // For registered members, save as pending coupon token for consistent handling
+      console.log('[Coupon Claim POST] Registered member with 0 completed classes qualifies');
 
-      try {
-        // Add coupon to member
-        member.coupons.push({
-          type: shareToken.couponData.type,
-          classInfoId: shareToken.couponData.classInfoId,
-          discountPercent: shareToken.couponData.discountPercent,
-          name: shareToken.couponData.name,
-          description: shareToken.couponData.description,
-          image: shareToken.couponData.image,
-          expiryDate: shareToken.couponData.expiryDate,
-          quantity: 1,
-          usedCount: 0
-        });
+      member.pendingCouponToken = claimToken;
+      await member.save();
 
-        // Decrement sender's coupon
-        const sender = await Member.findOne({ memberId: shareToken.senderMemberId });
-        if (sender) {
-          const senderCoupon = sender.coupons.id(shareToken.senderCouponId);
-          if (senderCoupon) {
-            const remainingUses = senderCoupon.quantity - senderCoupon.usedCount;
-            if (remainingUses === 1) {
-              sender.coupons.pull(shareToken.senderCouponId);
-            } else {
-              senderCoupon.quantity -= 1;
-            }
-            await sender.save();
-          }
+      return res.status(200).json({
+        message: '優惠券可領取 / Coupon can be claimed',
+        success: true,
+        coupon: shareToken.couponData,
+        senderName: shareToken.senderName,
+        couponToken: claimToken,
+        member: {
+          memberId: member.memberId,
+          name: member.name
         }
-
-        // Mark token as claimed
-        shareToken.status = 'claimed';
-        shareToken.claimedBy = member.memberId;
-        shareToken.claimedAt = new Date();
-        await shareToken.save();
-
-        // Save member with new coupon
-        await member.save();
-
-        console.log('[Coupon Claim POST] Coupon claimed successfully by member:', member.memberId);
-
-        return res.status(200).json({
-          message: '優惠券領取成功 / Coupon claimed successfully',
-          success: true,
-          coupon: shareToken.couponData,
-          senderName: shareToken.senderName
-        });
-      } catch (claimError) {
-        console.error('[Coupon Claim POST] Error processing coupon claim:', claimError);
-        return res.status(500).json({
-          message: '優惠券領取失敗 / Failed to claim coupon',
-          error: claimError.message
-        });
-      }
+      });
     }
 
     res.status(405).json({ message: 'Method not allowed' });
