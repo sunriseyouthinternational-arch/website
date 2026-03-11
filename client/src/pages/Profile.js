@@ -151,8 +151,8 @@ function Profile() {
         axios.get('/api/classes'),
         axios.get('/api/activities')
       ]);
-      const activeClasses = classesRes.data.classes.filter(c => c.status === 'active');
-      const activeActivities = activitiesRes.data.activities.filter(a => a.status === 'active');
+      const activeClasses = classesRes.data.classes.filter(c => c.status === 'upcoming');
+      const activeActivities = activitiesRes.data.activities.filter(a => a.status === 'upcoming');
 
       activeActivities.sort((a, b) => {
         const dateA = new Date(a.date);
