@@ -194,6 +194,20 @@ function CouponClaim() {
 
         console.log('Token for claiming:', claimToken);
 
+        // Set up listener for login status changes (handles redirect-back from liff.login)
+        window.liff.onLoginStatusUpdate((isLoggedIn) => {
+          console.log('LIFF login status updated:', isLoggedIn);
+          if (isLoggedIn) {
+            console.log('User now logged in, attempting auto-claim');
+            window.liff.getProfile().then(profile => {
+              attemptAutoClaim(profile.userId, claimToken);
+            }).catch(err => {
+              console.error('Error getting profile after login:', err);
+              setLoading(false);
+            });
+          }
+        });
+
         // Check if user is logged in to LINE
         if (window.liff.isLoggedIn()) {
           const profile = await window.liff.getProfile();
