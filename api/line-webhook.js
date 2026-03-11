@@ -120,16 +120,6 @@ async function handleFollowEvent(event) {
 
     if (member) {
       console.log('[handleFollowEvent] Existing member re-followed:', member.memberId);
-
-      // Send welcome back message
-      await client.pushMessage({
-        to: lineUserId,
-        messages: [{
-          type: 'text',
-          text: `🎉 歡迎回來！Welcome back!\n\n您的團員編號 Your Member ID:\n${member.memberId}\n\n請造訪我們的網站 Visit our website:\n${baseUrl}/profile`
-        }]
-      });
-      console.log('[handleFollowEvent] Welcome back message sent');
       return;
     }
 
