@@ -27,9 +27,11 @@ function Profile() {
   const sessionFromUrl = searchParams.get('session');
   const classIdFromUrl = searchParams.get('classId');
   const [activeTab, setActiveTab] = useState(
-    tabFromUrl === 'courses' ? 'courses' :
-    tabFromUrl === 'points' ? 'points' :
-    tabFromUrl === 'association' ? 'association' :
+    tabFromUrl === 'courses' || tabFromUrl === 'classes' ? 'classes' :
+    tabFromUrl === 'activities' ? 'activities' :
+    tabFromUrl === 'coupons' ? 'coupons' :
+    tabFromUrl === 'points' || tabFromUrl === 'gifts' ? 'points' :
+    tabFromUrl === 'association' || tabFromUrl === 'meetings' ? 'association' :
     'profile'
   );
 
@@ -123,7 +125,7 @@ function Profile() {
         setMember(response.data.member);
         setMemberId(id);
 
-        setMessage({ type: 'success', text: t('language') === 'zh' ? '登入成功' : 'Login successful' });
+        setMessage({ type: 'success', text: t('login_successful') });
 
         if (sessionFromUrl) {
           const newUrl = `/profile/${id}${tabFromUrl ? `?tab=${tabFromUrl}` : ''}`;
@@ -136,7 +138,7 @@ function Profile() {
       console.error('Session validation failed:', error);
       setMessage({
         type: 'error',
-        text: t('language') === 'zh' ? '登入失效，請重新登入' : 'Session expired, please login again'
+        text: t('session_expired_please_login_again')
       });
     } finally {
       setLoading(false);
@@ -294,10 +296,16 @@ function Profile() {
   }, []);
 
   useEffect(() => {
-    if (tabFromUrl === 'courses') {
-      setActiveTab('courses');
-    } else if (tabFromUrl === 'points') {
+    if (tabFromUrl === 'courses' || tabFromUrl === 'classes') {
+      setActiveTab('classes');
+    } else if (tabFromUrl === 'activities') {
+      setActiveTab('activities');
+    } else if (tabFromUrl === 'coupons') {
+      setActiveTab('coupons');
+    } else if (tabFromUrl === 'points' || tabFromUrl === 'gifts') {
       setActiveTab('points');
+    } else if (tabFromUrl === 'association' || tabFromUrl === 'meetings') {
+      setActiveTab('association');
     } else if (tabFromUrl === 'profile') {
       setActiveTab('profile');
     }
@@ -361,7 +369,7 @@ function Profile() {
 
       setMessage({
         type: 'success',
-        text: t('language') === 'zh' ? '報名成功' : 'Registration successful'
+        text: t('registration_successful')
       });
 
       // Refresh meetings
@@ -369,7 +377,7 @@ function Profile() {
     } catch (error) {
       setMessage({
         type: 'error',
-        text: error.response?.data?.message || (t('language') === 'zh' ? '報名失敗' : 'Registration failed')
+        text: error.response?.data?.message || (t('registration_failed'))
       });
     } finally {
       setRegisteringMeeting(null);
@@ -410,7 +418,7 @@ function Profile() {
     if (!file.type.startsWith('image/')) {
       setMessage({
         type: 'error',
-        text: t('language') === 'zh' ? '請上傳圖片文件' : 'Please upload an image file'
+        text: t('please_upload_an_image_file')
       });
       return;
     }
@@ -419,7 +427,7 @@ function Profile() {
     if (file.size > 5 * 1024 * 1024) {
       setMessage({
         type: 'error',
-        text: t('language') === 'zh' ? '圖片大小不能超過 5MB' : 'Image size cannot exceed 5MB'
+        text: t('image_size_cannot_exceed_5mb')
       });
       return;
     }
@@ -436,7 +444,7 @@ function Profile() {
     if (!absenceFormImage) {
       setMessage({
         type: 'error',
-        text: t('language') === 'zh' ? '請上傳請假表' : 'Please upload the absence form'
+        text: t('please_upload_the_absence_form')
       });
       return;
     }
@@ -451,7 +459,7 @@ function Profile() {
 
       setMessage({
         type: 'success',
-        text: response.data.message || (t('language') === 'zh' ? '請假申請提交成功' : 'Absence request submitted successfully')
+        text: response.data.message || (t('absence_request_submitted_successfully'))
       });
 
       // Close modal and reset
@@ -464,7 +472,7 @@ function Profile() {
     } catch (error) {
       setMessage({
         type: 'error',
-        text: error.response?.data?.message || (t('language') === 'zh' ? '提交失敗' : 'Submission failed')
+        text: error.response?.data?.message || (t('submission_failed'))
       });
     } finally {
       setUploadingAbsenceForm(false);
@@ -516,9 +524,7 @@ function Profile() {
       console.error('[Profile] Error checking member:', error);
       setMessage({
         type: 'error',
-        text: error.response?.data?.message || (t('language') === 'zh'
-          ? '載入失敗，請稍後再試'
-          : 'Failed to load, please try again')
+        text: error.response?.data?.message || (t('failed_to_load_please_try_again'))
       });
       setLoading(false);
     }
@@ -538,9 +544,7 @@ function Profile() {
           console.error('[Profile] LIFF SDK still not available after wait');
           setMessage({
             type: 'error',
-            text: t('language') === 'zh'
-              ? 'LINE SDK 載入失敗，請重新整理頁面'
-              : 'LINE SDK failed to load, please refresh the page'
+            text: t('line_sdk_failed_to_load_please_refresh_the_page')
           });
           setLoading(false);
         }
@@ -555,9 +559,7 @@ function Profile() {
       console.error('[Profile] LIFF ID not configured!');
       setMessage({
         type: 'error',
-        text: t('language') === 'zh'
-          ? '系統設定錯誤 (缺少 LIFF ID)，請聯繫管理員'
-          : 'System configuration error (missing LIFF ID), please contact administrator'
+        text: t('system_configuration_error_missing_liff_id_please_')
       });
       setLoading(false);
       return;
@@ -650,9 +652,7 @@ function Profile() {
     if (!registrationData.name || !registrationData.contact.mobile || !registrationData.contact.lineId) {
       setMessage({
         type: 'error',
-        text: t('language') === 'zh'
-          ? '請填寫所有必填欄位'
-          : 'Please fill in all required fields'
+        text: t('please_fill_in_all_required_fields')
       });
       setSubmittingRegistration(false);
       return;
@@ -662,9 +662,7 @@ function Profile() {
     if (phoneNumber.length < 9 || phoneNumber.length > 10) {
       setMessage({
         type: 'error',
-        text: t('language') === 'zh'
-          ? '請輸入有效的台灣手機號碼（9-10位數字）'
-          : 'Please enter a valid Taiwan phone number (9-10 digits)'
+        text: t('please_enter_a_valid_taiwan_phone_number_9_10_digi')
       });
       setSubmittingRegistration(false);
       return;
@@ -697,7 +695,7 @@ function Profile() {
       setNeedsRegistration(false);
       setMessage({
         type: 'success',
-        text: t('language') === 'zh' ? '註冊成功！' : 'Registration successful!'
+        text: t('registration_successful')
       });
 
       navigate(`/profile/${response.data.member.memberId}`, { replace: true });
@@ -705,9 +703,7 @@ function Profile() {
       console.error('[Profile] Registration failed:', error);
       setMessage({
         type: 'error',
-        text: error.response?.data?.message || (t('language') === 'zh'
-          ? '註冊失敗，請稍後再試'
-          : 'Registration failed, please try again')
+        text: error.response?.data?.message || (t('registration_failed_please_try_again'))
       });
     } finally {
       setSubmittingRegistration(false);
@@ -741,7 +737,7 @@ function Profile() {
       const response = await axios.get(`/api/members?memberId=${id}`);
       setMember(response.data.member);
       setMemberId(id);
-      setMessage({ type: 'success', text: t('language') === 'zh' ? '載入成功' : 'Loaded successfully' });
+      setMessage({ type: 'success', text: t('loaded_successfully') });
     } catch (error) {
       setMessage({
         type: 'error',
@@ -819,12 +815,12 @@ function Profile() {
       setEditMode(false);
       setMessage({
         type: 'success',
-        text: response.data.message || (t('language') === 'zh' ? '更新成功' : 'Update successful')
+        text: response.data.message || (t('update_successful'))
       });
     } catch (error) {
       setMessage({
         type: 'error',
-        text: error.response?.data?.message || (t('language') === 'zh' ? '更新失敗' : 'Update failed')
+        text: error.response?.data?.message || (t('update_failed'))
       });
     } finally {
       setLoading(false);
@@ -846,7 +842,7 @@ function Profile() {
     }
 
     if (!item) {
-      setMessage({ type: 'error', text: t('language') === 'zh' ? '找不到項目' : 'Item not found' });
+      setMessage({ type: 'error', text: t('item_not_found') });
       return;
     }
 
@@ -938,7 +934,7 @@ function Profile() {
     } catch (error) {
       setMessage({
         type: 'error',
-        text: error.response?.data?.message || (t('language') === 'zh' ? '生成分享連結失敗' : 'Failed to generate share link')
+        text: error.response?.data?.message || (t('failed_to_generate_share_link'))
       });
       setShowShareModal(false);
     } finally {
@@ -951,7 +947,7 @@ function Profile() {
     navigator.clipboard.writeText(text);
     setMessage({
       type: 'success',
-      text: t('language') === 'zh' ? '已複製到剪貼簿' : 'Copied to clipboard'
+      text: t('copied_to_clipboard')
     });
   };
 
@@ -959,7 +955,7 @@ function Profile() {
     if (!member) {
       setMessage({
         type: 'error',
-        text: t('language') === 'zh' ? '請先登入' : 'Please login first'
+        text: t('please_login_first')
       });
       return;
     }
@@ -977,14 +973,14 @@ function Profile() {
 
       setMessage({
         type: 'success',
-        text: t('language') === 'zh' ? '購買成功！' : 'Purchase successful!'
+        text: t('purchase_successful')
       });
 
       await fetchCouponsForSale();
     } catch (error) {
       setMessage({
         type: 'error',
-        text: error.response?.data?.message || (t('language') === 'zh' ? '購買失敗' : 'Purchase failed')
+        text: error.response?.data?.message || (t('purchase_failed'))
       });
     } finally {
       setPurchasingCoupon(null);
@@ -1016,12 +1012,10 @@ function Profile() {
         <div className="card" style={{ textAlign: 'center', padding: '60px 20px' }}>
           <div style={{ fontSize: '64px', marginBottom: '20px' }}>⏳</div>
           <h3 style={{ color: '#667eea', marginBottom: '15px' }}>
-            {t('language') === 'zh' ? '載入中...' : 'Loading...'}
+            {t('loading')}
           </h3>
           <p style={{ color: '#666', fontSize: '14px' }}>
-            {t('language') === 'zh'
-              ? '正在初始化...'
-              : 'Initializing...'}
+            {t('initializing')}
           </p>
         </div>
       ) : !isLoggedIn ? (
@@ -1029,12 +1023,10 @@ function Profile() {
         <div className="card" style={{ textAlign: 'center', padding: '60px 20px' }}>
           <div style={{ fontSize: '64px', marginBottom: '20px' }}>🔐</div>
           <h2 style={{ color: '#667eea', marginBottom: '20px' }}>
-            {t('language') === 'zh' ? '會員登入' : 'Member Login'}
+            {t('member_login')}
           </h2>
           <p style={{ textAlign: 'center', marginBottom: '30px', color: '#666' }}>
-            {t('language') === 'zh'
-              ? '請使用 LINE 帳號登入以查看或註冊您的會員資料'
-              : 'Please login with LINE to view or register your member profile'}
+            {t('please_login_with_line_to_view_or_register_your_me')}
           </p>
           <button
             onClick={() => window.liff.login()}
@@ -1052,25 +1044,23 @@ function Profile() {
             }}
           >
             <span style={{ fontSize: '20px' }}>📱</span>
-            {t('language') === 'zh' ? '使用 LINE 登入' : 'Login with LINE'}
+            {t('login_with_line')}
           </button>
         </div>
       ) : needsRegistration ? (
         /* Show registration form if member needs to complete registration */
         <div className="card">
           <h2 style={{ color: '#667eea', marginBottom: '20px', textAlign: 'center' }}>
-            {t('language') === 'zh' ? '完成註冊' : 'Complete Registration'}
+            {t('complete_registration')}
           </h2>
 
           <p style={{ textAlign: 'center', marginBottom: '30px', color: '#666' }}>
-            {t('language') === 'zh'
-              ? '歡迎！請填寫以下資料完成註冊'
-              : 'Welcome! Please fill in the following information to complete registration'}
+            {t('welcome_please_fill_in_the_following_information_t')}
           </p>
 
           <form onSubmit={handleRegistrationSubmit}>            <div style={{ marginBottom: '15px' }}>
               <label style={{ display: 'block', marginBottom: '5px', fontWeight: '600' }}>
-                {t('language') === 'zh' ? '姓名 *' : 'Name *'}
+                {t('name_')}
               </label>
               <input
                 type="text"
@@ -1083,7 +1073,7 @@ function Profile() {
 
             <div style={{ marginBottom: '15px' }}>
               <label style={{ display: 'block', marginBottom: '5px', fontWeight: '600' }}>
-                {t('language') === 'zh' ? '英文別名' : 'English Alias'}
+                {t('english_name')}
               </label>
               <input
                 type="text"
@@ -1095,7 +1085,7 @@ function Profile() {
 
             <div style={{ marginBottom: '15px' }}>
               <label style={{ display: 'block', marginBottom: '5px', fontWeight: '600' }}>
-                {t('language') === 'zh' ? '性別 *' : 'Gender *'}
+                {t('gender')}
               </label>
               <select
                 required
@@ -1103,14 +1093,15 @@ function Profile() {
                 onChange={(e) => setRegistrationData({...registrationData, gender: e.target.value})}
                 style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ccc' }}
               >
-                <option value="男">男 / Male</option>
-                <option value="女">女 / Female</option>
+                <option value="男">{t('male')}</option>
+                <option value="女">{t('female')}</option>
+                <option value="prefer-not-to-say">{t('preferNotToSay')}</option>
               </select>
             </div>
 
             <div style={{ marginBottom: '15px' }}>
               <label style={{ display: 'block', marginBottom: '5px', fontWeight: '600' }}>
-                {t('language') === 'zh' ? '出生日期 *' : 'Birth Date *'}
+                {t('birth_date_')}
               </label>
               <input
                 type="date"
@@ -1123,7 +1114,7 @@ function Profile() {
 
             <div style={{ marginBottom: '15px' }}>
               <label style={{ display: 'block', marginBottom: '5px', fontWeight: '600' }}>
-                {t('language') === 'zh' ? '手機號碼 *' : 'Mobile Number *'}
+                {t('mobile_number')}
               </label>
               <input
                 type="tel"
@@ -1139,7 +1130,7 @@ function Profile() {
 
             <div style={{ marginBottom: '15px' }}>
               <label style={{ display: 'block', marginBottom: '5px', fontWeight: '600' }}>
-                {t('language') === 'zh' ? 'LINE ID *' : 'LINE ID *'}
+                {t('line_id')}
               </label>
               <input
                 type="text"
@@ -1148,7 +1139,19 @@ function Profile() {
                   ...registrationData,
                   contact: {...registrationData.contact, lineId: e.target.value}
                 })}
-                placeholder={t('language') === 'zh' ? '輸入您的 LINE ID' : 'Enter your LINE ID'}
+                placeholder={t('enter_your_line_id')}
+                style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ccc' }}
+              />
+            </div>
+
+            <div style={{ marginBottom: '15px' }}>
+              <label style={{ display: 'block', marginBottom: '5px', fontWeight: '600' }}>
+                {t('referral_code_optional')}
+              </label>
+              <input
+                type="text"
+                value={registrationData.referralCode}
+                onChange={(e) => setRegistrationData({...registrationData, referralCode: e.target.value})}
                 style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ccc' }}
               />
             </div>
@@ -1156,10 +1159,10 @@ function Profile() {
             {/* Family Members Section */}
             <div style={{ marginBottom: '20px', marginTop: '25px' }}>
               <h4 style={{ marginBottom: '10px', borderBottom: '2px solid #1976d2', paddingBottom: '8px' }}>
-                {t('language') === 'zh' ? '家庭成員資訊（選填）' : 'Family Members (Optional)'}
+                {t('family_members_optional')}
               </h4>
               <p style={{ fontSize: '14px', color: '#666', marginBottom: '15px' }}>
-                {t('language') === 'zh' ? '添加您的孩子資料' : "Add your children's information"}
+                {t('add_your_children_information')}
               </p>
 
               {registrationData.familyMembers.map((fm, index) => (
@@ -1176,26 +1179,26 @@ function Profile() {
 
                   <div className="form-group" style={{ marginBottom: '12px' }}>
                     <label style={{ display: 'block', marginBottom: '5px', fontWeight: '600' }}>
-                      {t('language') === 'zh' ? '姓名 *' : 'Name *'}
+                      {t('name_')}
                     </label>
                     <input
                       type="text"
                       value={fm.name}
                       onChange={(e) => handleRegistrationFamilyMemberChange(index, 'name', e.target.value)}
-                      placeholder={t('language') === 'zh' ? '輸入姓名' : 'Enter name'}
+                      placeholder={t('enter_name')}
                       style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ccc' }}
                     />
                   </div>
 
                   <div className="form-group" style={{ marginBottom: '12px' }}>
                     <label style={{ display: 'block', marginBottom: '5px', fontWeight: '600' }}>
-                      {t('language') === 'zh' ? '英文名（選填）' : 'English Alias (Optional)'}
+                      {t('english_name_optional')}
                     </label>
                     <input
                       type="text"
                       value={fm.englishAlias}
                       onChange={(e) => handleRegistrationFamilyMemberChange(index, 'englishAlias', e.target.value)}
-                      placeholder={t('language') === 'zh' ? '輸入英文名' : 'Enter English name'}
+                      placeholder={t('enter_english_name')}
                       style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ccc' }}
                     />
                   </div>
@@ -1203,21 +1206,22 @@ function Profile() {
                   <div className="form-row" style={{ display: 'flex', gap: '15px', marginBottom: '12px' }}>
                     <div className="form-group" style={{ flex: 1 }}>
                       <label style={{ display: 'block', marginBottom: '5px', fontWeight: '600' }}>
-                        {t('language') === 'zh' ? '性別 *' : 'Gender *'}
+                        {t('gender')}
                       </label>
                       <select
                         value={fm.gender}
                         onChange={(e) => handleRegistrationFamilyMemberChange(index, 'gender', e.target.value)}
                         style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ccc' }}
                       >
-                        <option value="男">{t('language') === 'zh' ? '男' : 'Male'}</option>
-                        <option value="女">{t('language') === 'zh' ? '女' : 'Female'}</option>
+                        <option value="男">{t('male')}</option>
+                        <option value="女">{t('female')}</option>
+                        <option value="prefer-not-to-say">{t('preferNotToSay')}</option>
                       </select>
                     </div>
 
                     <div className="form-group" style={{ flex: 1 }}>
                       <label style={{ display: 'block', marginBottom: '5px', fontWeight: '600' }}>
-                        {t('language') === 'zh' ? '生日 *' : 'Birth Date *'}
+                        {t('birth_date')}
                       </label>
                       <input
                         type="date"
@@ -1234,7 +1238,7 @@ function Profile() {
                     onClick={() => removeRegistrationFamilyMember(index)}
                     style={{ marginTop: '8px' }}
                   >
-                    {t('language') === 'zh' ? '移除此成員' : 'Remove Member'}
+                    {t('remove_member')}
                   </button>
                 </div>
               ))}
@@ -1245,23 +1249,8 @@ function Profile() {
                 onClick={addRegistrationFamilyMember}
                 style={{ marginTop: '10px' }}
               >
-                + {t('language') === 'zh' ? '新增家庭成員' : 'Add Family Member'}
+                + {t('add_family_member')}
               </button>
-            </div>
-
-            <div style={{ marginBottom: '15px' }}>
-            </div>
-
-            <div style={{ marginBottom: '15px' }}>
-              <label style={{ display: 'block', marginBottom: '5px', fontWeight: '600' }}>
-                {t('language') === 'zh' ? '推薦碼（選填）' : 'Referral Code (Optional)'}
-              </label>
-              <input
-                type="text"
-                value={registrationData.referralCode}
-                onChange={(e) => setRegistrationData({...registrationData, referralCode: e.target.value})}
-                style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ccc' }}
-              />
             </div>
 
             {message.text && (
@@ -1277,8 +1266,8 @@ function Profile() {
               style={{ width: '100%', padding: '12px', fontSize: '16px' }}
             >
               {submittingRegistration
-                ? (t('language') === 'zh' ? '提交中...' : 'Submitting...')
-                : (t('language') === 'zh' ? '完成註冊' : 'Complete Registration')}
+                ? (t('submitting'))
+                : (t('complete_registration'))}
             </button>
           </form>
         </div>
@@ -1306,7 +1295,7 @@ function Profile() {
                   e.currentTarget.style.color = '#666';
                 }}
               >
-                🚪 {t('language') === 'zh' ? '登出' : 'Logout'}
+                🚪 {t('logout')}
               </button>
             </div>
           )}
@@ -1322,32 +1311,32 @@ function Profile() {
               className={`tab-button ${activeTab === 'classes' ? 'active' : ''}`}
               onClick={() => setActiveTab('classes')}
             >
-              {t('language') === 'zh' ? '課程' : 'Classes'}
+              {t('classes')}
             </button>
             <button
               className={`tab-button ${activeTab === 'activities' ? 'active' : ''}`}
               onClick={() => setActiveTab('activities')}
             >
-              {t('language') === 'zh' ? '活動' : 'Activities'}
+              {t('activities')}
             </button>
             <button
               className={`tab-button ${activeTab === 'coupons' ? 'active' : ''}`}
               onClick={() => setActiveTab('coupons')}
             >
-              {t('language') === 'zh' ? '優惠券' : 'Coupons'}
+              {t('coupons')}
             </button>
             <button
               className={`tab-button ${activeTab === 'points' ? 'active' : ''}`}
               onClick={() => setActiveTab('points')}
             >
-              {t('language') === 'zh' ? '點數與禮物' : 'Points & Gifts'}
+              {t('points_and_gifts')}
             </button>
             {member && member.membershipStatus === '協會會員' && (
               <button
                 className={`tab-button ${activeTab === 'association' ? 'active' : ''}`}
                 onClick={() => setActiveTab('association')}
               >
-                {t('language') === 'zh' ? '協會會議' : 'Association Meetings'}
+                {t('association_meetings')}
               </button>
             )}
           </div>
@@ -1361,7 +1350,7 @@ function Profile() {
                   <div className="profile-header">
                     <div className="profile-picture-section">
                       {member.profilePicture ? (
-                        <img src={getImageSrc(member.profilePicture)} alt="Profile" className="profile-picture" />
+                        <img src={getImageSrc(member.profilePicture)} alt={t('profile_picture')} className="profile-picture" />
                       ) : (
                         <div className="profile-picture-placeholder">
                           <span>{member.name[0]}</span>
@@ -1374,14 +1363,14 @@ function Profile() {
                       {member.englishAlias && (
                         <p><strong>{t('englishAlias')}:</strong> {member.englishAlias}</p>
                       )}
-                      <p><strong>{t('memberId')}:</strong> {member.memberId}</p>
+                      <p><strong>{t('member_id')}:</strong> {member.memberId}</p>
                       <p><strong>{t('gender')}:</strong> {member.gender}</p>
                       <p><strong>{t('birthDate')}:</strong> {formatDate(member.birthDate)}</p>
                     </div>
                   </div>
 
                   <div className="contact-info">
-                    <h3>{t('contactInfo')}</h3>
+                    <h3>{t('contact_information')}</h3>
                     <p><strong>{t('mobile')}:</strong> {member.contact?.mobile}</p>
                     {member.contact?.phone && <p><strong>{t('phone')}:</strong> {member.contact.phone}</p>}
                     {member.contact?.lineId && <p><strong>{t('lineId')}:</strong> {member.contact.lineId}</p>}
@@ -1395,11 +1384,11 @@ function Profile() {
                     marginTop: '20px'
                   }}>
                     <h3 style={{ marginBottom: '15px', color: '#495057' }}>
-                      {t('language') === 'zh' ? '會籍狀態' : 'Membership Status'}
+                      {t('membership_status')}
                     </h3>
                     <div style={{ marginBottom: '12px' }}>
                       <p style={{ fontSize: '16px', marginBottom: '8px' }}>
-                        <strong>{t('language') === 'zh' ? '目前狀態：' : 'Current Status: '}</strong>
+                        <strong>{t('current_status')}</strong>
                         <span style={{
                           padding: '4px 12px',
                           background: member.membershipStatus === '協會會員' ? '#4dabf7' : '#868e96',
@@ -1414,7 +1403,7 @@ function Profile() {
                       </p>
                     </div>
                     <p style={{ fontSize: '14px', color: '#666', marginBottom: '15px' }}>
-                      <strong>{t('language') === 'zh' ? '成為會員日期：' : 'Member Since: '}</strong>
+                      <strong>{t('member_since')}</strong>
                       {formatDate(member.membershipStartDate || member.createdAt)}
                     </p>
                     {member.membershipStatus === '會友' && (
@@ -1428,12 +1417,12 @@ function Profile() {
                           fontSize: '15px'
                         }}
                       >
-                        ⭐ {t('language') === 'zh' ? '升級為協會會員' : 'Upgrade to Association Member'}
+                        ⭐ {t('upgrade_to_association_member')}
                       </button>
                     )}
                     {member.membershipStatus === '協會會員' && member.membershipUpgradedDate && (
                       <p style={{ fontSize: '14px', color: '#666', marginTop: '10px' }}>
-                        <strong>{t('language') === 'zh' ? '升級日期：' : 'Upgraded On: '}</strong>
+                        <strong>{t('upgraded_on')}</strong>
                         {formatDate(member.membershipUpgradedDate)}
                       </p>
                     )}
@@ -1457,7 +1446,7 @@ function Profile() {
 
                   <div className="profile-actions">
                     <button onClick={startEdit} className="btn btn-primary">
-                      {t('language') === 'zh' ? '編輯資料' : 'Edit Profile'}
+                      {t('edit_profile')}
                     </button>
                     <button onClick={() => setMember(null)} className="btn btn-secondary">
                       {t('logout')}
@@ -1466,7 +1455,7 @@ function Profile() {
                 </>
               ) : (
                 <div className="edit-profile-form">
-                  <h3>{t('language') === 'zh' ? '編輯個人資料' : 'Edit Profile'}</h3>
+                  <h3>{t('edit_profile')}</h3>
 
                   <div className="form-group">
                     <label>{t('fullName')} *</label>
@@ -1492,8 +1481,9 @@ function Profile() {
                   <div className="form-group">
                     <label>{t('gender')} *</label>
                     <select name="gender" value={editFormData.gender} onChange={handleEditChange}>
-                      <option value="男">{t('language') === 'zh' ? '男' : 'Male'}</option>
-                      <option value="女">{t('language') === 'zh' ? '女' : 'Female'}</option>
+                      <option value="男">{t('male')}</option>
+                      <option value="女">{t('female')}</option>
+                      <option value="prefer-not-to-say">{t('preferNotToSay')}</option>
                     </select>
                   </div>
 
@@ -1508,7 +1498,7 @@ function Profile() {
                     />
                   </div>
 
-                  <h4>{t('contactInfo')}</h4>
+                  <h4>{t('contact_information')}</h4>
 
                   <div className="form-group">
                     <label>{t('mobile')} *</label>
@@ -1571,8 +1561,9 @@ function Profile() {
                             value={fm.gender}
                             onChange={(e) => handleFamilyMemberChange(index, 'gender', e.target.value)}
                           >
-                            <option value="男">{t('language') === 'zh' ? '男' : 'Male'}</option>
-                            <option value="女">{t('language') === 'zh' ? '女' : 'Female'}</option>
+                            <option value="男">{t('male')}</option>
+                            <option value="女">{t('female')}</option>
+                            <option value="prefer-not-to-say">{t('preferNotToSay')}</option>
                           </select>
                         </div>
 
@@ -1591,22 +1582,22 @@ function Profile() {
                           onClick={() => removeFamilyMember(index)}
                           className="btn btn-danger btn-small"
                         >
-                          {t('language') === 'zh' ? '移除' : 'Remove'}
+                          {t('remove')}
                         </button>
                       </div>
                     </div>
                   ))}
 
                   <button type="button" onClick={addFamilyMember} className="btn btn-secondary">
-                    {t('language') === 'zh' ? '+ 新增家庭成員' : '+ Add Family Member'}
+                    {t('_add_family_member')}
                   </button>
 
                   <div className="profile-actions">
                     <button onClick={saveEdit} className="btn btn-primary" disabled={loading}>
-                      {loading ? (t('language') === 'zh' ? '儲存中...' : 'Saving...') : (t('language') === 'zh' ? '儲存' : 'Save')}
+                      {loading ? (t('saving')) : (t('save'))}
                     </button>
                     <button onClick={cancelEdit} className="btn btn-secondary" disabled={loading}>
-                      {t('language') === 'zh' ? '取消' : 'Cancel'}
+                      {t('cancel')}
                     </button>
                   </div>
                 </div>
@@ -1624,7 +1615,7 @@ function Profile() {
                 ← {t('back')}
               </button>
 
-              <h2>{selectedClass.classInfoId?.name || 'N/A'}</h2>
+              <h2>{selectedClass.classInfoId?.name || t('noData')}</h2>
 
               {selectedClass.classInfoId?.banner && (
                 <img
@@ -1658,7 +1649,7 @@ function Profile() {
                   border: '2px solid #e0e8ff'
                 }}>
                   <h3 style={{ marginBottom: '15px', color: '#667eea', fontSize: '20px' }}>
-                    {t('language') === 'zh' ? '課程詳情' : 'Class Details'}
+                    {t('class_details')}
                   </h3>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                     <div>
@@ -1759,7 +1750,7 @@ function Profile() {
                       onError={(e) => {
                         e.target.style.display = 'none';
                         const errorMsg = document.createElement('div');
-                        errorMsg.innerHTML = `<p style="padding: 20px; background: #f0f0f0; border-radius: 8px; text-align: center;">📍 ${selectedClass.location}<br/><small style="color: #666;">${t('language') === 'zh' ? '地圖載入失敗，請直接使用地址' : 'Map failed to load, please use the address directly'}</small></p>`;
+                        errorMsg.innerHTML = `<p style="padding: 20px; background: #f0f0f0; border-radius: 8px; text-align: center;">📍 ${selectedClass.location}<br/><small style="color: #666;">${t('map_failed_to_load_please_use_the_address_directly')}</small></p>`;
                         e.target.parentNode.appendChild(errorMsg);
                       }}
                     />
@@ -1821,7 +1812,7 @@ function Profile() {
                                 className="btn btn-small"
                                 style={{ padding: '6px 12px', fontSize: '14px' }}
                               >
-                                {t('viewDetails')}
+                                {t('view_details')}
                               </button>
                             )}
                           </div>
@@ -1829,7 +1820,7 @@ function Profile() {
                       );
                     })
                   ) : (
-                    <p className="empty-message">{t('language') === 'zh' ? '尚無報名課程' : 'No enrolled classes'}</p>
+                    <p className="empty-message">{t('no_enrolled_classes')}</p>
                   )}
                 </div>
 
@@ -1984,7 +1975,7 @@ function Profile() {
                 <div className="grid">
                   {getFilteredClasses().map((classItem) => (
                     <div key={classItem._id} className="item-card">
-                      <h4>{classItem.classInfoId?.name || 'N/A'}</h4>
+                      <h4>{classItem.classInfoId?.name || t('noData')}</h4>
                       {classItem.classInfoId?.banner && (
                         <img
                           src={getImageSrc(classItem.classInfoId.banner)}
@@ -2015,7 +2006,7 @@ function Profile() {
                           className="btn btn-secondary"
                           style={{ flex: 1 }}
                         >
-                          {t('viewDetails')}
+                          {t('view_details')}
                         </button>
                         {isEnrolled('class', classItem._id) ? (
                           <button className="btn btn-secondary" disabled style={{ flex: 1 }}>{t('enrolled')}</button>
@@ -2052,7 +2043,7 @@ function Profile() {
                       </div>
                     ))
                   ) : (
-                    <p className="empty-message">{t('language') === 'zh' ? '尚無報名活動' : 'No enrolled activities'}</p>
+                    <p className="empty-message">{t('no_enrolled_activities')}</p>
                   )}
                 </div>
 
@@ -2121,13 +2112,13 @@ function Profile() {
           {activeTab === 'coupons' && (
             <div className="card">
               <h3 style={{ color: '#667eea', marginBottom: '30px', textAlign: 'center' }}>
-                {t('language') === 'zh' ? '優惠券商店' : 'Coupon Store'}
+                {t('coupon_store')}
               </h3>
 
               {couponsForSale.length > 0 && (
                 <div style={{ marginBottom: '40px' }}>
                   <h4 style={{ color: '#667eea', marginBottom: '20px', fontSize: '20px', textAlign: 'center' }}>
-                    {t('language') === 'zh' ? '🛒 購買優惠券' : '🛒 Purchase Coupons'}
+                    {t('purchase_coupons')}
                   </h4>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px', marginBottom: '30px' }}>
                     {couponsForSale.map((couponForSale) => {
@@ -2172,8 +2163,8 @@ function Profile() {
                               }}
                             >
                               {profile.type === 'trial'
-                                ? (t('language') === 'zh' ? '體驗券' : 'Trial')
-                                : (t('language') === 'zh' ? '折扣券' : 'Discount')}
+                                ? (t('trial'))
+                                : (t('discount'))}
                             </span>
                             {couponForSale.stock !== -1 && (
                               <span
@@ -2187,7 +2178,7 @@ function Profile() {
                                   fontWeight: 'bold'
                                 }}
                               >
-                                {t('language') === 'zh' ? '庫存：' : 'Stock: '}{couponForSale.stock}
+                                {t('stock')}{couponForSale.stock}
                               </span>
                             )}
                           </div>
@@ -2199,11 +2190,11 @@ function Profile() {
                           </p>
                           {profile.type === 'discount' && (
                             <p style={{ fontSize: '16px', color: '#c92a2a', fontWeight: 'bold', marginBottom: '10px' }}>
-                              {t('language') === 'zh' ? '折扣：' : 'Discount: '}{profile.discountPercent}%
+                              {t('discount_')}{profile.discountPercent}%
                             </p>
                           )}
                           <p style={{ fontSize: '20px', marginBottom: '15px', fontWeight: 'bold', color: '#28a745' }}>
-                            {t('language') === 'zh' ? '價格：$' : 'Price: $'}{couponForSale.price}
+                            {t('price')}{couponForSale.price}
                           </p>
                           <button
                             onClick={() => handlePurchaseCoupon(couponForSale)}
@@ -2217,11 +2208,11 @@ function Profile() {
                             }}
                           >
                             {purchasingCoupon === couponForSale._id ? (
-                              t('language') === 'zh' ? '⏳ 購買中...' : '⏳ Purchasing...'
+                              t('purchasing')
                             ) : couponForSale.stock !== -1 && couponForSale.stock <= 0 ? (
-                              t('language') === 'zh' ? '已售完' : 'Sold Out'
+                              t('sold_out')
                             ) : (
-                              <>💰 {t('language') === 'zh' ? '購買' : 'Purchase'}</>
+                              <>💰 {t('purchase')}</>
                             )}
                           </button>
                         </div>
@@ -2233,7 +2224,7 @@ function Profile() {
               )}
 
               <h4 style={{ color: '#667eea', marginBottom: '20px', fontSize: '20px', textAlign: 'center' }}>
-                {t('language') === 'zh' ? '📋 我擁有的優惠券' : '📋 My Owned Coupons'}
+                {t('my_owned_coupons')}
               </h4>
 
               <div style={{
@@ -2248,9 +2239,7 @@ function Profile() {
               }}>
                 <span style={{ fontSize: '24px' }}>ℹ️</span>
                 <p style={{ margin: 0, color: '#856404', fontSize: '14px' }}>
-                  {t('language') === 'zh'
-                    ? '提醒：優惠券只能分享給非會員。已註冊的會員無法領取分享的優惠券。'
-                    : 'Reminder: Coupons can only be shared to non-members. Registered members cannot claim shared coupons.'}
+                  {t('reminder_coupons_can_only_be_shared_to_non_members')}
                 </p>
               </div>
 
@@ -2346,8 +2335,8 @@ function Profile() {
                             }}
                           >
                             {coupon.type === 'trial'
-                              ? (t('language') === 'zh' ? '體驗券' : 'Trial')
-                              : (t('language') === 'zh' ? '折扣券' : 'Discount')}
+                              ? (t('trial'))
+                              : (t('discount'))}
                           </span>
                           {coupon.count > 1 && (
                             <span
@@ -2376,7 +2365,7 @@ function Profile() {
                                 fontWeight: 'bold'
                               }}
                             >
-                              {t('language') === 'zh' ? '已用完' : 'Used Up'}
+                              {t('used_up')}
                             </span>
                           )}
                           {expiryUrgency === 'expired' && (
@@ -2391,7 +2380,7 @@ function Profile() {
                                 fontWeight: 'bold'
                               }}
                             >
-                              {t('language') === 'zh' ? '已過期' : 'Expired'}
+                              {t('expired')}
                             </span>
                           )}
                           {expiryUrgency === 'critical' && daysLeft >= 0 && (
@@ -2407,7 +2396,7 @@ function Profile() {
                                 animation: 'pulse 2s ease-in-out infinite'
                               }}
                             >
-                              ⚠️ {daysLeft} {t('language') === 'zh' ? '天後過期' : 'days left'}
+                              ⚠️ {daysLeft} {t('days_left')}
                             </span>
                           )}
                           {expiryUrgency === 'warning' && (
@@ -2422,7 +2411,7 @@ function Profile() {
                                 fontWeight: 'bold'
                               }}
                             >
-                              {daysLeft} {t('language') === 'zh' ? '天後過期' : 'days left'}
+                              {daysLeft} {t('days_left')}
                             </span>
                           )}
                         </div>
@@ -2434,17 +2423,17 @@ function Profile() {
                         </p>
                         {coupon.type === 'discount' && (
                           <p style={{ fontSize: '16px', color: '#c92a2a', fontWeight: 'bold', marginBottom: '10px' }}>
-                            {t('language') === 'zh' ? '折扣：' : 'Discount: '}{coupon.discountPercent}%
+                            {t('discount_')}{coupon.discountPercent}%
                           </p>
                         )}
                         <p style={{ fontSize: '14px', marginBottom: '8px', color: remainingUses > 0 ? '#495057' : '#868e96' }}>
-                          <strong>{t('language') === 'zh' ? '剩餘使用次數：' : 'Remaining Uses: '}</strong>
+                          <strong>{t('remaining_uses')}</strong>
                           <span style={{ fontSize: '18px', fontWeight: 'bold', color: remainingUses > 0 ? '#667eea' : '#868e96' }}>
                             {remainingUses}
                           </span> / {coupon.quantity}
                         </p>
                         <p style={{ fontSize: '12px', color: '#999', marginBottom: '15px' }}>
-                          {t('language') === 'zh' ? '創建於 ' : 'Created '}{formatDate(coupon.createdAt)}
+                          {t('created')}{formatDate(coupon.createdAt)}
                         </p>
                         {remainingUses > 0 && (
                           <button
@@ -2458,9 +2447,9 @@ function Profile() {
                             }}
                           >
                             {sharingCouponId === coupon.ids[0] ? (
-                              t('language') === 'zh' ? '⏳ 載入中...' : '⏳ Loading...'
+                              t('loading')
                             ) : (
-                              <>🔗 {t('language') === 'zh' ? '分享給新朋友' : 'Share to New Friends'}</>
+                              <>🔗 {t('share_to_new_friends')}</>
                             )}
                           </button>
                         )}
@@ -2477,12 +2466,10 @@ function Profile() {
                 }}>
                   <div style={{ fontSize: '64px', marginBottom: '20px' }}>🎫</div>
                   <h4 style={{ color: '#667eea', marginBottom: '15px' }}>
-                    {t('language') === 'zh' ? '尚無優惠券' : 'No Coupons Yet'}
+                    {t('no_coupons_yet')}
                   </h4>
                   <p style={{ color: '#666', fontSize: '16px' }}>
-                    {t('language') === 'zh'
-                      ? '您目前沒有任何優惠券。請關注我們的活動以獲取優惠券！'
-                      : 'You don\'t have any coupons yet. Follow our events to get coupons!'}
+                    {t('you_don_t_have_any_coupons_yet_follow_our_events_to_get_coupons')}
                   </p>
                 </div>
               )}
@@ -2493,23 +2480,21 @@ function Profile() {
             <div className="card">
               <div className="points-gifts-section">
                 <div className="points-display-large">
-                  <h3>{t('language') === 'zh' ? '您的會員點數' : 'Your Member Points'}</h3>
+                  <h3>{t('your_member_points')}</h3>
                   <div className="points-value-large">
                     <span className="points-number-large">{member.points || 0}</span>
-                    <span className="points-label-large">{t('language') === 'zh' ? '點' : 'points'}</span>
+                    <span className="points-label-large">{t('points')}</span>
                   </div>
                 </div>
 
                 <div className="gifts-under-construction">
                   <div className="construction-icon">🚧</div>
-                  <h3>{t('language') === 'zh' ? '禮物兌換' : 'Gift Redemption'}</h3>
+                  <h3>{t('gift_redemption')}</h3>
                   <p className="construction-message">
-                    {t('language') === 'zh' ? '施工中' : 'Under Construction'}
+                    {t('under_construction')}
                   </p>
                   <p className="construction-description">
-                    {t('language') === 'zh'
-                      ? '此功能正在開發中，敬請期待！'
-                      : 'This feature is currently under development. Stay tuned!'}
+                    {t('this_feature_is_currently_under_development_stay_t')}
                   </p>
                 </div>
               </div>
@@ -2518,7 +2503,7 @@ function Profile() {
 
           {activeTab === 'association' && member && member.membershipStatus === '協會會員' && (
             <div className="card">
-              <h3>{t('language') === 'zh' ? '協會會議' : 'Association Meetings'}</h3>
+              <h3>{t('association_meetings')}</h3>
 
               {/* Member Stats */}
               {memberStats && (
@@ -2530,12 +2515,12 @@ function Profile() {
                   marginBottom: '30px'
                 }}>
                   <h4 style={{ marginBottom: '15px', color: '#1971c2' }}>
-                    {t('language') === 'zh' ? '會員統計' : 'Member Statistics'}
+                    {t('member_statistics')}
                   </h4>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px' }}>
                     <div>
                       <p style={{ fontSize: '14px', color: '#666', marginBottom: '5px' }}>
-                        {t('language') === 'zh' ? '成為協會會員日期' : 'Member Since'}
+                        {t('member_since_')}
                       </p>
                       <p style={{ fontSize: '18px', fontWeight: 'bold', color: '#1971c2' }}>
                         {memberStats.memberSince ? new Date(memberStats.memberSince).toLocaleDateString('zh-TW') : 'N/A'}
@@ -2546,7 +2531,7 @@ function Profile() {
                         {t('language') === 'zh' ? `${memberStats.currentYear}年參與會議` : `Meetings Attended in ${memberStats.currentYear}`}
                       </p>
                       <p style={{ fontSize: '18px', fontWeight: 'bold', color: '#1971c2' }}>
-                        {memberStats.meetingsAttendedThisYear} {t('language') === 'zh' ? '次' : 'times'}
+                        {memberStats.meetingsAttendedThisYear} {t('times')}
                       </p>
                     </div>
                   </div>
@@ -2554,11 +2539,11 @@ function Profile() {
               )}
 
               {/* Registered Meetings */}
-              <h4 className="section-subtitle">{t('language') === 'zh' ? '已報名會議' : 'Registered Meetings'}</h4>
+              <h4 className="section-subtitle">{t('registered_meetings')}</h4>
               {loadingMeetings ? (
                 <div style={{ textAlign: 'center', padding: '40px' }}>
                   <div style={{ fontSize: '24px', marginBottom: '10px' }}>⏳</div>
-                  <p style={{ color: '#666' }}>{t('language') === 'zh' ? '載入中...' : 'Loading...'}</p>
+                  <p style={{ color: '#666' }}>{t('loading')}</p>
                 </div>
               ) : (
                 <div className="enrolled-list">
@@ -2571,30 +2556,30 @@ function Profile() {
                         </p>
                         <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginTop: '10px' }}>
                           <span className="status-badge paid">
-                            {t('language') === 'zh' ? '已報名' : 'Registered'}
+                            {t('registered_')}
                           </span>
                           <button
                             onClick={() => setShowMeetingDetails(meeting)}
                             className="btn btn-small btn-primary"
                             style={{ padding: '5px 15px', fontSize: '13px' }}
                           >
-                            {t('language') === 'zh' ? '查看詳情' : 'View Details'}
+                            {t('view_details')}
                           </button>
                         </div>
                       </div>
                     ))
                   ) : (
-                    <p className="empty-message">{t('language') === 'zh' ? '尚未報名任何會議' : 'No registered meetings'}</p>
+                    <p className="empty-message">{t('no_registered_meetings')}</p>
                   )}
                 </div>
               )}
 
               {/* Upcoming Meetings */}
-              <h4 className="section-subtitle">{t('language') === 'zh' ? '即將舉行的會議' : 'Upcoming Meetings'}</h4>
+              <h4 className="section-subtitle">{t('upcoming_meetings')}</h4>
               {loadingMeetings ? (
                 <div style={{ textAlign: 'center', padding: '40px' }}>
                   <div style={{ fontSize: '24px', marginBottom: '10px' }}>⏳</div>
-                  <p style={{ color: '#666' }}>{t('language') === 'zh' ? '載入中...' : 'Loading...'}</p>
+                  <p style={{ color: '#666' }}>{t('loading')}</p>
                 </div>
               ) : (
               <div className="grid">
@@ -2603,14 +2588,14 @@ function Profile() {
                     <div key={meeting._id} className="item-card">
                       <h4>{meeting.agenda}</h4>
                       <div className="item-details">
-                        <p><strong>{t('language') === 'zh' ? '日期' : 'Date'}:</strong> {new Date(meeting.date).toLocaleDateString('zh-TW')}</p>
-                        <p><strong>{t('language') === 'zh' ? '時間' : 'Time'}:</strong> {meeting.time}</p>
+                        <p><strong>{t('date')}:</strong> {new Date(meeting.date).toLocaleDateString('zh-TW')}</p>
+                        <p><strong>{t('time')}:</strong> {meeting.time}</p>
                         {meeting.location && (
                           <p><strong>{t('location')}:</strong> 📍 {meeting.location}</p>
                         )}
-                        <p><strong>{t('language') === 'zh' ? '類型' : 'Type'}:</strong> {meeting.memberType}</p>
+                        <p><strong>{t('type')}:</strong> {meeting.memberType}</p>
                         <p>
-                          <strong>{t('language') === 'zh' ? '已報名人數' : 'Registered'}:</strong> {meeting.participants.length}
+                          <strong>{t('registered')}:</strong> {meeting.participants.length}
                         </p>
                       </div>
                       {meeting.location && (
@@ -2637,12 +2622,10 @@ function Profile() {
                           marginBottom: '10px'
                         }}>
                           <p style={{ margin: 0, color: '#856404', fontSize: '14px', fontWeight: 'bold' }}>
-                            ⚠️ {t('language') === 'zh' ? '強制參加會議' : 'Mandatory Meeting'}
+                            ⚠️ {t('mandatory_meeting')}
                           </p>
                           <p style={{ margin: '5px 0 0 0', color: '#856404', fontSize: '12px' }}>
-                            {t('language') === 'zh'
-                              ? '會員必須出席或提交請假表'
-                              : 'Members must attend or submit absence form'}
+                            {t('members_must_attend_or_submit_absence_form')}
                           </p>
                         </div>
                       )}
@@ -2654,8 +2637,8 @@ function Profile() {
                           style={{ flex: 1, minWidth: '120px' }}
                         >
                           {registeringMeeting === meeting._id
-                            ? (t('language') === 'zh' ? '報名中...' : 'Registering...')
-                            : (t('language') === 'zh' ? '報名' : 'Register')
+                            ? (t('registering'))
+                            : (t('register'))
                           }
                         </button>
                         {meeting.mandatory && !hasSubmittedAbsence(meeting._id) && (
@@ -2664,7 +2647,7 @@ function Profile() {
                             className="btn btn-secondary"
                             style={{ flex: 1, minWidth: '120px' }}
                           >
-                            {t('language') === 'zh' ? '無法出席' : 'Cannot Attend'}
+                            {t('cannot_attend')}
                           </button>
                         )}
                         {hasSubmittedAbsence(meeting._id) && (() => {
@@ -2687,8 +2670,8 @@ function Profile() {
                                 fontWeight: 'bold'
                               }}>
                                 {isApproved
-                                  ? `✓ ${t('language') === 'zh' ? '請假已核准' : 'Absence Approved'}`
-                                  : `⏳ ${t('language') === 'zh' ? '請假待審核' : 'Absence Pending'}`
+                                  ? `✓ ${t('absence_approved')}`
+                                  : `⏳ ${t('absence_pending')}`
                                 }
                               </span>
                             </div>
@@ -2698,7 +2681,7 @@ function Profile() {
                     </div>
                   ))
                 ) : (
-                  <p className="empty-message">{t('language') === 'zh' ? '目前沒有可報名的會議' : 'No upcoming meetings available'}</p>
+                  <p className="empty-message">{t('no_upcoming_meetings_available')}</p>
                 )}
               </div>
               )}
@@ -2711,7 +2694,7 @@ function Profile() {
         <div className="card" style={{ textAlign: 'center', padding: '60px 20px' }}>
           <div style={{ fontSize: '64px', marginBottom: '20px' }}>⚠️</div>
           <h3 style={{ color: '#667eea', marginBottom: '15px' }}>
-            {t('language') === 'zh' ? '載入失敗' : 'Failed to Load'}
+            {t('failed_to_load')}
           </h3>
           {message.text && (
             <div className={`message ${message.type}`} style={{ marginBottom: '20px' }}>
@@ -2719,9 +2702,7 @@ function Profile() {
             </div>
           )}
           <p style={{ color: '#666', fontSize: '14px', marginBottom: '20px' }}>
-            {t('language') === 'zh'
-              ? '請重新整理頁面或聯繫管理員'
-              : 'Please refresh the page or contact administrator'}
+            {t('please_refresh_the_page_or_contact_administrator')}
           </p>
           <button
             onClick={() => window.location.reload()}
@@ -2735,7 +2716,7 @@ function Profile() {
               fontSize: '16px'
             }}
           >
-            {t('language') === 'zh' ? '重新整理' : 'Refresh Page'}
+            {t('refresh_page')}
           </button>
         </div>
       )}      {showCheckout && checkoutData && (
@@ -2763,7 +2744,7 @@ function Profile() {
             boxShadow: '0 10px 50px rgba(0, 0, 0, 0.3)'
           }}>
             <h2 style={{ color: '#667eea', marginBottom: '30px', textAlign: 'center' }}>
-              {t('language') === 'zh' ? '選擇付款方式' : 'Select Payment Method'}
+              {t('select_payment_method')}
             </h2>            <div style={{
               background: '#f8f9ff',
               padding: '20px',
@@ -2775,12 +2756,12 @@ function Profile() {
                 {checkoutData.name}
               </h3>
               <p style={{ fontSize: '18px', marginBottom: '8px' }}>
-                <strong>{t('language') === 'zh' ? '金額：' : 'Cost: '}</strong>
+                <strong>{t('cost')}</strong>
                 {selectedCoupon ? (
                   <>
                     {selectedCoupon.type === 'trial' ? (
                       <span style={{ color: '#2b8a3e', fontWeight: 'bold' }}>
-                        {t('language') === 'zh' ? '免費（體驗券）' : 'Free (Trial Coupon)'}
+                        {t('free_trial_coupon')}
                       </span>
                     ) : (
                       <>
@@ -2792,7 +2773,7 @@ function Profile() {
                           NT$ {Math.round(checkoutData.cost * (100 - selectedCoupon.discountPercent) / 100)}
                         </span>
                         <span style={{ color: '#c92a2a', fontSize: '14px' }}>
-                          {' '}({selectedCoupon.discountPercent}% {t('language') === 'zh' ? '折扣' : 'off'})
+                          {' '}({selectedCoupon.discountPercent}% {t('off')})
                         </span>
                       </>
                     )}
@@ -2812,7 +2793,7 @@ function Profile() {
                   border: '2px solid #667eea'
                 }}>
                   <p style={{ marginBottom: '5px', color: '#667eea', fontWeight: 'bold' }}>
-                    ✓ {t('language') === 'zh' ? '已選擇優惠券：' : 'Coupon Selected: '}{selectedCoupon.name}
+                    ✓ {t('coupon_selected')}{selectedCoupon.name}
                   </p>
                   <button
                     onClick={() => setSelectedCoupon(null)}
@@ -2826,7 +2807,7 @@ function Profile() {
                       padding: 0
                     }}
                   >
-                    {t('language') === 'zh' ? '移除優惠券' : 'Remove Coupon'}
+                    {t('remove_coupon')}
                   </button>
                 </div>
               )}
@@ -2845,9 +2826,9 @@ function Profile() {
                 }}
               >
                 {completingEnrollment ? (
-                  t('language') === 'zh' ? '⏳ 處理中...' : '⏳ Processing...'
+                  t('processing')
                 ) : (
-                  <>💵 {t('language') === 'zh' ? '現場付款' : 'Pay in Person'}</>
+                  <>💵 {t('pay_in_person')}</>
                 )}
               </button>
 
@@ -2865,7 +2846,7 @@ function Profile() {
                   cursor: 'not-allowed'
                 }}
               >
-                💳 {t('language') === 'zh' ? '信用卡付款（施工中）' : 'Credit Card (Under Construction)'}
+                💳 {t('credit_card_under_construction')}
               </button>
 
               <button
@@ -2882,7 +2863,7 @@ function Profile() {
                   cursor: 'not-allowed'
                 }}
               >
-                💚 {t('language') === 'zh' ? 'LINE Pay（施工中）' : 'LINE Pay (Under Construction)'}
+                💚 {t('line_pay_under_construction')}
               </button>
 
               <button
@@ -2900,7 +2881,7 @@ function Profile() {
                   border: 'none'
                 }}
               >
-                🎫 {t('language') === 'zh' ? '使用優惠券' : 'Redeem Coupon'}
+                🎫 {t('redeem_coupon')}
               </button>
             </div>
 
@@ -2913,7 +2894,7 @@ function Profile() {
               className="btn btn-secondary"
               style={{ width: '100%' }}
             >
-              {t('language') === 'zh' ? '取消' : 'Cancel'}
+              {t('cancel')}
             </button>
           </div>
         </div>
@@ -2942,7 +2923,7 @@ function Profile() {
             boxShadow: '0 10px 50px rgba(0, 0, 0, 0.3)'
           }}>
             <h2 style={{ color: '#667eea', marginBottom: '30px', textAlign: 'center' }}>
-              {t('language') === 'zh' ? '選擇優惠券' : 'Select Coupon'}
+              {t('select_coupon')}
             </h2>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '20px', marginBottom: '30px' }}>
@@ -2999,8 +2980,8 @@ function Profile() {
                             textTransform: 'uppercase'
                           }}>
                             {coupon.type === 'trial'
-                              ? (t('language') === 'zh' ? '體驗券' : 'Trial')
-                              : (t('language') === 'zh' ? '折扣券' : 'Discount')}
+                              ? (t('trial'))
+                              : (t('discount'))}
                           </span>
                         </div>
                         <h4 style={{ color: '#667eea', marginBottom: '8px', fontSize: '16px' }}>
@@ -3011,11 +2992,11 @@ function Profile() {
                         </p>
                         {coupon.type === 'discount' && (
                           <p style={{ fontSize: '14px', color: '#c92a2a', fontWeight: 'bold', marginBottom: '8px' }}>
-                            {coupon.discountPercent}% {t('language') === 'zh' ? '折扣' : 'OFF'}
+                            {coupon.discountPercent}% {t('off')}
                           </p>
                         )}
                         <p style={{ fontSize: '13px', color: '#999' }}>
-                          {t('language') === 'zh' ? '剩餘：' : 'Remaining: '}
+                          {t('remaining')}
                           {coupon.quantity - coupon.usedCount}
                         </p>
                         {!isValid && (
@@ -3032,7 +3013,7 @@ function Profile() {
                             fontWeight: 'bold',
                             textAlign: 'center'
                           }}>
-                            {t('language') === 'zh' ? '不適用此課程' : 'Not valid for this class'}
+                            {t('not_valid_for_this_class')}
                           </div>
                         )}
                       </div>
@@ -3040,7 +3021,7 @@ function Profile() {
                   })
               ) : (
                 <p style={{ gridColumn: '1 / -1', textAlign: 'center', color: '#999', padding: '40px' }}>
-                  {t('language') === 'zh' ? '您目前沒有可用的優惠券' : 'You have no available coupons'}
+                  {t('you_have_no_available_coupons')}
                 </p>
               )}
             </div>
@@ -3050,7 +3031,7 @@ function Profile() {
               className="btn btn-secondary"
               style={{ width: '100%' }}
             >
-              {t('language') === 'zh' ? '取消' : 'Cancel'}
+              {t('cancel')}
             </button>
           </div>
         </div>
@@ -3079,7 +3060,7 @@ function Profile() {
             boxShadow: '0 10px 50px rgba(0, 0, 0, 0.3)'
           }}>
             <h2 style={{ color: '#667eea', marginBottom: '20px', textAlign: 'center' }}>
-              {t('language') === 'zh' ? '分享優惠券給新朋友' : 'Share Coupon to New Friends'}
+              {t('share_coupon_to_new_friends')}
             </h2>            <div style={{
               background: '#fff3cd',
               border: '2px solid #ffc107',
@@ -3091,14 +3072,10 @@ function Profile() {
                 <span style={{ fontSize: '20px', marginTop: '2px' }}>ℹ️</span>
                 <div>
                   <p style={{ margin: 0, fontSize: '14px', color: '#856404', fontWeight: '600' }}>
-                    {t('language') === 'zh'
-                      ? '⚠️ 此優惠券僅能分享給尚未加入 LINE 官方帳號的朋友'
-                      : '⚠️ This coupon can only be shared with friends who haven\'t added our LINE Official Account yet'}
+                    {t('this_coupon_can_only_be_shared_with_friends_who_havent_added_our_line_official_account_yet')}
                   </p>
                   <p style={{ margin: '8px 0 0 0', fontSize: '13px', color: '#856404' }}>
-                    {t('language') === 'zh'
-                      ? '當您的朋友透過連結加入並完成註冊後，優惠券將自動加入他們的帳戶。'
-                      : 'When your friend joins via the link and completes registration, the coupon will be automatically added to their account.'}
+                    {t('when_your_friend_joins_via_the_link_and_completes_')}
                   </p>
                 </div>
               </div>
@@ -3136,8 +3113,8 @@ function Profile() {
                   textTransform: 'uppercase'
                 }}>
                   {shareCoupon.type === 'trial'
-                    ? (t('language') === 'zh' ? '體驗券' : 'Trial')
-                    : (t('language') === 'zh' ? '折扣券' : 'Discount')}
+                    ? (t('trial'))
+                    : (t('discount'))}
                 </span>
               </div>
               <h4 style={{ color: '#667eea', marginBottom: '10px' }}>
@@ -3152,17 +3129,17 @@ function Profile() {
               <div style={{ textAlign: 'center', padding: '40px' }}>
                 <div style={{ fontSize: '48px', marginBottom: '20px' }}>⏳</div>
                 <p style={{ color: '#667eea', fontSize: '16px' }}>
-                  {t('language') === 'zh' ? '正在生成分享連結...' : 'Generating share link...'}
+                  {t('generating_share_link')}
                 </p>
               </div>
             ) : shareLink ? (
               <>                <div style={{ textAlign: 'center', marginBottom: '30px' }}>
                   <p style={{ marginBottom: '15px', fontWeight: '600', color: '#333' }}>
-                    {t('language') === 'zh' ? '掃描 QR Code 領取優惠券' : 'Scan QR Code to Claim'}
+                    {t('scan_qr_code_to_claim')}
                   </p>
                   <img
                     src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(shareLink.claimUrl)}`}
-                    alt="QR Code"
+                    alt={t('qrCodeImage')}
                     style={{
                       width: '200px',
                       height: '200px',
@@ -3173,9 +3150,7 @@ function Profile() {
                     }}
                   />
                   <p style={{ marginTop: '10px', fontSize: '12px', color: '#666' }}>
-                    {t('language') === 'zh'
-                      ? '掃描後前往領取頁面，依照指示完成領取'
-                      : 'Scan to visit claim page and follow instructions'}
+                    {t('scan_to_visit_claim_page_and_follow_instructions')}
                   </p>
                 </div>                <div style={{ marginBottom: '20px' }}>
                   <label style={{
@@ -3184,7 +3159,7 @@ function Profile() {
                     fontWeight: '600',
                     color: '#333'
                   }}>
-                    {t('language') === 'zh' ? '或使用此連結分享' : 'Or Share This Link'}
+                    {t('or_share_this_link')}
                   </label>
                   <div style={{ display: 'flex', gap: '10px' }}>
                     <input
@@ -3205,12 +3180,12 @@ function Profile() {
                       className="btn btn-secondary"
                       style={{ whiteSpace: 'nowrap' }}
                     >
-                      {t('language') === 'zh' ? '複製' : 'Copy'}
+                      {t('copy')}
                     </button>
                   </div>
                 </div>                <a
                   href={`https://line.me/R/msg/text/?${encodeURIComponent(
-                    `${t('language') === 'zh' ? '🎁 我分享了一張優惠券給你！\n' : '🎁 I shared a coupon with you!\n'}${shareLink.claimUrl}`
+                    `${t('i_shared_a_coupon_with_youn')}${shareLink.claimUrl}`
                   )}`}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -3238,7 +3213,7 @@ function Profile() {
                     e.currentTarget.style.boxShadow = 'none';
                   }}
                 >
-                  💬 {t('language') === 'zh' ? '透過 LINE 分享給新朋友' : 'Share via LINE to New Friends'}
+                  💬 {t('share_via_line_to_new_friends')}
                 </a>                <div style={{
                   background: '#fff3cd',
                   border: '1px solid #ffc107',
@@ -3259,9 +3234,7 @@ function Profile() {
                   marginBottom: '20px'
                 }}>
                   <p style={{ margin: 0, fontSize: '13px', color: '#004085', lineHeight: '1.6' }}>
-                    {t('language') === 'zh'
-                      ? '💡 收件人點擊連結後需要加入 LINE 官方帳號並完成註冊，優惠券將自動加入他們的帳戶。'
-                      : '💡 Recipients need to add the LINE Official Account and complete registration. The coupon will be automatically added to their account.'}
+                    {t('recipients_need_to_add_the_line_official_account_a')}
                   </p>
                 </div>
               </>
@@ -3276,7 +3249,7 @@ function Profile() {
               className="btn btn-secondary"
               style={{ width: '100%' }}
             >
-              {t('language') === 'zh' ? '關閉' : 'Close'}
+              {t('close')}
             </button>
           </div>
         </div>
@@ -3310,12 +3283,10 @@ function Profile() {
             <div style={{ textAlign: 'center', marginBottom: '30px' }}>
               <div style={{ fontSize: '64px', marginBottom: '15px' }}>✅</div>
               <h2 style={{ color: '#2b8a3e', marginBottom: '10px' }}>
-                {t('language') === 'zh' ? '報名成功！' : 'Enrollment Successful!'}
+                {t('enrollment_successful')}
               </h2>
               <p style={{ color: '#666', fontSize: '14px' }}>
-                {t('language') === 'zh'
-                  ? '請保存以下資訊，並於課程當天出示'
-                  : 'Please save this information and show it on the class day'}
+                {t('please_save_this_information_and_show_it_on_the_cl')}
               </p>
             </div>
 
@@ -3327,14 +3298,14 @@ function Profile() {
               border: '2px solid #d3e0ff'
             }}>
               <h3 style={{ color: '#667eea', marginBottom: '20px', fontSize: '20px', textAlign: 'center' }}>
-                {t('language') === 'zh' ? '報名詳情' : 'Enrollment Details'}
+                {t('enrollment_details')}
               </h3>
 
               <div style={{ marginBottom: '15px', paddingBottom: '15px', borderBottom: '1px solid #e9ecef' }}>
                 <p style={{ fontSize: '14px', color: '#666', marginBottom: '5px' }}>
                   {paymentConfirmationData.type === 'class'
-                    ? (t('language') === 'zh' ? '課程名稱' : 'Class Name')
-                    : (t('language') === 'zh' ? '活動名稱' : 'Activity Name')}
+                    ? (t('class_name'))
+                    : (t('activity_name'))}
                 </p>
                 <p style={{ fontSize: '18px', fontWeight: 'bold', color: '#333' }}>
                   {paymentConfirmationData.itemName}
@@ -3345,11 +3316,11 @@ function Profile() {
                 <>
                   <div style={{ marginBottom: '15px', paddingBottom: '15px', borderBottom: '1px solid #e9ecef' }}>
                     <p style={{ fontSize: '14px', color: '#666', marginBottom: '5px' }}>
-                      {t('language') === 'zh' ? '日期' : 'Date'}
+                      {t('date')}
                     </p>
                     <p style={{ fontSize: '16px', fontWeight: '600', color: '#333' }}>
                       📅 {new Date(paymentConfirmationData.item.date).toLocaleDateString(
-                        t('language') === 'zh' ? 'zh-TW' : 'en-US',
+                        t('en_us'),
                         { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' }
                       )}
                     </p>
@@ -3357,7 +3328,7 @@ function Profile() {
 
                   <div style={{ marginBottom: '15px', paddingBottom: '15px', borderBottom: '1px solid #e9ecef' }}>
                     <p style={{ fontSize: '14px', color: '#666', marginBottom: '5px' }}>
-                      {t('language') === 'zh' ? '時間' : 'Time'}
+                      {t('time')}
                     </p>
                     <p style={{ fontSize: '16px', fontWeight: '600', color: '#333' }}>
                       🕐 {paymentConfirmationData.item.time}
@@ -3367,7 +3338,7 @@ function Profile() {
                   {paymentConfirmationData.item.location && (
                     <div style={{ marginBottom: '15px', paddingBottom: '15px', borderBottom: '1px solid #e9ecef' }}>
                       <p style={{ fontSize: '14px', color: '#666', marginBottom: '5px' }}>
-                        {t('language') === 'zh' ? '地點' : 'Location'}
+                        {t('location')}
                       </p>
                       <p style={{ fontSize: '16px', fontWeight: '600', color: '#333' }}>
                         📍 {paymentConfirmationData.item.location}
@@ -3379,26 +3350,26 @@ function Profile() {
 
               <div style={{ marginBottom: '15px', paddingBottom: '15px', borderBottom: '1px solid #e9ecef' }}>
                 <p style={{ fontSize: '14px', color: '#666', marginBottom: '5px' }}>
-                  {t('language') === 'zh' ? '付款方式' : 'Payment Method'}
+                  {t('payment_method')}
                 </p>
                 <p style={{ fontSize: '16px', fontWeight: '600', color: '#333' }}>
                   {paymentConfirmationData.paymentMethod === 'in-person'
-                    ? (t('language') === 'zh' ? '💵 現場付款' : '💵 Pay in Person')
-                    : (t('language') === 'zh' ? '💳 信用卡' : '💳 Credit Card')}
+                    ? (t('pay_in_person'))
+                    : (t('credit_card'))}
                 </p>
               </div>
 
               {paymentConfirmationData.discount > 0 && (
                 <div style={{ marginBottom: '15px', paddingBottom: '15px', borderBottom: '1px solid #e9ecef' }}>
                   <p style={{ fontSize: '14px', color: '#666', marginBottom: '5px' }}>
-                    {t('language') === 'zh' ? '原價' : 'Original Price'}
+                    {t('original_price')}
                   </p>
                   <p style={{ fontSize: '16px', textDecoration: 'line-through', color: '#999' }}>
                     NT$ {paymentConfirmationData.originalCost}
                   </p>
                   <p style={{ fontSize: '14px', color: '#c92a2a', fontWeight: 'bold', marginTop: '5px' }}>
                     {paymentConfirmationData.couponUsed?.type === 'trial'
-                      ? (t('language') === 'zh' ? '✓ 體驗券已使用（免費）' : '✓ Trial Coupon Applied (Free)')
+                      ? (t('trial_coupon_applied_free'))
                       : (t('language') === 'zh'
                         ? `✓ 折扣券已使用 (-NT$ ${paymentConfirmationData.discount})`
                         : `✓ Discount Applied (-NT$ ${paymentConfirmationData.discount})`)}
@@ -3409,14 +3380,14 @@ function Profile() {
               <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '2px solid #667eea' }}>
                 <p style={{ fontSize: '14px', color: '#666', marginBottom: '5px' }}>
                   {paymentConfirmationData.finalCost === 0
-                    ? (t('language') === 'zh' ? '應付金額' : 'Amount Paid')
+                    ? (t('amount_paid'))
                     : (paymentConfirmationData.paymentMethod === 'in-person'
                       ? (t('language') === 'zh' ? '應付金額' : 'Amount to Pay')
-                      : (t('language') === 'zh' ? '已付金額' : 'Amount Paid'))}
+                      : (t('amount_paid')))}
                 </p>
                 <p style={{ fontSize: '28px', fontWeight: 'bold', color: paymentConfirmationData.finalCost === 0 ? '#2b8a3e' : '#667eea' }}>
                   {paymentConfirmationData.finalCost === 0
-                    ? (t('language') === 'zh' ? '免費' : 'FREE')
+                    ? (t('free'))
                     : `NT$ ${paymentConfirmationData.finalCost}`}
                 </p>
               </div>
@@ -3431,9 +3402,7 @@ function Profile() {
                 marginBottom: '25px'
               }}>
                 <p style={{ margin: 0, fontSize: '15px', color: '#856404', fontWeight: 'bold', textAlign: 'center' }}>
-                  ⚠️ {t('language') === 'zh'
-                    ? '請記得於課程現場繳費'
-                    : 'Please remember to pay at the venue'}
+                  ⚠️ {t('please_remember_to_pay_at_the_venue')}
                 </p>
               </div>
             )}
@@ -3446,9 +3415,7 @@ function Profile() {
               marginBottom: '25px'
             }}>
               <p style={{ margin: 0, fontSize: '14px', color: '#004085', lineHeight: '1.6' }}>
-                💡 {t('language') === 'zh'
-                  ? '請於上課當天出示此確認資訊。您也可以在個人檔案的「我的課程」中查看報名記錄。'
-                  : 'Please show this confirmation when you arrive for class. You can also view your enrollment in "My Courses" in your profile.'}
+                💡 {t('please_show_this_confirmation_when_you_arrive_for_class_you_can_also_view_your_enrollment_in_my_courses')}
               </p>
             </div>
 
@@ -3460,7 +3427,7 @@ function Profile() {
               className="btn btn-primary"
               style={{ width: '100%', padding: '15px', fontSize: '16px' }}
             >
-              {t('language') === 'zh' ? '完成' : 'Done'}
+              {t('done')}
             </button>
           </div>
         </div>
@@ -3494,12 +3461,10 @@ function Profile() {
             <div style={{ textAlign: 'center', marginBottom: '30px' }}>
               <div style={{ fontSize: '64px', marginBottom: '15px' }}>⭐</div>
               <h2 style={{ color: '#667eea', marginBottom: '10px' }}>
-                {t('language') === 'zh' ? '升級為協會會員' : 'Upgrade to Association Member'}
+                {t('upgrade_to_association_member')}
               </h2>
               <p style={{ color: '#666', fontSize: '14px' }}>
-                {t('language') === 'zh'
-                  ? '選擇付款方式並完成升級'
-                  : 'Choose payment method and complete upgrade'}
+                {t('choose_payment_method_and_complete_upgrade')}
               </p>
             </div>
 
@@ -3511,7 +3476,7 @@ function Profile() {
               border: '2px solid #d3e0ff'
             }}>
               <h3 style={{ color: '#667eea', marginBottom: '20px', fontSize: '18px' }}>
-                {t('language') === 'zh' ? '升級費用' : 'Upgrade Fee'}
+                {t('upgrade_fee')}
               </h3>
 
               <div style={{
@@ -3522,10 +3487,10 @@ function Profile() {
                 marginBottom: '20px'
               }}>
                 <div style={{ fontWeight: 'bold', fontSize: '18px', marginBottom: '8px', color: '#495057' }}>
-                  {t('language') === 'zh' ? '年費' : 'Annual Fee'}
+                  {t('annual_fee')}
                 </div>
                 <div style={{ fontSize: '16px', color: '#666', marginBottom: '15px' }}>
-                  NT$ 3,000 / {t('language') === 'zh' ? '年' : 'year'}
+                  NT$ 3,000 / {t('year')}
                 </div>
               </div>
 
@@ -3536,14 +3501,14 @@ function Profile() {
                 padding: '15px'
               }}>
                 <p style={{ margin: 0, fontSize: '16px', color: '#856404', fontWeight: 'bold', textAlign: 'center' }}>
-                  💰 {t('language') === 'zh' ? '應付金額：' : 'Amount to Pay: '}
+                  💰 {t('amount_to_pay')}
                   NT$ 3,000
                 </p>
               </div>
             </div>
 
             <h3 style={{ marginBottom: '15px', fontSize: '16px', color: '#495057' }}>
-              {t('language') === 'zh' ? '選擇付款方式' : 'Choose Payment Method'}
+              {t('choose_payment_method')}
             </h3>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginBottom: '25px' }}>
@@ -3572,7 +3537,7 @@ function Profile() {
                     console.error('Membership upgrade error:', error);
                     setMessage({
                       type: 'error',
-                      text: error.response?.data?.message || (t('language') === 'zh' ? '升級失敗' : 'Upgrade failed')
+                      text: error.response?.data?.message || (t('upgrade_failed'))
                     });
                   } finally {
                     setProcessingUpgrade(false);
@@ -3590,9 +3555,9 @@ function Profile() {
                 }}
               >
                 {processingUpgrade ? (
-                  t('language') === 'zh' ? '⏳ 處理中...' : '⏳ Processing...'
+                  t('processing')
                 ) : (
-                  <>💵 {t('language') === 'zh' ? '現場付款' : 'Pay in Person'}</>
+                  <>💵 {t('pay_in_person')}</>
                 )}
               </button>
 
@@ -3610,7 +3575,7 @@ function Profile() {
                   cursor: 'not-allowed'
                 }}
               >
-                💳 {t('language') === 'zh' ? '信用卡（施工中）' : 'Credit Card (Under Construction)'}
+                💳 {t('credit_card_under_construction')}
               </button>
 
               <button
@@ -3627,7 +3592,7 @@ function Profile() {
                   cursor: 'not-allowed'
                 }}
               >
-                💚 {t('language') === 'zh' ? 'LINE Pay（施工中）' : 'LINE Pay (Under Construction)'}
+                💚 {t('line_pay_under_construction')}
               </button>
             </div>
 
@@ -3639,9 +3604,7 @@ function Profile() {
               marginBottom: '20px'
             }}>
               <p style={{ margin: 0, fontSize: '13px', color: '#004085', lineHeight: '1.6' }}>
-                ℹ️ {t('language') === 'zh'
-                  ? '升級後將立即享有協會會員權益。請保存此確認資訊，並於現場出示繳費。'
-                  : 'You will immediately enjoy association member benefits after upgrading. Please save this confirmation and show it when paying in person.'}
+                ℹ️ {t('you_will_immediately_enjoy_association_member_bene')}
               </p>
             </div>
 
@@ -3654,7 +3617,7 @@ function Profile() {
               style={{ width: '100%', padding: '12px', fontSize: '14px' }}
               disabled={processingUpgrade}
             >
-              {t('language') === 'zh' ? '取消' : 'Cancel'}
+              {t('cancel')}
             </button>
           </div>
         </div>
@@ -3713,12 +3676,12 @@ function Profile() {
               border: '2px solid #d3e0ff'
             }}>
               <h3 style={{ color: '#667eea', marginBottom: '20px', fontSize: '20px', textAlign: 'center' }}>
-                {t('language') === 'zh' ? '升級詳情' : 'Upgrade Details'}
+                {t('upgrade_details')}
               </h3>
 
               <div style={{ marginBottom: '15px', paddingBottom: '15px', borderBottom: '1px solid #e9ecef' }}>
                 <p style={{ fontSize: '14px', color: '#666', marginBottom: '5px' }}>
-                  {t('language') === 'zh' ? '升級至' : 'Upgrade To'}
+                  {t('upgrade_to')}
                 </p>
                 <p style={{ fontSize: '18px', fontWeight: 'bold', color: '#333' }}>
                   ⭐ 協會會員
@@ -3727,10 +3690,10 @@ function Profile() {
 
               <div style={{ marginBottom: '15px', paddingBottom: '15px', borderBottom: '1px solid #e9ecef' }}>
                 <p style={{ fontSize: '14px', color: '#666', marginBottom: '5px' }}>
-                  {t('language') === 'zh' ? '付款方式' : 'Payment Method'}
+                  {t('payment_method')}
                 </p>
                 <p style={{ fontSize: '16px', fontWeight: '600', color: '#333' }}>
-                  💵 {t('language') === 'zh' ? '現場付款' : 'Pay in Person'}
+                  💵 {t('pay_in_person')}
                 </p>
               </div>
 
@@ -3753,12 +3716,10 @@ function Profile() {
                 marginBottom: '25px'
               }}>
                 <p style={{ margin: 0, fontSize: '15px', color: '#856404', fontWeight: 'bold', marginBottom: '10px' }}>
-                  ⚠️ {t('language') === 'zh' ? '重要提醒' : 'Important Notice'}
+                  ⚠️ {t('important_notice')}
                 </p>
                 <p style={{ margin: 0, fontSize: '14px', color: '#856404', lineHeight: '1.6' }}>
-                  {t('language') === 'zh'
-                    ? '1. 請於現場繳費 NT$ 3,000\n2. 繳費後，管理員將確認並更新您的會員狀態\n3. 確認後您將享有協會會員權益'
-                    : '1. Please pay NT$ 3,000 in person\n2. After payment, admin will confirm and update your membership status\n3. You will enjoy association member benefits after confirmation'}
+                  {t('1_please_pay_nt_3000_in_personn2_after_payment_adm')}
                 </p>
               </div>
             )}
@@ -3771,9 +3732,7 @@ function Profile() {
               marginBottom: '25px'
             }}>
               <p style={{ margin: 0, fontSize: '14px', color: '#004085', lineHeight: '1.6' }}>
-                💡 {t('language') === 'zh'
-                  ? '您可以在個人檔案中查看會籍狀態。'
-                  : 'You can view your membership status in your profile.'}
+                💡 {t('you_can_view_your_membership_status_in_your_profil')}
               </p>
             </div>
 
@@ -3785,7 +3744,7 @@ function Profile() {
               className="btn btn-primary"
               style={{ width: '100%', padding: '15px', fontSize: '16px' }}
             >
-              {t('language') === 'zh' ? '完成' : 'Done'}
+              {t('done')}
             </button>
           </div>
         </div>
@@ -3818,16 +3777,16 @@ function Profile() {
             overflowY: 'auto'
           }}>
             <h3 style={{ marginBottom: '20px', color: '#667eea' }}>
-              {t('language') === 'zh' ? '會議詳情' : 'Meeting Details'}
+              {t('meeting_details')}
             </h3>
 
             <div style={{ marginBottom: '20px' }}>
               <h4 style={{ fontSize: '18px', marginBottom: '15px' }}>{showMeetingDetails.agenda}</h4>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                <p><strong>{t('language') === 'zh' ? '日期' : 'Date'}:</strong> {new Date(showMeetingDetails.date).toLocaleDateString('zh-TW')}</p>
-                <p><strong>{t('language') === 'zh' ? '時間' : 'Time'}:</strong> {showMeetingDetails.time}</p>
-                <p><strong>{t('language') === 'zh' ? '類型' : 'Type'}:</strong> {showMeetingDetails.memberType}</p>
+                <p><strong>{t('date')}:</strong> {new Date(showMeetingDetails.date).toLocaleDateString('zh-TW')}</p>
+                <p><strong>{t('time')}:</strong> {showMeetingDetails.time}</p>
+                <p><strong>{t('type')}:</strong> {showMeetingDetails.memberType}</p>
 
                 {showMeetingDetails.meetingType === 'in-person' && showMeetingDetails.location && (
                   <>
@@ -3849,7 +3808,7 @@ function Profile() {
 
                 {showMeetingDetails.meetingType === 'zoom' && showMeetingDetails.zoomUrl && (
                   <div>
-                    <p><strong>{t('language') === 'zh' ? 'Zoom 連結' : 'Zoom URL'}:</strong></p>
+                    <p><strong>{t('zoom_url')}:</strong></p>
                     <a
                       href={showMeetingDetails.zoomUrl}
                       target="_blank"
@@ -3876,12 +3835,10 @@ function Profile() {
                     marginTop: '10px'
                   }}>
                     <p style={{ margin: 0, color: '#856404', fontSize: '14px', fontWeight: 'bold' }}>
-                      ⚠️ {t('language') === 'zh' ? '強制參加會議' : 'Mandatory Meeting'}
+                      ⚠️ {t('mandatory_meeting')}
                     </p>
                     <p style={{ margin: '5px 0 0 0', color: '#856404', fontSize: '12px' }}>
-                      {t('language') === 'zh'
-                        ? '會員必須出席或提交請假表'
-                        : 'Members must attend or submit absence form'}
+                      {t('members_must_attend_or_submit_absence_form')}
                     </p>
                   </div>
                 )}
@@ -3893,7 +3850,7 @@ function Profile() {
               className="btn btn-primary"
               style={{ width: '100%' }}
             >
-              {t('language') === 'zh' ? '關閉' : 'Close'}
+              {t('close')}
             </button>
           </div>
         </div>
@@ -3923,7 +3880,7 @@ function Profile() {
             boxShadow: '0 10px 40px rgba(0,0,0,0.2)'
           }}>
             <h3 style={{ marginBottom: '20px', color: '#667eea' }}>
-              {t('language') === 'zh' ? '提交請假表' : 'Submit Absence Form'}
+              {t('submit_absence_form')}
             </h3>
 
             <div style={{
@@ -3934,11 +3891,11 @@ function Profile() {
               marginBottom: '20px'
             }}>
               <p style={{ margin: 0, fontSize: '14px', color: '#856404', lineHeight: '1.6' }}>
-                <strong>{t('language') === 'zh' ? '請按照以下步驟：' : 'Please follow these steps:'}</strong>
+                <strong>{t('please_follow_these_steps')}</strong>
               </p>
               <ol style={{ margin: '10px 0 0 20px', padding: 0, fontSize: '14px', color: '#856404' }}>
                 <li>
-                  {t('language') === 'zh' ? '下載請假表範本' : 'Download the absence form template'}
+                  {t('download_the_absence_form_template')}
                   <br />
                   <a
                     href="/forms/absence-form-template.docx"
@@ -3951,12 +3908,12 @@ function Profile() {
                       display: 'inline-block'
                     }}
                   >
-                    📥 {t('language') === 'zh' ? '點擊下載表格' : 'Click to download form'}
+                    📥 {t('click_to_download_form')}
                   </a>
                 </li>
-                <li>{t('language') === 'zh' ? '列印並填寫表格' : 'Print and fill out the form'}</li>
-                <li>{t('language') === 'zh' ? '拍攝填妥表格的清晰照片' : 'Take a clear photo of the completed form'}</li>
-                <li>{t('language') === 'zh' ? '上傳照片' : 'Upload the photo'}</li>
+                <li>{t('print_and_fill_out_the_form')}</li>
+                <li>{t('take_a_clear_photo_of_the_completed_form')}</li>
+                <li>{t('upload_the_photo')}</li>
               </ol>
             </div>
 
@@ -3967,7 +3924,7 @@ function Profile() {
                 fontWeight: 'bold',
                 color: '#333'
               }}>
-                {t('language') === 'zh' ? '上傳請假表照片' : 'Upload Form Photo'}
+                {t('upload_form_photo')}
               </label>
               <input
                 type="file"
@@ -3982,20 +3939,18 @@ function Profile() {
                 }}
               />
               <p style={{ fontSize: '12px', color: '#666', marginTop: '5px' }}>
-                {t('language') === 'zh'
-                  ? '支援格式：JPG, PNG｜最大 5MB'
-                  : 'Supported formats: JPG, PNG | Max 5MB'}
+                {t('supported_formats_jpg_png_max_5mb')}
               </p>
             </div>
 
             {absenceFormImage && (
               <div style={{ marginBottom: '20px' }}>
                 <p style={{ fontWeight: 'bold', marginBottom: '10px' }}>
-                  {t('language') === 'zh' ? '預覽：' : 'Preview:'}
+                  {t('preview')}
                 </p>
                 <img
                   src={absenceFormImage}
-                  alt="Form preview"
+                  alt={t('formPreview')}
                   style={{
                     width: '100%',
                     maxHeight: '300px',
@@ -4015,8 +3970,8 @@ function Profile() {
                 style={{ flex: 1 }}
               >
                 {uploadingAbsenceForm
-                  ? (t('language') === 'zh' ? '上傳中...' : 'Uploading...')
-                  : (t('language') === 'zh' ? '提交' : 'Submit')
+                  ? (t('uploading'))
+                  : (t('submit'))
                 }
               </button>
               <button
@@ -4029,7 +3984,7 @@ function Profile() {
                 disabled={uploadingAbsenceForm}
                 style={{ flex: 1 }}
               >
-                {t('language') === 'zh' ? '取消' : 'Cancel'}
+                {t('cancel')}
               </button>
             </div>
           </div>
