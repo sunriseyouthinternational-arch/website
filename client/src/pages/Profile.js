@@ -571,35 +571,6 @@ function Profile() {
       console.log('[Profile] LIFF initialized successfully');
       setLiffReady(true);
 
-      // Set up listener for login status changes (handles redirect-back from liff.login)
-      window.liff.onLoginStatusUpdate((isLoggedIn) => {
-        console.log('[Profile] LIFF login status updated:', isLoggedIn);
-        if (isLoggedIn) {
-          console.log('[Profile] User now logged in, fetching profile...');
-          window.liff.getProfile().then(profile => {
-            console.log('[Profile] Got profile after login:', profile.displayName);
-
-            // Save to localStorage for persistent login
-            const userCache = {
-              userId: profile.userId,
-              displayName: profile.displayName,
-              pictureUrl: profile.pictureUrl,
-              lastUpdated: new Date().toISOString()
-            };
-            localStorage.setItem('lineUserCache', JSON.stringify(userCache));
-
-            setLineUserId(profile.userId);
-            setLineProfile(profile);
-            setIsLoggedIn(true);
-
-            fetchOrCreateMember(profile.userId, profile);
-          }).catch(err => {
-            console.error('[Profile] Error getting profile after login:', err);
-            setLoading(false);
-          });
-        }
-      });
-
       const isLoggedIn = window.liff.isLoggedIn();
       console.log('[Profile] Login status:', isLoggedIn);
 
