@@ -93,8 +93,14 @@ function CouponClaim() {
       console.error('Error status:', err.response?.status);
       console.error('Error data:', err.response?.data);
 
+      // Check if member has completed classes
+      if (err.response?.data?.hasCompletedClasses) {
+        setError(err.response.data.message);
+        setStatus('completed_classes');
+        setLoading(false);
+      }
       // Check if already registered
-      if (err.response?.data?.alreadyRegistered) {
+      else if (err.response?.data?.alreadyRegistered) {
         setError(err.response.data.message);
         setStatus('already_registered');
         setLoading(false);
@@ -263,6 +269,46 @@ function CouponClaim() {
             }}
           >
             {t('view_my_coupons')}
+          </a>
+        </div>
+      </div>
+    );
+  }
+
+  if (status === 'completed_classes') {
+    return (
+      <div className="container">
+        <div className="card" style={{ textAlign: 'center', padding: '60px 20px' }}>
+          <div style={{ fontSize: '64px', marginBottom: '20px' }}>📚</div>
+          <h2 style={{ color: '#d32f2f', marginBottom: '15px' }}>
+            {t('coupon_not_eligible')}
+          </h2>
+          <p style={{ color: '#666', fontSize: '16px', marginBottom: '25px' }}>
+            {error || (t('coupons_for_members_with_no_completed_classes'))}
+          </p>
+          <a
+            href="/profile"
+            style={{
+              display: 'inline-block',
+              padding: '12px 30px',
+              background: '#667eea',
+              color: 'white',
+              borderRadius: '8px',
+              textDecoration: 'none',
+              fontWeight: 'bold',
+              fontSize: '16px',
+              transition: 'all 0.3s ease'
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.background = '#5568d3';
+              e.currentTarget.style.transform = 'translateY(-2px)';
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.background = '#667eea';
+              e.currentTarget.style.transform = 'translateY(0)';
+            }}
+          >
+            {t('go_to_my_profile')}
           </a>
         </div>
       </div>
