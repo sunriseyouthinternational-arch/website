@@ -295,6 +295,45 @@ function Profile() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Handle return from LIFF login redirect
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden && liffReady && window.liff) {
+        const isLoggedIn = window.liff.isLoggedIn();
+        console.log('[Profile] Page became visible, checking LIFF status:', isLoggedIn);
+
+        if (isLoggedIn && !lineUserId) {
+          // User has logged in while page was hidden (came back from LIFF redirect)
+          console.log('[Profile] User logged in after redirect, fetching profile...');
+          window.liff.getProfile().then(profile => {
+            console.log('[Profile] Got profile after redirect:', profile.displayName);
+
+            // Save to localStorage for persistent login
+            const userCache = {
+              userId: profile.userId,
+              displayName: profile.displayName,
+              pictureUrl: profile.pictureUrl,
+              lastUpdated: new Date().toISOString()
+            };
+            localStorage.setItem('lineUserCache', JSON.stringify(userCache));
+
+            setLineUserId(profile.userId);
+            setLineProfile(profile);
+            setIsLoggedIn(true);
+
+            fetchOrCreateMember(profile.userId, profile);
+          }).catch(err => {
+            console.error('[Profile] Error getting profile after redirect:', err);
+            setLoading(false);
+          });
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [liffReady, lineUserId]);
+
   useEffect(() => {
     if (tabFromUrl === 'courses' || tabFromUrl === 'classes') {
       setActiveTab('classes');
@@ -570,35 +609,6 @@ function Profile() {
       await window.liff.init({ liffId });
       console.log('[Profile] LIFF initialized successfully');
       setLiffReady(true);
-
-      // Set up listener for login status changes (handles redirect-back from liff.login)
-      window.liff.onLoginStatusUpdate((isLoggedIn) => {
-        console.log('[Profile] LIFF login status updated:', isLoggedIn);
-        if (isLoggedIn) {
-          console.log('[Profile] User now logged in, fetching profile...');
-          window.liff.getProfile().then(profile => {
-            console.log('[Profile] Got profile after login:', profile.displayName);
-
-            // Save to localStorage for persistent login
-            const userCache = {
-              userId: profile.userId,
-              displayName: profile.displayName,
-              pictureUrl: profile.pictureUrl,
-              lastUpdated: new Date().toISOString()
-            };
-            localStorage.setItem('lineUserCache', JSON.stringify(userCache));
-
-            setLineUserId(profile.userId);
-            setLineProfile(profile);
-            setIsLoggedIn(true);
-
-            fetchOrCreateMember(profile.userId, profile);
-          }).catch(err => {
-            console.error('[Profile] Error getting profile after login:', err);
-            setLoading(false);
-          });
-        }
-      });
 
       const isLoggedIn = window.liff.isLoggedIn();
       console.log('[Profile] Login status:', isLoggedIn);

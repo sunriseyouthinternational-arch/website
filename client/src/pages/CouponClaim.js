@@ -194,20 +194,6 @@ function CouponClaim() {
 
         console.log('Token for claiming:', claimToken);
 
-        // Set up listener for login status changes (handles redirect-back from liff.login)
-        window.liff.onLoginStatusUpdate((isLoggedIn) => {
-          console.log('LIFF login status updated:', isLoggedIn);
-          if (isLoggedIn) {
-            console.log('User now logged in, attempting auto-claim');
-            window.liff.getProfile().then(profile => {
-              attemptAutoClaim(profile.userId, claimToken);
-            }).catch(err => {
-              console.error('Error getting profile after login:', err);
-              setLoading(false);
-            });
-          }
-        });
-
         // Check if user is logged in to LINE
         if (window.liff.isLoggedIn()) {
           const profile = await window.liff.getProfile();
@@ -233,6 +219,40 @@ function CouponClaim() {
     initializeLiff();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
+
+  // Handle return from LIFF login redirect
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden && window.liff) {
+        const isLoggedIn = window.liff.isLoggedIn();
+        console.log('[CouponClaim] Page became visible, checking LIFF status:', isLoggedIn);
+
+        if (isLoggedIn && !loading) {
+          // User has logged in while page was hidden (came back from LIFF redirect)
+          console.log('[CouponClaim] User logged in after redirect, attempting auto-claim');
+
+          // Get the claim token from localStorage
+          let claimToken = localStorage.getItem('couponClaimToken');
+          if (!claimToken) {
+            claimToken = token;
+          }
+
+          if (claimToken) {
+            window.liff.getProfile().then(profile => {
+              console.log('[CouponClaim] Got profile after redirect, attempting auto-claim');
+              attemptAutoClaim(profile.userId, claimToken);
+            }).catch(err => {
+              console.error('[CouponClaim] Error getting profile after redirect:', err);
+              setLoading(false);
+            });
+          }
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [token, loading]);
 
   const getLineAddFriendUrl = () => {
     const lineChannelId = process.env.REACT_APP_LINE_CHANNEL_ID || '@907xmpck';
