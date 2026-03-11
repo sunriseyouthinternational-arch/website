@@ -667,7 +667,7 @@ function Profile() {
     setSubmittingRegistration(true);
     setMessage({ type: '', text: '' });
 
-    if (!registrationData.name || !registrationData.contact.mobile || !registrationData.contact.lineId) {
+    if (!registrationData.name || !registrationData.contact.mobile) {
       setMessage({
         type: 'error',
         text: t('please_fill_in_all_required_fields')
@@ -1148,7 +1148,7 @@ function Profile() {
 
             <div style={{ marginBottom: '15px' }}>
               <label style={{ display: 'block', marginBottom: '5px', fontWeight: '600' }}>
-                {t('line_id')}
+                {t('line_id')} <span style={{ color: '#999', fontSize: '0.9em' }}>({t('optional')})</span>
               </label>
               <input
                 type="text"
