@@ -9,13 +9,13 @@ If you've made changes to the rich menu configuration but users don't see the up
 
 ## Solution: Regenerate Rich Menus
 
-Use the `/api/line-regenerate-menus` endpoint to regenerate rich menus for existing members.
+Use the `/api/admin` endpoint with `resource=line-rich-menu&action=regenerate` to regenerate rich menus for existing members.
 
 ### Usage Options
 
 #### 1. Regenerate for ALL Members
 ```bash
-GET https://www.sunriseyouth.org/api/line-regenerate-menus
+GET https://www.sunriseyouth.org/api/admin?resource=line-rich-menu&action=regenerate
 ```
 
 This will:
@@ -26,12 +26,12 @@ This will:
 
 #### 2. Regenerate for Specific Member
 ```bash
-GET https://www.sunriseyouth.org/api/line-regenerate-menus?memberId=M0001
+GET https://www.sunriseyouth.org/api/admin?resource=line-rich-menu&action=regenerate&memberId=M0001
 ```
 
 #### 3. Regenerate by LINE User ID
 ```bash
-GET https://www.sunriseyouth.org/api/line-regenerate-menus?lineUserId=U1234567890abcdef
+GET https://www.sunriseyouth.org/api/admin?resource=line-rich-menu&action=regenerate&lineUserId=U1234567890abcdef
 ```
 
 ## Current Rich Menu Configuration
@@ -81,10 +81,10 @@ GET https://www.sunriseyouth.org/api/line-regenerate-menus?lineUserId=U123456789
 Test the endpoints directly:
 ```bash
 # For specific member
-curl "https://www.sunriseyouth.org/api/line-regenerate-menus?memberId=M0001"
+curl "https://www.sunriseyouth.org/api/admin?resource=line-rich-menu&action=regenerate&memberId=M0001"
 
 # For all members
-curl "https://www.sunriseyouth.org/api/line-regenerate-menus"
+curl "https://www.sunriseyouth.org/api/admin?resource=line-rich-menu&action=regenerate"
 ```
 
 ### 2. Response Format
@@ -172,7 +172,7 @@ If automated regeneration fails, you can manually delete old rich menus:
 
 - `/lib/lineRichMenu.js` - Rich menu creation logic
 - `/api/line-webhook.js` - Handles follow events and messages
-- `/api/line-regenerate-menus.js` - Regeneration endpoint
+- `/api/admin.js` - Admin endpoints including rich menu setup and regeneration
 - `/public/images/rich-menu/richmenu.png` - Rich menu image
 - `/client/src/pages/Profile.js` - Profile page with tabs
 

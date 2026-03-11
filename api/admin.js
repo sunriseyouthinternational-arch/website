@@ -57,6 +57,29 @@ module.exports = async (req, res) => {
       return res.status(200).json({ leaderboard: rankedLeaderboard });
     }
 
+    // Helper for HTTPS requests (used by line-rich-menu actions)
+    function lineRequest(options, body) {
+      return new Promise((resolve, reject) => {
+        const req = require('https').request(options, (res) => {
+          let data = '';
+          res.on('data', (chunk) => { data += chunk; });
+          res.on('end', () => {
+            console.log(`[admin] ${options.path} -> ${res.statusCode}: ${data || '(empty)'}`);
+            if (res.statusCode >= 200 && res.statusCode < 300) {
+              resolve(data ? JSON.parse(data) : {});
+            } else if (res.statusCode === 404) {
+              resolve({ notFound: true });
+            } else {
+              reject(new Error(`${options.path} returned HTTP ${res.statusCode}: ${data}`));
+            }
+          });
+        });
+        req.on('error', reject);
+        if (body) req.write(body);
+        req.end();
+      });
+    }
+
     // LINE Rich Menu setup
     if (resource === 'line-rich-menu' && action === 'setup') {
       try {
@@ -135,31 +158,8 @@ module.exports = async (req, res) => {
           ]
         };
 
-        const https = require('https');
         const fs = require('fs');
         const path = require('path');
-
-        // Helper for HTTPS requests
-        function lineRequest(options, body) {
-          return new Promise((resolve, reject) => {
-            const req = https.request(options, (res) => {
-              let data = '';
-              res.on('data', (chunk) => { data += chunk; });
-              res.on('end', () => {
-                console.log(`[admin] ${options.path} -> ${res.statusCode}: ${data || '(empty)'}`);
-                if (res.statusCode === 200) {
-                  resolve(data ? JSON.parse(data) : {});
-                } else {
-                  reject(new Error(`${options.path} returned HTTP ${res.statusCode}: ${data}`));
-                }
-              });
-            });
-            req.on('error', reject);
-            if (body) req.write(body);
-            req.end();
-          });
-        }
-
         const token = process.env.LINE_CHANNEL_ACCESS_TOKEN;
         const richMenuBody = JSON.stringify(richMenu);
 
@@ -230,6 +230,123 @@ module.exports = async (req, res) => {
           message: 'Failed to create rich menu',
           error: error.message,
           details: error.response?.data || error.toString()
+        });
+      }
+    }
+
+    // LINE Rich Menu regenerate
+    if (resource === 'line-rich-menu' && action === 'regenerate') {
+      try {
+        const token = process.env.LINE_CHANNEL_ACCESS_TOKEN;
+        if (!token) {
+          return res.status(500).json({
+            message: 'LINE_CHANNEL_ACCESS_TOKEN not configured',
+            error: 'Missing environment variable'
+          });
+        }
+
+        const { memberId: queryMemberId, lineUserId } = req.query;
+
+        // Determine which members to process
+        let members = [];
+
+        if (queryMemberId) {
+          // Specific member by memberId
+          const member = await Member.findOne({ memberId: queryMemberId });
+          if (!member) {
+            return res.status(404).json({ success: false, message: 'Member not found' });
+          }
+          members = [member];
+        } else if (lineUserId) {
+          // Specific member by LINE user ID
+          const member = await Member.findOne({ 'line.userId': lineUserId });
+          if (!member) {
+            return res.status(404).json({ success: false, message: 'Member with that LINE ID not found' });
+          }
+          members = [member];
+        } else {
+          // All members with completed registration and LINE accounts
+          members = await Member.find({
+            registrationCompleted: true,
+            'line.userId': { $exists: true, $ne: null }
+          }).lean();
+        }
+
+        const results = [];
+
+        for (const member of members) {
+          console.log(`[admin] Processing member: ${member.memberId} (${member.line?.userId})`);
+
+          try {
+            if (!member.line?.userId) {
+              console.log(`[admin] Skipping ${member.memberId} - no LINE user ID`);
+              results.push({
+                memberId: member.memberId,
+                name: member.name,
+                lineUserId: member.line?.userId,
+                success: false,
+                reason: 'No LINE user ID linked'
+              });
+              continue;
+            }
+
+            // Step 1: Delete any old individual rich menu assignment for this user
+            console.log(`[admin] Step 1: Clearing old rich menu assignment for ${member.memberId}...`);
+            try {
+              await lineRequest({
+                hostname: 'api.line.me',
+                port: 443,
+                path: `/v2/bot/user/${member.line.userId}/richmenu`,
+                method: 'DELETE',
+                headers: {
+                  'Authorization': `Bearer ${token}`,
+                  'Content-Length': 0
+                }
+              });
+              console.log(`[admin] Old rich menu assignment cleared for ${member.memberId}`);
+            } catch (err) {
+              // It's okay if there's no old menu to delete
+              console.log(`[admin] No old menu to delete (${err.message.substring(0, 50)})`);
+            }
+
+            console.log(`[admin] ${member.memberId} regenerated successfully`);
+            results.push({
+              memberId: member.memberId,
+              name: member.name,
+              lineUserId: member.line.userId,
+              success: true
+            });
+          } catch (error) {
+            console.error(`[admin] Error processing ${member.memberId}:`, error.message);
+            results.push({
+              memberId: member.memberId,
+              name: member.name,
+              lineUserId: member.line?.userId,
+              success: false,
+              error: error.message
+            });
+          }
+        }
+
+        const successCount = results.filter(r => r.success).length;
+        const failedCount = results.filter(r => !r.success).length;
+
+        return res.status(200).json({
+          success: true,
+          message: `Processed ${members.length} member(s)`,
+          summary: {
+            total: members.length,
+            success: successCount,
+            failed: failedCount
+          },
+          results
+        });
+      } catch (error) {
+        console.error('[admin] Regenerate error:', error);
+        return res.status(500).json({
+          success: false,
+          message: 'Failed to regenerate rich menus',
+          error: error.message
         });
       }
     }
