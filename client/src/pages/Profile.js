@@ -118,11 +118,16 @@ function Profile() {
     // Default to male if gender is not specified or is "prefer-not-to-say"
     const normalizedGender = !gender || gender === 'prefer-not-to-say' ? '男' : gender;
 
+    let imagePath;
     if (normalizedGender === '女') {
-      return '/images/profile_pics/female.jpg';
+      imagePath = '/images/profile_pics/female.jpg';
+    } else {
+      // Default to male for '男' and any other values
+      imagePath = '/images/profile_pics/male.jpg';
     }
-    // Default to male for '男' and any other values
-    return '/images/profile_pics/male.jpg';
+
+    // Use getImageSrc to ensure proper URL handling (especially for API-served static files)
+    return getImageSrc(imagePath);
   };
 
   // eslint-disable-next-line no-unused-vars
