@@ -114,6 +114,17 @@ function Profile() {
     return `${apiUrl}${imagePath}`;
   };
 
+  const getGenderBasedProfilePic = (gender) => {
+    // Default to male if gender is not specified or is "prefer-not-to-say"
+    const normalizedGender = !gender || gender === 'prefer-not-to-say' ? '男' : gender;
+
+    if (normalizedGender === '女') {
+      return '/images/profile_pics/female.jpg';
+    }
+    // Default to male for '男' and any other values
+    return '/images/profile_pics/male.jpg';
+  };
+
   // eslint-disable-next-line no-unused-vars
   const validateAndSaveSession = async (sessionToken, id) => {
     setLoading(true);
@@ -1367,13 +1378,7 @@ function Profile() {
                 <>
                   <div className="profile-header">
                     <div className="profile-picture-section">
-                      {member.profilePicture ? (
-                        <img src={getImageSrc(member.profilePicture)} alt={t('profile_picture')} className="profile-picture" />
-                      ) : (
-                        <div className="profile-picture-placeholder">
-                          <span>{member.name[0]}</span>
-                        </div>
-                      )}
+                      <img src={getGenderBasedProfilePic(member.gender)} alt={t('profile_picture')} className="profile-picture" />
                     </div>
 
                     <div className="profile-info">
