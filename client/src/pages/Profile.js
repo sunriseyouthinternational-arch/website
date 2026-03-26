@@ -114,6 +114,16 @@ function Profile() {
     return `${apiUrl}${imagePath}`;
   };
 
+  const getGenderBasedProfilePic = (gender) => {
+    // Default to male if gender is not specified or is "prefer-not-to-say"
+    const normalizedGender = !gender || gender === 'prefer-not-to-say' ? '男' : gender;
+
+    if (normalizedGender === '女') {
+      return `${process.env.PUBLIC_URL}/images/profile_pics/female.jpg`;
+    }
+    return `${process.env.PUBLIC_URL}/images/profile_pics/male.jpg`;
+  };
+
   // eslint-disable-next-line no-unused-vars
   const validateAndSaveSession = async (sessionToken, id) => {
     setLoading(true);
@@ -151,8 +161,8 @@ function Profile() {
         axios.get('/api/classes'),
         axios.get('/api/activities')
       ]);
-      const activeClasses = classesRes.data.classes.filter(c => c.status === 'active');
-      const activeActivities = activitiesRes.data.activities.filter(a => a.status === 'active');
+      const activeClasses = classesRes.data.classes.filter(c => c.status === 'upcoming');
+      const activeActivities = activitiesRes.data.activities.filter(a => a.status === 'upcoming');
 
       activeActivities.sort((a, b) => {
         const dateA = new Date(a.date);
@@ -262,36 +272,51 @@ function Profile() {
   useEffect(() => {
     fetchClassesAndActivities();
 
-    // Check localStorage for cached LINE user first (for instant UX)
-    const cachedLineUser = localStorage.getItem('lineUserCache');
-    if (cachedLineUser) {
-      try {
-        const userData = JSON.parse(cachedLineUser);
-        console.log('[Profile] Found cached LINE user, restoring session:', userData.displayName);
+    // Unified initialization that properly coordinates cache check and LIFF init
+    const initializeAuth = async () => {
+      setLoading(true);
+      setMessage({ type: '', text: '' });
 
-        setLineUserId(userData.userId);
-        setLineProfile({
-          userId: userData.userId,
-          displayName: userData.displayName,
-          pictureUrl: userData.pictureUrl
-        });
-        setIsLoggedIn(true);
+      // Check localStorage for cached LINE user first (for instant UX)
+      const cachedLineUser = localStorage.getItem('lineUserCache');
+      let hasCachedUser = false;
 
-        // Fetch member data with cached userId
-        if (userData.userId) {
-          fetchOrCreateMember(userData.userId, {
+      if (cachedLineUser) {
+        try {
+          const userData = JSON.parse(cachedLineUser);
+          console.log('[Profile] Found cached LINE user, restoring session:', userData.displayName);
+
+          setLineUserId(userData.userId);
+          setLineProfile({
+            userId: userData.userId,
             displayName: userData.displayName,
             pictureUrl: userData.pictureUrl
           });
-        }
-      } catch (error) {
-        console.error('[Profile] Failed to parse cached user data:', error);
-        localStorage.removeItem('lineUserCache');
-      }
-    }
+          setIsLoggedIn(true);
+          hasCachedUser = true;
 
-    // Initialize LIFF in background to verify/update session
-    initializeLIFF();
+          // Fetch member data with cached userId
+          if (userData.userId) {
+            await fetchOrCreateMember(userData.userId, {
+              displayName: userData.displayName,
+              pictureUrl: userData.pictureUrl
+            });
+          }
+        } catch (error) {
+          console.error('[Profile] Failed to parse cached user data:', error);
+          localStorage.removeItem('lineUserCache');
+          hasCachedUser = false;
+        }
+      }
+
+      // If we used cached user successfully, skip LIFF init (cache implies already logged in)
+      // Otherwise, initialize LIFF to check/refresh session
+      if (!hasCachedUser) {
+        await initializeLIFF();
+      }
+    };
+
+    initializeAuth();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -592,6 +617,7 @@ function Profile() {
         setLineProfile(profile);
         setIsLoggedIn(true);
 
+        // fetchOrCreateMember will manage loading state
         await fetchOrCreateMember(profile.userId, profile);
       } else {
         console.log('[Profile] User not logged in, clearing cache');
@@ -601,6 +627,8 @@ function Profile() {
         setIsLoggedIn(false);
         setLineUserId(null);
         setLineProfile(null);
+        // Only set loading=false if we're managing it from initializeLIFF
+        // If called from initializeAuth parent, loading is already handled
         setLoading(false);
       }
     } catch (error) {
@@ -649,7 +677,7 @@ function Profile() {
     setSubmittingRegistration(true);
     setMessage({ type: '', text: '' });
 
-    if (!registrationData.name || !registrationData.contact.mobile || !registrationData.contact.lineId) {
+    if (!registrationData.name || !registrationData.contact.mobile) {
       setMessage({
         type: 'error',
         text: t('please_fill_in_all_required_fields')
@@ -1130,7 +1158,7 @@ function Profile() {
 
             <div style={{ marginBottom: '15px' }}>
               <label style={{ display: 'block', marginBottom: '5px', fontWeight: '600' }}>
-                {t('line_id')}
+                {t('line_id')} <span style={{ color: '#999', fontSize: '0.9em' }}>({t('optional')})</span>
               </label>
               <input
                 type="text"
@@ -1349,13 +1377,7 @@ function Profile() {
                 <>
                   <div className="profile-header">
                     <div className="profile-picture-section">
-                      {member.profilePicture ? (
-                        <img src={getImageSrc(member.profilePicture)} alt={t('profile_picture')} className="profile-picture" />
-                      ) : (
-                        <div className="profile-picture-placeholder">
-                          <span>{member.name[0]}</span>
-                        </div>
-                      )}
+                      <img src={getGenderBasedProfilePic(member.gender)} alt={t('profile_picture')} className="profile-picture" />
                     </div>
 
                     <div className="profile-info">

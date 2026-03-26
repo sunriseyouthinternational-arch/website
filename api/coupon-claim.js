@@ -1,5 +1,6 @@
 const connectDB = require('../lib/mongodb');
 const { CouponShareToken, Member, ClassInfo } = require('../db/models');
+const line = require('@line/bot-sdk');
 
 module.exports = async (req, res) => {
   // Set CORS headers
@@ -177,6 +178,28 @@ module.exports = async (req, res) => {
 
         console.log('[Coupon Claim POST] Placeholder member created with pending token');
 
+        // Send LINE message with registration instructions
+        try {
+          const client = new line.messagingApi.MessagingApiClient({
+            channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN
+          });
+
+          const registrationText = `🎉 歡迎！您已掃描優惠券\n\n📋 為了領取此優惠券，請完成會員註冊：\n${process.env.REGISTRATION_URL || 'https://website.example.com'}/profile\n\n點擊上方連結進行註冊，填寫基本資訊後，優惠券將自動添加到您的帳戶！\n\n✨ 如有任何問題，歡迎聯絡我們`;
+
+          console.log('[Coupon Claim POST] Sending registration guide message to new user:', lineUserId);
+          await client.pushMessage({
+            to: lineUserId,
+            messages: [{
+              type: 'text',
+              text: registrationText
+            }]
+          });
+          console.log('[Coupon Claim POST] Registration guide message sent successfully');
+        } catch (messageError) {
+          console.error('[Coupon Claim POST] Error sending registration guide message:', messageError);
+          // Don't fail the API call if message sending fails
+        }
+
         return res.status(404).json({
           message: '找不到會員，請先完成註冊 / Member not found, please complete registration first',
           needsRegistration: true,
@@ -191,6 +214,30 @@ module.exports = async (req, res) => {
         member.pendingCouponToken = claimToken;
         await member.save();
 
+        // Send LINE message with registration instructions
+        if (member.line && member.line.userId) {
+          try {
+            const client = new line.messagingApi.MessagingApiClient({
+              channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN
+            });
+
+            const registrationText = `📋 您需要完成會員註冊以領取優惠券\n\n請點擊下方連結進行註冊：\n${process.env.REGISTRATION_URL || 'https://website.example.com'}/profile\n\n註冊時請填寫您的基本資訊，完成後優惠券將自動添加到您的帳戶！\n\n🎁 尚未加入 LINE 官方帳號嗎？\n點擊下方加入並獲得最新活動資訊`;
+
+            console.log('[Coupon Claim POST] Sending registration guide message to:', member.line.userId);
+            await client.pushMessage({
+              to: member.line.userId,
+              messages: [{
+                type: 'text',
+                text: registrationText
+              }]
+            });
+            console.log('[Coupon Claim POST] Registration guide message sent successfully');
+          } catch (messageError) {
+            console.error('[Coupon Claim POST] Error sending registration guide message:', messageError);
+            // Don't fail the API call if message sending fails
+          }
+        }
+
         return res.status(400).json({
           message: '請先完成註冊 / Please complete registration first',
           needsRegistration: true,
@@ -198,11 +245,37 @@ module.exports = async (req, res) => {
         });
       }
 
-      // Member is already registered - coupons can only be shared to new members
-      console.log('[Coupon Claim POST] Member already registered, rejecting claim');
-      return res.status(400).json({
-        message: '優惠券只能分享給新會員 / Coupons can only be shared to new members',
-        alreadyRegistered: true
+      // Check if member has completed any classes
+      const completedClasses = member.enrollments.filter(
+        e => e.type === 'class' && e.status === 'completed'
+      );
+
+      if (completedClasses.length > 0) {
+        console.log('[Coupon Claim POST] Member has completed classes, rejecting claim:', completedClasses.length);
+        return res.status(400).json({
+          message: '優惠券只能分享給未修過課程的會員 / Coupons can only be shared to members who have not completed any classes',
+          hasCompletedClasses: true,
+          completedClassCount: completedClasses.length
+        });
+      }
+
+      // Member qualifies - has completed 0 classes
+      // For registered members, save as pending coupon token for consistent handling
+      console.log('[Coupon Claim POST] Registered member with 0 completed classes qualifies');
+
+      member.pendingCouponToken = claimToken;
+      await member.save();
+
+      return res.status(200).json({
+        message: '優惠券可領取 / Coupon can be claimed',
+        success: true,
+        coupon: shareToken.couponData,
+        senderName: shareToken.senderName,
+        couponToken: claimToken,
+        member: {
+          memberId: member.memberId,
+          name: member.name
+        }
       });
     }
 

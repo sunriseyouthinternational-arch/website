@@ -80,12 +80,47 @@ function CouponClaim() {
       console.log('Auto-claim response:', response.data);
 
       if (response.data.success) {
-        setStatus('claimed');
-        setCouponData({
-          coupon: response.data.coupon,
-          senderName: response.data.senderName
-        });
-        setLoading(false);
+        // For registered members with 0 completed classes, need to call the claim-pending-coupon action
+        try {
+          console.log('Calling claim-pending-coupon action to finalize coupon claim');
+          const sessionToken = localStorage.getItem('sessionToken');
+          const memberId = response.data.member?.memberId;
+
+          if (memberId) {
+            const claimResponse = await axios.post(`/api/members?memberId=${memberId}&action=claim-pending-coupon`, {
+              pendingToken: response.data.couponToken || token
+            }, {
+              headers: {
+                'Content-Type': 'application/json',
+                ...(sessionToken && { 'Authorization': `Bearer ${sessionToken}` })
+              }
+            });
+
+            console.log('Pending coupon claimed successfully');
+            setStatus('claimed');
+            setCouponData({
+              coupon: claimResponse.data.coupon,
+              senderName: response.data.senderName
+            });
+            setLoading(false);
+          } else {
+            // Fallback if no member ID in response
+            setStatus('claimed');
+            setCouponData({
+              coupon: response.data.coupon,
+              senderName: response.data.senderName
+            });
+            setLoading(false);
+          }
+        } catch (claimError) {
+          console.error('Error finalizing coupon claim:', claimError);
+          setStatus('claimed');
+          setCouponData({
+            coupon: response.data.coupon,
+            senderName: response.data.senderName
+          });
+          setLoading(false);
+        }
       }
     } catch (err) {
       console.error('Auto-claim error:', err);
@@ -93,8 +128,14 @@ function CouponClaim() {
       console.error('Error status:', err.response?.status);
       console.error('Error data:', err.response?.data);
 
+      // Check if member has completed classes
+      if (err.response?.data?.hasCompletedClasses) {
+        setError(err.response.data.message);
+        setStatus('completed_classes');
+        setLoading(false);
+      }
       // Check if already registered
-      if (err.response?.data?.alreadyRegistered) {
+      else if (err.response?.data?.alreadyRegistered) {
         setError(err.response.data.message);
         setStatus('already_registered');
         setLoading(false);
@@ -152,6 +193,20 @@ function CouponClaim() {
         }
 
         console.log('Token for claiming:', claimToken);
+
+        // Set up listener for login status changes (handles redirect-back from liff.login)
+        window.liff.onLoginStatusUpdate((isLoggedIn) => {
+          console.log('LIFF login status updated:', isLoggedIn);
+          if (isLoggedIn) {
+            console.log('User now logged in, attempting auto-claim');
+            window.liff.getProfile().then(profile => {
+              attemptAutoClaim(profile.userId, claimToken);
+            }).catch(err => {
+              console.error('Error getting profile after login:', err);
+              setLoading(false);
+            });
+          }
+        });
 
         // Check if user is logged in to LINE
         if (window.liff.isLoggedIn()) {
@@ -263,6 +318,46 @@ function CouponClaim() {
             }}
           >
             {t('view_my_coupons')}
+          </a>
+        </div>
+      </div>
+    );
+  }
+
+  if (status === 'completed_classes') {
+    return (
+      <div className="container">
+        <div className="card" style={{ textAlign: 'center', padding: '60px 20px' }}>
+          <div style={{ fontSize: '64px', marginBottom: '20px' }}>📚</div>
+          <h2 style={{ color: '#d32f2f', marginBottom: '15px' }}>
+            {t('coupon_not_eligible')}
+          </h2>
+          <p style={{ color: '#666', fontSize: '16px', marginBottom: '25px' }}>
+            {error || (t('coupons_for_members_with_no_completed_classes'))}
+          </p>
+          <a
+            href="/profile"
+            style={{
+              display: 'inline-block',
+              padding: '12px 30px',
+              background: '#667eea',
+              color: 'white',
+              borderRadius: '8px',
+              textDecoration: 'none',
+              fontWeight: 'bold',
+              fontSize: '16px',
+              transition: 'all 0.3s ease'
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.background = '#5568d3';
+              e.currentTarget.style.transform = 'translateY(-2px)';
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.background = '#667eea';
+              e.currentTarget.style.transform = 'translateY(0)';
+            }}
+          >
+            {t('go_to_my_profile')}
           </a>
         </div>
       </div>

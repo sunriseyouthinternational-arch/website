@@ -120,28 +120,36 @@ async function handleFollowEvent(event) {
 
     if (member) {
       console.log('[handleFollowEvent] Existing member re-followed:', member.memberId);
-
-      // Send welcome back message
-      await client.pushMessage({
-        to: lineUserId,
-        messages: [{
-          type: 'text',
-          text: `🎉 歡迎回來！Welcome back!\n\n您的團員編號 Your Member ID:\n${member.memberId}\n\n請造訪我們的網站 Visit our website:\n${baseUrl}/profile`
-        }]
-      });
-      console.log('[handleFollowEvent] Welcome back message sent');
       return;
     }
 
-    // New user - send welcome message
-    console.log('[handleFollowEvent] New user, sending welcome message');
+    // New user - check for pending coupon from coupon claim flow
+    console.log('[handleFollowEvent] New user, checking for pending coupon');
     const profile = await client.getProfile(lineUserId);
+
+    // Look for a placeholder member created during coupon claim attempt
+    const placeholderMember = await Member.findOne({
+      'line.userId': lineUserId,
+      registrationCompleted: false,
+      pendingCouponToken: { $exists: true, $ne: null }
+    });
+
+    let welcomeText;
+    if (placeholderMember) {
+      console.log('[handleFollowEvent] Found pending coupon for user:', placeholderMember.memberId);
+      // User added LINE from coupon scan - send coupon-aware welcome message
+      welcomeText = `🎁 歡迎！您掃描的優惠券已準備好！\nWelcome! Your coupon is ready!\n\n${profile.displayName} 您好！\nHello ${profile.displayName}!\n\n您有一張等待中的優惠券！\nYou have a pending coupon!\n\n請點擊以下連結完成註冊，優惠券將自動添加到您的帳戶：\nPlease click the link below to complete registration, and the coupon will be automatically added:\n\n${baseUrl}/profile\n\n🎉 完成後立即可使用優惠券！\n✨ Use it immediately after registration!`;
+    } else {
+      console.log('[handleFollowEvent] No pending coupon, sending standard welcome message');
+      // Standard welcome message for users who added LINE without coupon context
+      welcomeText = `🎉 歡迎加入晨光國際少年團！\nWelcome to Sunrise Youth International!\n\n${profile.displayName} 您好！\nHello ${profile.displayName}!\n\n請點擊以下連結開始註冊：\nPlease click the link below to register:\n\n${baseUrl}/profile\n\n完成註冊後即可使用所有功能！\nComplete registration to access all features!`;
+    }
 
     await client.pushMessage({
       to: lineUserId,
       messages: [{
         type: 'text',
-        text: `🎉 歡迎加入晨光國際少年團！\nWelcome to Sunrise Youth International!\n\n${profile.displayName} 您好！\nHello ${profile.displayName}!\n\n請點擊以下連結開始註冊：\nPlease click the link below to register:\n\n${baseUrl}/profile\n\n完成註冊後即可使用所有功能！\nComplete registration to access all features!`
+        text: welcomeText
       }]
     });
     console.log('[handleFollowEvent] Welcome message sent');
