@@ -1755,42 +1755,40 @@ function Profile() {
                     borderRadius: '8px',
                     border: '2px solid #f0e0c0'
                   }}>
-                    <h3 style={{ marginBottom: '15px', color: '#667eea', fontSize: '20px' }}>{t('hostInfo')}</h3>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                      <h3 style={{ color: '#667eea', fontSize: '20px', margin: 0 }}>{t('hostInfo')}</h3>
+                      {!editingHostPhoto && (
+                        <button
+                          onClick={() => setEditingHostPhoto(true)}
+                          style={{
+                            background: '#667eea',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '8px',
+                            padding: '8px 16px',
+                            cursor: 'pointer',
+                            fontSize: '14px',
+                            fontWeight: 'bold'
+                          }}
+                        >
+                          ✏️ {t('edit_photo')}
+                        </button>
+                      )}
+                    </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', alignItems: 'center', textAlign: 'center' }}>
-                      <div style={{ position: 'relative' }}>
-                        {selectedClass.teacherId.photo && (
-                          <img
-                            src={getImageSrc(selectedClass.teacherId.photo)}
-                            alt={selectedClass.teacherId.name}
-                            style={{
-                              width: '120px',
-                              height: '120px',
-                              objectFit: 'cover',
-                              borderRadius: '50%',
-                              border: '3px solid #667eea'
-                            }}
-                          />
-                        )}
-                        {!editingHostPhoto && (
-                          <button
-                            onClick={() => setEditingHostPhoto(true)}
-                            style={{
-                              position: selectedClass.teacherId.photo ? 'absolute' : 'relative',
-                              bottom: selectedClass.teacherId.photo ? '0' : 'auto',
-                              right: selectedClass.teacherId.photo ? '0' : 'auto',
-                              background: '#667eea',
-                              color: 'white',
-                              border: 'none',
-                              borderRadius: '8px',
-                              padding: '8px 16px',
-                              cursor: 'pointer',
-                              fontSize: '14px'
-                            }}
-                          >
-                            {selectedClass.teacherId.photo ? '✏️' : t('upload_photo')}
-                          </button>
-                        )}
-                      </div>
+                      {selectedClass.teacherId.photo && (
+                        <img
+                          src={getImageSrc(selectedClass.teacherId.photo)}
+                          alt={selectedClass.teacherId.name}
+                          style={{
+                            width: '120px',
+                            height: '120px',
+                            objectFit: 'cover',
+                            borderRadius: '50%',
+                            border: '3px solid #667eea'
+                          }}
+                        />
+                      )}
                       {editingHostPhoto && (
                         <div style={{ width: '100%', marginTop: '10px' }}>
                           <input
