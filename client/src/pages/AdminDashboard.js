@@ -21,6 +21,9 @@ function AdminDashboard() {
   const [selectedTeacher, setSelectedTeacher] = useState(null);
   const [selectedClassInfo, setSelectedClassInfo] = useState(null);
 
+  const [editingTeacherPhoto, setEditingTeacherPhoto] = useState(false);
+  const [uploadingTeacherPhoto, setUploadingTeacherPhoto] = useState(false);
+
   const [showAddClassInfoForm, setShowAddClassInfoForm] = useState(false);
   const [newClassInfo, setNewClassInfo] = useState({
     name: '',
@@ -704,6 +707,41 @@ function AdminDashboard() {
       console.error('Error deleting teacher:', error);
       setMessage({ type: 'error', text: error.response?.data?.message || t('error') });
     }
+  };
+
+  const handleUpdateTeacherPhoto = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      setMessage({ type: 'error', text: t('image_size_must_be_less_than_2mb') });
+      return;
+    }
+
+    if (!file.type.startsWith('image/')) {
+      setMessage({ type: 'error', text: t('please_upload_an_image_file') });
+      return;
+    }
+
+    setUploadingTeacherPhoto(true);
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      try {
+        await axios.put(`/api/teachers?id=${selectedTeacher._id}`, {
+          photo: reader.result
+        });
+
+        setMessage({ type: 'success', text: t('image_uploaded_successfully') });
+        setSelectedTeacher({ ...selectedTeacher, photo: reader.result });
+        setEditingTeacherPhoto(false);
+        fetchData();
+      } catch (error) {
+        setMessage({ type: 'error', text: error.response?.data?.message || t('update_failed') });
+      } finally {
+        setUploadingTeacherPhoto(false);
+      }
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleAddMeeting = async (e) => {
@@ -2914,8 +2952,8 @@ function AdminDashboard() {
             </button>
           </div>
 
-          {selectedTeacher.photo && (
-            <div style={{ textAlign: 'center', margin: '20px 0' }}>
+          <div style={{ textAlign: 'center', margin: '20px 0' }}>
+            {selectedTeacher.photo && (
               <img
                 src={selectedTeacher.photo}
                 alt={selectedTeacher.name}
@@ -2927,8 +2965,42 @@ function AdminDashboard() {
                   border: '3px solid #667eea'
                 }}
               />
-            </div>
-          )}
+            )}
+            {!editingTeacherPhoto && (
+              <button
+                onClick={() => setEditingTeacherPhoto(true)}
+                className="btn btn-primary"
+                style={{ marginTop: '15px', display: 'block', margin: '15px auto 0' }}
+              >
+                ✏️ {t('change_photo')}
+              </button>
+            )}
+            {editingTeacherPhoto && (
+              <div style={{ marginTop: '15px', maxWidth: '400px', margin: '15px auto 0' }}>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleUpdateTeacherPhoto}
+                  disabled={uploadingTeacherPhoto}
+                  style={{
+                    padding: '10px',
+                    border: '2px dashed #667eea',
+                    borderRadius: '8px',
+                    width: '100%',
+                    cursor: 'pointer'
+                  }}
+                />
+                <button
+                  onClick={() => setEditingTeacherPhoto(false)}
+                  disabled={uploadingTeacherPhoto}
+                  className="btn btn-secondary"
+                  style={{ marginTop: '10px' }}
+                >
+                  {t('cancel')}
+                </button>
+              </div>
+            )}
+          </div>
 
           <div className="member-detail-grid">
             <div className="detail-section">
