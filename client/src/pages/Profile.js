@@ -86,6 +86,9 @@ function Profile() {
   const [loadingMeetings, setLoadingMeetings] = useState(false);
   const [showMeetingDetails, setShowMeetingDetails] = useState(null);
 
+  const [editingHostPhoto, setEditingHostPhoto] = useState(false);
+  const [uploadingHostPhoto, setUploadingHostPhoto] = useState(false);
+
   // eslint-disable-next-line no-unused-vars
   const [liffReady, setLiffReady] = useState(false);
   const [lineUserId, setLineUserId] = useState(null);
@@ -855,6 +858,54 @@ function Profile() {
     }
   };
 
+
+  const handleHostPhotoUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      setMessage({ type: 'error', text: t('image_size_must_be_less_than_2mb') });
+      return;
+    }
+
+    if (!file.type.startsWith('image/')) {
+      setMessage({ type: 'error', text: t('please_upload_an_image_file') });
+      return;
+    }
+
+    setUploadingHostPhoto(true);
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      try {
+        await axios.put(`/api/teachers?id=${selectedClass.teacherId._id}`, {
+          photo: reader.result
+        });
+
+        setMessage({ type: 'success', text: t('image_uploaded_successfully') });
+
+        const updatedClasses = classes.map(c => {
+          if (c._id === selectedClass._id) {
+            return {
+              ...c,
+              teacherId: { ...c.teacherId, photo: reader.result }
+            };
+          }
+          return c;
+        });
+        setClasses(updatedClasses);
+        setSelectedClass({
+          ...selectedClass,
+          teacherId: { ...selectedClass.teacherId, photo: reader.result }
+        });
+        setEditingHostPhoto(false);
+      } catch (error) {
+        setMessage({ type: 'error', text: error.response?.data?.message || t('update_failed') });
+      } finally {
+        setUploadingHostPhoto(false);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
 
   const handleEnroll = async (type, id, name) => {
     if (!member) {
@@ -1707,17 +1758,73 @@ function Profile() {
                     <h3 style={{ marginBottom: '15px', color: '#667eea', fontSize: '20px' }}>{t('hostInfo')}</h3>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', alignItems: 'center', textAlign: 'center' }}>
                       {selectedClass.teacherId.photo && (
-                        <img
-                          src={getImageSrc(selectedClass.teacherId.photo)}
-                          alt={selectedClass.teacherId.name}
-                          style={{
-                            width: '120px',
-                            height: '120px',
-                            objectFit: 'cover',
-                            borderRadius: '50%',
-                            border: '3px solid #667eea'
-                          }}
-                        />
+                        <div style={{ position: 'relative' }}>
+                          <img
+                            src={getImageSrc(selectedClass.teacherId.photo)}
+                            alt={selectedClass.teacherId.name}
+                            style={{
+                              width: '120px',
+                              height: '120px',
+                              objectFit: 'cover',
+                              borderRadius: '50%',
+                              border: '3px solid #667eea'
+                            }}
+                          />
+                          {!editingHostPhoto && (
+                            <button
+                              onClick={() => setEditingHostPhoto(true)}
+                              style={{
+                                position: 'absolute',
+                                bottom: '0',
+                                right: '0',
+                                background: '#667eea',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '50%',
+                                width: '32px',
+                                height: '32px',
+                                cursor: 'pointer',
+                                fontSize: '16px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                              }}
+                            >
+                              ✏️
+                            </button>
+                          )}
+                        </div>
+                      )}
+                      {editingHostPhoto && (
+                        <div style={{ width: '100%', marginTop: '10px' }}>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleHostPhotoUpload}
+                            disabled={uploadingHostPhoto}
+                            style={{
+                              padding: '10px',
+                              border: '2px dashed #667eea',
+                              borderRadius: '8px',
+                              width: '100%',
+                              cursor: 'pointer'
+                            }}
+                          />
+                          <button
+                            onClick={() => setEditingHostPhoto(false)}
+                            disabled={uploadingHostPhoto}
+                            style={{
+                              marginTop: '10px',
+                              padding: '8px 16px',
+                              background: '#ccc',
+                              border: 'none',
+                              borderRadius: '4px',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            {t('cancel')}
+                          </button>
+                        </div>
                       )}
                       <div style={{ width: '100%', textAlign: 'left' }}>
                         <h4 style={{ marginBottom: '10px', fontSize: '18px', textAlign: 'center' }}>{selectedClass.teacherId.name}</h4>
