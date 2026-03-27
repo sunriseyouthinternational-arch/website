@@ -147,7 +147,7 @@ export const translations = {
     end_time_must_be_after_start_time: '結束時間必須晚於開始時間',
     english_name: '英文名',
     english_name_optional: '英文名（選填）',
-    enrolled: '報名日期',
+    enrolled: '已報名',
     enrolled_date: '報名日期',
     enrolled_members: '已報名會員',
     enrollment_details: '報名詳情',

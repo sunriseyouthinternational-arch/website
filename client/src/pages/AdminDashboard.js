@@ -23,6 +23,8 @@ function AdminDashboard() {
 
   const [editingTeacherPhoto, setEditingTeacherPhoto] = useState(false);
   const [uploadingTeacherPhoto, setUploadingTeacherPhoto] = useState(false);
+  const [editingTeacher, setEditingTeacher] = useState(false);
+  const [editTeacherData, setEditTeacherData] = useState({});
 
   const [showAddClassInfoForm, setShowAddClassInfoForm] = useState(false);
   const [newClassInfo, setNewClassInfo] = useState({
@@ -742,6 +744,18 @@ function AdminDashboard() {
       }
     };
     reader.readAsDataURL(file);
+  };
+
+  const handleUpdateTeacher = async () => {
+    try {
+      await axios.put(`/api/teachers?id=${selectedTeacher._id}`, editTeacherData);
+      setMessage({ type: 'success', text: t('update_successful') });
+      setSelectedTeacher({ ...selectedTeacher, ...editTeacherData });
+      setEditingTeacher(false);
+      fetchData();
+    } catch (error) {
+      setMessage({ type: 'error', text: error.response?.data?.message || t('update_failed') });
+    }
   };
 
   const handleAddMeeting = async (e) => {
@@ -2938,18 +2952,55 @@ function AdminDashboard() {
           <div className="detail-header">
             <button
               className="btn btn-secondary"
-              onClick={() => setSelectedTeacher(null)}
+              onClick={() => {
+                setSelectedTeacher(null);
+                setEditingTeacher(false);
+              }}
             >
               ← {t('back_to_list')}
             </button>
             <h3>{t('host_details')}</h3>
-            <button
-              className="btn btn-danger"
-              onClick={() => handleDeleteTeacher(selectedTeacher._id)}
-              style={{ marginLeft: 'auto' }}
-            >
-              {t('delete_')}
-            </button>
+            <div style={{ marginLeft: 'auto', display: 'flex', gap: '10px' }}>
+              {!editingTeacher ? (
+                <button
+                  className="btn btn-primary"
+                  onClick={() => {
+                    setEditingTeacher(true);
+                    setEditTeacherData({
+                      name: selectedTeacher.name,
+                      bio: selectedTeacher.bio || '',
+                      specialties: selectedTeacher.specialties || '',
+                      education: selectedTeacher.education || '',
+                      phone: selectedTeacher.phone || '',
+                      lineId: selectedTeacher.lineId || ''
+                    });
+                  }}
+                >
+                  ✏️ {t('edit')}
+                </button>
+              ) : (
+                <>
+                  <button
+                    className="btn btn-primary"
+                    onClick={handleUpdateTeacher}
+                  >
+                    {t('save')}
+                  </button>
+                  <button
+                    className="btn btn-secondary"
+                    onClick={() => setEditingTeacher(false)}
+                  >
+                    {t('cancel')}
+                  </button>
+                </>
+              )}
+              <button
+                className="btn btn-danger"
+                onClick={() => handleDeleteTeacher(selectedTeacher._id)}
+              >
+                {t('delete_')}
+              </button>
+            </div>
           </div>
 
           <div style={{ textAlign: 'center', margin: '20px 0' }}>
@@ -3007,19 +3058,54 @@ function AdminDashboard() {
               <h4>{t('basic_information')}</h4>
               <div className="detail-row">
                 <strong>{t('name')}:</strong>
-                <span>{selectedTeacher.name}</span>
+                {editingTeacher ? (
+                  <input
+                    type="text"
+                    value={editTeacherData.name}
+                    onChange={(e) => setEditTeacherData({ ...editTeacherData, name: e.target.value })}
+                    style={{ padding: '5px', border: '1px solid #ddd', borderRadius: '4px', width: '100%' }}
+                  />
+                ) : (
+                  <span>{selectedTeacher.name}</span>
+                )}
               </div>
               <div className="detail-row">
                 <strong>{t('specialties')}:</strong>
-                <span>{selectedTeacher.specialties || 'N/A'}</span>
+                {editingTeacher ? (
+                  <input
+                    type="text"
+                    value={editTeacherData.specialties}
+                    onChange={(e) => setEditTeacherData({ ...editTeacherData, specialties: e.target.value })}
+                    style={{ padding: '5px', border: '1px solid #ddd', borderRadius: '4px', width: '100%' }}
+                  />
+                ) : (
+                  <span>{selectedTeacher.specialties || 'N/A'}</span>
+                )}
               </div>
               <div className="detail-row">
                 <strong>{t('education')}:</strong>
-                <span>{selectedTeacher.education || 'N/A'}</span>
+                {editingTeacher ? (
+                  <input
+                    type="text"
+                    value={editTeacherData.education}
+                    onChange={(e) => setEditTeacherData({ ...editTeacherData, education: e.target.value })}
+                    style={{ padding: '5px', border: '1px solid #ddd', borderRadius: '4px', width: '100%' }}
+                  />
+                ) : (
+                  <span>{selectedTeacher.education || 'N/A'}</span>
+                )}
               </div>
               <div className="detail-row">
                 <strong>{t('bio')}:</strong>
-                <span>{selectedTeacher.bio || 'N/A'}</span>
+                {editingTeacher ? (
+                  <textarea
+                    value={editTeacherData.bio}
+                    onChange={(e) => setEditTeacherData({ ...editTeacherData, bio: e.target.value })}
+                    style={{ padding: '5px', border: '1px solid #ddd', borderRadius: '4px', width: '100%', minHeight: '60px' }}
+                  />
+                ) : (
+                  <span>{selectedTeacher.bio || 'N/A'}</span>
+                )}
               </div>
             </div>
 
@@ -3028,11 +3114,29 @@ function AdminDashboard() {
               <h4>{t('contact_information')}</h4>
               <div className="detail-row">
                 <strong>{t('phone')}:</strong>
-                <span>{selectedTeacher.phone || 'N/A'}</span>
+                {editingTeacher ? (
+                  <input
+                    type="text"
+                    value={editTeacherData.phone}
+                    onChange={(e) => setEditTeacherData({ ...editTeacherData, phone: e.target.value })}
+                    style={{ padding: '5px', border: '1px solid #ddd', borderRadius: '4px', width: '100%' }}
+                  />
+                ) : (
+                  <span>{selectedTeacher.phone || 'N/A'}</span>
+                )}
               </div>
               <div className="detail-row">
                 <strong>LINE ID:</strong>
-                <span>{selectedTeacher.lineId || 'N/A'}</span>
+                {editingTeacher ? (
+                  <input
+                    type="text"
+                    value={editTeacherData.lineId}
+                    onChange={(e) => setEditTeacherData({ ...editTeacherData, lineId: e.target.value })}
+                    style={{ padding: '5px', border: '1px solid #ddd', borderRadius: '4px', width: '100%' }}
+                  />
+                ) : (
+                  <span>{selectedTeacher.lineId || 'N/A'}</span>
+                )}
               </div>
             </div>
           </div>
