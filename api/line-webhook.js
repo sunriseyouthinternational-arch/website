@@ -147,12 +147,18 @@ async function handleFollowEvent(event) {
 
     await client.pushMessage({
       to: lineUserId,
-      messages: [{
-        type: 'text',
-        text: welcomeText
-      }]
+      messages: [
+        {
+          type: 'text',
+          text: welcomeText
+        },
+        {
+          type: 'text',
+          text: '👋 傳送一個貼圖跟我們打聲招呼吧！\n👋 Send us a sticker to say hello!'
+        }
+      ]
     });
-    console.log('[handleFollowEvent] Welcome message sent');
+    console.log('[handleFollowEvent] Welcome messages sent');
   } catch (error) {
     console.error('[handleFollowEvent] Error:', error);
 
@@ -202,7 +208,7 @@ async function handleMessageEvent(event) {
         to: lineUserId,
         messages: [{
           type: 'text',
-          text: '請先完成註冊。\nPlease complete registration first.'
+          text: '您好！歡迎來到晨光國際少年團！✨\n請先完成註冊，即可開始使用所有功能！\n\nHello! Welcome to Sunrise Youth International! ✨\nPlease complete your registration to get started!'
         }]
       });
       return;
@@ -293,7 +299,7 @@ async function handlePostbackEvent(event) {
           to: lineUserId,
           messages: [{
             type: 'text',
-            text: `💬 請先完成註冊後即可分享推薦碼。\nPlease complete registration first to share your referral code.\n\n點擊以下連結開始註冊：\nClick the link below to register:\n\n${process.env.BASE_URL}/profile`
+            text: `您好！歡迎來到晨光國際少年團！✨\n請先完成註冊，即可開始使用所有功能！\n\nHello! Welcome to Sunrise Youth International! ✨\nPlease complete your registration to get started!\n\n${process.env.BASE_URL}/profile`
           }]
         });
         return;
