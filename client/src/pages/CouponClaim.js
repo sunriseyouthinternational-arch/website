@@ -18,7 +18,7 @@ function CouponClaim() {
   }, [token]);
 
   const initializeLiff = async () => {
-    const liffId = process.env.REACT_APP_LIFF_ID;
+    const liffId = process.env.REACT_APP_LIFF_ID || process.env.REACT_APP_LIFF_ID_PROFILE;
 
     if (!liffId) {
       setError(t('language') === 'zh' ? '系統設定錯誤，請聯繫管理員' : 'System configuration error');
