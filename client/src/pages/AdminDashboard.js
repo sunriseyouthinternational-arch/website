@@ -1250,8 +1250,11 @@ function AdminDashboard() {
         <button className={`tab-button ${activeTab === 'members' ? 'active' : ''}`} onClick={() => setActiveTab('members')}>
           {t('memberManagement')}
         </button>
-        <button className={`tab-button ${activeTab === 'items' ? 'active' : ''}`} onClick={() => setActiveTab('items')}>
-          {t('class_and_activity')}
+        <button className={`tab-button ${activeTab === 'classes' ? 'active' : ''}`} onClick={() => setActiveTab('classes')}>
+          {t('class_management')}
+        </button>
+        <button className={`tab-button ${activeTab === 'activities' ? 'active' : ''}`} onClick={() => setActiveTab('activities')}>
+          {t('activity_management')}
         </button>
         <button className={`tab-button ${activeTab === 'teachers' ? 'active' : ''}`} onClick={() => setActiveTab('teachers')}>
           {t('host_management')}
@@ -1846,7 +1849,7 @@ function AdminDashboard() {
         </div>
       )}
 
-      {activeTab === 'items' && selectedClassInfo && (
+      {activeTab === 'classes' && selectedClassInfo && (
         <div className="card">
           <div className="detail-header">
             <button
@@ -1974,9 +1977,9 @@ function AdminDashboard() {
         </div>
       )}
 
-      {activeTab === 'items' && !selectedItem && !selectedClassInfo && (
+      {activeTab === 'classes' && !selectedItem && !selectedClassInfo && (
         <div className="card">
-          <h3>{t('class_and_activity_management')}</h3>          <div className="items-section" style={{ marginTop: '30px' }}>
+          <h3>{t('class_management')}</h3>          <div className="items-section" style={{ marginTop: '30px' }}>
             <div className="section-header">
               <h4 style={{ color: '#667eea' }}>
                 {t('classInformation')} ({classInfos.length})
@@ -2339,7 +2342,14 @@ function AdminDashboard() {
                 </div>
               ))}
             </div>
-          </div>          <div className="items-section" style={{ marginTop: '40px' }}>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'activities' && !selectedItem && (
+        <div className="card">
+          <h3>{t('activity_management')}</h3>
+          <div className="items-section" style={{ marginTop: '40px' }}>
             <div className="section-header">
               <h4 style={{ color: '#667eea' }}>
                 {t('activities')} ({activities.length})
@@ -2627,7 +2637,7 @@ function AdminDashboard() {
         </div>
       )}
 
-      {activeTab === 'items' && selectedItem && (
+      {(activeTab === 'classes' || activeTab === 'activities') && selectedItem && (
         <div className="card">
           <div className="detail-header">
             <button
