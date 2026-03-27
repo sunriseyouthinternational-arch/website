@@ -155,9 +155,9 @@ module.exports = async (req, res) => {
               altText: `新課程：${classInfo.name}`,
               contents: {
                 type: 'bubble',
-                hero: classInfo.banner ? {
+                hero: classInfo.banner && classInfo.banner.startsWith('http') ? {
                   type: 'image',
-                  url: classInfo.banner.startsWith('http') || classInfo.banner.startsWith('data:') ? classInfo.banner : `${process.env.BASE_URL}${classInfo.banner}`,
+                  url: classInfo.banner,
                   size: 'full',
                   aspectRatio: '20:13',
                   aspectMode: 'cover'
