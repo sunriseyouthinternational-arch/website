@@ -146,10 +146,105 @@ module.exports = async (req, res) => {
         if (sendLineAnnouncement) {
           try {
             const axios = require('axios');
-            const message = `📢 新課程通知\n\n課程：${classInfo.name}\n日期：${new Date(date).toLocaleDateString('zh-TW')}\n時間：${time}\n地點：${location || '待定'}\n\n請至官方帳號查看詳情並報名！`;
+
+            const flexMessage = {
+              type: 'flex',
+              altText: `新課程：${classInfo.name}`,
+              contents: {
+                type: 'bubble',
+                hero: classInfo.banner ? {
+                  type: 'image',
+                  url: classInfo.banner.startsWith('http') ? classInfo.banner : `${process.env.BASE_URL || 'https://your-domain.com'}${classInfo.banner}`,
+                  size: 'full',
+                  aspectRatio: '20:13',
+                  aspectMode: 'cover'
+                } : undefined,
+                body: {
+                  type: 'box',
+                  layout: 'vertical',
+                  contents: [
+                    {
+                      type: 'text',
+                      text: classInfo.name,
+                      weight: 'bold',
+                      size: 'xl',
+                      wrap: true
+                    },
+                    {
+                      type: 'box',
+                      layout: 'vertical',
+                      margin: 'lg',
+                      spacing: 'sm',
+                      contents: [
+                        {
+                          type: 'box',
+                          layout: 'baseline',
+                          spacing: 'sm',
+                          contents: [
+                            { type: 'text', text: '📅', size: 'sm', flex: 0 },
+                            { type: 'text', text: new Date(date).toLocaleDateString('zh-TW'), size: 'sm', color: '#666666', flex: 5, wrap: true }
+                          ]
+                        },
+                        {
+                          type: 'box',
+                          layout: 'baseline',
+                          spacing: 'sm',
+                          contents: [
+                            { type: 'text', text: '⏰', size: 'sm', flex: 0 },
+                            { type: 'text', text: time, size: 'sm', color: '#666666', flex: 5, wrap: true }
+                          ]
+                        },
+                        location ? {
+                          type: 'box',
+                          layout: 'baseline',
+                          spacing: 'sm',
+                          contents: [
+                            { type: 'text', text: '📍', size: 'sm', flex: 0 },
+                            { type: 'text', text: location, size: 'sm', color: '#666666', flex: 5, wrap: true }
+                          ]
+                        } : undefined,
+                        {
+                          type: 'box',
+                          layout: 'baseline',
+                          spacing: 'sm',
+                          contents: [
+                            { type: 'text', text: '👥', size: 'sm', flex: 0 },
+                            { type: 'text', text: `名額：${classInfo.maxParticipants}人`, size: 'sm', color: '#666666', flex: 5 }
+                          ]
+                        },
+                        classInfo.description ? {
+                          type: 'text',
+                          text: classInfo.description,
+                          size: 'sm',
+                          color: '#999999',
+                          margin: 'md',
+                          wrap: true
+                        } : undefined
+                      ].filter(Boolean)
+                    }
+                  ]
+                },
+                footer: {
+                  type: 'box',
+                  layout: 'vertical',
+                  spacing: 'sm',
+                  contents: [
+                    {
+                      type: 'button',
+                      style: 'primary',
+                      action: {
+                        type: 'uri',
+                        label: '查看詳情',
+                        uri: `${process.env.BASE_URL || 'https://your-domain.com'}/profile?tab=classes&classId=${classItem._id}`
+                      }
+                    }
+                  ]
+                }
+              }
+            };
 
             await axios.post('https://api.line.me/v2/bot/message/broadcast', {
-              messages: [{ type: 'text', text: message }]
+              messages: [flexMessage]
             }, {
               headers: {
                 'Content-Type': 'application/json',
