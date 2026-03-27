@@ -1804,6 +1804,56 @@ function Profile() {
                 </div>
               )}
 
+              {isEnrolled('class', selectedClass._id) && (
+                <div style={{
+                  background: '#f8f9ff',
+                  padding: '20px',
+                  borderRadius: '8px',
+                  border: '2px solid #e0e8ff',
+                  marginBottom: '20px'
+                }}>
+                  <h3 style={{ marginBottom: '15px', color: '#667eea' }}>{t('enrollment_summary')}</h3>
+                  {selectedClass.participants
+                    .filter(p => p.memberId.toString() === member._id.toString())
+                    .map((p, idx) => {
+                      const itemCost = selectedClass.classInfoId?.cost || 0;
+                      const discount = p.couponDiscount || 0;
+                      const final = Math.max(0, itemCost - discount);
+                      return (
+                        <div key={idx} style={{ marginBottom: '10px', paddingBottom: '10px', borderBottom: idx < selectedClass.participants.filter(p => p.memberId.toString() === member._id.toString()).length - 1 ? '1px solid #e0e8ff' : 'none' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span>{p.memberName}</span>
+                            <span>
+                              {discount > 0 ? (
+                                <>
+                                  <span style={{ textDecoration: 'line-through', color: '#999', fontSize: '14px' }}>NT$ {itemCost}</span>
+                                  {' '}
+                                  <span style={{ color: final === 0 ? '#2b8a3e' : '#667eea', fontWeight: 'bold' }}>NT$ {final}</span>
+                                </>
+                              ) : (
+                                <span>NT$ {itemCost}</span>
+                              )}
+                            </span>
+                          </div>
+                          {discount > 0 && (
+                            <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
+                              ✓ {t('coupon_applied')}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  <div style={{ marginTop: '15px', paddingTop: '15px', borderTop: '2px solid #667eea', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontWeight: 'bold', fontSize: '18px' }}>
+                    <span>{t('total')}</span>
+                    <span style={{ color: '#667eea' }}>
+                      NT$ {selectedClass.participants
+                        .filter(p => p.memberId.toString() === member._id.toString())
+                        .reduce((sum, p) => sum + Math.max(0, (selectedClass.classInfoId?.cost || 0) - (p.couponDiscount || 0)), 0)}
+                    </span>
+                  </div>
+                </div>
+              )}
+
               <div style={{ display: 'flex', gap: '15px', justifyContent: 'center' }}>
                 {isEnrolled('class', selectedClass._id) ? (
                   <button className="btn btn-secondary" disabled>{t('enrolled')}</button>
