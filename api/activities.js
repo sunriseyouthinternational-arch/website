@@ -157,15 +157,15 @@ module.exports = async (req, res) => {
         // Update enrollment status when activity status changes
         if (req.body.status === 'completed') {
           await Member.updateMany(
-            { 'enrollments.itemId': mongoose.Types.ObjectId(id) },
+            { 'enrollments.itemId': new mongoose.Types.ObjectId(id) },
             { $set: { 'enrollments.$[elem].status': 'completed' } },
-            { arrayFilters: [{ 'elem.itemId': mongoose.Types.ObjectId(id) }] }
+            { arrayFilters: [{ 'elem.itemId': new mongoose.Types.ObjectId(id) }] }
           );
         } else if (req.body.status === 'cancelled') {
           await Member.updateMany(
-            { 'enrollments.itemId': mongoose.Types.ObjectId(id) },
+            { 'enrollments.itemId': new mongoose.Types.ObjectId(id) },
             { $set: { 'enrollments.$[elem].status': 'cancelled' } },
-            { arrayFilters: [{ 'elem.itemId': mongoose.Types.ObjectId(id) }] }
+            { arrayFilters: [{ 'elem.itemId': new mongoose.Types.ObjectId(id) }] }
           );
         }
 

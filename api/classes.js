@@ -308,16 +308,16 @@ module.exports = async (req, res) => {
         if (req.body.status === 'completed') {
           console.log('Updating enrollment status to completed for class:', id);
           const result = await Member.updateMany(
-            { 'enrollments.itemId': mongoose.Types.ObjectId(id) },
+            { 'enrollments.itemId': new mongoose.Types.ObjectId(id) },
             { $set: { 'enrollments.$[elem].status': 'completed' } },
-            { arrayFilters: [{ 'elem.itemId': mongoose.Types.ObjectId(id) }] }
+            { arrayFilters: [{ 'elem.itemId': new mongoose.Types.ObjectId(id) }] }
           );
           console.log('Update result:', result);
         } else if (req.body.status === 'cancelled') {
           const result = await Member.updateMany(
-            { 'enrollments.itemId': mongoose.Types.ObjectId(id) },
+            { 'enrollments.itemId': new mongoose.Types.ObjectId(id) },
             { $set: { 'enrollments.$[elem].status': 'cancelled' } },
-            { arrayFilters: [{ 'elem.itemId': mongoose.Types.ObjectId(id) }] }
+            { arrayFilters: [{ 'elem.itemId': new mongoose.Types.ObjectId(id) }] }
           );
           console.log('Update result:', result);
         }
