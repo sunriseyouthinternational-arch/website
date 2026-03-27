@@ -38,6 +38,7 @@ module.exports = async (req, res) => {
 
       // Handle coupon redemption
       let couponUsed = null;
+      let couponDiscount = 0;
       if (couponId) {
         const coupon = member.coupons.id(couponId);
 
@@ -56,6 +57,9 @@ module.exports = async (req, res) => {
           if (coupon.classInfoId.toString() !== classItem.classInfoId._id.toString()) {
             return res.status(400).json({ message: '此優惠券不適用於本課程 / This coupon is not valid for this class' });
           }
+          couponDiscount = classItem.classInfoId.cost;
+        } else {
+          couponDiscount = Math.round(classItem.classInfoId.cost * coupon.discountPercent / 100);
         }
         // Discount coupons are valid for all classes
 
@@ -72,7 +76,8 @@ module.exports = async (req, res) => {
         memberId: member._id,
         memberName: member.name,
         paid: false,
-        paymentMethod: paymentMethod || 'in-person'
+        paymentMethod: paymentMethod || 'in-person',
+        couponDiscount
       });
 
       // Add family members
@@ -80,19 +85,18 @@ module.exports = async (req, res) => {
       familyMembers.forEach(fmIndex => {
         const familyMember = member.familyMembers[fmIndex];
         if (familyMember) {
-          classItem.participants.push({
-            memberId: member._id,
-            memberName: `${familyMember.name} (${member.name}的家人)`,
-            paid: false,
-            paymentMethod: paymentMethod || 'in-person',
-            isFamilyMember: true
-          });
+          let fmCouponDiscount = 0;
 
           // Handle family member coupon
           const fmCouponId = familyMemberCoupons[fmIndex];
           if (fmCouponId) {
             const fmCoupon = member.coupons.id(fmCouponId);
             if (fmCoupon && fmCoupon.usedCount < fmCoupon.quantity) {
+              if (fmCoupon.type === 'trial') {
+                fmCouponDiscount = classItem.classInfoId.cost;
+              } else {
+                fmCouponDiscount = Math.round(classItem.classInfoId.cost * fmCoupon.discountPercent / 100);
+              }
               fmCoupon.usedCount += 1;
               familyCouponsUsed.push({
                 name: fmCoupon.name,
@@ -101,6 +105,15 @@ module.exports = async (req, res) => {
               });
             }
           }
+
+          classItem.participants.push({
+            memberId: member._id,
+            memberName: `${familyMember.name} (${member.name}的家人)`,
+            paid: false,
+            paymentMethod: paymentMethod || 'in-person',
+            isFamilyMember: true,
+            couponDiscount: fmCouponDiscount
+          });
         }
       });
 

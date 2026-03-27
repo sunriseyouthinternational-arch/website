@@ -2952,12 +2952,20 @@ function AdminDashboard() {
                       <th>{t('name')}</th>
                       <th>{t('enrolled_date')}</th>
                       <th>{t('payment_method')}</th>
+                      <th>{t('cost')}</th>
                       <th>{t('payment')}</th>
                       <th>{t('action')}</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {selectedItem.participants.map(participant => (
+                    {selectedItem.participants.map(participant => {
+                      const itemCost = selectedItem.type === 'class'
+                        ? selectedItem.classInfoId?.cost || 0
+                        : selectedItem.cost || 0;
+                      const couponDiscount = participant.couponDiscount || 0;
+                      const finalCost = Math.max(0, itemCost - couponDiscount);
+
+                      return (
                       <tr key={participant._id}>
                         <td>
                           {members.find(m => m._id === participant.memberId)?.memberId || 'N/A'}
@@ -2993,6 +3001,20 @@ function AdminDashboard() {
                           </select>
                         </td>
                         <td>
+                          {couponDiscount > 0 ? (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                              <span style={{ textDecoration: 'line-through', color: '#999', fontSize: '12px' }}>
+                                NT$ {itemCost}
+                              </span>
+                              <span style={{ color: finalCost === 0 ? '#2b8a3e' : '#667eea', fontWeight: 'bold' }}>
+                                NT$ {finalCost}
+                              </span>
+                            </div>
+                          ) : (
+                            <span>NT$ {itemCost}</span>
+                          )}
+                        </td>
+                        <td>
                           <span className={`status-badge ${participant.paid ? 'paid' : 'unpaid'}`}>
                             {participant.paid
                               ? (t('paid'))
@@ -3020,7 +3042,8 @@ function AdminDashboard() {
                           </button>
                         </td>
                       </tr>
-                    ))}
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
