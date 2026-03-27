@@ -152,7 +152,7 @@ module.exports = async (req, res) => {
 
             const flexMessage = {
               type: 'flex',
-              altText: `新課程：${classInfo.name}`,
+              altText: `📢 新課程通知：${classInfo.name}`,
               contents: {
                 type: 'bubble',
                 hero: classInfo.banner && classInfo.banner.startsWith('http') ? {
@@ -168,10 +168,18 @@ module.exports = async (req, res) => {
                   contents: [
                     {
                       type: 'text',
+                      text: '📢 新課程通知',
+                      weight: 'bold',
+                      size: 'md',
+                      color: '#1DB446'
+                    },
+                    {
+                      type: 'text',
                       text: classInfo.name,
                       weight: 'bold',
                       size: 'xl',
-                      wrap: true
+                      wrap: true,
+                      margin: 'md'
                     },
                     {
                       type: 'box',
@@ -197,15 +205,15 @@ module.exports = async (req, res) => {
                             { type: 'text', text: time, size: 'sm', color: '#666666', flex: 5, wrap: true }
                           ]
                         },
-                        location ? {
+                        {
                           type: 'box',
                           layout: 'baseline',
                           spacing: 'sm',
                           contents: [
-                            { type: 'text', text: '📍', size: 'sm', flex: 0 },
-                            { type: 'text', text: location, size: 'sm', color: '#666666', flex: 5, wrap: true }
+                            { type: 'text', text: '📍 地點', size: 'sm', flex: 0 },
+                            { type: 'text', text: location || '待定', size: 'sm', color: '#666666', flex: 5, wrap: true }
                           ]
-                        } : undefined,
+                        },
                         {
                           type: 'box',
                           layout: 'baseline',
@@ -222,7 +230,15 @@ module.exports = async (req, res) => {
                           color: '#999999',
                           margin: 'md',
                           wrap: true
-                        } : undefined
+                        } : undefined,
+                        {
+                          type: 'text',
+                          text: '請至官方帳號查看詳情並報名！',
+                          size: 'sm',
+                          color: '#1DB446',
+                          margin: 'md',
+                          wrap: true
+                        }
                       ].filter(Boolean)
                     }
                   ]
@@ -237,7 +253,7 @@ module.exports = async (req, res) => {
                       style: 'primary',
                       action: {
                         type: 'uri',
-                        label: '查看詳情',
+                        label: '查看詳情並報名',
                         uri: `${process.env.BASE_URL}/profile?tab=classes&classId=${classItem._id}`
                       }
                     }
