@@ -1595,9 +1595,41 @@ function AdminDashboard() {
                 </div>
               )}
             </div>
-          </div>
 
-          {selectedMember.enrollments && selectedMember.enrollments.length > 0 && (
+            {selectedMember.familyMembers && selectedMember.familyMembers.length > 0 && (
+              <div className="detail-section">
+                <h4>{t('familyMembers')}</h4>
+                {selectedMember.familyMembers.map((fm, idx) => (
+                  <div key={idx} style={{
+                    padding: '15px',
+                    background: '#f8f9fa',
+                    borderRadius: '8px',
+                    marginBottom: '10px',
+                    border: '1px solid #dee2e6'
+                  }}>
+                    <div className="detail-row">
+                      <strong>{t('name')}:</strong>
+                      <span>{fm.name}</span>
+                    </div>
+                    {fm.englishAlias && (
+                      <div className="detail-row">
+                        <strong>{t('englishAlias')}:</strong>
+                        <span>{fm.englishAlias}</span>
+                      </div>
+                    )}
+                    <div className="detail-row">
+                      <strong>{t('gender')}:</strong>
+                      <span>{fm.gender}</span>
+                    </div>
+                    <div className="detail-row">
+                      <strong>{t('birthDate')}:</strong>
+                      <span>{formatDate(fm.birthDate)}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
             <div className="detail-section" style={{ marginTop: '30px' }}>
               <h4>{t('enrollment_history')}</h4>
               <div className="table-container">

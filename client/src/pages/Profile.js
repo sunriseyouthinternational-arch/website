@@ -1544,13 +1544,12 @@ function Profile() {
                   </div>
 
                   <div className="form-group">
-                    <label>{t('lineId')} *</label>
+                    <label>{t('lineId')} <span style={{ color: '#999', fontSize: '0.9em' }}>({t('optional')})</span></label>
                     <input
                       type="text"
                       name="contact.lineId"
                       value={editFormData.contact.lineId}
                       onChange={handleEditChange}
-                      required
                     />
                   </div>
 
