@@ -163,10 +163,10 @@ function Profile() {
         axios.get('/api/classes'),
         axios.get('/api/activities')
       ]);
-      const activeClasses = classesRes.data.classes.filter(c => c.status === 'upcoming');
-      const activeActivities = activitiesRes.data.activities.filter(a => a.status === 'upcoming');
+      const allClasses = classesRes.data.classes;
+      const allActivities = activitiesRes.data.activities;
 
-      activeActivities.sort((a, b) => {
+      allActivities.sort((a, b) => {
         const dateA = new Date(a.date);
         const dateB = new Date(b.date);
 
@@ -186,8 +186,8 @@ function Profile() {
         return timeA.localeCompare(timeB);
       });
 
-      setClasses(activeClasses);
-      setActivities(activeActivities);
+      setClasses(allClasses);
+      setActivities(allActivities);
     } catch (error) {
       console.error('Error fetching classes/activities:', error);
     }
@@ -217,7 +217,7 @@ function Profile() {
   };
 
   const getFilteredClasses = () => {
-    let filtered = [...classes];
+    let filtered = classes.filter(c => c.status === 'upcoming');
 
     if (selectedClassInfo !== 'all') {
       filtered = filtered.filter(c => c.classInfoId?._id === selectedClassInfo);
@@ -2152,7 +2152,7 @@ function Profile() {
 
                 <h4 className="section-subtitle">{t('availableActivities')}</h4>
                 <div className="grid">
-                  {activities.map((activity) => (
+                  {activities.filter(a => a.status === 'upcoming').map((activity) => (
                     <div key={activity._id} className="item-card">
                       <h4>{activity.name}</h4>
                       {activity.banner && (
