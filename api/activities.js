@@ -23,57 +23,15 @@ module.exports = async (req, res) => {
         return res.status(404).json({ message: '找不到團員 / Member not found' });
       }
 
-      const totalEnrolling = 1 + familyMembers.length;
+      // Only enroll family members, not the member themselves
+      const totalEnrolling = familyMembers.length;
+      if (totalEnrolling === 0) {
+        return res.status(400).json({ message: '請至少選擇一位家庭成員 / Please select at least one family member' });
+      }
+
       if (activity.currentParticipants + totalEnrolling > activity.maxParticipants) {
         return res.status(400).json({ message: '活動名額不足 / Not enough spots available' });
       }
-
-      const alreadyEnrolled = activity.participants.some(
-        p => p.memberId.toString() === member._id.toString()
-      );
-
-      if (alreadyEnrolled) {
-        return res.status(400).json({ message: '已經報名此活動 / Already enrolled in this activity' });
-      }
-
-      // Handle coupon redemption
-      let couponUsed = null;
-      let couponDiscount = 0;
-      if (couponId) {
-        const coupon = member.coupons.id(couponId);
-
-        if (!coupon) {
-          return res.status(404).json({ message: '找不到優惠券 / Coupon not found' });
-        }
-
-        // Check if coupon has remaining uses
-        if (coupon.usedCount >= coupon.quantity) {
-          return res.status(400).json({ message: '優惠券已用完 / Coupon has been fully used' });
-        }
-
-        // Validate coupon type - only discount coupons work for activities
-        if (coupon.type === 'trial') {
-          return res.status(400).json({ message: '體驗券僅適用於課程 / Trial coupons are only valid for classes' });
-        }
-
-        couponDiscount = Math.round(activity.cost * coupon.discountPercent / 100);
-
-        // Increment usedCount
-        coupon.usedCount += 1;
-        couponUsed = {
-          name: coupon.name,
-          type: coupon.type,
-          discountPercent: coupon.discountPercent
-        };
-      }
-
-      activity.participants.push({
-        memberId: member._id,
-        memberName: member.name,
-        paid: false,
-        paymentMethod: paymentMethod || 'in-person',
-        couponDiscount
-      });
 
       // Add family members
       const familyCouponsUsed = [];
@@ -123,15 +81,15 @@ module.exports = async (req, res) => {
       await member.save();
 
       let message = '報名成功！';
-      if (couponUsed) {
-        message += `已使用 ${couponUsed.discountPercent}% 折扣券。`;
+      if (familyCouponsUsed.length > 0) {
+        message += '已使用優惠券。';
       } else {
         message += '請記得於活動現場繳費。';
       }
       message += ' / Enrollment successful!';
 
-      if (couponUsed) {
-        message += ` ${couponUsed.discountPercent}% discount coupon applied.`;
+      if (familyCouponsUsed.length > 0) {
+        message += ' Coupons applied.';
       } else {
         message += ' Please remember to pay at the venue.';
       }
@@ -139,7 +97,6 @@ module.exports = async (req, res) => {
       return res.status(200).json({
         message,
         activity,
-        couponUsed,
         familyCouponsUsed
       });
     }

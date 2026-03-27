@@ -892,6 +892,13 @@ function Profile() {
   const handleCompleteEnrollment = async (paymentMethod, coupon = null) => {
     setCompletingEnrollment(true);
     try {
+      // If no family members selected, show error
+      if (selectedFamilyMembers.length === 0) {
+        setMessage({ type: 'error', text: t('please_select_at_least_one_person') });
+        setCompletingEnrollment(false);
+        return;
+      }
+
       const endpoint = checkoutData.type === 'class'
         ? `/api/classes?id=${checkoutData.id}&action=enroll`
         : `/api/activities?id=${checkoutData.id}&action=enroll`;
@@ -901,26 +908,16 @@ function Profile() {
         paymentMethod,
         couponId: coupon?._id,
         familyMembers: selectedFamilyMembers,
-        familyMemberCoupons
+        familyMemberCoupons,
+        enrollSelfOnly: false
       });
 
       // Calculate final price
-      let originalCost = checkoutData.cost * (1 + selectedFamilyMembers.length);
+      let originalCost = checkoutData.cost * selectedFamilyMembers.length;
       let finalCost = originalCost;
       let discount = 0;
 
-      if (response.data.couponUsed) {
-        if (response.data.couponUsed.type === 'trial') {
-          finalCost = checkoutData.cost * selectedFamilyMembers.length;
-          discount = checkoutData.cost;
-        } else {
-          discount = Math.round(checkoutData.cost * response.data.couponUsed.discountPercent / 100);
-          finalCost = originalCost - discount;
-        }
-      }
-
-      // Add family member coupon discounts
-      if (response.data.familyCouponsUsed) {
+      if (response.data.familyCouponsUsed && response.data.familyCouponsUsed.length > 0) {
         response.data.familyCouponsUsed.forEach(fmCoupon => {
           if (fmCoupon.type === 'trial') {
             finalCost -= checkoutData.cost;
@@ -941,7 +938,7 @@ function Profile() {
         originalCost,
         finalCost,
         discount,
-        couponUsed: response.data.couponUsed,
+        familyCouponsUsed: response.data.familyCouponsUsed,
         paymentMethod,
         familyMembersCount: selectedFamilyMembers.length
       });
@@ -951,7 +948,6 @@ function Profile() {
 
       setShowCheckout(false);
       setCheckoutData(null);
-      setSelectedCoupon(null);
       setSelectedFamilyMembers([]);
       setFamilyMemberCoupons({});
 
@@ -2901,7 +2897,7 @@ function Profile() {
                 border: '2px solid #ffd700'
               }}>
                 <h4 style={{ color: '#667eea', marginBottom: '15px' }}>
-                  {t('language') === 'zh' ? '同時為家庭成員報名？' : 'Enroll Family Members?'}
+                  {t('language') === 'zh' ? '選擇要報名的家庭成員' : 'Select Family Members to Enroll'}
                 </h4>
                 {member.familyMembers.map((fm, index) => {
                   const availableCoupons = member.coupons.filter(c => {
@@ -2965,85 +2961,20 @@ function Profile() {
               </h3>
               <p style={{ fontSize: '18px', marginBottom: '8px' }}>
                 <strong>{t('cost')}</strong>
-                {selectedCoupon ? (
-                  <>
-                    {selectedCoupon.type === 'trial' ? (
-                      <>
-                        <span style={{ color: '#2b8a3e', fontWeight: 'bold' }}>
-                          {t('free_trial_coupon')}
-                        </span>
-                        {selectedFamilyMembers.length > 0 && (
-                          <>
-                            {' + '}
-                            <span style={{ fontWeight: 'bold', color: '#667eea' }}>
-                              NT$ {checkoutData.cost * selectedFamilyMembers.length}
-                            </span>
-                            <span style={{ fontSize: '14px', color: '#666' }}>
-                              {' '}({selectedFamilyMembers.length} {t('language') === 'zh' ? '位家庭成員' : 'family member(s)'})
-                            </span>
-                          </>
-                        )}
-                      </>
-                    ) : (
-                      <>
-                        <span style={{ textDecoration: 'line-through', color: '#999' }}>
-                          NT$ {checkoutData.cost * (1 + selectedFamilyMembers.length)}
-                        </span>
-                        {' → '}
-                        <span style={{ color: '#c92a2a', fontWeight: 'bold' }}>
-                          NT$ {Math.round(checkoutData.cost * (100 - selectedCoupon.discountPercent) / 100) + (checkoutData.cost * selectedFamilyMembers.length)}
-                        </span>
-                        <span style={{ color: '#c92a2a', fontSize: '14px' }}>
-                          {' '}({selectedCoupon.discountPercent}% {t('off')})
-                        </span>
-                      </>
-                    )}
-                  </>
-                ) : (
-                  <>
-                    <span style={{ fontWeight: 'bold', color: '#667eea' }}>
-                      NT$ {checkoutData.cost * (1 + selectedFamilyMembers.length)}
-                    </span>
-                    {selectedFamilyMembers.length > 0 && (
-                      <span style={{ fontSize: '14px', color: '#666' }}>
-                        {' '}({1 + selectedFamilyMembers.length} {t('language') === 'zh' ? '人' : 'person(s)'})
-                      </span>
-                    )}
-                  </>
+                <span style={{ fontWeight: 'bold', color: '#667eea' }}>
+                  NT$ {checkoutData.cost * selectedFamilyMembers.length}
+                </span>
+                {selectedFamilyMembers.length > 0 && (
+                  <span style={{ fontSize: '14px', color: '#666' }}>
+                    {' '}({selectedFamilyMembers.length} {t('language') === 'zh' ? '人' : 'person(s)'})
+                  </span>
                 )}
               </p>
-              {selectedCoupon && (
-                <div style={{
-                  marginTop: '15px',
-                  padding: '15px',
-                  background: 'white',
-                  borderRadius: '8px',
-                  border: '2px solid #667eea'
-                }}>
-                  <p style={{ marginBottom: '5px', color: '#667eea', fontWeight: 'bold' }}>
-                    ✓ {t('coupon_selected')}{selectedCoupon.name}
-                  </p>
-                  <button
-                    onClick={() => setSelectedCoupon(null)}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      color: '#c92a2a',
-                      cursor: 'pointer',
-                      textDecoration: 'underline',
-                      fontSize: '14px',
-                      padding: 0
-                    }}
-                  >
-                    {t('remove_coupon')}
-                  </button>
-                </div>
-              )}
             </div>            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginBottom: '30px' }}>
               <button
-                onClick={() => handleCompleteEnrollment('in-person', selectedCoupon)}
+                onClick={() => handleCompleteEnrollment('in-person', null)}
                 className="btn btn-primary"
-                disabled={completingEnrollment}
+                disabled={completingEnrollment || selectedFamilyMembers.length === 0}
                 style={{
                   padding: '20px',
                   fontSize: '18px',
@@ -3093,31 +3024,14 @@ function Profile() {
               >
                 💚 {t('line_pay_under_construction')}
               </button>
-
-              <button
-                onClick={() => setShowCouponModal(true)}
-                className="btn"
-                style={{
-                  padding: '20px',
-                  fontSize: '18px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '10px',
-                  background: selectedCoupon ? '#d3f9d8' : '#667eea',
-                  color: 'white',
-                  border: 'none'
-                }}
-              >
-                🎫 {t('redeem_coupon')}
-              </button>
             </div>
 
             <button
               onClick={() => {
                 setShowCheckout(false);
                 setCheckoutData(null);
-                setSelectedCoupon(null);
+                setSelectedFamilyMembers([]);
+                setFamilyMemberCoupons({});
               }}
               className="btn btn-secondary"
               style={{ width: '100%' }}
