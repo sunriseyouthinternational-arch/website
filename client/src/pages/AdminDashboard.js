@@ -47,7 +47,8 @@ function AdminDashboard() {
     time: '',
     date: '',
     location: '',
-    status: 'upcoming'
+    status: 'upcoming',
+    sendLineAnnouncement: false
   });
 
   const [showAddActivityForm, setShowAddActivityForm] = useState(false);
@@ -412,7 +413,8 @@ function AdminDashboard() {
         time: '',
         date: '',
         location: '',
-        status: 'upcoming'
+        status: 'upcoming',
+        sendLineAnnouncement: false
       });
 
       const classesRes = await axios.get('/api/classes');
@@ -2283,6 +2285,19 @@ function AdminDashboard() {
                     />
                   </div>
                 )}
+
+                <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <input
+                    type="checkbox"
+                    id="sendLineAnnouncementClass"
+                    checked={newClass.sendLineAnnouncement}
+                    onChange={(e) => setNewClass({ ...newClass, sendLineAnnouncement: e.target.checked })}
+                    style={{ width: 'auto' }}
+                  />
+                  <label htmlFor="sendLineAnnouncementClass" style={{ margin: 0 }}>
+                    {t('send_line_announcement_to_all_line_followers')}
+                  </label>
+                </div>
 
                 <button type="submit" className="btn btn-primary">
                   {t('hostClass')}

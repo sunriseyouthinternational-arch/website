@@ -123,7 +123,7 @@ module.exports = async (req, res) => {
       }
 
       if (req.method === 'POST') {
-        const { classInfoId, teacherId, teacher, time, date, location } = req.body;
+        const { classInfoId, teacherId, teacher, time, date, location, sendLineAnnouncement } = req.body;
 
         // Verify classInfo exists
         const classInfo = await ClassInfo.findById(classInfoId);
@@ -141,6 +141,25 @@ module.exports = async (req, res) => {
         });
 
         await classItem.save();
+
+        // Send LINE broadcast if requested
+        if (sendLineAnnouncement) {
+          try {
+            const axios = require('axios');
+            const message = `📢 新課程通知\n\n課程：${classInfo.name}\n日期：${new Date(date).toLocaleDateString('zh-TW')}\n時間：${time}\n地點：${location || '待定'}\n\n請至官方帳號查看詳情並報名！`;
+
+            await axios.post('https://api.line.me/v2/bot/message/broadcast', {
+              messages: [{ type: 'text', text: message }]
+            }, {
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${process.env.LINE_CHANNEL_ACCESS_TOKEN}`
+              }
+            });
+          } catch (error) {
+            console.error('LINE broadcast error:', error);
+          }
+        }
 
         return res.status(201).json({
           message: '課程創建成功 / Class created successfully',
