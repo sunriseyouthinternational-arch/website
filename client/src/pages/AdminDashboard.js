@@ -2951,19 +2951,42 @@ function AdminDashboard() {
                       <th>{t('member_id')}</th>
                       <th>{t('name')}</th>
                       <th>{t('enrolled_date')}</th>
+                      <th>{t('cost')}</th>
                       <th>{t('payment_method')}</th>
                       <th>{t('payment')}</th>
                       <th>{t('action')}</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {selectedItem.participants.map(participant => (
+                    {selectedItem.participants.map(participant => {
+                      const itemCost = selectedItem.type === 'class'
+                        ? selectedItem.classInfoId?.cost
+                        : selectedItem.cost;
+                      const couponDiscount = participant.couponDiscount || 0;
+                      const finalCost = itemCost - couponDiscount;
+
+                      return (
                       <tr key={participant._id}>
                         <td>
                           {members.find(m => m._id === participant.memberId)?.memberId || 'N/A'}
                         </td>
                         <td>{participant.memberName}</td>
                         <td>{formatDate(participant.enrolledAt)}</td>
+                        <td>
+                          {couponDiscount > 0 ? (
+                            <>
+                              <span style={{ textDecoration: 'line-through', color: '#999' }}>
+                                NT$ {itemCost}
+                              </span>
+                              {' → '}
+                              <span style={{ color: '#2b8a3e', fontWeight: 'bold' }}>
+                                NT$ {finalCost}
+                              </span>
+                            </>
+                          ) : (
+                            <span>NT$ {itemCost}</span>
+                          )}
+                        </td>
                         <td>
                           <select
                             value={participant.paymentMethod || 'in-person'}
@@ -3020,7 +3043,8 @@ function AdminDashboard() {
                           </button>
                         </td>
                       </tr>
-                    ))}
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>

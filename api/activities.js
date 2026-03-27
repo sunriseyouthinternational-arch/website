@@ -38,6 +38,7 @@ module.exports = async (req, res) => {
 
       // Handle coupon redemption
       let couponUsed = null;
+      let couponDiscount = 0;
       if (couponId) {
         const coupon = member.coupons.id(couponId);
 
@@ -55,6 +56,8 @@ module.exports = async (req, res) => {
           return res.status(400).json({ message: '體驗券僅適用於課程 / Trial coupons are only valid for classes' });
         }
 
+        couponDiscount = Math.round(activity.cost * coupon.discountPercent / 100);
+
         // Increment usedCount
         coupon.usedCount += 1;
         couponUsed = {
@@ -68,7 +71,8 @@ module.exports = async (req, res) => {
         memberId: member._id,
         memberName: member.name,
         paid: false,
-        paymentMethod: paymentMethod || 'in-person'
+        paymentMethod: paymentMethod || 'in-person',
+        couponDiscount
       });
 
       // Add family members
@@ -76,19 +80,18 @@ module.exports = async (req, res) => {
       familyMembers.forEach(fmIndex => {
         const familyMember = member.familyMembers[fmIndex];
         if (familyMember) {
-          activity.participants.push({
-            memberId: member._id,
-            memberName: `${familyMember.name} (${member.name}的家人)`,
-            paid: false,
-            paymentMethod: paymentMethod || 'in-person',
-            isFamilyMember: true
-          });
+          let fmCouponDiscount = 0;
 
           // Handle family member coupon
           const fmCouponId = familyMemberCoupons[fmIndex];
           if (fmCouponId) {
             const fmCoupon = member.coupons.id(fmCouponId);
             if (fmCoupon && fmCoupon.usedCount < fmCoupon.quantity) {
+              if (fmCoupon.type === 'trial') {
+                fmCouponDiscount = activity.cost;
+              } else {
+                fmCouponDiscount = Math.round(activity.cost * fmCoupon.discountPercent / 100);
+              }
               fmCoupon.usedCount += 1;
               familyCouponsUsed.push({
                 name: fmCoupon.name,
@@ -97,6 +100,15 @@ module.exports = async (req, res) => {
               });
             }
           }
+
+          activity.participants.push({
+            memberId: member._id,
+            memberName: `${familyMember.name} (${member.name}的家人)`,
+            paid: false,
+            paymentMethod: paymentMethod || 'in-person',
+            isFamilyMember: true,
+            couponDiscount: fmCouponDiscount
+          });
         }
       });
 
