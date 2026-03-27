@@ -42,7 +42,7 @@ function AdminDashboard() {
   const [showAddClassForm, setShowAddClassForm] = useState(false);
   const [newClass, setNewClass] = useState({
     classInfoId: '',
-    teacherId: '',
+    teacherId: [],
     teacher: '',
     time: '',
     date: '',
@@ -59,7 +59,7 @@ function AdminDashboard() {
     time: '',
     location: '',
     cost: '',
-    teacherId: '',
+    teacherId: [],
     teacher: '',
     maxParticipants: '',
     banner: '',
@@ -408,7 +408,7 @@ function AdminDashboard() {
       setShowAddClassForm(false);
       setNewClass({
         classInfoId: '',
-        teacherId: '',
+        teacherId: [],
         teacher: '',
         time: '',
         date: '',
@@ -513,7 +513,7 @@ function AdminDashboard() {
         time: '',
         location: '',
         cost: '',
-        teacherId: '',
+        teacherId: [],
         teacher: '',
         maxParticipants: '',
         banner: '',
@@ -2151,24 +2151,27 @@ function AdminDashboard() {
                 <div className="form-group">
                   <label>{t('host')} *</label>
                   <select
-                    value={newClass.teacherId || ''}
+                    multiple
+                    value={newClass.teacherId}
                     onChange={(e) => {
-                      const selectedTeacher = teachers.find(t => t._id === e.target.value);
+                      const selectedIds = Array.from(e.target.selectedOptions, option => option.value);
+                      const selectedNames = selectedIds.map(id => teachers.find(t => t._id === id)?.name).filter(Boolean).join(', ');
                       setNewClass({
                         ...newClass,
-                        teacherId: e.target.value,
-                        teacher: selectedTeacher ? selectedTeacher.name : ''
+                        teacherId: selectedIds,
+                        teacher: selectedNames
                       });
                     }}
                     required
+                    style={{ minHeight: '80px' }}
                   >
-                    <option value="">{t('select_host')}</option>
                     {teachers.map(teacher => (
                       <option key={teacher._id} value={teacher._id}>
                         {teacher.name}
                       </option>
                     ))}
                   </select>
+                  <small style={{ color: '#666', fontSize: '12px' }}>Hold Ctrl/Cmd to select multiple hosts</small>
                 </div>
 
                 <div className="form-row">
@@ -2388,24 +2391,27 @@ function AdminDashboard() {
                 <div className="form-group">
                   <label>{t('host')} *</label>
                   <select
-                    value={newActivity.teacherId || ''}
+                    multiple
+                    value={newActivity.teacherId}
                     onChange={(e) => {
-                      const selectedTeacher = teachers.find(t => t._id === e.target.value);
+                      const selectedIds = Array.from(e.target.selectedOptions, option => option.value);
+                      const selectedNames = selectedIds.map(id => teachers.find(t => t._id === id)?.name).filter(Boolean).join(', ');
                       setNewActivity({
                         ...newActivity,
-                        teacherId: e.target.value,
-                        teacher: selectedTeacher ? selectedTeacher.name : ''
+                        teacherId: selectedIds,
+                        teacher: selectedNames
                       });
                     }}
                     required
+                    style={{ minHeight: '80px' }}
                   >
-                    <option value="">{t('select_host')}</option>
                     {teachers.map(teacher => (
                       <option key={teacher._id} value={teacher._id}>
                         {teacher.name}
                       </option>
                     ))}
                   </select>
+                  <small style={{ color: '#666', fontSize: '12px' }}>Hold Ctrl/Cmd to select multiple hosts</small>
                 </div>
 
                 <div className="form-row">

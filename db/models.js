@@ -124,8 +124,8 @@ classInfoSchema.pre('save', function(next) {
 // Class Schema (Host Class) - Actual class instance with teacher and schedule
 const classSchema = new mongoose.Schema({
   classInfoId: { type: mongoose.Schema.Types.ObjectId, ref: 'ClassInfo', required: true },
-  teacherId: { type: mongoose.Schema.Types.ObjectId, ref: 'Teacher' }, // Reference to Teacher model
-  teacher: { type: String, required: true }, // Keep for backward compatibility and display name
+  teacherId: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Teacher' }], // Array of teacher references
+  teacher: { type: String, required: true }, // Comma-separated teacher names for display
   time: { type: String, required: true },
   date: { type: Date, required: true },
   location: { type: String },
@@ -176,8 +176,8 @@ const activitySchema = new mongoose.Schema({
   time: { type: String, required: true },
   location: { type: String },
   cost: { type: Number, required: true },
-  teacherId: { type: mongoose.Schema.Types.ObjectId, ref: 'Teacher' }, // Reference to Teacher model
-  teacher: { type: String, required: true }, // Keep for backward compatibility and display name
+  teacherId: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Teacher' }], // Array of teacher references
+  teacher: { type: String, required: true }, // Comma-separated teacher names for display
   maxParticipants: { type: Number, required: true },
   currentParticipants: { type: Number, default: 0 },
   participants: [{
