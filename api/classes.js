@@ -80,6 +80,8 @@ module.exports = async (req, res) => {
         couponDiscount
       });
 
+      console.log('[Enrollment] Main participant couponDiscount:', couponDiscount);
+
       // Add family members
       const familyCouponsUsed = [];
       familyMembers.forEach(fmIndex => {
@@ -114,10 +116,14 @@ module.exports = async (req, res) => {
             isFamilyMember: true,
             couponDiscount: fmCouponDiscount
           });
+
+          console.log('[Enrollment] Family member couponDiscount:', fmCouponDiscount);
         }
       });
 
       await classItem.save();
+
+      console.log('[Enrollment] Saved class participants:', JSON.stringify(classItem.participants, null, 2));
 
       member.enrollments.push({
         type: 'class',
