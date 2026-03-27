@@ -8,7 +8,6 @@ function CouponClaim() {
   const { t } = useLanguage();
   const { token } = useParams();
   const navigate = useNavigate();
-  const [couponData, setCouponData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [status, setStatus] = useState(null);
@@ -48,10 +47,6 @@ function CouponClaim() {
       const profile = await window.liff.getProfile();
       const lineUserId = profile.userId;
 
-      // First get coupon details
-      const detailsResponse = await axios.get(`/api/coupon-claim?token=${token}`);
-      setCouponData(detailsResponse.data);
-
       // Find member by LINE user ID
       const memberResponse = await axios.get(`/api/members?lineUserId=${lineUserId}`);
 
@@ -72,10 +67,6 @@ function CouponClaim() {
 
       if (claimResponse.data.success) {
         setStatus('claimed');
-        setCouponData(prev => ({
-          ...prev,
-          coupon: claimResponse.data.coupon
-        }));
       }
     } catch (err) {
       setError(err.response?.data?.message || t('failed_to_claim'));
