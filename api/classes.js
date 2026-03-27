@@ -147,6 +147,9 @@ module.exports = async (req, res) => {
           try {
             const axios = require('axios');
 
+            console.log('Sending LINE broadcast for class:', classInfo.name);
+            console.log('LINE_CHANNEL_ACCESS_TOKEN exists:', !!process.env.LINE_CHANNEL_ACCESS_TOKEN);
+
             const flexMessage = {
               type: 'flex',
               altText: `新課程：${classInfo.name}`,
@@ -154,7 +157,7 @@ module.exports = async (req, res) => {
                 type: 'bubble',
                 hero: classInfo.banner ? {
                   type: 'image',
-                  url: classInfo.banner.startsWith('http') ? classInfo.banner : `${process.env.BASE_URL || 'https://your-domain.com'}${classInfo.banner}`,
+                  url: classInfo.banner.startsWith('http') ? classInfo.banner : `${process.env.BASE_URL}${classInfo.banner}`,
                   size: 'full',
                   aspectRatio: '20:13',
                   aspectMode: 'cover'
@@ -235,7 +238,7 @@ module.exports = async (req, res) => {
                       action: {
                         type: 'uri',
                         label: '查看詳情',
-                        uri: `${process.env.BASE_URL || 'https://your-domain.com'}/profile?tab=classes&classId=${classItem._id}`
+                        uri: `${process.env.BASE_URL}/profile?tab=classes&classId=${classItem._id}`
                       }
                     }
                   ]
@@ -243,7 +246,7 @@ module.exports = async (req, res) => {
               }
             };
 
-            await axios.post('https://api.line.me/v2/bot/message/broadcast', {
+            const response = await axios.post('https://api.line.me/v2/bot/message/broadcast', {
               messages: [flexMessage]
             }, {
               headers: {
@@ -251,8 +254,10 @@ module.exports = async (req, res) => {
                 'Authorization': `Bearer ${process.env.LINE_CHANNEL_ACCESS_TOKEN}`
               }
             });
+
+            console.log('LINE broadcast sent successfully:', response.status);
           } catch (error) {
-            console.error('LINE broadcast error:', error);
+            console.error('LINE broadcast error:', error.response?.data || error.message);
           }
         }
 
