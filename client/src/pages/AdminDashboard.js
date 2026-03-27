@@ -36,7 +36,8 @@ function AdminDashboard() {
     description: '',
     cost: '',
     maxParticipants: '',
-    banner: ''
+    banner: '',
+    ageRange: ''
   });
 
   const [showAddClassForm, setShowAddClassForm] = useState(false);
@@ -63,7 +64,8 @@ function AdminDashboard() {
     teacher: '',
     maxParticipants: '',
     banner: '',
-    status: 'upcoming'
+    status: 'upcoming',
+    ageRange: ''
   });
 
   const [showAddTeacherForm, setShowAddTeacherForm] = useState(false);
@@ -2116,7 +2118,23 @@ function AdminDashboard() {
                       required
                     />
                   </div>
-                </div>                <div className="form-group">
+                </div>
+
+                <div className="form-group">
+                  <label>{t('language') === 'zh' ? '建議年齡範圍' : 'Recommended Age Range'}</label>
+                  <select
+                    value={newClassInfo.ageRange}
+                    onChange={(e) => setNewClassInfo({ ...newClassInfo, ageRange: e.target.value })}
+                  >
+                    <option value="">{t('language') === 'zh' ? '選擇年齡範圍' : 'Select Age Range'}</option>
+                    <option value="all">{t('language') === 'zh' ? '所有年齡' : 'All Ages'}</option>
+                    <option value="children">{t('language') === 'zh' ? '兒童 (6-12歲)' : 'Children (6-12)'}</option>
+                    <option value="teen">{t('language') === 'zh' ? '青少年 (13-17歲)' : 'Teen (13-17)'}</option>
+                    <option value="adult">{t('language') === 'zh' ? '成人 (18歲以上)' : 'Adult (18+)'}</option>
+                  </select>
+                </div>
+
+                <div className="form-group">
                   <label>{t('banner_image_optional')}</label>
                   <input
                     type="file"
@@ -2608,6 +2626,20 @@ function AdminDashboard() {
                       required
                     />
                   </div>
+                </div>
+
+                <div className="form-group">
+                  <label>{t('language') === 'zh' ? '建議年齡範圍' : 'Recommended Age Range'}</label>
+                  <select
+                    value={newActivity.ageRange}
+                    onChange={(e) => setNewActivity({ ...newActivity, ageRange: e.target.value })}
+                  >
+                    <option value="">{t('language') === 'zh' ? '選擇年齡範圍' : 'Select Age Range'}</option>
+                    <option value="all">{t('language') === 'zh' ? '所有年齡' : 'All Ages'}</option>
+                    <option value="children">{t('language') === 'zh' ? '兒童 (6-12歲)' : 'Children (6-12)'}</option>
+                    <option value="teen">{t('language') === 'zh' ? '青少年 (13-17歲)' : 'Teen (13-17)'}</option>
+                    <option value="adult">{t('language') === 'zh' ? '成人 (18歲以上)' : 'Adult (18+)'}</option>
+                  </select>
                 </div>
 
                 <div className="form-group">
