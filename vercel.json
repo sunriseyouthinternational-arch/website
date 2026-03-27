@@ -16,6 +16,10 @@
     {
       "source": "/api/coupon-claim",
       "destination": "/api/coupon-claim"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ],
   "redirects": [
