@@ -10,7 +10,7 @@ module.exports = async (req, res) => {
 
     // Enroll in class
     if (action === 'enroll' && req.method === 'POST') {
-      const { memberId, paymentMethod, couponId } = req.body;
+      const { memberId, paymentMethod, couponId, familyMembers = [] } = req.body;
 
       const classItem = await Class.findById(id).populate('classInfoId').populate('teacherId');
       const member = await Member.findOne({ memberId });
@@ -23,8 +23,9 @@ module.exports = async (req, res) => {
         return res.status(404).json({ message: '找不到團員 / Member not found' });
       }
 
-      if (classItem.currentParticipants >= classItem.classInfoId.maxParticipants) {
-        return res.status(400).json({ message: '課程已滿 / Class is full' });
+      const totalEnrolling = 1 + familyMembers.length;
+      if (classItem.currentParticipants + totalEnrolling > classItem.classInfoId.maxParticipants) {
+        return res.status(400).json({ message: '課程名額不足 / Not enough spots available' });
       }
 
       const alreadyEnrolled = classItem.participants.some(
@@ -72,6 +73,20 @@ module.exports = async (req, res) => {
         memberName: member.name,
         paid: false,
         paymentMethod: paymentMethod || 'in-person'
+      });
+
+      // Add family members
+      familyMembers.forEach(fmIndex => {
+        const familyMember = member.familyMembers[fmIndex];
+        if (familyMember) {
+          classItem.participants.push({
+            memberId: member._id,
+            memberName: `${familyMember.name} (${member.name}的家人)`,
+            paid: false,
+            paymentMethod: paymentMethod || 'in-person',
+            isFamilyMember: true
+          });
+        }
       });
 
       await classItem.save();

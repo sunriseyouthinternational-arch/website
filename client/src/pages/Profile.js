@@ -48,6 +48,7 @@ function Profile() {
   const [showCheckout, setShowCheckout] = useState(false);
   const [checkoutData, setCheckoutData] = useState(null);
   const [selectedCoupon, setSelectedCoupon] = useState(null);
+  const [selectedFamilyMembers, setSelectedFamilyMembers] = useState([]);
   const [showCouponModal, setShowCouponModal] = useState(false);
 
   const [showShareModal, setShowShareModal] = useState(false);
@@ -882,6 +883,7 @@ function Profile() {
       classInfoId: type === 'class' ? item.classInfoId?._id : null,
       item
     });
+    setSelectedFamilyMembers([]);
     setShowCheckout(true);
   };
 
@@ -895,20 +897,21 @@ function Profile() {
       const response = await axios.post(endpoint, {
         memberId: member.memberId,
         paymentMethod,
-        couponId: coupon?._id
+        couponId: coupon?._id,
+        familyMembers: selectedFamilyMembers
       });
 
       // Calculate final price
-      const originalCost = checkoutData.cost;
+      const originalCost = checkoutData.cost * (1 + selectedFamilyMembers.length);
       let finalCost = originalCost;
       let discount = 0;
 
       if (response.data.couponUsed) {
         if (response.data.couponUsed.type === 'trial') {
-          finalCost = 0;
-          discount = originalCost;
+          finalCost = checkoutData.cost * selectedFamilyMembers.length;
+          discount = checkoutData.cost;
         } else {
-          discount = Math.round(originalCost * response.data.couponUsed.discountPercent / 100);
+          discount = Math.round(checkoutData.cost * response.data.couponUsed.discountPercent / 100);
           finalCost = originalCost - discount;
         }
       }
@@ -922,7 +925,8 @@ function Profile() {
         finalCost,
         discount,
         couponUsed: response.data.couponUsed,
-        paymentMethod
+        paymentMethod,
+        familyMembersCount: selectedFamilyMembers.length
       });
 
       const memberResponse = await axios.get(`/api/members?memberId=${member.memberId}`);
@@ -931,6 +935,7 @@ function Profile() {
       setShowCheckout(false);
       setCheckoutData(null);
       setSelectedCoupon(null);
+      setSelectedFamilyMembers([]);
 
       // Show payment confirmation modal
       setShowPaymentConfirmation(true);
@@ -2768,7 +2773,40 @@ function Profile() {
           }}>
             <h2 style={{ color: '#667eea', marginBottom: '30px', textAlign: 'center' }}>
               {t('select_payment_method')}
-            </h2>            <div style={{
+            </h2>
+
+            {member.familyMembers && member.familyMembers.length > 0 && (
+              <div style={{
+                background: '#fff9e6',
+                padding: '20px',
+                borderRadius: '12px',
+                marginBottom: '20px',
+                border: '2px solid #ffd700'
+              }}>
+                <h4 style={{ color: '#667eea', marginBottom: '15px' }}>
+                  {t('language') === 'zh' ? '同時為家庭成員報名？' : 'Enroll Family Members?'}
+                </h4>
+                {member.familyMembers.map((fm, index) => (
+                  <label key={index} style={{ display: 'block', marginBottom: '10px', cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      checked={selectedFamilyMembers.includes(index)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedFamilyMembers([...selectedFamilyMembers, index]);
+                        } else {
+                          setSelectedFamilyMembers(selectedFamilyMembers.filter(i => i !== index));
+                        }
+                      }}
+                      style={{ marginRight: '10px' }}
+                    />
+                    {fm.name} (+NT$ {checkoutData.cost})
+                  </label>
+                ))}
+              </div>
+            )}
+
+            <div style={{
               background: '#f8f9ff',
               padding: '20px',
               borderRadius: '12px',
@@ -2783,17 +2821,30 @@ function Profile() {
                 {selectedCoupon ? (
                   <>
                     {selectedCoupon.type === 'trial' ? (
-                      <span style={{ color: '#2b8a3e', fontWeight: 'bold' }}>
-                        {t('free_trial_coupon')}
-                      </span>
+                      <>
+                        <span style={{ color: '#2b8a3e', fontWeight: 'bold' }}>
+                          {t('free_trial_coupon')}
+                        </span>
+                        {selectedFamilyMembers.length > 0 && (
+                          <>
+                            {' + '}
+                            <span style={{ fontWeight: 'bold', color: '#667eea' }}>
+                              NT$ {checkoutData.cost * selectedFamilyMembers.length}
+                            </span>
+                            <span style={{ fontSize: '14px', color: '#666' }}>
+                              {' '}({selectedFamilyMembers.length} {t('language') === 'zh' ? '位家庭成員' : 'family member(s)'})
+                            </span>
+                          </>
+                        )}
+                      </>
                     ) : (
                       <>
                         <span style={{ textDecoration: 'line-through', color: '#999' }}>
-                          NT$ {checkoutData.cost}
+                          NT$ {checkoutData.cost * (1 + selectedFamilyMembers.length)}
                         </span>
                         {' → '}
                         <span style={{ color: '#c92a2a', fontWeight: 'bold' }}>
-                          NT$ {Math.round(checkoutData.cost * (100 - selectedCoupon.discountPercent) / 100)}
+                          NT$ {Math.round(checkoutData.cost * (100 - selectedCoupon.discountPercent) / 100) + (checkoutData.cost * selectedFamilyMembers.length)}
                         </span>
                         <span style={{ color: '#c92a2a', fontSize: '14px' }}>
                           {' '}({selectedCoupon.discountPercent}% {t('off')})
@@ -2802,9 +2853,16 @@ function Profile() {
                     )}
                   </>
                 ) : (
-                  <span style={{ fontWeight: 'bold', color: '#667eea' }}>
-                    NT$ {checkoutData.cost}
-                  </span>
+                  <>
+                    <span style={{ fontWeight: 'bold', color: '#667eea' }}>
+                      NT$ {checkoutData.cost * (1 + selectedFamilyMembers.length)}
+                    </span>
+                    {selectedFamilyMembers.length > 0 && (
+                      <span style={{ fontSize: '14px', color: '#666' }}>
+                        {' '}({1 + selectedFamilyMembers.length} {t('language') === 'zh' ? '人' : 'person(s)'})
+                      </span>
+                    )}
+                  </>
                 )}
               </p>
               {selectedCoupon && (

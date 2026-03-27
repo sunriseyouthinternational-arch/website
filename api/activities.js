@@ -10,7 +10,7 @@ module.exports = async (req, res) => {
 
     // Enroll in activity
     if (action === 'enroll' && req.method === 'POST') {
-      const { memberId, paymentMethod, couponId } = req.body;
+      const { memberId, paymentMethod, couponId, familyMembers = [] } = req.body;
 
       const activity = await Activity.findById(id).populate('teacherId');
       const member = await Member.findOne({ memberId });
@@ -23,8 +23,9 @@ module.exports = async (req, res) => {
         return res.status(404).json({ message: '找不到團員 / Member not found' });
       }
 
-      if (activity.currentParticipants >= activity.maxParticipants) {
-        return res.status(400).json({ message: '活動已滿 / Activity is full' });
+      const totalEnrolling = 1 + familyMembers.length;
+      if (activity.currentParticipants + totalEnrolling > activity.maxParticipants) {
+        return res.status(400).json({ message: '活動名額不足 / Not enough spots available' });
       }
 
       const alreadyEnrolled = activity.participants.some(
@@ -68,6 +69,20 @@ module.exports = async (req, res) => {
         memberName: member.name,
         paid: false,
         paymentMethod: paymentMethod || 'in-person'
+      });
+
+      // Add family members
+      familyMembers.forEach(fmIndex => {
+        const familyMember = member.familyMembers[fmIndex];
+        if (familyMember) {
+          activity.participants.push({
+            memberId: member._id,
+            memberName: `${familyMember.name} (${member.name}的家人)`,
+            paid: false,
+            paymentMethod: paymentMethod || 'in-person',
+            isFamilyMember: true
+          });
+        }
       });
 
       await activity.save();
