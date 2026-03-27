@@ -1697,7 +1697,7 @@ function Profile() {
                       </div>
                     )}
                   </div>
-                </div>                {selectedClass.teacherId && (
+                </div>                {selectedClass.teacherId && Array.isArray(selectedClass.teacherId) && selectedClass.teacherId.length > 0 && (
                   <div style={{
                     background: '#fff8f0',
                     padding: '20px',
@@ -1705,45 +1705,47 @@ function Profile() {
                     border: '2px solid #f0e0c0'
                   }}>
                     <h3 style={{ marginBottom: '15px', color: '#667eea', fontSize: '20px' }}>{t('hostInfo')}</h3>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', alignItems: 'center', textAlign: 'center' }}>
-                      {selectedClass.teacherId.photo && (
-                        <img
-                          src={getImageSrc(selectedClass.teacherId.photo)}
-                          alt={selectedClass.teacherId.name}
-                          style={{
-                            width: '120px',
-                            height: '120px',
-                            objectFit: 'cover',
-                            borderRadius: '50%',
-                            border: '3px solid #667eea'
-                          }}
-                        />
-                      )}
-                      <div style={{ width: '100%', textAlign: 'left' }}>
-                        <h4 style={{ marginBottom: '10px', fontSize: '18px', textAlign: 'center' }}>{selectedClass.teacherId.name}</h4>
-                        {selectedClass.teacherId.bio && (
-                          <div style={{ marginBottom: '10px' }}>
-                            <strong>{t('hostBio')}:</strong>
-                            <p style={{ marginTop: '5px', lineHeight: '1.6', fontSize: '14px' }}>{selectedClass.teacherId.bio}</p>
-                          </div>
+                    {selectedClass.teacherId.map((teacher, index) => (
+                      <div key={index} style={{ display: 'flex', flexDirection: 'column', gap: '15px', alignItems: 'center', textAlign: 'center', marginBottom: index < selectedClass.teacherId.length - 1 ? '20px' : '0', paddingBottom: index < selectedClass.teacherId.length - 1 ? '20px' : '0', borderBottom: index < selectedClass.teacherId.length - 1 ? '1px solid #f0e0c0' : 'none' }}>
+                        {teacher.photo && (
+                          <img
+                            src={getImageSrc(teacher.photo)}
+                            alt={teacher.name}
+                            style={{
+                              width: '120px',
+                              height: '120px',
+                              objectFit: 'cover',
+                              borderRadius: '50%',
+                              border: '3px solid #667eea'
+                            }}
+                          />
                         )}
-                        {selectedClass.teacherId.specialties && (
-                          <div style={{ marginBottom: '10px' }}>
-                            <strong>{t('hostSpecialties')}:</strong>
-                            <p style={{ marginTop: '5px', fontSize: '14px' }}>{selectedClass.teacherId.specialties}</p>
-                          </div>
-                        )}
-                        {selectedClass.teacherId.education && (
-                          <div style={{ marginBottom: '10px' }}>
-                            <strong>{t('hostEducation')}:</strong>
-                            <p style={{ marginTop: '5px', fontSize: '14px' }}>{selectedClass.teacherId.education}</p>
-                          </div>
-                        )}
+                        <div style={{ width: '100%', textAlign: 'left' }}>
+                          <h4 style={{ marginBottom: '10px', fontSize: '18px', textAlign: 'center' }}>{teacher.name}</h4>
+                          {teacher.bio && (
+                            <div style={{ marginBottom: '10px' }}>
+                              <strong>{t('hostBio')}:</strong>
+                              <p style={{ marginTop: '5px', lineHeight: '1.6', fontSize: '14px' }}>{teacher.bio}</p>
+                            </div>
+                          )}
+                          {teacher.specialties && (
+                            <div style={{ marginBottom: '10px' }}>
+                              <strong>{t('hostSpecialties')}:</strong>
+                              <p style={{ marginTop: '5px', fontSize: '14px' }}>{teacher.specialties}</p>
+                            </div>
+                          )}
+                          {teacher.education && (
+                            <div style={{ marginBottom: '10px' }}>
+                              <strong>{t('hostEducation')}:</strong>
+                              <p style={{ marginTop: '5px', fontSize: '14px' }}>{teacher.education}</p>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </div>
+                    ))}
                   </div>
                 )}
-              </div>              {!selectedClass.teacherId && selectedClass.teacher && (
+              </div>              {(!selectedClass.teacherId || (Array.isArray(selectedClass.teacherId) && selectedClass.teacherId.length === 0)) && selectedClass.teacher && (
                 <div style={{
                   background: '#fff8f0',
                   padding: '20px',
