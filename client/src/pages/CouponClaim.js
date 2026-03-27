@@ -18,7 +18,7 @@ function CouponClaim() {
   }, [token]);
 
   const initializeLiff = async () => {
-    const liffId = process.env.REACT_APP_LIFF_ID || process.env.REACT_APP_LIFF_ID_PROFILE;
+    const liffId = process.env.REACT_APP_LIFF_ID_COUPON;
 
     console.log('[CouponClaim] LIFF ID:', liffId);
     console.log('[CouponClaim] Token:', token);
