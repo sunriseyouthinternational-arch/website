@@ -12,7 +12,6 @@ function CouponClaim() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [status, setStatus] = useState(null);
-  const [liffReady, setLiffReady] = useState(false);
 
   useEffect(() => {
     initializeLiff();
@@ -36,7 +35,6 @@ function CouponClaim() {
         return;
       }
 
-      setLiffReady(true);
       await attemptAutoClaim();
     } catch (err) {
       console.error('LIFF init error:', err);
