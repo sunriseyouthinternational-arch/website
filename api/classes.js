@@ -157,7 +157,7 @@ module.exports = async (req, res) => {
                 type: 'bubble',
                 hero: classInfo.banner ? {
                   type: 'image',
-                  url: classInfo.banner.startsWith('http') ? classInfo.banner : `${process.env.BASE_URL}${classInfo.banner}`,
+                  url: classInfo.banner.startsWith('http') || classInfo.banner.startsWith('data:') ? classInfo.banner : `${process.env.BASE_URL}${classInfo.banner}`,
                   size: 'full',
                   aspectRatio: '20:13',
                   aspectMode: 'cover'
