@@ -135,7 +135,9 @@ const classSchema = new mongoose.Schema({
     memberName: { type: String, required: true },
     enrolledAt: { type: Date, default: Date.now },
     paid: { type: Boolean, default: false },
-    paymentMethod: { type: String, enum: ['in-person', 'credit', 'linepay'], default: 'in-person' }
+    paymentMethod: { type: String, enum: ['in-person', 'credit', 'linepay'], default: 'in-person' },
+    isFamilyMember: { type: Boolean, default: false },
+    couponDiscount: { type: Number, default: 0 }
   }],
   status: { type: String, enum: ['upcoming', 'completed', 'cancelled'], default: 'upcoming' },
   createdAt: { type: Date, default: Date.now },
@@ -185,7 +187,9 @@ const activitySchema = new mongoose.Schema({
     memberName: { type: String, required: true },
     enrolledAt: { type: Date, default: Date.now },
     paid: { type: Boolean, default: false },
-    paymentMethod: { type: String, enum: ['in-person', 'credit', 'linepay'], default: 'in-person' }
+    paymentMethod: { type: String, enum: ['in-person', 'credit', 'linepay'], default: 'in-person' },
+    isFamilyMember: { type: Boolean, default: false },
+    couponDiscount: { type: Number, default: 0 }
   }],
   status: { type: String, enum: ['upcoming', 'completed', 'cancelled'], default: 'upcoming' },
   createdAt: { type: Date, default: Date.now },
