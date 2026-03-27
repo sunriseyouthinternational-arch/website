@@ -303,6 +303,21 @@ module.exports = async (req, res) => {
           return res.status(404).json({ message: '找不到課程 / Class not found' });
         }
 
+        // Update enrollment status when class status changes
+        if (req.body.status === 'completed') {
+          await Member.updateMany(
+            { 'enrollments.itemId': id },
+            { $set: { 'enrollments.$[elem].status': 'completed' } },
+            { arrayFilters: [{ 'elem.itemId': id }] }
+          );
+        } else if (req.body.status === 'cancelled') {
+          await Member.updateMany(
+            { 'enrollments.itemId': id },
+            { $set: { 'enrollments.$[elem].status': 'cancelled' } },
+            { arrayFilters: [{ 'elem.itemId': id }] }
+          );
+        }
+
         return res.status(200).json({
           message: '課程更新成功 / Class updated successfully',
           class: classItem
