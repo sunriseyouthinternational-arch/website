@@ -26,6 +26,10 @@ function AdminDashboard() {
   const [editingTeacher, setEditingTeacher] = useState(false);
   const [editTeacherData, setEditTeacherData] = useState({});
 
+  const [selectedCouponProfile, setSelectedCouponProfile] = useState(null);
+  const [editingCouponProfile, setEditingCouponProfile] = useState(false);
+  const [editCouponProfileData, setEditCouponProfileData] = useState({});
+
   const [showAddClassInfoForm, setShowAddClassInfoForm] = useState(false);
   const [newClassInfo, setNewClassInfo] = useState({
     name: '',
@@ -752,6 +756,18 @@ function AdminDashboard() {
       setMessage({ type: 'success', text: t('update_successful') });
       setSelectedTeacher({ ...selectedTeacher, ...editTeacherData });
       setEditingTeacher(false);
+      fetchData();
+    } catch (error) {
+      setMessage({ type: 'error', text: error.response?.data?.message || t('update_failed') });
+    }
+  };
+
+  const handleUpdateCouponProfile = async () => {
+    try {
+      await axios.put(`/api/coupons?resource=profiles&profileId=${selectedCouponProfile._id}`, editCouponProfileData);
+      setMessage({ type: 'success', text: t('update_successful') });
+      setSelectedCouponProfile({ ...selectedCouponProfile, ...editCouponProfileData });
+      setEditingCouponProfile(false);
       fetchData();
     } catch (error) {
       setMessage({ type: 'error', text: error.response?.data?.message || t('update_failed') });
@@ -3143,7 +3159,7 @@ function AdminDashboard() {
         </div>
       )}
 
-      {activeTab === 'coupons' && (
+      {activeTab === 'coupons' && !selectedCouponProfile && (
         <div className="card">
           <div className="section-header">
             <h3>{t('coupon_management')}</h3>
@@ -3338,29 +3354,38 @@ function AdminDashboard() {
                         ? `${t('trial')}: ${profile.classInfoId?.name || 'N/A'}`
                         : `${t('discount')}: ${profile.discountPercent}%`}
                     </p>
-                    <button
-                      onClick={async () => {
-                        if (window.confirm(t('delete_this_profile'))) {
-                          setDeletingProfileId(profile._id);
-                          try {
-                            await axios.delete(`/api/coupons?resource=profiles&profileId=${profile._id}`);
-                            setMessage({ type: 'success', text: t('profile_deleted') });
-                            fetchData();
-                          } catch (error) {
-                            setMessage({ type: 'error', text: error.response?.data?.message || t('error') });
-                          } finally {
-                            setDeletingProfileId(null);
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                      <button
+                        onClick={() => setSelectedCouponProfile(profile)}
+                        className="btn btn-secondary"
+                        style={{ flex: 1, fontSize: '13px', padding: '8px' }}
+                      >
+                        👁️ {t('view')}
+                      </button>
+                      <button
+                        onClick={async () => {
+                          if (window.confirm(t('delete_this_profile'))) {
+                            setDeletingProfileId(profile._id);
+                            try {
+                              await axios.delete(`/api/coupons?resource=profiles&profileId=${profile._id}`);
+                              setMessage({ type: 'success', text: t('profile_deleted') });
+                              fetchData();
+                            } catch (error) {
+                              setMessage({ type: 'error', text: error.response?.data?.message || t('error') });
+                            } finally {
+                              setDeletingProfileId(null);
+                            }
                           }
-                        }
-                      }}
-                      className="btn btn-danger"
-                      disabled={deletingProfileId === profile._id}
-                      style={{ width: '100%', fontSize: '13px', padding: '8px' }}
-                    >
-                      {deletingProfileId === profile._id
-                        ? (t('deleting'))
-                        : `🗑️ ${t('language') === 'zh' ? '刪除模板' : 'Delete'}`}
-                    </button>
+                        }}
+                        className="btn btn-danger"
+                        disabled={deletingProfileId === profile._id}
+                        style={{ flex: 1, fontSize: '13px', padding: '8px' }}
+                      >
+                        {deletingProfileId === profile._id
+                          ? (t('deleting'))
+                          : `🗑️ ${t('delete')}`}
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -3543,6 +3568,126 @@ function AdminDashboard() {
                 ))}
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'coupons' && selectedCouponProfile && (
+        <div className="card">
+          <div className="detail-header">
+            <button
+              className="btn btn-secondary"
+              onClick={() => {
+                setSelectedCouponProfile(null);
+                setEditingCouponProfile(false);
+              }}
+            >
+              ← {t('back_to_list')}
+            </button>
+            <h3>{t('coupon_profile_details')}</h3>
+            <div style={{ marginLeft: 'auto', display: 'flex', gap: '10px' }}>
+              {!editingCouponProfile ? (
+                <button
+                  className="btn btn-primary"
+                  onClick={() => {
+                    setEditingCouponProfile(true);
+                    setEditCouponProfileData({
+                      name: selectedCouponProfile.name,
+                      description: selectedCouponProfile.description || '',
+                      type: selectedCouponProfile.type,
+                      classInfoId: selectedCouponProfile.classInfoId?._id || '',
+                      discountPercent: selectedCouponProfile.discountPercent || '',
+                      image: selectedCouponProfile.image || ''
+                    });
+                  }}
+                >
+                  ✏️ {t('edit')}
+                </button>
+              ) : (
+                <>
+                  <button
+                    className="btn btn-primary"
+                    onClick={handleUpdateCouponProfile}
+                  >
+                    {t('save')}
+                  </button>
+                  <button
+                    className="btn btn-secondary"
+                    onClick={() => setEditingCouponProfile(false)}
+                  >
+                    {t('cancel')}
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+
+          <div style={{ marginTop: '20px' }}>
+            {selectedCouponProfile.image && (
+              <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+                <img
+                  src={selectedCouponProfile.image}
+                  alt={selectedCouponProfile.name}
+                  style={{ maxWidth: '300px', borderRadius: '8px' }}
+                />
+              </div>
+            )}
+
+            <div className="member-detail-grid">
+              <div className="detail-section">
+                <h4>{t('basic_information')}</h4>
+                <div className="detail-row">
+                  <strong>{t('name')}:</strong>
+                  {editingCouponProfile ? (
+                    <input
+                      type="text"
+                      value={editCouponProfileData.name}
+                      onChange={(e) => setEditCouponProfileData({ ...editCouponProfileData, name: e.target.value })}
+                      style={{ padding: '5px', border: '1px solid #ddd', borderRadius: '4px', width: '100%' }}
+                    />
+                  ) : (
+                    <span>{selectedCouponProfile.name}</span>
+                  )}
+                </div>
+                <div className="detail-row">
+                  <strong>{t('description')}:</strong>
+                  {editingCouponProfile ? (
+                    <textarea
+                      value={editCouponProfileData.description}
+                      onChange={(e) => setEditCouponProfileData({ ...editCouponProfileData, description: e.target.value })}
+                      style={{ padding: '5px', border: '1px solid #ddd', borderRadius: '4px', width: '100%', minHeight: '60px' }}
+                    />
+                  ) : (
+                    <span>{selectedCouponProfile.description || 'N/A'}</span>
+                  )}
+                </div>
+                <div className="detail-row">
+                  <strong>{t('type')}:</strong>
+                  <span>{selectedCouponProfile.type === 'trial' ? t('trial') : t('discount')}</span>
+                </div>
+                {selectedCouponProfile.type === 'trial' && (
+                  <div className="detail-row">
+                    <strong>{t('class')}:</strong>
+                    <span>{selectedCouponProfile.classInfoId?.name || 'N/A'}</span>
+                  </div>
+                )}
+                {selectedCouponProfile.type === 'discount' && (
+                  <div className="detail-row">
+                    <strong>{t('discount')}:</strong>
+                    {editingCouponProfile ? (
+                      <input
+                        type="number"
+                        value={editCouponProfileData.discountPercent}
+                        onChange={(e) => setEditCouponProfileData({ ...editCouponProfileData, discountPercent: e.target.value })}
+                        style={{ padding: '5px', border: '1px solid #ddd', borderRadius: '4px', width: '100%' }}
+                      />
+                    ) : (
+                      <span>{selectedCouponProfile.discountPercent}%</span>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       )}
