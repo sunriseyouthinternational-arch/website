@@ -12,6 +12,10 @@
     {
       "source": "/api/members/:path*",
       "destination": "/api/members"
+    },
+    {
+      "source": "/api/coupon-claim",
+      "destination": "/api/coupon-claim"
     }
   ],
   "redirects": [
