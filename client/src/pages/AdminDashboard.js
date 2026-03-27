@@ -2951,44 +2951,19 @@ function AdminDashboard() {
                       <th>{t('member_id')}</th>
                       <th>{t('name')}</th>
                       <th>{t('enrolled_date')}</th>
-                      <th>{t('cost')}</th>
                       <th>{t('payment_method')}</th>
                       <th>{t('payment')}</th>
                       <th>{t('action')}</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {selectedItem.participants.map(participant => {
-                      const itemCost = selectedItem.type === 'class'
-                        ? selectedItem.classInfoId?.cost
-                        : selectedItem.cost;
-                      const couponDiscount = participant.couponDiscount || 0;
-                      const finalCost = Math.max(0, itemCost - couponDiscount);
-
-                      return (
+                    {selectedItem.participants.map(participant => (
                       <tr key={participant._id}>
                         <td>
                           {members.find(m => m._id === participant.memberId)?.memberId || 'N/A'}
                         </td>
                         <td>{participant.memberName}</td>
                         <td>{formatDate(participant.enrolledAt)}</td>
-                        <td>
-                          {couponDiscount > 0 ? (
-                            <>
-                              <span style={{ textDecoration: 'line-through', color: '#999', marginRight: '8px' }}>
-                                NT$ {itemCost}
-                              </span>
-                              <span style={{ color: finalCost === 0 ? '#2b8a3e' : '#667eea', fontWeight: 'bold' }}>
-                                NT$ {finalCost}
-                              </span>
-                              <span style={{ fontSize: '12px', color: '#666', marginLeft: '5px' }}>
-                                (-NT$ {couponDiscount})
-                              </span>
-                            </>
-                          ) : (
-                            <span>NT$ {itemCost || 0}</span>
-                          )}
-                        </td>
                         <td>
                           <select
                             value={participant.paymentMethod || 'in-person'}
@@ -3045,8 +3020,7 @@ function AdminDashboard() {
                           </button>
                         </td>
                       </tr>
-                      );
-                    })}
+                    ))}
                   </tbody>
                 </table>
               </div>
