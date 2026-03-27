@@ -106,6 +106,9 @@ function AdminDashboard() {
     stock: -1
   });
 
+  const [editingItem, setEditingItem] = useState(false);
+  const [editItemData, setEditItemData] = useState({});
+
   const [associationMeetings, setAssociationMeetings] = useState([]);
   const [selectedMeeting, setSelectedMeeting] = useState(null);
   const [showAddMeetingForm, setShowAddMeetingForm] = useState(false);
@@ -863,6 +866,28 @@ function AdminDashboard() {
       fetchData();
     } catch (error) {
       console.error('Error updating item status:', error);
+      setMessage({ type: 'error', text: error.response?.data?.message || t('error') });
+    }
+  };
+
+  const handleUpdateItem = async (e) => {
+    e.preventDefault();
+    try {
+      const endpoint = selectedItem.type === 'class' ? '/api/classes' : '/api/activities';
+      await axios.put(`${endpoint}?id=${selectedItem._id}`, editItemData);
+
+      setMessage({
+        type: 'success',
+        text: t('update_successful')
+      });
+
+      setEditingItem(false);
+      fetchData();
+
+      const updatedItem = { ...selectedItem, ...editItemData };
+      setSelectedItem(updatedItem);
+    } catch (error) {
+      console.error('Error updating item:', error);
       setMessage({ type: 'error', text: error.response?.data?.message || t('error') });
     }
   };
@@ -2674,23 +2699,97 @@ function AdminDashboard() {
           <div className="detail-header">
             <button
               className="btn btn-secondary"
-              onClick={() => setSelectedItem(null)}
+              onClick={() => {
+                setSelectedItem(null);
+                setEditingItem(false);
+              }}
             >
               ← {t('back_to_list')}
             </button>
             <h3>
               {selectedItem.type === 'class' ? t('classes') : t('activities')} - {selectedItem.type === 'class' ? selectedItem.classInfoId?.name : selectedItem.name}
             </h3>
-            <button
-              className="btn btn-danger"
-              onClick={() => handleDeleteItem(selectedItem.type, selectedItem._id)}
-              style={{ marginLeft: 'auto' }}
-            >
-              {t('delete_')}
-            </button>
+            <div style={{ display: 'flex', gap: '10px', marginLeft: 'auto' }}>
+              <button
+                className="btn btn-primary"
+                onClick={() => {
+                  setEditingItem(!editingItem);
+                  if (!editingItem) {
+                    setEditItemData({
+                      date: selectedItem.date ? new Date(selectedItem.date).toISOString().split('T')[0] : '',
+                      time: selectedItem.time || '',
+                      location: selectedItem.location || '',
+                      teacher: selectedItem.teacher || '',
+                      teacherId: selectedItem.teacherId || []
+                    });
+                  }
+                }}
+              >
+                {editingItem ? t('cancel') : t('edit')}
+              </button>
+              <button
+                className="btn btn-danger"
+                onClick={() => handleDeleteItem(selectedItem.type, selectedItem._id)}
+              >
+                {t('delete_')}
+              </button>
+            </div>
           </div>
 
-          {((selectedItem.type === 'class' && selectedItem.classInfoId?.banner) || (selectedItem.type === 'activity' && selectedItem.banner)) && (
+          {editingItem ? (
+            <form onSubmit={handleUpdateItem} className="add-form" style={{ marginTop: '20px' }}>
+              <div className="form-group">
+                <label>{selectedItem.type === 'class' ? t('classDate') : t('activity_date')}</label>
+                <input
+                  type="date"
+                  value={editItemData.date}
+                  onChange={(e) => setEditItemData({ ...editItemData, date: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>{t('time')}</label>
+                <input
+                  type="text"
+                  value={editItemData.time}
+                  onChange={(e) => setEditItemData({ ...editItemData, time: e.target.value })}
+                  placeholder="e.g., 10:00 AM - 12:00 PM"
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>{t('location')}</label>
+                <input
+                  type="text"
+                  value={editItemData.location}
+                  onChange={(e) => setEditItemData({ ...editItemData, location: e.target.value })}
+                />
+              </div>
+              <div className="form-group">
+                <label>{t('select_host')}</label>
+                <select
+                  multiple
+                  value={editItemData.teacherId}
+                  onChange={(e) => {
+                    const selectedIds = Array.from(e.target.selectedOptions, option => option.value);
+                    const selectedNames = selectedIds.map(id => teachers.find(t => t._id === id)?.name).filter(Boolean).join(', ');
+                    setEditItemData({ ...editItemData, teacherId: selectedIds, teacher: selectedNames });
+                  }}
+                  style={{ minHeight: '80px' }}
+                >
+                  {teachers.map(teacher => (
+                    <option key={teacher._id} value={teacher._id}>{teacher.name}</option>
+                  ))}
+                </select>
+                <small style={{ color: '#666', fontSize: '12px' }}>Hold Ctrl/Cmd to select multiple hosts</small>
+              </div>
+              <button type="submit" className="btn btn-primary">
+                {t('save_changes')}
+              </button>
+            </form>
+          ) : (
+            <>
+              {((selectedItem.type === 'class' && selectedItem.classInfoId?.banner) || (selectedItem.type === 'activity' && selectedItem.banner)) && (
             <img
               src={selectedItem.type === 'class' ? selectedItem.classInfoId.banner : selectedItem.banner}
               alt={selectedItem.type === 'class' ? selectedItem.classInfoId?.name : selectedItem.name}
@@ -2871,6 +2970,8 @@ function AdminDashboard() {
               </p>
             )}
           </div>
+            </>
+          )}
         </div>
       )}
 
