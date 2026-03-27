@@ -10,13 +10,19 @@ module.exports = async (req, res) => {
     return res.status(200).end();
   }
 
-  const { token } = req.query;
-
   try {
     await connectDB();
 
     // GET - View coupon details
-    if (req.method === 'GET' && token) {
+    if (req.method === 'GET') {
+      const { token } = req.query;
+
+      if (!token) {
+        return res.status(400).json({
+          message: '缺少必要欄位 / Missing required fields'
+        });
+      }
+
       const shareToken = await CouponShareToken.findOne({ token }).populate('couponData.classInfoId');
 
       if (!shareToken) {
