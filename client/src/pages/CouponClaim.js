@@ -20,20 +20,28 @@ function CouponClaim() {
   const initializeLiff = async () => {
     const liffId = process.env.REACT_APP_LIFF_ID || process.env.REACT_APP_LIFF_ID_PROFILE;
 
+    console.log('[CouponClaim] LIFF ID:', liffId);
+    console.log('[CouponClaim] Token:', token);
+
     if (!liffId) {
+      console.error('[CouponClaim] No LIFF ID found');
       setError(t('language') === 'zh' ? '系統設定錯誤，請聯繫管理員' : 'System configuration error');
       setLoading(false);
       return;
     }
 
     try {
+      console.log('[CouponClaim] Initializing LIFF...');
       await window.liff.init({ liffId });
+      console.log('[CouponClaim] LIFF initialized, isLoggedIn:', window.liff.isLoggedIn());
 
       if (!window.liff.isLoggedIn()) {
+        console.log('[CouponClaim] Not logged in, redirecting to login...');
         window.liff.login({ redirectUri: window.location.href });
         return;
       }
 
+      console.log('[CouponClaim] Logged in, attempting auto claim...');
       await attemptAutoClaim();
     } catch (err) {
       console.error('LIFF init error:', err);
@@ -44,13 +52,18 @@ function CouponClaim() {
 
   const attemptAutoClaim = async () => {
     try {
+      console.log('[CouponClaim] Getting LIFF profile...');
       const profile = await window.liff.getProfile();
       const lineUserId = profile.userId;
+      console.log('[CouponClaim] LINE User ID:', lineUserId);
 
       // Find member by LINE user ID
+      console.log('[CouponClaim] Fetching member data...');
       const memberResponse = await axios.get(`/api/members?lineUserId=${lineUserId}`);
+      console.log('[CouponClaim] Member response:', memberResponse.data);
 
       if (!memberResponse.data.member) {
+        console.log('[CouponClaim] Member not found');
         setError(t('language') === 'zh' ? '找不到您的會員資料，請先完成註冊' : 'Member not found, please complete registration first');
         setStatus('not_registered');
         setLoading(false);
@@ -58,17 +71,23 @@ function CouponClaim() {
       }
 
       const memberId = memberResponse.data.member.memberId;
+      console.log('[CouponClaim] Member ID:', memberId);
 
       // Attempt to claim
+      console.log('[CouponClaim] Attempting to claim coupon...');
       const claimResponse = await axios.post('/api/coupon-claim', {
         token,
         memberId
       });
+      console.log('[CouponClaim] Claim response:', claimResponse.data);
 
       if (claimResponse.data.success) {
+        console.log('[CouponClaim] Claim successful');
         setStatus('claimed');
       }
     } catch (err) {
+      console.error('[CouponClaim] Error:', err);
+      console.error('[CouponClaim] Error response:', err.response?.data);
       setError(err.response?.data?.message || t('failed_to_claim'));
       if (err.response?.data?.hasCompletedClasses) {
         setStatus('completed_classes');
