@@ -12,58 +12,84 @@ function CouponClaim() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [status, setStatus] = useState(null);
-  const [memberId, setMemberId] = useState('');
-  const [claiming, setClaiming] = useState(false);
+  const [liffReady, setLiffReady] = useState(false);
 
   useEffect(() => {
-    fetchCouponDetails();
+    initializeLiff();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
-  const fetchCouponDetails = async () => {
+  const initializeLiff = async () => {
+    const liffId = process.env.REACT_APP_LIFF_ID;
+
+    if (!liffId) {
+      setError(t('language') === 'zh' ? '系統設定錯誤，請聯繫管理員' : 'System configuration error');
+      setLoading(false);
+      return;
+    }
+
     try {
-      const response = await axios.get(`/api/coupon-claim?token=${token}`);
-      setCouponData(response.data);
-      setStatus(response.data.status);
+      await window.liff.init({ liffId });
+
+      if (!window.liff.isLoggedIn()) {
+        window.liff.login({ redirectUri: window.location.href });
+        return;
+      }
+
+      setLiffReady(true);
+      await attemptAutoClaim();
     } catch (err) {
-      setError(err.response?.data?.message || t('failed_to_load'));
-      setStatus(err.response?.data?.status || 'error');
-    } finally {
+      console.error('LIFF init error:', err);
+      setError(t('language') === 'zh' ? '無法連接 LINE，請稍後再試' : 'Cannot connect to LINE');
       setLoading(false);
     }
   };
 
-  const handleClaim = async (e) => {
-    e.preventDefault();
-
-    if (!memberId.trim()) {
-      setError(t('language') === 'zh' ? '請輸入團員編號' : 'Please enter member ID');
-      return;
-    }
-
-    setClaiming(true);
-    setError(null);
-
+  const attemptAutoClaim = async () => {
     try {
-      const response = await axios.post('/api/coupon-claim', {
+      const profile = await window.liff.getProfile();
+      const lineUserId = profile.userId;
+
+      // First get coupon details
+      const detailsResponse = await axios.get(`/api/coupon-claim?token=${token}`);
+      setCouponData(detailsResponse.data);
+
+      // Find member by LINE user ID
+      const memberResponse = await axios.get(`/api/members?lineUserId=${lineUserId}`);
+
+      if (!memberResponse.data.member) {
+        setError(t('language') === 'zh' ? '找不到您的會員資料，請先完成註冊' : 'Member not found, please complete registration first');
+        setStatus('not_registered');
+        setLoading(false);
+        return;
+      }
+
+      const memberId = memberResponse.data.member.memberId;
+
+      // Attempt to claim
+      const claimResponse = await axios.post('/api/coupon-claim', {
         token,
-        memberId: memberId.trim()
+        memberId
       });
 
-      if (response.data.success) {
+      if (claimResponse.data.success) {
         setStatus('claimed');
         setCouponData(prev => ({
           ...prev,
-          coupon: response.data.coupon
+          coupon: claimResponse.data.coupon
         }));
       }
     } catch (err) {
       setError(err.response?.data?.message || t('failed_to_claim'));
       if (err.response?.data?.hasCompletedClasses) {
         setStatus('completed_classes');
+      } else if (err.response?.data?.status) {
+        setStatus(err.response.data.status);
+      } else {
+        setStatus('error');
       }
     } finally {
-      setClaiming(false);
+      setLoading(false);
     }
   };
 
@@ -113,7 +139,7 @@ function CouponClaim() {
               : 'The coupon has been added to your account. You can view it in your profile.'}
           </p>
           <button
-            onClick={() => navigate('/profile')}
+            onClick={() => window.liff.closeWindow()}
             style={{
               background: '#667eea',
               color: 'white',
@@ -125,14 +151,14 @@ function CouponClaim() {
               cursor: 'pointer'
             }}
           >
-            {t('language') === 'zh' ? '前往個人檔案' : 'Go to Profile'}
+            {t('language') === 'zh' ? '關閉' : 'Close'}
           </button>
         </div>
       </div>
     );
   }
 
-  if (status === 'error' || status === 'expired' || error) {
+  if (status === 'not_registered') {
     return (
       <div style={{
         minHeight: '100vh',
@@ -151,11 +177,28 @@ function CouponClaim() {
           textAlign: 'center',
           boxShadow: '0 10px 50px rgba(0, 0, 0, 0.3)'
         }}>
-          <div style={{ fontSize: '64px', marginBottom: '20px' }}>❌</div>
-          <h2 style={{ color: '#e74c3c', marginBottom: '15px' }}>
-            {t('language') === 'zh' ? '無法領取' : 'Cannot Claim'}
+          <div style={{ fontSize: '64px', marginBottom: '20px' }}>📝</div>
+          <h2 style={{ color: '#667eea', marginBottom: '15px' }}>
+            {t('language') === 'zh' ? '請先完成註冊' : 'Please Complete Registration'}
           </h2>
-          <p style={{ color: '#666' }}>{error}</p>
+          <p style={{ color: '#666', marginBottom: '30px' }}>
+            {error}
+          </p>
+          <button
+            onClick={() => navigate('/profile')}
+            style={{
+              background: '#667eea',
+              color: 'white',
+              border: 'none',
+              padding: '12px 30px',
+              borderRadius: '8px',
+              fontSize: '16px',
+              fontWeight: 'bold',
+              cursor: 'pointer'
+            }}
+          >
+            {t('language') === 'zh' ? '前往註冊' : 'Go to Registration'}
+          </button>
         </div>
       </div>
     );
@@ -205,133 +248,14 @@ function CouponClaim() {
         padding: '40px',
         maxWidth: '500px',
         width: '100%',
+        textAlign: 'center',
         boxShadow: '0 10px 50px rgba(0, 0, 0, 0.3)'
       }}>
-        <h2 style={{ color: '#667eea', marginBottom: '20px', textAlign: 'center' }}>
-          {t('language') === 'zh' ? '領取優惠券' : 'Claim Coupon'}
+        <div style={{ fontSize: '64px', marginBottom: '20px' }}>❌</div>
+        <h2 style={{ color: '#e74c3c', marginBottom: '15px' }}>
+          {t('language') === 'zh' ? '無法領取' : 'Cannot Claim'}
         </h2>
-
-        {couponData && (
-          <div style={{
-            background: '#f8f9ff',
-            padding: '20px',
-            borderRadius: '12px',
-            marginBottom: '30px',
-            border: '2px solid #d3e0ff'
-          }}>
-            {couponData.coupon.image && (
-              <img
-                src={couponData.coupon.image}
-                alt={couponData.coupon.name}
-                style={{
-                  width: '100%',
-                  height: '120px',
-                  objectFit: 'cover',
-                  borderRadius: '8px',
-                  marginBottom: '15px'
-                }}
-              />
-            )}
-            <div style={{ marginBottom: '10px' }}>
-              <span style={{
-                display: 'inline-block',
-                padding: '4px 12px',
-                background: couponData.coupon.type === 'trial' ? '#d3f9d8' : '#ffe3e3',
-                color: couponData.coupon.type === 'trial' ? '#2b8a3e' : '#c92a2a',
-                borderRadius: '6px',
-                fontSize: '12px',
-                fontWeight: 'bold',
-                textTransform: 'uppercase'
-              }}>
-                {couponData.coupon.type === 'trial' ? t('trial') : t('discount')}
-              </span>
-            </div>
-            <h4 style={{ color: '#667eea', marginBottom: '10px' }}>
-              {couponData.coupon.name}
-            </h4>
-            <p style={{ color: '#666', fontSize: '14px', marginBottom: '10px' }}>
-              {couponData.coupon.description}
-            </p>
-            <p style={{ color: '#999', fontSize: '13px' }}>
-              {t('language') === 'zh' ? '分享者：' : 'Shared by: '}{couponData.senderName}
-            </p>
-          </div>
-        )}
-
-        <div style={{
-          background: '#fff3cd',
-          border: '2px solid #ffc107',
-          borderRadius: '8px',
-          padding: '15px',
-          marginBottom: '25px'
-        }}>
-          <p style={{ margin: 0, fontSize: '14px', color: '#856404' }}>
-            ℹ️ {t('language') === 'zh'
-              ? '此優惠券僅限尚未完成任何課程的會員領取'
-              : 'This coupon can only be claimed by members who have not completed any classes'}
-          </p>
-        </div>
-
-        <form onSubmit={handleClaim}>
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{
-              display: 'block',
-              marginBottom: '8px',
-              fontWeight: '600',
-              color: '#333'
-            }}>
-              {t('language') === 'zh' ? '團員編號' : 'Member ID'} *
-            </label>
-            <input
-              type="text"
-              value={memberId}
-              onChange={(e) => setMemberId(e.target.value)}
-              placeholder={t('language') === 'zh' ? '請輸入您的團員編號' : 'Enter your member ID'}
-              style={{
-                width: '100%',
-                padding: '12px',
-                border: '2px solid #ddd',
-                borderRadius: '8px',
-                fontSize: '16px',
-                boxSizing: 'border-box'
-              }}
-              disabled={claiming}
-            />
-          </div>
-
-          {error && (
-            <div style={{
-              background: '#fee',
-              border: '1px solid #fcc',
-              borderRadius: '8px',
-              padding: '12px',
-              marginBottom: '20px',
-              color: '#c33',
-              fontSize: '14px'
-            }}>
-              {error}
-            </div>
-          )}
-
-          <button
-            type="submit"
-            disabled={claiming}
-            style={{
-              width: '100%',
-              background: claiming ? '#ccc' : '#667eea',
-              color: 'white',
-              border: 'none',
-              padding: '14px',
-              borderRadius: '8px',
-              fontSize: '16px',
-              fontWeight: 'bold',
-              cursor: claiming ? 'not-allowed' : 'pointer',
-              transition: 'all 0.3s ease'
-            }}
-          >
-            {claiming ? (t('language') === 'zh' ? '領取中...' : 'Claiming...') : (t('language') === 'zh' ? '領取優惠券' : 'Claim Coupon')}
-          </button>
-        </form>
+        <p style={{ color: '#666' }}>{error}</p>
       </div>
     </div>
   );
