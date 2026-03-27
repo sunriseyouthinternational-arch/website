@@ -152,7 +152,7 @@ module.exports = async (req, res) => {
               action: {
                 type: 'uri',
                 label: 'Coupons',
-                uri: 'https://www.sunriseyouth.org/profile?tab=coupons'
+                uri: `${process.env.BASE_URL}/profile?tab=coupons`
               }
             }
           ]

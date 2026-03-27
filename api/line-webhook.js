@@ -116,7 +116,7 @@ async function handleFollowEvent(event) {
     console.log('[handleFollowEvent] Checking if user exists...');
     const member = await Member.findOne({ 'line.userId': lineUserId });
 
-    const baseUrl = process.env.FRONTEND_URL || 'https://www.sunriseyouth.org';
+    const baseUrl = process.env.BASE_URL || process.env.FRONTEND_URL;
 
     if (member) {
       console.log('[handleFollowEvent] Existing member re-followed:', member.memberId);
@@ -208,7 +208,7 @@ async function handleMessageEvent(event) {
       return;
     }
 
-    const baseUrl = process.env.FRONTEND_URL || 'https://www.sunriseyouth.org';
+    const baseUrl = process.env.BASE_URL || process.env.FRONTEND_URL;
 
     // Handle member ID request
     if (messageText && (messageText.includes('編號') || messageText.toLowerCase().includes('id'))) {
@@ -293,7 +293,7 @@ async function handlePostbackEvent(event) {
           to: lineUserId,
           messages: [{
             type: 'text',
-            text: '💬 請先完成註冊後即可分享推薦碼。\nPlease complete registration first to share your referral code.\n\n點擊以下連結開始註冊：\nClick the link below to register:\n\nhttps://www.sunriseyouth.org/profile'
+            text: `💬 請先完成註冊後即可分享推薦碼。\nPlease complete registration first to share your referral code.\n\n點擊以下連結開始註冊：\nClick the link below to register:\n\n${process.env.BASE_URL}/profile`
           }]
         });
         return;
