@@ -851,6 +851,20 @@ function AdminDashboard() {
 
   const handleUpdateItemStatus = async (type, itemId, status) => {
     try {
+      // Check if changing to completed and if there are unpaid participants
+      if (status === 'completed' && selectedItem && selectedItem._id === itemId) {
+        const hasUnpaid = selectedItem.participants?.some(p => !p.paid);
+        if (hasUnpaid) {
+          setMessage({
+            type: 'error',
+            text: t('language') === 'zh'
+              ? '無法標記為已完成：仍有未付款的參與者'
+              : 'Cannot mark as completed: There are unpaid participants'
+          });
+          return;
+        }
+      }
+
       const endpoint = type === 'class' ? '/api/classes' : '/api/activities';
       await axios.put(`${endpoint}?id=${itemId}`, { status });
 
