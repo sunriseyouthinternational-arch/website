@@ -10,7 +10,7 @@ module.exports = async (req, res) => {
 
     // Enroll in activity
     if (action === 'enroll' && req.method === 'POST') {
-      const { memberId, paymentMethod, couponId, familyMembers = [] } = req.body;
+      const { memberId, paymentMethod, couponId, familyMembers = [], familyMemberCoupons = {} } = req.body;
 
       const activity = await Activity.findById(id).populate('teacherId');
       const member = await Member.findOne({ memberId });
@@ -72,6 +72,7 @@ module.exports = async (req, res) => {
       });
 
       // Add family members
+      const familyCouponsUsed = [];
       familyMembers.forEach(fmIndex => {
         const familyMember = member.familyMembers[fmIndex];
         if (familyMember) {
@@ -82,6 +83,20 @@ module.exports = async (req, res) => {
             paymentMethod: paymentMethod || 'in-person',
             isFamilyMember: true
           });
+
+          // Handle family member coupon
+          const fmCouponId = familyMemberCoupons[fmIndex];
+          if (fmCouponId) {
+            const fmCoupon = member.coupons.id(fmCouponId);
+            if (fmCoupon && fmCoupon.usedCount < fmCoupon.quantity) {
+              fmCoupon.usedCount += 1;
+              familyCouponsUsed.push({
+                name: fmCoupon.name,
+                type: fmCoupon.type,
+                discountPercent: fmCoupon.discountPercent
+              });
+            }
+          }
         }
       });
 
@@ -112,7 +127,8 @@ module.exports = async (req, res) => {
       return res.status(200).json({
         message,
         activity,
-        couponUsed
+        couponUsed,
+        familyCouponsUsed
       });
     }
 

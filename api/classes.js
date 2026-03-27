@@ -10,7 +10,7 @@ module.exports = async (req, res) => {
 
     // Enroll in class
     if (action === 'enroll' && req.method === 'POST') {
-      const { memberId, paymentMethod, couponId, familyMembers = [] } = req.body;
+      const { memberId, paymentMethod, couponId, familyMembers = [], familyMemberCoupons = {} } = req.body;
 
       const classItem = await Class.findById(id).populate('classInfoId').populate('teacherId');
       const member = await Member.findOne({ memberId });
@@ -76,6 +76,7 @@ module.exports = async (req, res) => {
       });
 
       // Add family members
+      const familyCouponsUsed = [];
       familyMembers.forEach(fmIndex => {
         const familyMember = member.familyMembers[fmIndex];
         if (familyMember) {
@@ -86,6 +87,20 @@ module.exports = async (req, res) => {
             paymentMethod: paymentMethod || 'in-person',
             isFamilyMember: true
           });
+
+          // Handle family member coupon
+          const fmCouponId = familyMemberCoupons[fmIndex];
+          if (fmCouponId) {
+            const fmCoupon = member.coupons.id(fmCouponId);
+            if (fmCoupon && fmCoupon.usedCount < fmCoupon.quantity) {
+              fmCoupon.usedCount += 1;
+              familyCouponsUsed.push({
+                name: fmCoupon.name,
+                type: fmCoupon.type,
+                discountPercent: fmCoupon.discountPercent
+              });
+            }
+          }
         }
       });
 
@@ -124,7 +139,8 @@ module.exports = async (req, res) => {
       return res.status(200).json({
         message,
         class: classItem,
-        couponUsed
+        couponUsed,
+        familyCouponsUsed
       });
     }
 

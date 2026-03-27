@@ -49,6 +49,7 @@ function Profile() {
   const [checkoutData, setCheckoutData] = useState(null);
   const [selectedCoupon, setSelectedCoupon] = useState(null);
   const [selectedFamilyMembers, setSelectedFamilyMembers] = useState([]);
+  const [familyMemberCoupons, setFamilyMemberCoupons] = useState({});
   const [showCouponModal, setShowCouponModal] = useState(false);
 
   const [showShareModal, setShowShareModal] = useState(false);
@@ -884,6 +885,7 @@ function Profile() {
       item
     });
     setSelectedFamilyMembers([]);
+    setFamilyMemberCoupons({});
     setShowCheckout(true);
   };
 
@@ -898,11 +900,12 @@ function Profile() {
         memberId: member.memberId,
         paymentMethod,
         couponId: coupon?._id,
-        familyMembers: selectedFamilyMembers
+        familyMembers: selectedFamilyMembers,
+        familyMemberCoupons
       });
 
       // Calculate final price
-      const originalCost = checkoutData.cost * (1 + selectedFamilyMembers.length);
+      let originalCost = checkoutData.cost * (1 + selectedFamilyMembers.length);
       let finalCost = originalCost;
       let discount = 0;
 
@@ -914,6 +917,20 @@ function Profile() {
           discount = Math.round(checkoutData.cost * response.data.couponUsed.discountPercent / 100);
           finalCost = originalCost - discount;
         }
+      }
+
+      // Add family member coupon discounts
+      if (response.data.familyCouponsUsed) {
+        response.data.familyCouponsUsed.forEach(fmCoupon => {
+          if (fmCoupon.type === 'trial') {
+            finalCost -= checkoutData.cost;
+            discount += checkoutData.cost;
+          } else {
+            const fmDiscount = Math.round(checkoutData.cost * fmCoupon.discountPercent / 100);
+            finalCost -= fmDiscount;
+            discount += fmDiscount;
+          }
+        });
       }
 
       // Store payment confirmation data
@@ -936,6 +953,7 @@ function Profile() {
       setCheckoutData(null);
       setSelectedCoupon(null);
       setSelectedFamilyMembers([]);
+      setFamilyMemberCoupons({});
 
       // Show payment confirmation modal
       setShowPaymentConfirmation(true);
@@ -2786,23 +2804,53 @@ function Profile() {
                 <h4 style={{ color: '#667eea', marginBottom: '15px' }}>
                   {t('language') === 'zh' ? '同時為家庭成員報名？' : 'Enroll Family Members?'}
                 </h4>
-                {member.familyMembers.map((fm, index) => (
-                  <label key={index} style={{ display: 'block', marginBottom: '10px', cursor: 'pointer' }}>
-                    <input
-                      type="checkbox"
-                      checked={selectedFamilyMembers.includes(index)}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setSelectedFamilyMembers([...selectedFamilyMembers, index]);
-                        } else {
-                          setSelectedFamilyMembers(selectedFamilyMembers.filter(i => i !== index));
-                        }
-                      }}
-                      style={{ marginRight: '10px' }}
-                    />
-                    {fm.name} (+NT$ {checkoutData.cost})
-                  </label>
-                ))}
+                {member.familyMembers.map((fm, index) => {
+                  const availableCoupons = member.coupons.filter(c => {
+                    const remaining = c.quantity - c.usedCount;
+                    if (remaining <= 0) return false;
+                    if (c.type === 'trial' && checkoutData.classInfoId) {
+                      return c.classInfoId?.toString() === checkoutData.classInfoId;
+                    }
+                    return c.type === 'discount';
+                  });
+
+                  return (
+                    <div key={index} style={{ marginBottom: '15px', padding: '10px', background: '#fff', borderRadius: '8px' }}>
+                      <label style={{ display: 'block', marginBottom: '8px', cursor: 'pointer' }}>
+                        <input
+                          type="checkbox"
+                          checked={selectedFamilyMembers.includes(index)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedFamilyMembers([...selectedFamilyMembers, index]);
+                            } else {
+                              setSelectedFamilyMembers(selectedFamilyMembers.filter(i => i !== index));
+                              const newFMCoupons = {...familyMemberCoupons};
+                              delete newFMCoupons[index];
+                              setFamilyMemberCoupons(newFMCoupons);
+                            }
+                          }}
+                          style={{ marginRight: '10px' }}
+                        />
+                        <strong>{fm.name}</strong> (+NT$ {checkoutData.cost})
+                      </label>
+                      {selectedFamilyMembers.includes(index) && availableCoupons.length > 0 && (
+                        <select
+                          value={familyMemberCoupons[index] || ''}
+                          onChange={(e) => setFamilyMemberCoupons({...familyMemberCoupons, [index]: e.target.value})}
+                          style={{ marginLeft: '30px', padding: '5px', width: 'calc(100% - 30px)' }}
+                        >
+                          <option value="">{t('language') === 'zh' ? '不使用優惠券' : 'No coupon'}</option>
+                          {availableCoupons.map(c => (
+                            <option key={c._id} value={c._id}>
+                              {c.name} ({c.type === 'trial' ? t('language') === 'zh' ? '免費' : 'Free' : `${c.discountPercent}% ${t('off')}`})
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             )}
 
