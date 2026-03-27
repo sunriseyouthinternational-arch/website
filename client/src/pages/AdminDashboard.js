@@ -2963,7 +2963,7 @@ function AdminDashboard() {
                         ? selectedItem.classInfoId?.cost
                         : selectedItem.cost;
                       const couponDiscount = participant.couponDiscount || 0;
-                      const finalCost = itemCost - couponDiscount;
+                      const finalCost = Math.max(0, itemCost - couponDiscount);
 
                       return (
                       <tr key={participant._id}>
@@ -2975,16 +2975,18 @@ function AdminDashboard() {
                         <td>
                           {couponDiscount > 0 ? (
                             <>
-                              <span style={{ textDecoration: 'line-through', color: '#999' }}>
+                              <span style={{ textDecoration: 'line-through', color: '#999', marginRight: '8px' }}>
                                 NT$ {itemCost}
                               </span>
-                              {' → '}
-                              <span style={{ color: '#2b8a3e', fontWeight: 'bold' }}>
+                              <span style={{ color: finalCost === 0 ? '#2b8a3e' : '#667eea', fontWeight: 'bold' }}>
                                 NT$ {finalCost}
+                              </span>
+                              <span style={{ fontSize: '12px', color: '#666', marginLeft: '5px' }}>
+                                (-NT$ {couponDiscount})
                               </span>
                             </>
                           ) : (
-                            <span>NT$ {itemCost}</span>
+                            <span>NT$ {itemCost || 0}</span>
                           )}
                         </td>
                         <td>

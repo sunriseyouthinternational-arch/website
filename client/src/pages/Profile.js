@@ -1838,6 +1838,11 @@ function Profile() {
                   {getEnrolledItems('class').length > 0 ? (
                     getEnrolledItems('class').map((enrollment) => {
                       const classItem = classes.find(c => c._id === enrollment.itemId);
+                      const participant = classItem?.participants?.find(p => p.memberId.toString() === member._id.toString());
+                      const itemCost = classItem?.classInfoId?.cost || 0;
+                      const couponDiscount = participant?.couponDiscount || 0;
+                      const finalCost = Math.max(0, itemCost - couponDiscount);
+
                       return (
                         <div key={enrollment._id} className="enrolled-item">
                           <div style={{ flex: 1 }}>
@@ -1847,10 +1852,31 @@ function Profile() {
                                 {formatDate(classItem.date)} • {classItem.time}
                               </p>
                             )}
+                            {classItem && (
+                              <p style={{ fontSize: '14px', marginTop: '5px' }}>
+                                {couponDiscount > 0 ? (
+                                  <>
+                                    <span style={{ textDecoration: 'line-through', color: '#999' }}>
+                                      NT$ {itemCost}
+                                    </span>
+                                    {' '}
+                                    <span style={{ color: finalCost === 0 ? '#2b8a3e' : '#667eea', fontWeight: 'bold' }}>
+                                      NT$ {finalCost}
+                                    </span>
+                                    {' '}
+                                    <span style={{ fontSize: '12px', color: '#666' }}>
+                                      (-NT$ {couponDiscount})
+                                    </span>
+                                  </>
+                                ) : (
+                                  <span>NT$ {itemCost}</span>
+                                )}
+                              </p>
+                            )}
                           </div>
                           <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                            <span className={`status-badge ${enrollment.paid ? 'paid' : 'unpaid'}`}>
-                              {enrollment.paid ? t('paid') : t('unpaid')}
+                            <span className={`status-badge ${participant?.paid ? 'paid' : 'unpaid'}`}>
+                              {participant?.paid ? t('paid') : t('unpaid')}
                             </span>
                             {classItem && (
                               <button
@@ -2080,14 +2106,45 @@ function Profile() {
                 <h4 className="section-subtitle">{t('registeredActivities')}</h4>
                 <div className="enrolled-list">
                   {getEnrolledItems('activity').length > 0 ? (
-                    getEnrolledItems('activity').map((enrollment) => (
-                      <div key={enrollment._id} className="enrolled-item">
-                        <p><strong>{enrollment.itemName}</strong></p>
-                        <span className={`status-badge ${enrollment.paid ? 'paid' : 'unpaid'}`}>
-                          {enrollment.paid ? t('paid') : t('unpaid')}
-                        </span>
-                      </div>
-                    ))
+                    getEnrolledItems('activity').map((enrollment) => {
+                      const activity = activities.find(a => a._id === enrollment.itemId);
+                      const participant = activity?.participants?.find(p => p.memberId.toString() === member._id.toString());
+                      const itemCost = activity?.cost || 0;
+                      const couponDiscount = participant?.couponDiscount || 0;
+                      const finalCost = Math.max(0, itemCost - couponDiscount);
+
+                      return (
+                        <div key={enrollment._id} className="enrolled-item">
+                          <div style={{ flex: 1 }}>
+                            <p><strong>{enrollment.itemName}</strong></p>
+                            {activity && (
+                              <p style={{ fontSize: '14px', marginTop: '5px' }}>
+                                {couponDiscount > 0 ? (
+                                  <>
+                                    <span style={{ textDecoration: 'line-through', color: '#999' }}>
+                                      NT$ {itemCost}
+                                    </span>
+                                    {' '}
+                                    <span style={{ color: finalCost === 0 ? '#2b8a3e' : '#667eea', fontWeight: 'bold' }}>
+                                      NT$ {finalCost}
+                                    </span>
+                                    {' '}
+                                    <span style={{ fontSize: '12px', color: '#666' }}>
+                                      (-NT$ {couponDiscount})
+                                    </span>
+                                  </>
+                                ) : (
+                                  <span>NT$ {itemCost}</span>
+                                )}
+                              </p>
+                            )}
+                          </div>
+                          <span className={`status-badge ${participant?.paid ? 'paid' : 'unpaid'}`}>
+                            {participant?.paid ? t('paid') : t('unpaid')}
+                          </span>
+                        </div>
+                      );
+                    })
                   ) : (
                     <p className="empty-message">{t('no_enrolled_activities')}</p>
                   )}
