@@ -1655,6 +1655,8 @@ function AdminDashboard() {
               </div>
             )}
           </div>
+
+          {selectedMember.enrollments && selectedMember.enrollments.length > 0 && (
             <div className="detail-section" style={{ marginTop: '30px' }}>
               <h4>{t('enrollment_history')}</h4>
               <div className="table-container">
@@ -1684,7 +1686,9 @@ function AdminDashboard() {
                 </table>
               </div>
             </div>
-          )}          <div className="detail-section" style={{ marginTop: '30px' }}>
+          )}
+
+          <div className="detail-section" style={{ marginTop: '30px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
               <h4 style={{ margin: 0 }}>{t('coupon_management')}</h4>
               <button
