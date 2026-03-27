@@ -2130,7 +2130,8 @@ function AdminDashboard() {
                     <option value="all">{t('language') === 'zh' ? '所有年齡' : 'All Ages'}</option>
                     <option value="children">{t('language') === 'zh' ? '兒童 (6-12歲)' : 'Children (6-12)'}</option>
                     <option value="teen">{t('language') === 'zh' ? '青少年 (13-17歲)' : 'Teen (13-17)'}</option>
-                    <option value="adult">{t('language') === 'zh' ? '成人 (18歲以上)' : 'Adult (18+)'}</option>
+                    <option value="adult">{t('language') === 'zh' ? '成人 (18-64歲)' : 'Adult (18-64)'}</option>
+                    <option value="elderly">{t('language') === 'zh' ? '長者 (65歲以上)' : 'Elderly (65+)'}</option>
                   </select>
                 </div>
 
@@ -2638,7 +2639,8 @@ function AdminDashboard() {
                     <option value="all">{t('language') === 'zh' ? '所有年齡' : 'All Ages'}</option>
                     <option value="children">{t('language') === 'zh' ? '兒童 (6-12歲)' : 'Children (6-12)'}</option>
                     <option value="teen">{t('language') === 'zh' ? '青少年 (13-17歲)' : 'Teen (13-17)'}</option>
-                    <option value="adult">{t('language') === 'zh' ? '成人 (18歲以上)' : 'Adult (18+)'}</option>
+                    <option value="adult">{t('language') === 'zh' ? '成人 (18-64歲)' : 'Adult (18-64)'}</option>
+                    <option value="elderly">{t('language') === 'zh' ? '長者 (65歲以上)' : 'Elderly (65+)'}</option>
                   </select>
                 </div>
 
