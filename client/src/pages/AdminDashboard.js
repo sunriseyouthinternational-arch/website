@@ -1338,7 +1338,15 @@ function AdminDashboard() {
                     <td>
                       <button
                         className="btn btn-small btn-primary"
-                        onClick={() => setSelectedMember(member)}
+                        onClick={async () => {
+                          try {
+                            const res = await axios.get(`/api/members?id=${member._id}`);
+                            setSelectedMember(res.data.member);
+                          } catch (error) {
+                            console.error('Error fetching member:', error);
+                            setSelectedMember(member);
+                          }
+                        }}
                       >
                         {t('view_details')}
                       </button>
