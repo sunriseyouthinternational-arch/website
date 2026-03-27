@@ -1,5 +1,6 @@
 const connectDB = require('../lib/mongodb');
 const { Class, ClassInfo, Member } = require('../db/models');
+const mongoose = require('mongoose');
 
 module.exports = async (req, res) => {
   const { id, action } = req.query;
@@ -305,19 +306,20 @@ module.exports = async (req, res) => {
 
         // Update enrollment status when class status changes
         if (req.body.status === 'completed') {
-          const mongoose = require('mongoose');
-          await Member.updateMany(
+          console.log('Updating enrollment status to completed for class:', id);
+          const result = await Member.updateMany(
             { 'enrollments.itemId': mongoose.Types.ObjectId(id) },
             { $set: { 'enrollments.$[elem].status': 'completed' } },
             { arrayFilters: [{ 'elem.itemId': mongoose.Types.ObjectId(id) }] }
           );
+          console.log('Update result:', result);
         } else if (req.body.status === 'cancelled') {
-          const mongoose = require('mongoose');
-          await Member.updateMany(
+          const result = await Member.updateMany(
             { 'enrollments.itemId': mongoose.Types.ObjectId(id) },
             { $set: { 'enrollments.$[elem].status': 'cancelled' } },
             { arrayFilters: [{ 'elem.itemId': mongoose.Types.ObjectId(id) }] }
           );
+          console.log('Update result:', result);
         }
 
         return res.status(200).json({

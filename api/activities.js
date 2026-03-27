@@ -1,5 +1,6 @@
 const connectDB = require('../lib/mongodb');
 const { Activity, Member } = require('../db/models');
+const mongoose = require('mongoose');
 
 module.exports = async (req, res) => {
   const { id, action } = req.query;
@@ -155,14 +156,12 @@ module.exports = async (req, res) => {
 
         // Update enrollment status when activity status changes
         if (req.body.status === 'completed') {
-          const mongoose = require('mongoose');
           await Member.updateMany(
             { 'enrollments.itemId': mongoose.Types.ObjectId(id) },
             { $set: { 'enrollments.$[elem].status': 'completed' } },
             { arrayFilters: [{ 'elem.itemId': mongoose.Types.ObjectId(id) }] }
           );
         } else if (req.body.status === 'cancelled') {
-          const mongoose = require('mongoose');
           await Member.updateMany(
             { 'enrollments.itemId': mongoose.Types.ObjectId(id) },
             { $set: { 'enrollments.$[elem].status': 'cancelled' } },
