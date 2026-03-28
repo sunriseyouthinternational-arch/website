@@ -2940,6 +2940,24 @@ function AdminDashboard() {
                 </>
               ) : (
                 <>
+                  <div className="form-group">
+                    <label>{t('name')} *</label>
+                    <input
+                      type="text"
+                      value={editItemData.name}
+                      onChange={(e) => setEditItemData({ ...editItemData, name: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>{t('description')} *</label>
+                    <textarea
+                      value={editItemData.description}
+                      onChange={(e) => setEditItemData({ ...editItemData, description: e.target.value })}
+                      required
+                      rows="3"
+                    />
+                  </div>
                   <div className="form-row">
                     <div className="form-group">
                       <label>{t('cost')} (NT$) *</label>
