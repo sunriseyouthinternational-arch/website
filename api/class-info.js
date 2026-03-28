@@ -15,14 +15,15 @@ module.exports = async (req, res) => {
       }
 
       if (req.method === 'POST') {
-        const { name, description, banner, cost, maxParticipants } = req.body;
+        const { name, description, banner, cost, maxParticipants, ageRange } = req.body;
 
         const classInfo = new ClassInfo({
           name,
           description,
           banner: banner || '',
           cost: parseFloat(cost),
-          maxParticipants: parseInt(maxParticipants)
+          maxParticipants: parseInt(maxParticipants),
+          ageRange: ageRange || []
         });
 
         await classInfo.save();
