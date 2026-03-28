@@ -17,6 +17,7 @@ function Profile() {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState({ type: '', text: '' });
   const [selectedClass, setSelectedClass] = useState(null);
+  const [selectedActivity, setSelectedActivity] = useState(null);
 
   const [selectedClassInfo, setSelectedClassInfo] = useState('all');
   const [selectedDate, setSelectedDate] = useState('all');
@@ -26,6 +27,7 @@ function Profile() {
   const tabFromUrl = searchParams.get('tab');
   const sessionFromUrl = searchParams.get('session');
   const classIdFromUrl = searchParams.get('classId');
+  const activityIdFromUrl = searchParams.get('activityId');
   const [activeTab, setActiveTab] = useState(
     tabFromUrl === 'courses' || tabFromUrl === 'classes' ? 'classes' :
     tabFromUrl === 'activities' ? 'activities' :
@@ -341,10 +343,20 @@ function Profile() {
       const classToOpen = classes.find(c => c._id === classIdFromUrl);
       if (classToOpen) {
         setSelectedClass(classToOpen);
-        setActiveTab('courses'); // Switch to courses tab
+        setActiveTab('classes');
       }
     }
   }, [classIdFromUrl, classes]);
+
+  useEffect(() => {
+    if (activityIdFromUrl && activities.length > 0) {
+      const activityToOpen = activities.find(a => a._id === activityIdFromUrl);
+      if (activityToOpen) {
+        setSelectedActivity(activityToOpen);
+        setActiveTab('activities');
+      }
+    }
+  }, [activityIdFromUrl, activities]);
 
   useEffect(() => {
     if (activeTab === 'coupons') {
@@ -542,7 +554,8 @@ function Profile() {
       setMemberId(memberData.memberId);
       setNeedsRegistration(false);
 
-      navigate(`/profile/${memberData.memberId}`, { replace: true });
+      const queryString = window.location.search;
+      navigate(`/profile/${memberData.memberId}${queryString}`, { replace: true });
       setLoading(false);
 
     } catch (error) {
@@ -2145,7 +2158,111 @@ function Profile() {
             </div>
           )}
 
-          {activeTab === 'activities' && (
+          {activeTab === 'activities' && selectedActivity && (
+            <div className="card">
+              <button
+                onClick={() => setSelectedActivity(null)}
+                className="btn btn-secondary"
+                style={{ marginBottom: '20px' }}
+              >
+                ← {t('back')}
+              </button>
+
+              <h2>{selectedActivity.name}</h2>
+
+              {selectedActivity.banner && (
+                <img
+                  src={getImageSrc(selectedActivity.banner)}
+                  alt={selectedActivity.name}
+                  loading="lazy"
+                  decoding="async"
+                  style={{
+                    width: '100%',
+                    aspectRatio: '16 / 9',
+                    objectFit: 'cover',
+                    borderRadius: '8px',
+                    marginTop: '15px',
+                    marginBottom: '20px',
+                    display: 'block'
+                  }}
+                />
+              )}
+
+              <p style={{ fontSize: '18px', lineHeight: '1.6', marginBottom: '20px', color: '#666' }}>
+                {selectedActivity.description || ''}
+              </p>
+
+              <div style={{
+                background: '#f8f9ff',
+                padding: '20px',
+                borderRadius: '8px',
+                border: '2px solid #e0e8ff',
+                marginBottom: '20px'
+              }}>
+                <h3 style={{ marginBottom: '15px', color: '#667eea', fontSize: '20px' }}>
+                  {t('activity_details')}
+                </h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <div>
+                    <strong>{t('date')}:</strong>
+                    <p style={{ marginTop: '5px' }}>{formatDate(selectedActivity.date)}</p>
+                  </div>
+                  <div>
+                    <strong>{t('time')}:</strong>
+                    <p style={{ marginTop: '5px' }}>{selectedActivity.time}</p>
+                  </div>
+                  {selectedActivity.location && (
+                    <div>
+                      <strong>{t('location')}:</strong>
+                      <p style={{ marginTop: '5px' }}>📍 {selectedActivity.location}</p>
+                    </div>
+                  )}
+                  <div>
+                    <strong>{t('host')}:</strong>
+                    <p style={{ marginTop: '5px' }}>{selectedActivity.teacher}</p>
+                  </div>
+                  <div>
+                    <strong>{t('cost')}:</strong>
+                    <p style={{ marginTop: '5px' }}>NT$ {selectedActivity.cost}</p>
+                  </div>
+                  <div>
+                    <strong>{t('participants')}:</strong>
+                    <p style={{ marginTop: '5px' }}>{selectedActivity.currentParticipants} / {selectedActivity.maxParticipants}</p>
+                  </div>
+                </div>
+              </div>
+
+              {selectedActivity.location && (
+                <div style={{ marginBottom: '20px' }}>
+                  <iframe
+                    src={`https://maps.google.com/maps?q=${encodeURIComponent(selectedActivity.location)}&output=embed`}
+                    width="100%"
+                    height="300"
+                    style={{ border: '1px solid #ddd', borderRadius: '8px' }}
+                    allowFullScreen=""
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                    title="Activity Location Map"
+                  />
+                </div>
+              )}
+
+              {isEnrolled('activity', selectedActivity._id) ? (
+                <button className="btn btn-secondary" disabled>{t('enrolled')}</button>
+              ) : selectedActivity.currentParticipants >= selectedActivity.maxParticipants ? (
+                <button className="btn btn-secondary" disabled>{t('full')}</button>
+              ) : (
+                <button
+                  className="btn btn-primary"
+                  onClick={() => openCheckout('activity', selectedActivity)}
+                >
+                  {t('enroll')}
+                </button>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'activities' && !selectedActivity && (
             <div className="card">
               <h3>{t('activities')}</h3>
 
