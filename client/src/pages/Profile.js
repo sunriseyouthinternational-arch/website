@@ -2147,6 +2147,9 @@ function Profile() {
                         <p><strong>{t('time')}:</strong> {classItem.time}</p>
                         <p><strong>{t('cost')}:</strong> NT$ {classItem.classInfoId?.cost || 0}</p>
                         <p><strong>{t('participants')}:</strong> {classItem.currentParticipants} / {classItem.classInfoId?.maxParticipants || 0}</p>
+                        {classItem.classInfoId?.ageRange && (
+                          <p><strong>{t('language') === 'zh' ? '建議年齡' : 'Recommended Age'}:</strong> {getAgeRangeLabel(classItem.classInfoId.ageRange)}</p>
+                        )}
                       </div>
                       <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
                         <button
