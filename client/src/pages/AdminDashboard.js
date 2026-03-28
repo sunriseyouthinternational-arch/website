@@ -2713,6 +2713,20 @@ function AdminDashboard() {
                   )}
                 </div>
 
+                <div className="form-group">
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      checked={newActivity.sendLineAnnouncement || false}
+                      onChange={(e) => setNewActivity({ ...newActivity, sendLineAnnouncement: e.target.checked })}
+                    />
+                    <span>{t('language') === 'zh' ? '發送 LINE 廣播通知' : 'Send LINE Broadcast Announcement'}</span>
+                  </label>
+                  <small style={{ color: '#666', display: 'block', marginTop: '5px' }}>
+                    {t('language') === 'zh' ? '勾選後將向所有用戶發送此活動的 LINE 通知' : 'Check to send a LINE notification about this activity to all users'}
+                  </small>
+                </div>
+
                 <button type="submit" className="btn btn-primary">
                   {t('add_activity')}
                 </button>

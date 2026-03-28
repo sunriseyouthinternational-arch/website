@@ -141,7 +141,7 @@ module.exports = async (req, res) => {
       }
 
       if (req.method === 'POST') {
-        const { name, description, banner, date, time, location, cost, teacherId, teacher, maxParticipants } = req.body;
+        const { name, description, banner, date, time, location, cost, teacherId, teacher, maxParticipants, sendLineAnnouncement } = req.body;
 
         const activity = new Activity({
           name,
@@ -157,6 +157,141 @@ module.exports = async (req, res) => {
         });
 
         await activity.save();
+
+        // Send LINE broadcast if requested
+        if (sendLineAnnouncement) {
+          try {
+            const axios = require('axios');
+
+            console.log('Sending LINE broadcast for activity:', name);
+            console.log('LINE_CHANNEL_ACCESS_TOKEN exists:', !!process.env.LINE_CHANNEL_ACCESS_TOKEN);
+
+            const flexMessage = {
+              type: 'flex',
+              altText: `📢 新活動通知：${name}`,
+              contents: {
+                type: 'bubble',
+                hero: banner && banner.startsWith('http') ? {
+                  type: 'image',
+                  url: banner,
+                  size: 'full',
+                  aspectRatio: '20:13',
+                  aspectMode: 'cover'
+                } : undefined,
+                body: {
+                  type: 'box',
+                  layout: 'vertical',
+                  contents: [
+                    {
+                      type: 'text',
+                      text: '📢 新活動通知',
+                      weight: 'bold',
+                      size: 'md',
+                      color: '#1DB446'
+                    },
+                    {
+                      type: 'text',
+                      text: name,
+                      weight: 'bold',
+                      size: 'xl',
+                      wrap: true,
+                      margin: 'md'
+                    },
+                    {
+                      type: 'box',
+                      layout: 'vertical',
+                      margin: 'lg',
+                      spacing: 'sm',
+                      contents: [
+                        {
+                          type: 'box',
+                          layout: 'baseline',
+                          spacing: 'sm',
+                          contents: [
+                            { type: 'text', text: '📅', size: 'sm', flex: 0 },
+                            { type: 'text', text: new Date(date).toLocaleDateString('zh-TW'), size: 'sm', color: '#666666', flex: 5, wrap: true }
+                          ]
+                        },
+                        {
+                          type: 'box',
+                          layout: 'baseline',
+                          spacing: 'sm',
+                          contents: [
+                            { type: 'text', text: '⏰', size: 'sm', flex: 0 },
+                            { type: 'text', text: time, size: 'sm', color: '#666666', flex: 5, wrap: true }
+                          ]
+                        },
+                        {
+                          type: 'box',
+                          layout: 'baseline',
+                          spacing: 'sm',
+                          contents: [
+                            { type: 'text', text: '📍 地點', size: 'sm', flex: 0 },
+                            { type: 'text', text: location || '待定', size: 'sm', color: '#666666', flex: 5, wrap: true }
+                          ]
+                        },
+                        {
+                          type: 'box',
+                          layout: 'baseline',
+                          spacing: 'sm',
+                          contents: [
+                            { type: 'text', text: '👥', size: 'sm', flex: 0 },
+                            { type: 'text', text: `名額：${maxParticipants}人`, size: 'sm', color: '#666666', flex: 5 }
+                          ]
+                        },
+                        description ? {
+                          type: 'text',
+                          text: description,
+                          size: 'sm',
+                          color: '#999999',
+                          margin: 'md',
+                          wrap: true
+                        } : undefined,
+                        {
+                          type: 'text',
+                          text: '請至官方帳號查看詳情並報名！',
+                          size: 'sm',
+                          color: '#1DB446',
+                          margin: 'md',
+                          wrap: true
+                        }
+                      ].filter(Boolean)
+                    }
+                  ]
+                },
+                footer: {
+                  type: 'box',
+                  layout: 'vertical',
+                  spacing: 'sm',
+                  contents: [
+                    {
+                      type: 'button',
+                      style: 'primary',
+                      action: {
+                        type: 'uri',
+                        label: '查看詳情並報名',
+                        uri: `${process.env.BASE_URL}/profile?tab=activities`
+                      }
+                    }
+                  ]
+                }
+              }
+            };
+
+            const response = await axios.post('https://api.line.me/v2/bot/message/broadcast', {
+              messages: [flexMessage]
+            }, {
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${process.env.LINE_CHANNEL_ACCESS_TOKEN}`
+              }
+            });
+
+            console.log('LINE broadcast sent successfully:', response.status);
+          } catch (error) {
+            console.error('LINE broadcast error:', error.response?.data || error.message);
+          }
+        }
 
         return res.status(201).json({
           message: '活動創建成功 / Activity created successfully',
