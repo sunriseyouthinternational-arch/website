@@ -572,6 +572,7 @@ function AdminDashboard() {
       setMessage({ type: 'error', text: error.response?.data?.message || t('error') });
     }
   };
+  // eslint-disable-next-line no-unused-vars
 
   const handleDeleteClassInfo = async (id) => {
     if (!window.confirm(t('are_you_sure_you_want_to_delete_this_will_affect_a'))) {
