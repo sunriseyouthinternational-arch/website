@@ -1721,7 +1721,11 @@ function Profile() {
                     </div>
                     <div>
                       <strong>{t('recommendedAge')}</strong>
-                      <p style={{ marginTop: '5px' }}>{selectedClass.classInfoId?.ageRange || 'all'}</p>
+                      <p style={{ marginTop: '5px' }}>
+                        {Array.isArray(selectedClass.classInfoId?.ageRange)
+                          ? selectedClass.classInfoId.ageRange.join(', ')
+                          : selectedClass.classInfoId?.ageRange || 'all'}
+                      </p>
                     </div>
                     {selectedClass.location && (
                       <div>
@@ -2134,7 +2138,7 @@ function Profile() {
                         <p><strong>{t('time')}</strong> {classItem.time}</p>
                         <p><strong>{t('cost')}</strong> NT$ {classItem.classInfoId?.cost || 0}</p>
                         <p><strong>{t('participants')}</strong> {classItem.currentParticipants} / {classItem.classInfoId?.maxParticipants || 0}</p>
-                        <p><strong>{t('recommendedAge')}</strong> {classItem.classInfoId?.ageRange || 'all'}</p>
+                        <p><strong>{t('recommendedAge')}</strong> {Array.isArray(classItem.classInfoId?.ageRange) ? classItem.classInfoId.ageRange.join(', ') : classItem.classInfoId?.ageRange || 'all'}</p>
                       </div>
                       <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
                         <button
@@ -2236,7 +2240,11 @@ function Profile() {
                   </div>
                   <div>
                     <strong>{t('recommendedAge')}</strong>
-                    <p style={{ marginTop: '5px' }}>{selectedActivity.ageRange || 'all'}</p>
+                    <p style={{ marginTop: '5px' }}>
+                      {Array.isArray(selectedActivity.ageRange)
+                        ? selectedActivity.ageRange.join(', ')
+                        : selectedActivity.ageRange || 'all'}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -2354,7 +2362,7 @@ function Profile() {
                         )}
                         <p><strong>{t('cost')}</strong> NT$ {activity.cost}</p>
                         <p><strong>{t('participants')}</strong> {activity.currentParticipants} / {activity.maxParticipants}</p>
-                        <p><strong>{t('recommendedAge')}</strong> {activity.ageRange || 'all'}</p>
+                        <p><strong>{t('recommendedAge')}</strong> {Array.isArray(activity.ageRange) ? activity.ageRange.join(', ') : activity.ageRange || 'all'}</p>
                       </div>
                       {activity.location && (
                         <div style={{ marginTop: '10px', marginBottom: '10px' }}>

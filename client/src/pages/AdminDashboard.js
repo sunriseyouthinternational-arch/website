@@ -2035,8 +2035,13 @@ function AdminDashboard() {
               <div className="form-group">
                 <label>{t('recommendedAge')} *</label>
                 <select
-                  value={selectedClassInfo.ageRange || 'all'}
-                  onChange={(e) => setSelectedClassInfo({ ...selectedClassInfo, ageRange: e.target.value })}
+                  multiple
+                  value={selectedClassInfo.ageRange || []}
+                  onChange={(e) => {
+                    const selected = Array.from(e.target.selectedOptions, option => option.value);
+                    setSelectedClassInfo({ ...selectedClassInfo, ageRange: selected });
+                  }}
+                  style={{ minHeight: '120px' }}
                   required
                 >
                   <option value="all">{t('all')}</option>
@@ -2045,6 +2050,9 @@ function AdminDashboard() {
                   <option value="adult">{t('adult')}</option>
                   <option value="elderly">{t('elderly')}</option>
                 </select>
+                <small style={{ color: '#666', marginTop: '5px', display: 'block' }}>
+                  Hold Ctrl/Cmd to select multiple
+                </small>
               </div>
             </div>
 
@@ -2137,16 +2145,23 @@ function AdminDashboard() {
                 <div className="form-group">
                   <label>{t('language') === 'zh' ? '建議年齡範圍' : 'Recommended Age Range'}</label>
                   <select
-                    value={newClassInfo.ageRange}
-                    onChange={(e) => setNewClassInfo({ ...newClassInfo, ageRange: e.target.value })}
+                    multiple
+                    value={newClassInfo.ageRange || []}
+                    onChange={(e) => {
+                      const selected = Array.from(e.target.selectedOptions, option => option.value);
+                      setNewClassInfo({ ...newClassInfo, ageRange: selected });
+                    }}
+                    style={{ minHeight: '120px' }}
                   >
-                    <option value="">{t('language') === 'zh' ? '選擇年齡範圍' : 'Select Age Range'}</option>
                     <option value="all">{t('language') === 'zh' ? '所有年齡' : 'All Ages'}</option>
                     <option value="children">{t('language') === 'zh' ? '兒童 (6-12歲)' : 'Children (6-12)'}</option>
                     <option value="teen">{t('language') === 'zh' ? '青少年 (13-17歲)' : 'Teen (13-17)'}</option>
                     <option value="adult">{t('language') === 'zh' ? '成人 (18-64歲)' : 'Adult (18-64)'}</option>
                     <option value="elderly">{t('language') === 'zh' ? '長者 (65歲以上)' : 'Elderly (65+)'}</option>
                   </select>
+                  <small style={{ color: '#666', marginTop: '5px', display: 'block' }}>
+                    {t('language') === 'zh' ? '按住 Ctrl/Cmd 選擇多個' : 'Hold Ctrl/Cmd to select multiple'}
+                  </small>
                 </div>
 
                 <div className="form-group">
@@ -2646,16 +2661,23 @@ function AdminDashboard() {
                 <div className="form-group">
                   <label>{t('language') === 'zh' ? '建議年齡範圍' : 'Recommended Age Range'}</label>
                   <select
-                    value={newActivity.ageRange}
-                    onChange={(e) => setNewActivity({ ...newActivity, ageRange: e.target.value })}
+                    multiple
+                    value={newActivity.ageRange || []}
+                    onChange={(e) => {
+                      const selected = Array.from(e.target.selectedOptions, option => option.value);
+                      setNewActivity({ ...newActivity, ageRange: selected });
+                    }}
+                    style={{ minHeight: '120px' }}
                   >
-                    <option value="">{t('language') === 'zh' ? '選擇年齡範圍' : 'Select Age Range'}</option>
                     <option value="all">{t('language') === 'zh' ? '所有年齡' : 'All Ages'}</option>
                     <option value="children">{t('language') === 'zh' ? '兒童 (6-12歲)' : 'Children (6-12)'}</option>
                     <option value="teen">{t('language') === 'zh' ? '青少年 (13-17歲)' : 'Teen (13-17)'}</option>
                     <option value="adult">{t('language') === 'zh' ? '成人 (18-64歲)' : 'Adult (18-64)'}</option>
                     <option value="elderly">{t('language') === 'zh' ? '長者 (65歲以上)' : 'Elderly (65+)'}</option>
                   </select>
+                  <small style={{ color: '#666', marginTop: '5px', display: 'block' }}>
+                    {t('language') === 'zh' ? '按住 Ctrl/Cmd 選擇多個' : 'Hold Ctrl/Cmd to select multiple'}
+                  </small>
                 </div>
 
                 <div className="form-group">
@@ -2942,8 +2964,12 @@ function AdminDashboard() {
                 <strong>{t('recommendedAge')}</strong>
                 <span>
                   {selectedItem.type === 'class'
-                    ? (selectedItem.classInfoId?.ageRange || 'all')
-                    : (selectedItem.ageRange || 'all')}
+                    ? (Array.isArray(selectedItem.classInfoId?.ageRange)
+                        ? selectedItem.classInfoId.ageRange.join(', ')
+                        : selectedItem.classInfoId?.ageRange || 'all')
+                    : (Array.isArray(selectedItem.ageRange)
+                        ? selectedItem.ageRange.join(', ')
+                        : selectedItem.ageRange || 'all')}
                 </span>
               </div>
               <div className="detail-row">
