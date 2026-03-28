@@ -5,11 +5,12 @@ This folder contains static images for the website.
 ## Folder Structure
 
 - **`/line-broadcast`** - Default image for LINE broadcast messages (class announcements)
-- **`/rich-menu`** - Rich menu images for LINE Official Account
+- **`/profile_pics`** - Default profile pictures (male.jpg, female.jpg)
+- **`/richmenu`** - Rich menu images for LINE Official Account
 
 ## LINE Broadcast Image
 
-Place a default image in `/public/images/line-broadcast/` to be used in all LINE broadcast messages when announcing new classes.
+Place a default image in `/client/public/images/line-broadcast/` to be used in all LINE broadcast messages when announcing new classes.
 
 **Requirements:**
 - Aspect ratio: 20:13 (e.g., 1040 x 676 pixels)
@@ -25,21 +26,29 @@ https://your-domain.com/images/line-broadcast/default.jpg
 
 Update the LINE broadcast code to use this URL instead of class banner images.
 
+## Profile Pictures
+
+Default profile pictures are stored in `/client/public/images/profile_pics/`:
+- `male.jpg` - Default picture for male members
+- `female.jpg` - Default picture for female members
+
+These are served directly by the React app and accessible at `/images/profile_pics/male.jpg` and `/images/profile_pics/female.jpg`.
+
 ## Rich Menu Image
 
-Place your `rich-menu.png` file (2500 x 1686 pixels) in `/public/images/rich-menu/`.
+Place your `rich-menu.png` file (2500 x 1686 pixels) in `/client/public/images/richmenu/`.
 
 Then update `lib/lineRichMenu.js` to use:
 ```javascript
-const imagePath = '/images/rich-menu/rich-menu.png';
+const imagePath = path.join(process.cwd(), 'client/public/images/richmenu/rich-menu.png');
 ```
 
 ## How to Add Images
 
-1. Add your image files to the appropriate subfolder
+1. Add your image files to the appropriate subfolder in `/client/public/images/`
 2. Commit and push your changes:
    ```bash
-   git add public/images/
+   git add client/public/images/
    git commit -m "Add images"
    git push
    ```
@@ -48,6 +57,7 @@ const imagePath = '/images/rich-menu/rich-menu.png';
 
 - **LINE broadcast**: 1040 x 676px (20:13 aspect ratio)
 - **Rich menu**: 2500 x 1686px (required by LINE)
+- **Profile pictures**: Any reasonable size (will be displayed as thumbnails)
 - **Formats**: JPG, PNG
 - **Optimization**: Compress images before uploading for better performance
 

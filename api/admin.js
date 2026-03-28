@@ -181,7 +181,7 @@ module.exports = async (req, res) => {
         console.log('[admin] Rich menu created:', richMenuId);
 
         // Step 2: Upload image (uses api-data.line.me, path ends with /content)
-        const imagePath = path.join(process.cwd(), 'public/images/richmenu/richmenu.jpg');
+        const imagePath = path.join(process.cwd(), 'client/public/images/richmenu/richmenu.jpg');
         if (!fs.existsSync(imagePath)) {
           return res.status(500).json({
             message: 'Rich menu created but image not found',
