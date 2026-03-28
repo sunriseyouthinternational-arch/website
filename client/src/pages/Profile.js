@@ -126,17 +126,6 @@ function Profile() {
     return `${process.env.PUBLIC_URL}/images/profile_pics/male.jpg`;
   };
 
-  const getAgeRangeLabel = (ageRange) => {
-    const labels = {
-      'all': t('language') === 'zh' ? '所有年齡' : 'All Ages',
-      'children': t('language') === 'zh' ? '兒童 (6-12歲)' : 'Children (6-12)',
-      'teen': t('language') === 'zh' ? '青少年 (13-17歲)' : 'Teen (13-17)',
-      'adult': t('language') === 'zh' ? '成人 (18-64歲)' : 'Adult (18-64)',
-      'elderly': t('language') === 'zh' ? '長者 (65歲以上)' : 'Elderly (65+)'
-    };
-    return labels[ageRange] || '';
-  };
-
   // eslint-disable-next-line no-unused-vars
   const validateAndSaveSession = async (sessionToken, id) => {
     setLoading(true);
@@ -1730,12 +1719,6 @@ function Profile() {
                       <strong>{t('participants')}:</strong>
                       <p style={{ marginTop: '5px' }}>{selectedClass.currentParticipants} / {selectedClass.classInfoId?.maxParticipants || 0}</p>
                     </div>
-                    {selectedClass.classInfoId?.ageRange && (
-                      <div>
-                        <strong>{t('language') === 'zh' ? '建議年齡' : 'Recommended Age'}:</strong>
-                        <p style={{ marginTop: '5px' }}>{getAgeRangeLabel(selectedClass.classInfoId.ageRange)}</p>
-                      </div>
-                    )}
                     {selectedClass.location && (
                       <div>
                         <strong>{t('location')}:</strong>
@@ -2147,9 +2130,6 @@ function Profile() {
                         <p><strong>{t('time')}:</strong> {classItem.time}</p>
                         <p><strong>{t('cost')}:</strong> NT$ {classItem.classInfoId?.cost || 0}</p>
                         <p><strong>{t('participants')}:</strong> {classItem.currentParticipants} / {classItem.classInfoId?.maxParticipants || 0}</p>
-                        {classItem.classInfoId?.ageRange && (
-                          <p><strong>{t('language') === 'zh' ? '建議年齡' : 'Recommended Age'}:</strong> {getAgeRangeLabel(classItem.classInfoId.ageRange)}</p>
-                        )}
                       </div>
                       <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
                         <button
@@ -2249,12 +2229,6 @@ function Profile() {
                     <strong>{t('participants')}:</strong>
                     <p style={{ marginTop: '5px' }}>{selectedActivity.currentParticipants} / {selectedActivity.maxParticipants}</p>
                   </div>
-                  {selectedActivity.ageRange && (
-                    <div>
-                      <strong>{t('language') === 'zh' ? '建議年齡' : 'Recommended Age'}:</strong>
-                      <p style={{ marginTop: '5px' }}>{getAgeRangeLabel(selectedActivity.ageRange)}</p>
-                    </div>
-                  )}
                 </div>
               </div>
 
@@ -2371,17 +2345,7 @@ function Profile() {
                         )}
                         <p><strong>{t('cost')}:</strong> NT$ {activity.cost}</p>
                         <p><strong>{t('participants')}:</strong> {activity.currentParticipants} / {activity.maxParticipants}</p>
-                        {activity.ageRange && (
-                          <p><strong>{t('language') === 'zh' ? '建議年齡' : 'Recommended Age'}:</strong> {getAgeRangeLabel(activity.ageRange)}</p>
-                        )}
                       </div>
-                      <button
-                        onClick={() => setSelectedActivity(activity)}
-                        className="btn btn-secondary"
-                        style={{ marginBottom: '10px' }}
-                      >
-                        {t('language') === 'zh' ? '查看詳情' : 'View Details'}
-                      </button>
                       {activity.location && (
                         <div style={{ marginTop: '10px', marginBottom: '10px' }}>
                           <iframe

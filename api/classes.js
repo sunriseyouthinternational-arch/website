@@ -2,17 +2,6 @@ const connectDB = require('../lib/mongodb');
 const { Class, ClassInfo, Member } = require('../db/models');
 const mongoose = require('mongoose');
 
-const getAgeRangeLabel = (ageRange) => {
-  const labels = {
-    'all': '所有年齡',
-    'children': '兒童 (6-12歲)',
-    'teen': '青少年 (13-17歲)',
-    'adult': '成人 (18-64歲)',
-    'elderly': '長者 (65歲以上)'
-  };
-  return labels[ageRange] || '';
-};
-
 module.exports = async (req, res) => {
   const { id, action } = req.query;
 
@@ -255,15 +244,6 @@ module.exports = async (req, res) => {
                             { type: 'text', text: `名額：${classInfo.maxParticipants}人`, size: 'sm', color: '#666666', flex: 5 }
                           ]
                         },
-                        classInfo.ageRange ? {
-                          type: 'box',
-                          layout: 'baseline',
-                          spacing: 'sm',
-                          contents: [
-                            { type: 'text', text: '👶', size: 'sm', flex: 0 },
-                            { type: 'text', text: `建議年齡：${getAgeRangeLabel(classInfo.ageRange)}`, size: 'sm', color: '#666666', flex: 5, wrap: true }
-                          ]
-                        } : undefined,
                         classInfo.description ? {
                           type: 'text',
                           text: classInfo.description,
