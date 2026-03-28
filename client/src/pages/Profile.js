@@ -2254,7 +2254,7 @@ function Profile() {
               ) : (
                 <button
                   className="btn btn-primary"
-                  onClick={() => openCheckout('activity', selectedActivity)}
+                  onClick={() => handleEnroll('activity', selectedActivity._id, selectedActivity.name)}
                 >
                   {t('enroll')}
                 </button>
