@@ -47,10 +47,8 @@ function Profile() {
 
   const [showCheckout, setShowCheckout] = useState(false);
   const [checkoutData, setCheckoutData] = useState(null);
-  const [selectedCoupon, setSelectedCoupon] = useState(null);
   const [selectedFamilyMembers, setSelectedFamilyMembers] = useState([]);
   const [familyMemberCoupons, setFamilyMemberCoupons] = useState({});
-  const [showCouponModal, setShowCouponModal] = useState(false);
 
   const [showShareModal, setShowShareModal] = useState(false);
   const [shareCoupon, setShareCoupon] = useState(null);
@@ -3040,144 +3038,9 @@ function Profile() {
             </button>
           </div>
         </div>
-      )}      {showCouponModal && checkoutData && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0, 0, 0, 0.7)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1001,
-          padding: '20px'
-        }}>
-          <div style={{
-            background: 'white',
-            borderRadius: '16px',
-            padding: '40px',
-            maxWidth: '800px',
-            width: '100%',
-            maxHeight: '90vh',
-            overflow: 'auto',
-            boxShadow: '0 10px 50px rgba(0, 0, 0, 0.3)'
-          }}>
-            <h2 style={{ color: '#667eea', marginBottom: '30px', textAlign: 'center' }}>
-              {t('select_coupon')}
-            </h2>
+      )}
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '20px', marginBottom: '30px' }}>
-              {member.coupons && member.coupons.length > 0 ? (
-                member.coupons
-                  .filter(coupon => (coupon.quantity - coupon.usedCount) > 0) // Only show coupons with remaining quantity
-                  .map((coupon, idx) => {
-
-                    const isValid = coupon.type === 'discount' ||
-                      (coupon.type === 'trial' && coupon.classInfoId === checkoutData.classInfoId);
-
-                    return (
-                      <div
-                        key={idx}
-                        onClick={() => {
-                          if (isValid) {
-                            setSelectedCoupon(coupon);
-                            setShowCouponModal(false);
-                          }
-                        }}
-                        style={{
-                          background: isValid ? 'white' : '#f5f5f5',
-                          border: `2px solid ${isValid ? '#667eea' : '#ddd'}`,
-                          borderRadius: '12px',
-                          padding: '20px',
-                          cursor: isValid ? 'pointer' : 'not-allowed',
-                          opacity: isValid ? 1 : 0.5,
-                          transition: 'all 0.3s ease',
-                          position: 'relative'
-                        }}
-                      >
-                        {coupon.image && (
-                          <img
-                            src={coupon.image}
-                            alt={coupon.name}
-                            style={{
-                              width: '100%',
-                              height: '120px',
-                              objectFit: 'cover',
-                              borderRadius: '8px',
-                              marginBottom: '15px'
-                            }}
-                          />
-                        )}
-                        <div style={{ marginBottom: '10px' }}>
-                          <span style={{
-                            display: 'inline-block',
-                            padding: '4px 12px',
-                            background: coupon.type === 'trial' ? '#d3f9d8' : '#ffe3e3',
-                            color: coupon.type === 'trial' ? '#2b8a3e' : '#c92a2a',
-                            borderRadius: '6px',
-                            fontSize: '11px',
-                            fontWeight: 'bold',
-                            textTransform: 'uppercase'
-                          }}>
-                            {coupon.type === 'trial'
-                              ? (t('trial'))
-                              : (t('discount'))}
-                          </span>
-                        </div>
-                        <h4 style={{ color: '#667eea', marginBottom: '8px', fontSize: '16px' }}>
-                          {coupon.name}
-                        </h4>
-                        <p style={{ color: '#666', fontSize: '13px', marginBottom: '8px' }}>
-                          {coupon.description}
-                        </p>
-                        {coupon.type === 'discount' && (
-                          <p style={{ fontSize: '14px', color: '#c92a2a', fontWeight: 'bold', marginBottom: '8px' }}>
-                            {coupon.discountPercent}% {t('off')}
-                          </p>
-                        )}
-                        <p style={{ fontSize: '13px', color: '#999' }}>
-                          {t('remaining')}
-                          {coupon.quantity - coupon.usedCount}
-                        </p>
-                        {!isValid && (
-                          <div style={{
-                            position: 'absolute',
-                            top: '50%',
-                            left: '50%',
-                            transform: 'translate(-50%, -50%)',
-                            background: 'rgba(0, 0, 0, 0.8)',
-                            color: 'white',
-                            padding: '10px 20px',
-                            borderRadius: '8px',
-                            fontSize: '12px',
-                            fontWeight: 'bold',
-                            textAlign: 'center'
-                          }}>
-                            {t('not_valid_for_this_class')}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })
-              ) : (
-                <p style={{ gridColumn: '1 / -1', textAlign: 'center', color: '#999', padding: '40px' }}>
-                  {t('you_have_no_available_coupons')}
-                </p>
-              )}
-            </div>
-
-            <button
-              onClick={() => setShowCouponModal(false)}
-              className="btn btn-secondary"
-              style={{ width: '100%' }}
-            >
-              {t('cancel')}
-            </button>
-          </div>
-        </div>
-      )}      {showShareModal && shareCoupon && (
+      {showShareModal && shareCoupon && (
         <div style={{
           position: 'fixed',
           top: 0,
