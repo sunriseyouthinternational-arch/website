@@ -2818,12 +2818,6 @@ function AdminDashboard() {
                     >
                       {t('view_details')}
                     </button>
-                    <button
-                      className="btn btn-small btn-secondary"
-                      onClick={() => setSelectedActivity(activity)}
-                    >
-                      {t('edit')}
-                    </button>
                   </div>
                 </div>
               ))}

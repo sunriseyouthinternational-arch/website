@@ -224,13 +224,9 @@ function Profile() {
     }
 
     if (selectedDate !== 'all') {
-      const selectedDateObj = new Date(selectedDate);
-      selectedDateObj.setHours(0, 0, 0, 0);
-
       filtered = filtered.filter(c => {
-        const classDate = new Date(c.date);
-        classDate.setHours(0, 0, 0, 0);
-        return classDate.getTime() === selectedDateObj.getTime();
+        const classDateStr = c.date.split('T')[0];
+        return classDateStr === selectedDate;
       });
     }
 
