@@ -2032,6 +2032,20 @@ function AdminDashboard() {
                   required
                 />
               </div>
+              <div className="form-group">
+                <label>{t('recommendedAge')} *</label>
+                <select
+                  value={selectedClassInfo.ageRange || 'all'}
+                  onChange={(e) => setSelectedClassInfo({ ...selectedClassInfo, ageRange: e.target.value })}
+                  required
+                >
+                  <option value="all">{t('all')}</option>
+                  <option value="children">{t('children')}</option>
+                  <option value="teen">{t('teen')}</option>
+                  <option value="adult">{t('adult')}</option>
+                  <option value="elderly">{t('elderly')}</option>
+                </select>
+              </div>
             </div>
 
             <div style={{ display: 'flex', gap: '15px', marginTop: '20px' }}>
@@ -2881,51 +2895,59 @@ function AdminDashboard() {
             <div className="detail-section">
               <h4>{t('basic_information')}</h4>
               <div className="detail-row">
-                <strong>{t('name')}:</strong>
+                <strong>{t('name')}</strong>
                 <span>{selectedItem.type === 'class' ? selectedItem.classInfoId?.name : selectedItem.name}</span>
               </div>
               <div className="detail-row">
-                <strong>{t('description')}:</strong>
+                <strong>{t('description')}</strong>
                 <span>{selectedItem.type === 'class' ? selectedItem.classInfoId?.description : selectedItem.description}</span>
               </div>
               {selectedItem.date && selectedItem.type === 'class' && (
                 <div className="detail-row">
-                  <strong>{t('classDate')}:</strong>
+                  <strong>{t('classDate')}</strong>
                   <span>{formatDate(selectedItem.date)}</span>
                 </div>
               )}
               {selectedItem.date && selectedItem.type === 'activity' && (
                 <div className="detail-row">
-                  <strong>{t('activity_date')}:</strong>
+                  <strong>{t('activity_date')}</strong>
                   <span>{formatDate(selectedItem.date)}</span>
                 </div>
               )}
               <div className="detail-row">
-                <strong>{t('time')}:</strong>
+                <strong>{t('time')}</strong>
                 <span>{selectedItem.time}</span>
               </div>
               <div className="detail-row">
-                <strong>{t('host')}:</strong>
+                <strong>{t('host')}</strong>
                 <span>{selectedItem.teacher}</span>
               </div>
               {selectedItem.location && (
                 <div className="detail-row">
-                  <strong>{t('location')}:</strong>
+                  <strong>{t('location')}</strong>
                   <span>📍 {selectedItem.location}</span>
                 </div>
               )}
               <div className="detail-row">
-                <strong>{t('cost')}:</strong>
+                <strong>{t('cost')}</strong>
                 <span>NT$ {selectedItem.type === 'class' ? selectedItem.classInfoId?.cost : selectedItem.cost}</span>
               </div>
               <div className="detail-row">
-                <strong>{t('participants')}:</strong>
+                <strong>{t('participants')}</strong>
                 <span>
                   {selectedItem.currentParticipants} / {selectedItem.type === 'class' ? selectedItem.classInfoId?.maxParticipants : selectedItem.maxParticipants}
                 </span>
               </div>
               <div className="detail-row">
-                <strong>{t('status_')}:</strong>
+                <strong>{t('recommendedAge')}</strong>
+                <span>
+                  {selectedItem.type === 'class'
+                    ? (selectedItem.classInfoId?.ageRange || 'all')
+                    : (selectedItem.ageRange || 'all')}
+                </span>
+              </div>
+              <div className="detail-row">
+                <strong>{t('status_')}</strong>
                 <select
                   value={selectedItem.status || 'upcoming'}
                   onChange={(e) => handleUpdateItemStatus(selectedItem.type, selectedItem._id, e.target.value)}
