@@ -3168,31 +3168,33 @@ function AdminDashboard() {
                           )}
                         </td>
                         <td>
-                          <span className={`status-badge ${participant.paid ? 'paid' : 'unpaid'}`}>
-                            {participant.paid
-                              ? (t('paid'))
-                              : (t('unpaid'))}
+                          <span className={`status-badge ${itemCost === 0 ? 'paid' : (participant.paid ? 'paid' : 'unpaid')}`}>
+                            {itemCost === 0 ? t('free') : (participant.paid ? t('paid') : t('unpaid'))}
                           </span>
                         </td>
                         <td>
-                          <button
-                            className="btn btn-small"
-                            onClick={() =>
-                              updatePaymentStatus(
-                                selectedItem.type,
-                                selectedItem._id,
-                                participant._id,
-                                !participant.paid
-                              )
-                            }
-                            disabled={loadingStates[`${selectedItem.type}-${selectedItem._id}-${participant._id}`]}
-                          >
-                            {loadingStates[`${selectedItem.type}-${selectedItem._id}-${participant._id}`]
-                              ? t('processing')
-                              : participant.paid
-                                ? (t('mark_unpaid'))
-                                : (t('mark_paid'))}
-                          </button>
+                          {itemCost === 0 ? (
+                            <span style={{ color: '#666', fontSize: '14px' }}>-</span>
+                          ) : (
+                            <button
+                              className="btn btn-small"
+                              onClick={() =>
+                                updatePaymentStatus(
+                                  selectedItem.type,
+                                  selectedItem._id,
+                                  participant._id,
+                                  !participant.paid
+                                )
+                              }
+                              disabled={loadingStates[`${selectedItem.type}-${selectedItem._id}-${participant._id}`]}
+                            >
+                              {loadingStates[`${selectedItem.type}-${selectedItem._id}-${participant._id}`]
+                                ? t('processing')
+                                : participant.paid
+                                  ? (t('mark_unpaid'))
+                                  : (t('mark_paid'))}
+                            </button>
+                          )}
                         </td>
                       </tr>
                       );

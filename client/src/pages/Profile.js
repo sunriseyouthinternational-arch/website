@@ -1938,8 +1938,8 @@ function Profile() {
                             )}
                           </div>
                           <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                            <span className={`status-badge ${myParticipants.every(p => p.paid) ? 'paid' : 'unpaid'}`}>
-                              {myParticipants.every(p => p.paid) ? t('paid') : t('unpaid')}
+                            <span className={`status-badge ${itemCost === 0 ? 'paid' : (myParticipants.every(p => p.paid) ? 'paid' : 'unpaid')}`}>
+                              {itemCost === 0 ? t('free') : (myParticipants.every(p => p.paid) ? t('paid') : t('unpaid'))}
                             </span>
                             {classItem && (
                               <button
@@ -2317,8 +2317,8 @@ function Profile() {
                             </p>
                           )}
                         </div>
-                        <span className={`status-badge ${myParticipants.every(p => p.paid) ? 'paid' : 'unpaid'}`}>
-                          {myParticipants.every(p => p.paid) ? t('paid') : t('unpaid')}
+                        <span className={`status-badge ${itemCost === 0 ? 'paid' : (myParticipants.every(p => p.paid) ? 'paid' : 'unpaid')}`}>
+                          {itemCost === 0 ? t('free') : (myParticipants.every(p => p.paid) ? t('paid') : t('unpaid'))}
                         </span>
                       </div>
                       );
