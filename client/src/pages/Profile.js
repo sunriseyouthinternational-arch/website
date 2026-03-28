@@ -2895,8 +2895,59 @@ function Profile() {
                 border: '2px solid #ffd700'
               }}>
                 <h4 style={{ color: '#667eea', marginBottom: '15px' }}>
-                  {t('language') === 'zh' ? '選擇要報名的家庭成員' : 'Select Family Members to Enroll'}
+                  {t('language') === 'zh' ? '選擇要報名的人員' : 'Select People to Enroll'}
                 </h4>
+
+                {/* Main member */}
+                {(() => {
+                  const availableCoupons = member.coupons.filter(c => {
+                    const remaining = c.quantity - c.usedCount;
+                    if (remaining <= 0) return false;
+                    if (c.type === 'trial' && checkoutData.classInfoId) {
+                      return c.classInfoId?.toString() === checkoutData.classInfoId;
+                    }
+                    return c.type === 'discount';
+                  });
+
+                  return (
+                    <div style={{ marginBottom: '15px', padding: '10px', background: '#fff', borderRadius: '8px' }}>
+                      <label style={{ display: 'block', marginBottom: '8px', cursor: 'pointer' }}>
+                        <input
+                          type="checkbox"
+                          checked={selectedFamilyMembers.includes('self')}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedFamilyMembers([...selectedFamilyMembers, 'self']);
+                            } else {
+                              setSelectedFamilyMembers(selectedFamilyMembers.filter(i => i !== 'self'));
+                              const newFMCoupons = {...familyMemberCoupons};
+                              delete newFMCoupons['self'];
+                              setFamilyMemberCoupons(newFMCoupons);
+                            }
+                          }}
+                          style={{ marginRight: '10px' }}
+                        />
+                        <strong>{member.name}</strong> (+NT$ {checkoutData.cost})
+                      </label>
+                      {selectedFamilyMembers.includes('self') && availableCoupons.length > 0 && (
+                        <select
+                          value={familyMemberCoupons['self'] || ''}
+                          onChange={(e) => setFamilyMemberCoupons({...familyMemberCoupons, 'self': e.target.value})}
+                          style={{ marginLeft: '30px', padding: '5px', width: 'calc(100% - 30px)' }}
+                        >
+                          <option value="">{t('language') === 'zh' ? '不使用優惠券' : 'No coupon'}</option>
+                          {availableCoupons.map(c => (
+                            <option key={c._id} value={c._id}>
+                              {c.name} ({c.type === 'trial' ? t('language') === 'zh' ? '免費' : 'Free' : `${c.discountPercent}% ${t('off')}`})
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                    </div>
+                  );
+                })()}
+
+                {/* Family members */}
                 {member.familyMembers.map((fm, index) => {
                   const availableCoupons = member.coupons.filter(c => {
                     const remaining = c.quantity - c.usedCount;

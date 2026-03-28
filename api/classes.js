@@ -23,25 +23,22 @@ module.exports = async (req, res) => {
         return res.status(404).json({ message: '找不到團員 / Member not found' });
       }
 
-      // Only enroll family members, not the member themselves
       const totalEnrolling = familyMembers.length;
       if (totalEnrolling === 0) {
-        return res.status(400).json({ message: '請至少選擇一位家庭成員 / Please select at least one family member' });
+        return res.status(400).json({ message: '請至少選擇一位人員 / Please select at least one person' });
       }
 
       if (classItem.currentParticipants + totalEnrolling > classItem.classInfoId.maxParticipants) {
         return res.status(400).json({ message: '課程名額不足 / Not enough spots available' });
       }
 
-      // Add family members
       const familyCouponsUsed = [];
       familyMembers.forEach(fmIndex => {
-        const familyMember = member.familyMembers[fmIndex];
-        if (familyMember) {
+        // Handle main member enrollment
+        if (fmIndex === 'self') {
           let fmCouponDiscount = 0;
 
-          // Handle family member coupon
-          const fmCouponId = familyMemberCoupons[fmIndex];
+          const fmCouponId = familyMemberCoupons['self'];
           if (fmCouponId) {
             const fmCoupon = member.coupons.id(fmCouponId);
             if (fmCoupon && fmCoupon.usedCount < fmCoupon.quantity) {
@@ -61,14 +58,45 @@ module.exports = async (req, res) => {
 
           classItem.participants.push({
             memberId: member._id,
-            memberName: `${familyMember.name} (${member.name}的家人)`,
+            memberName: member.name,
             paid: false,
             paymentMethod: paymentMethod || 'in-person',
-            isFamilyMember: true,
+            isFamilyMember: false,
             couponDiscount: fmCouponDiscount
           });
+        } else {
+          // Handle family member enrollment
+          const familyMember = member.familyMembers[fmIndex];
+          if (familyMember) {
+            let fmCouponDiscount = 0;
 
-          console.log('[Enrollment] Family member couponDiscount:', fmCouponDiscount);
+            const fmCouponId = familyMemberCoupons[fmIndex];
+            if (fmCouponId) {
+              const fmCoupon = member.coupons.id(fmCouponId);
+              if (fmCoupon && fmCoupon.usedCount < fmCoupon.quantity) {
+                if (fmCoupon.type === 'trial') {
+                  fmCouponDiscount = classItem.classInfoId.cost;
+                } else {
+                  fmCouponDiscount = Math.round(classItem.classInfoId.cost * fmCoupon.discountPercent / 100);
+                }
+                fmCoupon.usedCount += 1;
+                familyCouponsUsed.push({
+                  name: fmCoupon.name,
+                  type: fmCoupon.type,
+                  discountPercent: fmCoupon.discountPercent
+                });
+              }
+            }
+
+            classItem.participants.push({
+              memberId: member._id,
+              memberName: `${familyMember.name} (${member.name}的家人)`,
+              paid: false,
+              paymentMethod: paymentMethod || 'in-person',
+              isFamilyMember: true,
+              couponDiscount: fmCouponDiscount
+            });
+          }
         }
       });
 
