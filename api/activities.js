@@ -270,7 +270,7 @@ module.exports = async (req, res) => {
                       action: {
                         type: 'uri',
                         label: '查看詳情並報名',
-                        uri: `${process.env.BASE_URL}/profile?tab=activities`
+                        uri: `${process.env.BASE_URL}/profile?tab=activities&activityId=${activity._id}`
                       }
                     }
                   ]
