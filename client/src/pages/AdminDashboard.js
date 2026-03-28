@@ -21,24 +21,35 @@ function AdminDashboard() {
   const [selectedTeacher, setSelectedTeacher] = useState(null);
   const [selectedClassInfo, setSelectedClassInfo] = useState(null);
 
+  const [editingTeacherPhoto, setEditingTeacherPhoto] = useState(false);
+  const [uploadingTeacherPhoto, setUploadingTeacherPhoto] = useState(false);
+  const [editingTeacher, setEditingTeacher] = useState(false);
+  const [editTeacherData, setEditTeacherData] = useState({});
+
+  const [selectedCouponProfile, setSelectedCouponProfile] = useState(null);
+  const [editingCouponProfile, setEditingCouponProfile] = useState(false);
+  const [editCouponProfileData, setEditCouponProfileData] = useState({});
+
   const [showAddClassInfoForm, setShowAddClassInfoForm] = useState(false);
   const [newClassInfo, setNewClassInfo] = useState({
     name: '',
     description: '',
     cost: '',
     maxParticipants: '',
-    banner: ''
+    banner: '',
+    ageRange: ''
   });
 
   const [showAddClassForm, setShowAddClassForm] = useState(false);
   const [newClass, setNewClass] = useState({
     classInfoId: '',
-    teacherId: '',
+    teacherId: [],
     teacher: '',
     time: '',
     date: '',
     location: '',
-    status: 'upcoming'
+    status: 'upcoming',
+    sendLineAnnouncement: false
   });
 
   const [showAddActivityForm, setShowAddActivityForm] = useState(false);
@@ -49,11 +60,12 @@ function AdminDashboard() {
     time: '',
     location: '',
     cost: '',
-    teacherId: '',
+    teacherId: [],
     teacher: '',
     maxParticipants: '',
     banner: '',
-    status: 'upcoming'
+    status: 'upcoming',
+    ageRange: ''
   });
 
   const [showAddTeacherForm, setShowAddTeacherForm] = useState(false);
@@ -95,6 +107,9 @@ function AdminDashboard() {
     price: '',
     stock: -1
   });
+
+  const [editingItem, setEditingItem] = useState(false);
+  const [editItemData, setEditItemData] = useState({});
 
   const [associationMeetings, setAssociationMeetings] = useState([]);
   const [selectedMeeting, setSelectedMeeting] = useState(null);
@@ -398,12 +413,13 @@ function AdminDashboard() {
       setShowAddClassForm(false);
       setNewClass({
         classInfoId: '',
-        teacherId: '',
+        teacherId: [],
         teacher: '',
         time: '',
         date: '',
         location: '',
-        status: 'upcoming'
+        status: 'upcoming',
+        sendLineAnnouncement: false
       });
 
       const classesRes = await axios.get('/api/classes');
@@ -502,7 +518,7 @@ function AdminDashboard() {
         time: '',
         location: '',
         cost: '',
-        teacherId: '',
+        teacherId: [],
         teacher: '',
         maxParticipants: '',
         banner: '',
@@ -706,6 +722,65 @@ function AdminDashboard() {
     }
   };
 
+  const handleUpdateTeacherPhoto = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      setMessage({ type: 'error', text: t('image_size_must_be_less_than_2mb') });
+      return;
+    }
+
+    if (!file.type.startsWith('image/')) {
+      setMessage({ type: 'error', text: t('please_upload_an_image_file') });
+      return;
+    }
+
+    setUploadingTeacherPhoto(true);
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      try {
+        await axios.put(`/api/teachers?id=${selectedTeacher._id}`, {
+          photo: reader.result
+        });
+
+        setMessage({ type: 'success', text: t('image_uploaded_successfully') });
+        setSelectedTeacher({ ...selectedTeacher, photo: reader.result });
+        setEditingTeacherPhoto(false);
+        fetchData();
+      } catch (error) {
+        setMessage({ type: 'error', text: error.response?.data?.message || t('update_failed') });
+      } finally {
+        setUploadingTeacherPhoto(false);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleUpdateTeacher = async () => {
+    try {
+      await axios.put(`/api/teachers?id=${selectedTeacher._id}`, editTeacherData);
+      setMessage({ type: 'success', text: t('update_successful') });
+      setSelectedTeacher({ ...selectedTeacher, ...editTeacherData });
+      setEditingTeacher(false);
+      fetchData();
+    } catch (error) {
+      setMessage({ type: 'error', text: error.response?.data?.message || t('update_failed') });
+    }
+  };
+
+  const handleUpdateCouponProfile = async () => {
+    try {
+      await axios.put(`/api/coupons?resource=profiles&profileId=${selectedCouponProfile._id}`, editCouponProfileData);
+      setMessage({ type: 'success', text: t('update_successful') });
+      setSelectedCouponProfile({ ...selectedCouponProfile, ...editCouponProfileData });
+      setEditingCouponProfile(false);
+      fetchData();
+    } catch (error) {
+      setMessage({ type: 'error', text: error.response?.data?.message || t('update_failed') });
+    }
+  };
+
   const handleAddMeeting = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -778,6 +853,20 @@ function AdminDashboard() {
 
   const handleUpdateItemStatus = async (type, itemId, status) => {
     try {
+      // Check if changing to completed and if there are unpaid participants
+      if (status === 'completed' && selectedItem && selectedItem._id === itemId) {
+        const hasUnpaid = selectedItem.participants?.some(p => !p.paid);
+        if (hasUnpaid) {
+          setMessage({
+            type: 'error',
+            text: t('language') === 'zh'
+              ? '無法標記為已完成：仍有未付款的參與者'
+              : 'Cannot mark as completed: There are unpaid participants'
+          });
+          return;
+        }
+      }
+
       const endpoint = type === 'class' ? '/api/classes' : '/api/activities';
       await axios.put(`${endpoint}?id=${itemId}`, { status });
 
@@ -793,6 +882,28 @@ function AdminDashboard() {
       fetchData();
     } catch (error) {
       console.error('Error updating item status:', error);
+      setMessage({ type: 'error', text: error.response?.data?.message || t('error') });
+    }
+  };
+
+  const handleUpdateItem = async (e) => {
+    e.preventDefault();
+    try {
+      const endpoint = selectedItem.type === 'class' ? '/api/classes' : '/api/activities';
+      await axios.put(`${endpoint}?id=${selectedItem._id}`, editItemData);
+
+      setMessage({
+        type: 'success',
+        text: t('update_successful')
+      });
+
+      setEditingItem(false);
+      fetchData();
+
+      const updatedItem = { ...selectedItem, ...editItemData };
+      setSelectedItem(updatedItem);
+    } catch (error) {
+      console.error('Error updating item:', error);
       setMessage({ type: 'error', text: error.response?.data?.message || t('error') });
     }
   };
@@ -1180,8 +1291,11 @@ function AdminDashboard() {
         <button className={`tab-button ${activeTab === 'members' ? 'active' : ''}`} onClick={() => setActiveTab('members')}>
           {t('memberManagement')}
         </button>
-        <button className={`tab-button ${activeTab === 'items' ? 'active' : ''}`} onClick={() => setActiveTab('items')}>
-          {t('class_and_activity')}
+        <button className={`tab-button ${activeTab === 'classes' ? 'active' : ''}`} onClick={() => setActiveTab('classes')}>
+          {t('class_management')}
+        </button>
+        <button className={`tab-button ${activeTab === 'activities' ? 'active' : ''}`} onClick={() => setActiveTab('activities')}>
+          {t('activity_management')}
         </button>
         <button className={`tab-button ${activeTab === 'teachers' ? 'active' : ''}`} onClick={() => setActiveTab('teachers')}>
           {t('host_management')}
@@ -1226,7 +1340,15 @@ function AdminDashboard() {
                     <td>
                       <button
                         className="btn btn-small btn-primary"
-                        onClick={() => setSelectedMember(member)}
+                        onClick={async () => {
+                          try {
+                            const res = await axios.get(`/api/members?id=${member._id}`);
+                            setSelectedMember(res.data.member);
+                          } catch (error) {
+                            console.error('Error fetching member:', error);
+                            setSelectedMember(member);
+                          }
+                        }}
                       >
                         {t('view_details')}
                       </button>
@@ -1522,6 +1644,40 @@ function AdminDashboard() {
                 </div>
               )}
             </div>
+
+            {selectedMember.familyMembers && selectedMember.familyMembers.length > 0 && (
+              <div className="detail-section">
+                <h4>{t('familyMembers')}</h4>
+                {selectedMember.familyMembers.map((fm, idx) => (
+                  <div key={idx} style={{
+                    padding: '15px',
+                    background: '#f8f9fa',
+                    borderRadius: '8px',
+                    marginBottom: '10px',
+                    border: '1px solid #dee2e6'
+                  }}>
+                    <div className="detail-row">
+                      <strong>{t('name')}:</strong>
+                      <span>{fm.name}</span>
+                    </div>
+                    {fm.englishAlias && (
+                      <div className="detail-row">
+                        <strong>{t('englishAlias')}:</strong>
+                        <span>{fm.englishAlias}</span>
+                      </div>
+                    )}
+                    <div className="detail-row">
+                      <strong>{t('gender')}:</strong>
+                      <span>{fm.gender}</span>
+                    </div>
+                    <div className="detail-row">
+                      <strong>{t('birthDate')}:</strong>
+                      <span>{formatDate(fm.birthDate)}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {selectedMember.enrollments && selectedMember.enrollments.length > 0 && (
@@ -1554,7 +1710,9 @@ function AdminDashboard() {
                 </table>
               </div>
             </div>
-          )}          <div className="detail-section" style={{ marginTop: '30px' }}>
+          )}
+
+          <div className="detail-section" style={{ marginTop: '30px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
               <h4 style={{ margin: 0 }}>{t('coupon_management')}</h4>
               <button
@@ -1776,7 +1934,7 @@ function AdminDashboard() {
         </div>
       )}
 
-      {activeTab === 'items' && selectedClassInfo && (
+      {activeTab === 'classes' && selectedClassInfo && (
         <div className="card">
           <div className="detail-header">
             <button
@@ -1904,9 +2062,9 @@ function AdminDashboard() {
         </div>
       )}
 
-      {activeTab === 'items' && !selectedItem && !selectedClassInfo && (
+      {activeTab === 'classes' && !selectedItem && !selectedClassInfo && (
         <div className="card">
-          <h3>{t('class_and_activity_management')}</h3>          <div className="items-section" style={{ marginTop: '30px' }}>
+          <h3>{t('class_management')}</h3>          <div className="items-section" style={{ marginTop: '30px' }}>
             <div className="section-header">
               <h4 style={{ color: '#667eea' }}>
                 {t('classInformation')} ({classInfos.length})
@@ -1960,7 +2118,24 @@ function AdminDashboard() {
                       required
                     />
                   </div>
-                </div>                <div className="form-group">
+                </div>
+
+                <div className="form-group">
+                  <label>{t('language') === 'zh' ? '建議年齡範圍' : 'Recommended Age Range'}</label>
+                  <select
+                    value={newClassInfo.ageRange}
+                    onChange={(e) => setNewClassInfo({ ...newClassInfo, ageRange: e.target.value })}
+                  >
+                    <option value="">{t('language') === 'zh' ? '選擇年齡範圍' : 'Select Age Range'}</option>
+                    <option value="all">{t('language') === 'zh' ? '所有年齡' : 'All Ages'}</option>
+                    <option value="children">{t('language') === 'zh' ? '兒童 (6-12歲)' : 'Children (6-12)'}</option>
+                    <option value="teen">{t('language') === 'zh' ? '青少年 (13-17歲)' : 'Teen (13-17)'}</option>
+                    <option value="adult">{t('language') === 'zh' ? '成人 (18-64歲)' : 'Adult (18-64)'}</option>
+                    <option value="elderly">{t('language') === 'zh' ? '長者 (65歲以上)' : 'Elderly (65+)'}</option>
+                  </select>
+                </div>
+
+                <div className="form-group">
                   <label>{t('banner_image_optional')}</label>
                   <input
                     type="file"
@@ -2081,24 +2256,27 @@ function AdminDashboard() {
                 <div className="form-group">
                   <label>{t('host')} *</label>
                   <select
-                    value={newClass.teacherId || ''}
+                    multiple
+                    value={newClass.teacherId}
                     onChange={(e) => {
-                      const selectedTeacher = teachers.find(t => t._id === e.target.value);
+                      const selectedIds = Array.from(e.target.selectedOptions, option => option.value);
+                      const selectedNames = selectedIds.map(id => teachers.find(t => t._id === id)?.name).filter(Boolean).join(', ');
                       setNewClass({
                         ...newClass,
-                        teacherId: e.target.value,
-                        teacher: selectedTeacher ? selectedTeacher.name : ''
+                        teacherId: selectedIds,
+                        teacher: selectedNames
                       });
                     }}
                     required
+                    style={{ minHeight: '80px' }}
                   >
-                    <option value="">{t('select_host')}</option>
                     {teachers.map(teacher => (
                       <option key={teacher._id} value={teacher._id}>
                         {teacher.name}
                       </option>
                     ))}
                   </select>
+                  <small style={{ color: '#666', fontSize: '12px' }}>Hold Ctrl/Cmd to select multiple hosts</small>
                 </div>
 
                 <div className="form-row">
@@ -2216,6 +2394,19 @@ function AdminDashboard() {
                   </div>
                 )}
 
+                <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <input
+                    type="checkbox"
+                    id="sendLineAnnouncementClass"
+                    checked={newClass.sendLineAnnouncement}
+                    onChange={(e) => setNewClass({ ...newClass, sendLineAnnouncement: e.target.checked })}
+                    style={{ width: 'auto' }}
+                  />
+                  <label htmlFor="sendLineAnnouncementClass" style={{ margin: 0 }}>
+                    {t('send_line_announcement_to_all_line_followers')}
+                  </label>
+                </div>
+
                 <button type="submit" className="btn btn-primary">
                   {t('hostClass')}
                 </button>
@@ -2253,7 +2444,14 @@ function AdminDashboard() {
                 </div>
               ))}
             </div>
-          </div>          <div className="items-section" style={{ marginTop: '40px' }}>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'activities' && !selectedItem && (
+        <div className="card">
+          <h3>{t('activity_management')}</h3>
+          <div className="items-section" style={{ marginTop: '40px' }}>
             <div className="section-header">
               <h4 style={{ color: '#667eea' }}>
                 {t('activities')} ({activities.length})
@@ -2305,24 +2503,27 @@ function AdminDashboard() {
                 <div className="form-group">
                   <label>{t('host')} *</label>
                   <select
-                    value={newActivity.teacherId || ''}
+                    multiple
+                    value={newActivity.teacherId}
                     onChange={(e) => {
-                      const selectedTeacher = teachers.find(t => t._id === e.target.value);
+                      const selectedIds = Array.from(e.target.selectedOptions, option => option.value);
+                      const selectedNames = selectedIds.map(id => teachers.find(t => t._id === id)?.name).filter(Boolean).join(', ');
                       setNewActivity({
                         ...newActivity,
-                        teacherId: e.target.value,
-                        teacher: selectedTeacher ? selectedTeacher.name : ''
+                        teacherId: selectedIds,
+                        teacher: selectedNames
                       });
                     }}
                     required
+                    style={{ minHeight: '80px' }}
                   >
-                    <option value="">{t('select_host')}</option>
                     {teachers.map(teacher => (
                       <option key={teacher._id} value={teacher._id}>
                         {teacher.name}
                       </option>
                     ))}
                   </select>
+                  <small style={{ color: '#666', fontSize: '12px' }}>Hold Ctrl/Cmd to select multiple hosts</small>
                 </div>
 
                 <div className="form-row">
@@ -2426,6 +2627,21 @@ function AdminDashboard() {
                       required
                     />
                   </div>
+                </div>
+
+                <div className="form-group">
+                  <label>{t('language') === 'zh' ? '建議年齡範圍' : 'Recommended Age Range'}</label>
+                  <select
+                    value={newActivity.ageRange}
+                    onChange={(e) => setNewActivity({ ...newActivity, ageRange: e.target.value })}
+                  >
+                    <option value="">{t('language') === 'zh' ? '選擇年齡範圍' : 'Select Age Range'}</option>
+                    <option value="all">{t('language') === 'zh' ? '所有年齡' : 'All Ages'}</option>
+                    <option value="children">{t('language') === 'zh' ? '兒童 (6-12歲)' : 'Children (6-12)'}</option>
+                    <option value="teen">{t('language') === 'zh' ? '青少年 (13-17歲)' : 'Teen (13-17)'}</option>
+                    <option value="adult">{t('language') === 'zh' ? '成人 (18-64歲)' : 'Adult (18-64)'}</option>
+                    <option value="elderly">{t('language') === 'zh' ? '長者 (65歲以上)' : 'Elderly (65+)'}</option>
+                  </select>
                 </div>
 
                 <div className="form-group">
@@ -2538,28 +2754,102 @@ function AdminDashboard() {
         </div>
       )}
 
-      {activeTab === 'items' && selectedItem && (
+      {(activeTab === 'classes' || activeTab === 'activities') && selectedItem && (
         <div className="card">
           <div className="detail-header">
             <button
               className="btn btn-secondary"
-              onClick={() => setSelectedItem(null)}
+              onClick={() => {
+                setSelectedItem(null);
+                setEditingItem(false);
+              }}
             >
               ← {t('back_to_list')}
             </button>
             <h3>
               {selectedItem.type === 'class' ? t('classes') : t('activities')} - {selectedItem.type === 'class' ? selectedItem.classInfoId?.name : selectedItem.name}
             </h3>
-            <button
-              className="btn btn-danger"
-              onClick={() => handleDeleteItem(selectedItem.type, selectedItem._id)}
-              style={{ marginLeft: 'auto' }}
-            >
-              {t('delete_')}
-            </button>
+            <div style={{ display: 'flex', gap: '10px', marginLeft: 'auto' }}>
+              <button
+                className="btn btn-primary"
+                onClick={() => {
+                  setEditingItem(!editingItem);
+                  if (!editingItem) {
+                    setEditItemData({
+                      date: selectedItem.date ? new Date(selectedItem.date).toISOString().split('T')[0] : '',
+                      time: selectedItem.time || '',
+                      location: selectedItem.location || '',
+                      teacher: selectedItem.teacher || '',
+                      teacherId: selectedItem.teacherId || []
+                    });
+                  }
+                }}
+              >
+                {editingItem ? t('cancel') : t('edit')}
+              </button>
+              <button
+                className="btn btn-danger"
+                onClick={() => handleDeleteItem(selectedItem.type, selectedItem._id)}
+              >
+                {t('delete_')}
+              </button>
+            </div>
           </div>
 
-          {((selectedItem.type === 'class' && selectedItem.classInfoId?.banner) || (selectedItem.type === 'activity' && selectedItem.banner)) && (
+          {editingItem ? (
+            <form onSubmit={handleUpdateItem} className="add-form" style={{ marginTop: '20px' }}>
+              <div className="form-group">
+                <label>{selectedItem.type === 'class' ? t('classDate') : t('activity_date')}</label>
+                <input
+                  type="date"
+                  value={editItemData.date}
+                  onChange={(e) => setEditItemData({ ...editItemData, date: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>{t('time')}</label>
+                <input
+                  type="text"
+                  value={editItemData.time}
+                  onChange={(e) => setEditItemData({ ...editItemData, time: e.target.value })}
+                  placeholder="e.g., 10:00 AM - 12:00 PM"
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>{t('location')}</label>
+                <input
+                  type="text"
+                  value={editItemData.location}
+                  onChange={(e) => setEditItemData({ ...editItemData, location: e.target.value })}
+                />
+              </div>
+              <div className="form-group">
+                <label>{t('select_host')}</label>
+                <select
+                  multiple
+                  value={editItemData.teacherId}
+                  onChange={(e) => {
+                    const selectedIds = Array.from(e.target.selectedOptions, option => option.value);
+                    const selectedNames = selectedIds.map(id => teachers.find(t => t._id === id)?.name).filter(Boolean).join(', ');
+                    setEditItemData({ ...editItemData, teacherId: selectedIds, teacher: selectedNames });
+                  }}
+                  style={{ minHeight: '80px' }}
+                >
+                  {teachers.map(teacher => (
+                    <option key={teacher._id} value={teacher._id}>{teacher.name}</option>
+                  ))}
+                </select>
+                <small style={{ color: '#666', fontSize: '12px' }}>Hold Ctrl/Cmd to select multiple hosts</small>
+              </div>
+              <button type="submit" className="btn btn-primary">
+                {t('save_changes')}
+              </button>
+            </form>
+          ) : (
+            <>
+              {((selectedItem.type === 'class' && selectedItem.classInfoId?.banner) || (selectedItem.type === 'activity' && selectedItem.banner)) && (
             <img
               src={selectedItem.type === 'class' ? selectedItem.classInfoId.banner : selectedItem.banner}
               alt={selectedItem.type === 'class' ? selectedItem.classInfoId?.name : selectedItem.name}
@@ -2662,12 +2952,20 @@ function AdminDashboard() {
                       <th>{t('name')}</th>
                       <th>{t('enrolled_date')}</th>
                       <th>{t('payment_method')}</th>
+                      <th>{t('cost')}</th>
                       <th>{t('payment')}</th>
                       <th>{t('action')}</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {selectedItem.participants.map(participant => (
+                    {selectedItem.participants.map(participant => {
+                      const itemCost = selectedItem.type === 'class'
+                        ? selectedItem.classInfoId?.cost || 0
+                        : selectedItem.cost || 0;
+                      const couponDiscount = participant.couponDiscount || 0;
+                      const finalCost = Math.max(0, itemCost - couponDiscount);
+
+                      return (
                       <tr key={participant._id}>
                         <td>
                           {members.find(m => m._id === participant.memberId)?.memberId || 'N/A'}
@@ -2703,6 +3001,20 @@ function AdminDashboard() {
                           </select>
                         </td>
                         <td>
+                          {couponDiscount > 0 ? (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                              <span style={{ textDecoration: 'line-through', color: '#999', fontSize: '12px' }}>
+                                NT$ {itemCost}
+                              </span>
+                              <span style={{ color: finalCost === 0 ? '#2b8a3e' : '#667eea', fontWeight: 'bold' }}>
+                                NT$ {finalCost}
+                              </span>
+                            </div>
+                          ) : (
+                            <span>NT$ {itemCost}</span>
+                          )}
+                        </td>
+                        <td>
                           <span className={`status-badge ${participant.paid ? 'paid' : 'unpaid'}`}>
                             {participant.paid
                               ? (t('paid'))
@@ -2730,7 +3042,8 @@ function AdminDashboard() {
                           </button>
                         </td>
                       </tr>
-                    ))}
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -2740,6 +3053,8 @@ function AdminDashboard() {
               </p>
             )}
           </div>
+            </>
+          )}
         </div>
       )}
 
@@ -2900,22 +3215,59 @@ function AdminDashboard() {
           <div className="detail-header">
             <button
               className="btn btn-secondary"
-              onClick={() => setSelectedTeacher(null)}
+              onClick={() => {
+                setSelectedTeacher(null);
+                setEditingTeacher(false);
+              }}
             >
               ← {t('back_to_list')}
             </button>
             <h3>{t('host_details')}</h3>
-            <button
-              className="btn btn-danger"
-              onClick={() => handleDeleteTeacher(selectedTeacher._id)}
-              style={{ marginLeft: 'auto' }}
-            >
-              {t('delete_')}
-            </button>
+            <div style={{ marginLeft: 'auto', display: 'flex', gap: '10px' }}>
+              {!editingTeacher ? (
+                <button
+                  className="btn btn-primary"
+                  onClick={() => {
+                    setEditingTeacher(true);
+                    setEditTeacherData({
+                      name: selectedTeacher.name,
+                      bio: selectedTeacher.bio || '',
+                      specialties: selectedTeacher.specialties || '',
+                      education: selectedTeacher.education || '',
+                      phone: selectedTeacher.phone || '',
+                      lineId: selectedTeacher.lineId || ''
+                    });
+                  }}
+                >
+                  ✏️ {t('edit')}
+                </button>
+              ) : (
+                <>
+                  <button
+                    className="btn btn-primary"
+                    onClick={handleUpdateTeacher}
+                  >
+                    {t('save')}
+                  </button>
+                  <button
+                    className="btn btn-secondary"
+                    onClick={() => setEditingTeacher(false)}
+                  >
+                    {t('cancel')}
+                  </button>
+                </>
+              )}
+              <button
+                className="btn btn-danger"
+                onClick={() => handleDeleteTeacher(selectedTeacher._id)}
+              >
+                {t('delete_')}
+              </button>
+            </div>
           </div>
 
-          {selectedTeacher.photo && (
-            <div style={{ textAlign: 'center', margin: '20px 0' }}>
+          <div style={{ textAlign: 'center', margin: '20px 0' }}>
+            {selectedTeacher.photo && (
               <img
                 src={selectedTeacher.photo}
                 alt={selectedTeacher.name}
@@ -2927,27 +3279,96 @@ function AdminDashboard() {
                   border: '3px solid #667eea'
                 }}
               />
-            </div>
-          )}
+            )}
+            {!editingTeacherPhoto && (
+              <button
+                onClick={() => setEditingTeacherPhoto(true)}
+                className="btn btn-primary"
+                style={{ marginTop: '15px', display: 'block', margin: '15px auto 0' }}
+              >
+                ✏️ {t('change_photo')}
+              </button>
+            )}
+            {editingTeacherPhoto && (
+              <div style={{ marginTop: '15px', maxWidth: '400px', margin: '15px auto 0' }}>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleUpdateTeacherPhoto}
+                  disabled={uploadingTeacherPhoto}
+                  style={{
+                    padding: '10px',
+                    border: '2px dashed #667eea',
+                    borderRadius: '8px',
+                    width: '100%',
+                    cursor: 'pointer'
+                  }}
+                />
+                <button
+                  onClick={() => setEditingTeacherPhoto(false)}
+                  disabled={uploadingTeacherPhoto}
+                  className="btn btn-secondary"
+                  style={{ marginTop: '10px' }}
+                >
+                  {t('cancel')}
+                </button>
+              </div>
+            )}
+          </div>
 
           <div className="member-detail-grid">
             <div className="detail-section">
               <h4>{t('basic_information')}</h4>
               <div className="detail-row">
                 <strong>{t('name')}:</strong>
-                <span>{selectedTeacher.name}</span>
+                {editingTeacher ? (
+                  <input
+                    type="text"
+                    value={editTeacherData.name}
+                    onChange={(e) => setEditTeacherData({ ...editTeacherData, name: e.target.value })}
+                    style={{ padding: '5px', border: '1px solid #ddd', borderRadius: '4px', width: '100%' }}
+                  />
+                ) : (
+                  <span>{selectedTeacher.name}</span>
+                )}
               </div>
               <div className="detail-row">
                 <strong>{t('specialties')}:</strong>
-                <span>{selectedTeacher.specialties || 'N/A'}</span>
+                {editingTeacher ? (
+                  <input
+                    type="text"
+                    value={editTeacherData.specialties}
+                    onChange={(e) => setEditTeacherData({ ...editTeacherData, specialties: e.target.value })}
+                    style={{ padding: '5px', border: '1px solid #ddd', borderRadius: '4px', width: '100%' }}
+                  />
+                ) : (
+                  <span>{selectedTeacher.specialties || 'N/A'}</span>
+                )}
               </div>
               <div className="detail-row">
                 <strong>{t('education')}:</strong>
-                <span>{selectedTeacher.education || 'N/A'}</span>
+                {editingTeacher ? (
+                  <input
+                    type="text"
+                    value={editTeacherData.education}
+                    onChange={(e) => setEditTeacherData({ ...editTeacherData, education: e.target.value })}
+                    style={{ padding: '5px', border: '1px solid #ddd', borderRadius: '4px', width: '100%' }}
+                  />
+                ) : (
+                  <span>{selectedTeacher.education || 'N/A'}</span>
+                )}
               </div>
               <div className="detail-row">
                 <strong>{t('bio')}:</strong>
-                <span>{selectedTeacher.bio || 'N/A'}</span>
+                {editingTeacher ? (
+                  <textarea
+                    value={editTeacherData.bio}
+                    onChange={(e) => setEditTeacherData({ ...editTeacherData, bio: e.target.value })}
+                    style={{ padding: '5px', border: '1px solid #ddd', borderRadius: '4px', width: '100%', minHeight: '60px' }}
+                  />
+                ) : (
+                  <span>{selectedTeacher.bio || 'N/A'}</span>
+                )}
               </div>
             </div>
 
@@ -2956,18 +3377,36 @@ function AdminDashboard() {
               <h4>{t('contact_information')}</h4>
               <div className="detail-row">
                 <strong>{t('phone')}:</strong>
-                <span>{selectedTeacher.phone || 'N/A'}</span>
+                {editingTeacher ? (
+                  <input
+                    type="text"
+                    value={editTeacherData.phone}
+                    onChange={(e) => setEditTeacherData({ ...editTeacherData, phone: e.target.value })}
+                    style={{ padding: '5px', border: '1px solid #ddd', borderRadius: '4px', width: '100%' }}
+                  />
+                ) : (
+                  <span>{selectedTeacher.phone || 'N/A'}</span>
+                )}
               </div>
               <div className="detail-row">
                 <strong>LINE ID:</strong>
-                <span>{selectedTeacher.lineId || 'N/A'}</span>
+                {editingTeacher ? (
+                  <input
+                    type="text"
+                    value={editTeacherData.lineId}
+                    onChange={(e) => setEditTeacherData({ ...editTeacherData, lineId: e.target.value })}
+                    style={{ padding: '5px', border: '1px solid #ddd', borderRadius: '4px', width: '100%' }}
+                  />
+                ) : (
+                  <span>{selectedTeacher.lineId || 'N/A'}</span>
+                )}
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {activeTab === 'coupons' && (
+      {activeTab === 'coupons' && !selectedCouponProfile && (
         <div className="card">
           <div className="section-header">
             <h3>{t('coupon_management')}</h3>
@@ -3162,29 +3601,38 @@ function AdminDashboard() {
                         ? `${t('trial')}: ${profile.classInfoId?.name || 'N/A'}`
                         : `${t('discount')}: ${profile.discountPercent}%`}
                     </p>
-                    <button
-                      onClick={async () => {
-                        if (window.confirm(t('delete_this_profile'))) {
-                          setDeletingProfileId(profile._id);
-                          try {
-                            await axios.delete(`/api/coupons?resource=profiles&profileId=${profile._id}`);
-                            setMessage({ type: 'success', text: t('profile_deleted') });
-                            fetchData();
-                          } catch (error) {
-                            setMessage({ type: 'error', text: error.response?.data?.message || t('error') });
-                          } finally {
-                            setDeletingProfileId(null);
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                      <button
+                        onClick={() => setSelectedCouponProfile(profile)}
+                        className="btn btn-secondary"
+                        style={{ flex: 1, fontSize: '13px', padding: '8px' }}
+                      >
+                        👁️ {t('view')}
+                      </button>
+                      <button
+                        onClick={async () => {
+                          if (window.confirm(t('delete_this_profile'))) {
+                            setDeletingProfileId(profile._id);
+                            try {
+                              await axios.delete(`/api/coupons?resource=profiles&profileId=${profile._id}`);
+                              setMessage({ type: 'success', text: t('profile_deleted') });
+                              fetchData();
+                            } catch (error) {
+                              setMessage({ type: 'error', text: error.response?.data?.message || t('error') });
+                            } finally {
+                              setDeletingProfileId(null);
+                            }
                           }
-                        }
-                      }}
-                      className="btn btn-danger"
-                      disabled={deletingProfileId === profile._id}
-                      style={{ width: '100%', fontSize: '13px', padding: '8px' }}
-                    >
-                      {deletingProfileId === profile._id
-                        ? (t('deleting'))
-                        : `🗑️ ${t('language') === 'zh' ? '刪除模板' : 'Delete'}`}
-                    </button>
+                        }}
+                        className="btn btn-danger"
+                        disabled={deletingProfileId === profile._id}
+                        style={{ flex: 1, fontSize: '13px', padding: '8px' }}
+                      >
+                        {deletingProfileId === profile._id
+                          ? (t('deleting'))
+                          : `🗑️ ${t('delete')}`}
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -3367,6 +3815,126 @@ function AdminDashboard() {
                 ))}
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'coupons' && selectedCouponProfile && (
+        <div className="card">
+          <div className="detail-header">
+            <button
+              className="btn btn-secondary"
+              onClick={() => {
+                setSelectedCouponProfile(null);
+                setEditingCouponProfile(false);
+              }}
+            >
+              ← {t('back_to_list')}
+            </button>
+            <h3>{t('coupon_profile_details')}</h3>
+            <div style={{ marginLeft: 'auto', display: 'flex', gap: '10px' }}>
+              {!editingCouponProfile ? (
+                <button
+                  className="btn btn-primary"
+                  onClick={() => {
+                    setEditingCouponProfile(true);
+                    setEditCouponProfileData({
+                      name: selectedCouponProfile.name,
+                      description: selectedCouponProfile.description || '',
+                      type: selectedCouponProfile.type,
+                      classInfoId: selectedCouponProfile.classInfoId?._id || '',
+                      discountPercent: selectedCouponProfile.discountPercent || '',
+                      image: selectedCouponProfile.image || ''
+                    });
+                  }}
+                >
+                  ✏️ {t('edit')}
+                </button>
+              ) : (
+                <>
+                  <button
+                    className="btn btn-primary"
+                    onClick={handleUpdateCouponProfile}
+                  >
+                    {t('save')}
+                  </button>
+                  <button
+                    className="btn btn-secondary"
+                    onClick={() => setEditingCouponProfile(false)}
+                  >
+                    {t('cancel')}
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+
+          <div style={{ marginTop: '20px' }}>
+            {selectedCouponProfile.image && (
+              <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+                <img
+                  src={selectedCouponProfile.image}
+                  alt={selectedCouponProfile.name}
+                  style={{ maxWidth: '300px', borderRadius: '8px' }}
+                />
+              </div>
+            )}
+
+            <div className="member-detail-grid">
+              <div className="detail-section">
+                <h4>{t('basic_information')}</h4>
+                <div className="detail-row">
+                  <strong>{t('name')}:</strong>
+                  {editingCouponProfile ? (
+                    <input
+                      type="text"
+                      value={editCouponProfileData.name}
+                      onChange={(e) => setEditCouponProfileData({ ...editCouponProfileData, name: e.target.value })}
+                      style={{ padding: '5px', border: '1px solid #ddd', borderRadius: '4px', width: '100%' }}
+                    />
+                  ) : (
+                    <span>{selectedCouponProfile.name}</span>
+                  )}
+                </div>
+                <div className="detail-row">
+                  <strong>{t('description')}:</strong>
+                  {editingCouponProfile ? (
+                    <textarea
+                      value={editCouponProfileData.description}
+                      onChange={(e) => setEditCouponProfileData({ ...editCouponProfileData, description: e.target.value })}
+                      style={{ padding: '5px', border: '1px solid #ddd', borderRadius: '4px', width: '100%', minHeight: '60px' }}
+                    />
+                  ) : (
+                    <span>{selectedCouponProfile.description || 'N/A'}</span>
+                  )}
+                </div>
+                <div className="detail-row">
+                  <strong>{t('type')}:</strong>
+                  <span>{selectedCouponProfile.type === 'trial' ? t('trial') : t('discount')}</span>
+                </div>
+                {selectedCouponProfile.type === 'trial' && (
+                  <div className="detail-row">
+                    <strong>{t('class')}:</strong>
+                    <span>{selectedCouponProfile.classInfoId?.name || 'N/A'}</span>
+                  </div>
+                )}
+                {selectedCouponProfile.type === 'discount' && (
+                  <div className="detail-row">
+                    <strong>{t('discount')}:</strong>
+                    {editingCouponProfile ? (
+                      <input
+                        type="number"
+                        value={editCouponProfileData.discountPercent}
+                        onChange={(e) => setEditCouponProfileData({ ...editCouponProfileData, discountPercent: e.target.value })}
+                        style={{ padding: '5px', border: '1px solid #ddd', borderRadius: '4px', width: '100%' }}
+                      />
+                    ) : (
+                      <span>{selectedCouponProfile.discountPercent}%</span>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       )}

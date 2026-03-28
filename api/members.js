@@ -423,6 +423,27 @@ module.exports = async (req, res) => {
       });
     }
 
+    // Get member by LINE user ID only
+    if (req.method === 'GET' && lineUserId && !memberId) {
+      console.log('[API] Looking up member by LINE user ID:', lineUserId);
+      const member = await Member.findOne({ 'line.userId': lineUserId });
+
+      if (!member) {
+        console.log('[API] No member found with line.userId:', lineUserId);
+        return res.status(404).json({
+          message: '找不到會員 / Member not found'
+        });
+      }
+
+      console.log('[API] Member found:', {
+        memberId: member.memberId,
+        name: member.name,
+        registrationCompleted: member.registrationCompleted
+      });
+
+      return res.status(200).json({ member });
+    }
+
     // Get member by ID
     if (req.method === 'GET' && memberId) {
       const query = { memberId };

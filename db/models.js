@@ -124,8 +124,8 @@ classInfoSchema.pre('save', function(next) {
 // Class Schema (Host Class) - Actual class instance with teacher and schedule
 const classSchema = new mongoose.Schema({
   classInfoId: { type: mongoose.Schema.Types.ObjectId, ref: 'ClassInfo', required: true },
-  teacherId: { type: mongoose.Schema.Types.ObjectId, ref: 'Teacher' }, // Reference to Teacher model
-  teacher: { type: String, required: true }, // Keep for backward compatibility and display name
+  teacherId: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Teacher' }], // Array of teacher references
+  teacher: { type: String, required: true }, // Comma-separated teacher names for display
   time: { type: String, required: true },
   date: { type: Date, required: true },
   location: { type: String },
@@ -135,7 +135,9 @@ const classSchema = new mongoose.Schema({
     memberName: { type: String, required: true },
     enrolledAt: { type: Date, default: Date.now },
     paid: { type: Boolean, default: false },
-    paymentMethod: { type: String, enum: ['in-person', 'credit', 'linepay'], default: 'in-person' }
+    paymentMethod: { type: String, enum: ['in-person', 'credit', 'linepay'], default: 'in-person' },
+    isFamilyMember: { type: Boolean, default: false },
+    couponDiscount: { type: Number, default: 0 }
   }],
   status: { type: String, enum: ['upcoming', 'completed', 'cancelled'], default: 'upcoming' },
   createdAt: { type: Date, default: Date.now },
@@ -176,8 +178,8 @@ const activitySchema = new mongoose.Schema({
   time: { type: String, required: true },
   location: { type: String },
   cost: { type: Number, required: true },
-  teacherId: { type: mongoose.Schema.Types.ObjectId, ref: 'Teacher' }, // Reference to Teacher model
-  teacher: { type: String, required: true }, // Keep for backward compatibility and display name
+  teacherId: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Teacher' }], // Array of teacher references
+  teacher: { type: String, required: true }, // Comma-separated teacher names for display
   maxParticipants: { type: Number, required: true },
   currentParticipants: { type: Number, default: 0 },
   participants: [{
@@ -185,7 +187,9 @@ const activitySchema = new mongoose.Schema({
     memberName: { type: String, required: true },
     enrolledAt: { type: Date, default: Date.now },
     paid: { type: Boolean, default: false },
-    paymentMethod: { type: String, enum: ['in-person', 'credit', 'linepay'], default: 'in-person' }
+    paymentMethod: { type: String, enum: ['in-person', 'credit', 'linepay'], default: 'in-person' },
+    isFamilyMember: { type: Boolean, default: false },
+    couponDiscount: { type: Number, default: 0 }
   }],
   status: { type: String, enum: ['upcoming', 'completed', 'cancelled'], default: 'upcoming' },
   createdAt: { type: Date, default: Date.now },

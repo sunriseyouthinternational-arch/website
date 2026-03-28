@@ -110,7 +110,7 @@ module.exports = async (req, res) => {
               action: {
                 type: 'uri',
                 label: 'Profile',
-                uri: 'https://www.sunriseyouth.org/profile'
+                uri: `${process.env.BASE_URL}/profile`
               }
             },
             // Button 2: Referral Code - Bottom left
@@ -138,7 +138,7 @@ module.exports = async (req, res) => {
               action: {
                 type: 'uri',
                 label: 'Classes',
-                uri: 'https://www.sunriseyouth.org/profile?tab=classes'
+                uri: `${process.env.BASE_URL}/profile?tab=classes`
               }
             },
             // Button 4: Coupons - Bottom right
@@ -152,7 +152,7 @@ module.exports = async (req, res) => {
               action: {
                 type: 'uri',
                 label: 'Coupons',
-                uri: 'https://www.sunriseyouth.org/profile?tab=coupons'
+                uri: `${process.env.BASE_URL}/profile?tab=coupons`
               }
             }
           ]

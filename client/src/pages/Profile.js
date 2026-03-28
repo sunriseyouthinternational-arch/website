@@ -47,8 +47,8 @@ function Profile() {
 
   const [showCheckout, setShowCheckout] = useState(false);
   const [checkoutData, setCheckoutData] = useState(null);
-  const [selectedCoupon, setSelectedCoupon] = useState(null);
-  const [showCouponModal, setShowCouponModal] = useState(false);
+  const [selectedFamilyMembers, setSelectedFamilyMembers] = useState([]);
+  const [familyMemberCoupons, setFamilyMemberCoupons] = useState({});
 
   const [showShareModal, setShowShareModal] = useState(false);
   const [shareCoupon, setShareCoupon] = useState(null);
@@ -85,9 +85,6 @@ function Profile() {
   const [uploadingAbsenceForm, setUploadingAbsenceForm] = useState(false);
   const [loadingMeetings, setLoadingMeetings] = useState(false);
   const [showMeetingDetails, setShowMeetingDetails] = useState(null);
-
-  const [editingHostPhoto, setEditingHostPhoto] = useState(false);
-  const [uploadingHostPhoto, setUploadingHostPhoto] = useState(false);
 
   // eslint-disable-next-line no-unused-vars
   const [liffReady, setLiffReady] = useState(false);
@@ -859,54 +856,6 @@ function Profile() {
   };
 
 
-  const handleHostPhotoUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    if (file.size > 2 * 1024 * 1024) {
-      setMessage({ type: 'error', text: t('image_size_must_be_less_than_2mb') });
-      return;
-    }
-
-    if (!file.type.startsWith('image/')) {
-      setMessage({ type: 'error', text: t('please_upload_an_image_file') });
-      return;
-    }
-
-    setUploadingHostPhoto(true);
-    const reader = new FileReader();
-    reader.onloadend = async () => {
-      try {
-        await axios.put(`/api/teachers?id=${selectedClass.teacherId._id}`, {
-          photo: reader.result
-        });
-
-        setMessage({ type: 'success', text: t('image_uploaded_successfully') });
-
-        const updatedClasses = classes.map(c => {
-          if (c._id === selectedClass._id) {
-            return {
-              ...c,
-              teacherId: { ...c.teacherId, photo: reader.result }
-            };
-          }
-          return c;
-        });
-        setClasses(updatedClasses);
-        setSelectedClass({
-          ...selectedClass,
-          teacherId: { ...selectedClass.teacherId, photo: reader.result }
-        });
-        setEditingHostPhoto(false);
-      } catch (error) {
-        setMessage({ type: 'error', text: error.response?.data?.message || t('update_failed') });
-      } finally {
-        setUploadingHostPhoto(false);
-      }
-    };
-    reader.readAsDataURL(file);
-  };
-
   const handleEnroll = async (type, id, name) => {
     if (!member) {
       setMessage({ type: 'error', text: t('loginRequired') });
@@ -933,12 +882,21 @@ function Profile() {
       classInfoId: type === 'class' ? item.classInfoId?._id : null,
       item
     });
+    setSelectedFamilyMembers([]);
+    setFamilyMemberCoupons({});
     setShowCheckout(true);
   };
 
   const handleCompleteEnrollment = async (paymentMethod, coupon = null) => {
     setCompletingEnrollment(true);
     try {
+      // If no family members selected, show error
+      if (selectedFamilyMembers.length === 0) {
+        setMessage({ type: 'error', text: t('please_select_at_least_one_person') });
+        setCompletingEnrollment(false);
+        return;
+      }
+
       const endpoint = checkoutData.type === 'class'
         ? `/api/classes?id=${checkoutData.id}&action=enroll`
         : `/api/activities?id=${checkoutData.id}&action=enroll`;
@@ -946,22 +904,28 @@ function Profile() {
       const response = await axios.post(endpoint, {
         memberId: member.memberId,
         paymentMethod,
-        couponId: coupon?._id
+        couponId: coupon?._id,
+        familyMembers: selectedFamilyMembers,
+        familyMemberCoupons,
+        enrollSelfOnly: false
       });
 
       // Calculate final price
-      const originalCost = checkoutData.cost;
+      let originalCost = checkoutData.cost * selectedFamilyMembers.length;
       let finalCost = originalCost;
       let discount = 0;
 
-      if (response.data.couponUsed) {
-        if (response.data.couponUsed.type === 'trial') {
-          finalCost = 0;
-          discount = originalCost;
-        } else {
-          discount = Math.round(originalCost * response.data.couponUsed.discountPercent / 100);
-          finalCost = originalCost - discount;
-        }
+      if (response.data.familyCouponsUsed && response.data.familyCouponsUsed.length > 0) {
+        response.data.familyCouponsUsed.forEach(fmCoupon => {
+          if (fmCoupon.type === 'trial') {
+            finalCost -= checkoutData.cost;
+            discount += checkoutData.cost;
+          } else {
+            const fmDiscount = Math.round(checkoutData.cost * fmCoupon.discountPercent / 100);
+            finalCost -= fmDiscount;
+            discount += fmDiscount;
+          }
+        });
       }
 
       // Store payment confirmation data
@@ -972,8 +936,9 @@ function Profile() {
         originalCost,
         finalCost,
         discount,
-        couponUsed: response.data.couponUsed,
-        paymentMethod
+        familyCouponsUsed: response.data.familyCouponsUsed,
+        paymentMethod,
+        familyMembersCount: selectedFamilyMembers.length
       });
 
       const memberResponse = await axios.get(`/api/members?memberId=${member.memberId}`);
@@ -981,7 +946,8 @@ function Profile() {
 
       setShowCheckout(false);
       setCheckoutData(null);
-      setSelectedCoupon(null);
+      setSelectedFamilyMembers([]);
+      setFamilyMemberCoupons({});
 
       // Show payment confirmation modal
       setShowPaymentConfirmation(true);
@@ -1595,13 +1561,12 @@ function Profile() {
                   </div>
 
                   <div className="form-group">
-                    <label>{t('lineId')} *</label>
+                    <label>{t('lineId')} <span style={{ color: '#999', fontSize: '0.9em' }}>({t('optional')})</span></label>
                     <input
                       type="text"
                       name="contact.lineId"
                       value={editFormData.contact.lineId}
                       onChange={handleEditChange}
-                      required
                     />
                   </div>
 
@@ -1748,7 +1713,7 @@ function Profile() {
                       </div>
                     )}
                   </div>
-                </div>                {selectedClass.teacherId && (
+                </div>                {selectedClass.teacherId && Array.isArray(selectedClass.teacherId) && selectedClass.teacherId.length > 0 && (
                   <div style={{
                     background: '#fff8f0',
                     padding: '20px',
@@ -1756,12 +1721,12 @@ function Profile() {
                     border: '2px solid #f0e0c0'
                   }}>
                     <h3 style={{ marginBottom: '15px', color: '#667eea', fontSize: '20px' }}>{t('hostInfo')}</h3>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', alignItems: 'center', textAlign: 'center' }}>
-                      {selectedClass.teacherId.photo && (
-                        <div style={{ position: 'relative' }}>
+                    {selectedClass.teacherId.map((teacher, index) => (
+                      <div key={index} style={{ display: 'flex', flexDirection: 'column', gap: '15px', alignItems: 'center', textAlign: 'center', marginBottom: index < selectedClass.teacherId.length - 1 ? '20px' : '0', paddingBottom: index < selectedClass.teacherId.length - 1 ? '20px' : '0', borderBottom: index < selectedClass.teacherId.length - 1 ? '1px solid #f0e0c0' : 'none' }}>
+                        {teacher.photo && (
                           <img
-                            src={getImageSrc(selectedClass.teacherId.photo)}
-                            alt={selectedClass.teacherId.name}
+                            src={getImageSrc(teacher.photo)}
+                            alt={teacher.name}
                             style={{
                               width: '120px',
                               height: '120px',
@@ -1770,87 +1735,33 @@ function Profile() {
                               border: '3px solid #667eea'
                             }}
                           />
-                          {!editingHostPhoto && (
-                            <button
-                              onClick={() => setEditingHostPhoto(true)}
-                              style={{
-                                position: 'absolute',
-                                bottom: '0',
-                                right: '0',
-                                background: '#667eea',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '50%',
-                                width: '32px',
-                                height: '32px',
-                                cursor: 'pointer',
-                                fontSize: '16px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center'
-                              }}
-                            >
-                              ✏️
-                            </button>
+                        )}
+                        <div style={{ width: '100%', textAlign: 'left' }}>
+                          <h4 style={{ marginBottom: '10px', fontSize: '18px', textAlign: 'center' }}>{teacher.name}</h4>
+                          {teacher.bio && (
+                            <div style={{ marginBottom: '10px' }}>
+                              <strong>{t('hostBio')}:</strong>
+                              <p style={{ marginTop: '5px', lineHeight: '1.6', fontSize: '14px' }}>{teacher.bio}</p>
+                            </div>
+                          )}
+                          {teacher.specialties && (
+                            <div style={{ marginBottom: '10px' }}>
+                              <strong>{t('hostSpecialties')}:</strong>
+                              <p style={{ marginTop: '5px', fontSize: '14px' }}>{teacher.specialties}</p>
+                            </div>
+                          )}
+                          {teacher.education && (
+                            <div style={{ marginBottom: '10px' }}>
+                              <strong>{t('hostEducation')}:</strong>
+                              <p style={{ marginTop: '5px', fontSize: '14px' }}>{teacher.education}</p>
+                            </div>
                           )}
                         </div>
-                      )}
-                      {editingHostPhoto && (
-                        <div style={{ width: '100%', marginTop: '10px' }}>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={handleHostPhotoUpload}
-                            disabled={uploadingHostPhoto}
-                            style={{
-                              padding: '10px',
-                              border: '2px dashed #667eea',
-                              borderRadius: '8px',
-                              width: '100%',
-                              cursor: 'pointer'
-                            }}
-                          />
-                          <button
-                            onClick={() => setEditingHostPhoto(false)}
-                            disabled={uploadingHostPhoto}
-                            style={{
-                              marginTop: '10px',
-                              padding: '8px 16px',
-                              background: '#ccc',
-                              border: 'none',
-                              borderRadius: '4px',
-                              cursor: 'pointer'
-                            }}
-                          >
-                            {t('cancel')}
-                          </button>
-                        </div>
-                      )}
-                      <div style={{ width: '100%', textAlign: 'left' }}>
-                        <h4 style={{ marginBottom: '10px', fontSize: '18px', textAlign: 'center' }}>{selectedClass.teacherId.name}</h4>
-                        {selectedClass.teacherId.bio && (
-                          <div style={{ marginBottom: '10px' }}>
-                            <strong>{t('hostBio')}:</strong>
-                            <p style={{ marginTop: '5px', lineHeight: '1.6', fontSize: '14px' }}>{selectedClass.teacherId.bio}</p>
-                          </div>
-                        )}
-                        {selectedClass.teacherId.specialties && (
-                          <div style={{ marginBottom: '10px' }}>
-                            <strong>{t('hostSpecialties')}:</strong>
-                            <p style={{ marginTop: '5px', fontSize: '14px' }}>{selectedClass.teacherId.specialties}</p>
-                          </div>
-                        )}
-                        {selectedClass.teacherId.education && (
-                          <div style={{ marginBottom: '10px' }}>
-                            <strong>{t('hostEducation')}:</strong>
-                            <p style={{ marginTop: '5px', fontSize: '14px' }}>{selectedClass.teacherId.education}</p>
-                          </div>
-                        )}
                       </div>
-                    </div>
+                    ))}
                   </div>
                 )}
-              </div>              {!selectedClass.teacherId && selectedClass.teacher && (
+              </div>              {(!selectedClass.teacherId || (Array.isArray(selectedClass.teacherId) && selectedClass.teacherId.length === 0)) && selectedClass.teacher && (
                 <div style={{
                   background: '#fff8f0',
                   padding: '20px',
@@ -1883,6 +1794,56 @@ function Profile() {
                         e.target.parentNode.appendChild(errorMsg);
                       }}
                     />
+                  </div>
+                </div>
+              )}
+
+              {isEnrolled('class', selectedClass._id) && (
+                <div style={{
+                  background: '#f8f9ff',
+                  padding: '20px',
+                  borderRadius: '8px',
+                  border: '2px solid #e0e8ff',
+                  marginBottom: '20px'
+                }}>
+                  <h3 style={{ marginBottom: '15px', color: '#667eea' }}>{t('enrollment_summary')}</h3>
+                  {selectedClass.participants
+                    .filter(p => p.memberId.toString() === member._id.toString())
+                    .map((p, idx) => {
+                      const itemCost = selectedClass.classInfoId?.cost || 0;
+                      const discount = p.couponDiscount || 0;
+                      const final = Math.max(0, itemCost - discount);
+                      return (
+                        <div key={idx} style={{ marginBottom: '10px', paddingBottom: '10px', borderBottom: idx < selectedClass.participants.filter(p => p.memberId.toString() === member._id.toString()).length - 1 ? '1px solid #e0e8ff' : 'none' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span>{p.memberName}</span>
+                            <span>
+                              {discount > 0 ? (
+                                <>
+                                  <span style={{ textDecoration: 'line-through', color: '#999', fontSize: '14px' }}>NT$ {itemCost}</span>
+                                  {' '}
+                                  <span style={{ color: final === 0 ? '#2b8a3e' : '#667eea', fontWeight: 'bold' }}>NT$ {final}</span>
+                                </>
+                              ) : (
+                                <span>NT$ {itemCost}</span>
+                              )}
+                            </span>
+                          </div>
+                          {discount > 0 && (
+                            <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
+                              ✓ {t('coupon_applied')}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  <div style={{ marginTop: '15px', paddingTop: '15px', borderTop: '2px solid #667eea', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontWeight: 'bold', fontSize: '18px' }}>
+                    <span>{t('total')}</span>
+                    <span style={{ color: '#667eea' }}>
+                      NT$ {selectedClass.participants
+                        .filter(p => p.memberId.toString() === member._id.toString())
+                        .reduce((sum, p) => sum + Math.max(0, (selectedClass.classInfoId?.cost || 0) - (p.couponDiscount || 0)), 0)}
+                    </span>
                   </div>
                 </div>
               )}
@@ -1921,6 +1882,12 @@ function Profile() {
                   {getEnrolledItems('class').length > 0 ? (
                     getEnrolledItems('class').map((enrollment) => {
                       const classItem = classes.find(c => c._id === enrollment.itemId);
+                      const myParticipants = classItem?.participants?.filter(p => p.memberId.toString() === member._id.toString()) || [];
+                      const itemCost = classItem?.classInfoId?.cost || 0;
+                      const totalCost = myParticipants.reduce((sum, p) => sum + Math.max(0, itemCost - (p.couponDiscount || 0)), 0);
+                      const totalOriginalCost = itemCost * myParticipants.length;
+                      const hasDiscount = totalCost < totalOriginalCost;
+
                       return (
                         <div key={enrollment._id} className="enrolled-item">
                           <div style={{ flex: 1 }}>
@@ -1930,10 +1897,32 @@ function Profile() {
                                 {formatDate(classItem.date)} • {classItem.time}
                               </p>
                             )}
+                            {classItem && (
+                              <p style={{ fontSize: '14px', marginTop: '5px' }}>
+                                {hasDiscount ? (
+                                  <>
+                                    <span style={{ textDecoration: 'line-through', color: '#999' }}>
+                                      NT$ {totalOriginalCost}
+                                    </span>
+                                    {' '}
+                                    <span style={{ color: totalCost === 0 ? '#2b8a3e' : '#667eea', fontWeight: 'bold' }}>
+                                      NT$ {totalCost}
+                                    </span>
+                                  </>
+                                ) : (
+                                  <span>NT$ {totalOriginalCost}</span>
+                                )}
+                                {myParticipants.length > 1 && (
+                                  <span style={{ fontSize: '12px', color: '#666', marginLeft: '8px' }}>
+                                    ({myParticipants.length} {t('language') === 'zh' ? '人' : 'people'})
+                                  </span>
+                                )}
+                              </p>
+                            )}
                           </div>
                           <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                            <span className={`status-badge ${enrollment.paid ? 'paid' : 'unpaid'}`}>
-                              {enrollment.paid ? t('paid') : t('unpaid')}
+                            <span className={`status-badge ${myParticipants.every(p => p.paid) ? 'paid' : 'unpaid'}`}>
+                              {myParticipants.every(p => p.paid) ? t('paid') : t('unpaid')}
                             </span>
                             {classItem && (
                               <button
@@ -2163,14 +2152,47 @@ function Profile() {
                 <h4 className="section-subtitle">{t('registeredActivities')}</h4>
                 <div className="enrolled-list">
                   {getEnrolledItems('activity').length > 0 ? (
-                    getEnrolledItems('activity').map((enrollment) => (
+                    getEnrolledItems('activity').map((enrollment) => {
+                      const activity = activities.find(a => a._id === enrollment.itemId);
+                      const myParticipants = activity?.participants?.filter(p => p.memberId.toString() === member._id.toString()) || [];
+                      const itemCost = activity?.cost || 0;
+                      const totalCost = myParticipants.reduce((sum, p) => sum + Math.max(0, itemCost - (p.couponDiscount || 0)), 0);
+                      const totalOriginalCost = itemCost * myParticipants.length;
+                      const hasDiscount = totalCost < totalOriginalCost;
+
+                      return (
                       <div key={enrollment._id} className="enrolled-item">
-                        <p><strong>{enrollment.itemName}</strong></p>
-                        <span className={`status-badge ${enrollment.paid ? 'paid' : 'unpaid'}`}>
-                          {enrollment.paid ? t('paid') : t('unpaid')}
+                        <div style={{ flex: 1 }}>
+                          <p><strong>{enrollment.itemName}</strong></p>
+                          {activity && (
+                            <p style={{ fontSize: '14px', marginTop: '5px' }}>
+                              {hasDiscount ? (
+                                <>
+                                  <span style={{ textDecoration: 'line-through', color: '#999' }}>
+                                    NT$ {totalOriginalCost}
+                                  </span>
+                                  {' '}
+                                  <span style={{ color: totalCost === 0 ? '#2b8a3e' : '#667eea', fontWeight: 'bold' }}>
+                                    NT$ {totalCost}
+                                  </span>
+                                </>
+                              ) : (
+                                <span>NT$ {totalOriginalCost}</span>
+                              )}
+                              {myParticipants.length > 1 && (
+                                <span style={{ fontSize: '12px', color: '#666', marginLeft: '8px' }}>
+                                  ({myParticipants.length} {t('language') === 'zh' ? '人' : 'people'})
+                                </span>
+                              )}
+                            </p>
+                          )}
+                        </div>
+                        <span className={`status-badge ${myParticipants.every(p => p.paid) ? 'paid' : 'unpaid'}`}>
+                          {myParticipants.every(p => p.paid) ? t('paid') : t('unpaid')}
                         </span>
                       </div>
-                    ))
+                      );
+                    })
                   ) : (
                     <p className="empty-message">{t('no_enrolled_activities')}</p>
                   )}
@@ -2874,7 +2896,121 @@ function Profile() {
           }}>
             <h2 style={{ color: '#667eea', marginBottom: '30px', textAlign: 'center' }}>
               {t('select_payment_method')}
-            </h2>            <div style={{
+            </h2>
+
+            {member.familyMembers && member.familyMembers.length > 0 && (
+              <div style={{
+                background: '#fff9e6',
+                padding: '20px',
+                borderRadius: '12px',
+                marginBottom: '20px',
+                border: '2px solid #ffd700'
+              }}>
+                <h4 style={{ color: '#667eea', marginBottom: '15px' }}>
+                  {t('language') === 'zh' ? '選擇要報名的人員' : 'Select People to Enroll'}
+                </h4>
+
+                {/* Main member */}
+                {(() => {
+                  const availableCoupons = member.coupons.filter(c => {
+                    const remaining = c.quantity - c.usedCount;
+                    if (remaining <= 0) return false;
+                    if (c.type === 'trial' && checkoutData.classInfoId) {
+                      return c.classInfoId?.toString() === checkoutData.classInfoId;
+                    }
+                    return c.type === 'discount';
+                  });
+
+                  return (
+                    <div style={{ marginBottom: '15px', padding: '10px', background: '#fff', borderRadius: '8px' }}>
+                      <label style={{ display: 'block', marginBottom: '8px', cursor: 'pointer' }}>
+                        <input
+                          type="checkbox"
+                          checked={selectedFamilyMembers.includes('self')}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedFamilyMembers([...selectedFamilyMembers, 'self']);
+                            } else {
+                              setSelectedFamilyMembers(selectedFamilyMembers.filter(i => i !== 'self'));
+                              const newFMCoupons = {...familyMemberCoupons};
+                              delete newFMCoupons['self'];
+                              setFamilyMemberCoupons(newFMCoupons);
+                            }
+                          }}
+                          style={{ marginRight: '10px' }}
+                        />
+                        <strong>{member.name}</strong> (+NT$ {checkoutData.cost})
+                      </label>
+                      {selectedFamilyMembers.includes('self') && availableCoupons.length > 0 && (
+                        <select
+                          value={familyMemberCoupons['self'] || ''}
+                          onChange={(e) => setFamilyMemberCoupons({...familyMemberCoupons, 'self': e.target.value})}
+                          style={{ marginLeft: '30px', padding: '5px', width: 'calc(100% - 30px)' }}
+                        >
+                          <option value="">{t('language') === 'zh' ? '不使用優惠券' : 'No coupon'}</option>
+                          {availableCoupons.map(c => (
+                            <option key={c._id} value={c._id}>
+                              {c.name} ({c.type === 'trial' ? t('language') === 'zh' ? '免費' : 'Free' : `${c.discountPercent}% ${t('off')}`})
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                    </div>
+                  );
+                })()}
+
+                {/* Family members */}
+                {member.familyMembers.map((fm, index) => {
+                  const availableCoupons = member.coupons.filter(c => {
+                    const remaining = c.quantity - c.usedCount;
+                    if (remaining <= 0) return false;
+                    if (c.type === 'trial' && checkoutData.classInfoId) {
+                      return c.classInfoId?.toString() === checkoutData.classInfoId;
+                    }
+                    return c.type === 'discount';
+                  });
+
+                  return (
+                    <div key={index} style={{ marginBottom: '15px', padding: '10px', background: '#fff', borderRadius: '8px' }}>
+                      <label style={{ display: 'block', marginBottom: '8px', cursor: 'pointer' }}>
+                        <input
+                          type="checkbox"
+                          checked={selectedFamilyMembers.includes(index)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedFamilyMembers([...selectedFamilyMembers, index]);
+                            } else {
+                              setSelectedFamilyMembers(selectedFamilyMembers.filter(i => i !== index));
+                              const newFMCoupons = {...familyMemberCoupons};
+                              delete newFMCoupons[index];
+                              setFamilyMemberCoupons(newFMCoupons);
+                            }
+                          }}
+                          style={{ marginRight: '10px' }}
+                        />
+                        <strong>{fm.name}</strong> (+NT$ {checkoutData.cost})
+                      </label>
+                      {selectedFamilyMembers.includes(index) && availableCoupons.length > 0 && (
+                        <select
+                          value={familyMemberCoupons[index] || ''}
+                          onChange={(e) => setFamilyMemberCoupons({...familyMemberCoupons, [index]: e.target.value})}
+                          style={{ marginLeft: '30px', padding: '5px', width: 'calc(100% - 30px)' }}
+                        >
+                          <option value="">{t('language') === 'zh' ? '不使用優惠券' : 'No coupon'}</option>
+                          {availableCoupons.map(c => (
+                            <option key={c._id} value={c._id}>
+                              {c.name} ({c.type === 'trial' ? t('language') === 'zh' ? '免費' : 'Free' : `${c.discountPercent}% ${t('off')}`})
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            <div style={{
               background: '#f8f9ff',
               padding: '20px',
               borderRadius: '12px',
@@ -2886,65 +3022,38 @@ function Profile() {
               </h3>
               <p style={{ fontSize: '18px', marginBottom: '8px' }}>
                 <strong>{t('cost')}</strong>
-                {selectedCoupon ? (
-                  <>
-                    {selectedCoupon.type === 'trial' ? (
-                      <span style={{ color: '#2b8a3e', fontWeight: 'bold' }}>
-                        {t('free_trial_coupon')}
-                      </span>
-                    ) : (
-                      <>
-                        <span style={{ textDecoration: 'line-through', color: '#999' }}>
-                          NT$ {checkoutData.cost}
-                        </span>
-                        {' → '}
-                        <span style={{ color: '#c92a2a', fontWeight: 'bold' }}>
-                          NT$ {Math.round(checkoutData.cost * (100 - selectedCoupon.discountPercent) / 100)}
-                        </span>
-                        <span style={{ color: '#c92a2a', fontSize: '14px' }}>
-                          {' '}({selectedCoupon.discountPercent}% {t('off')})
-                        </span>
-                      </>
-                    )}
-                  </>
-                ) : (
-                  <span style={{ fontWeight: 'bold', color: '#667eea' }}>
-                    NT$ {checkoutData.cost}
+                <span style={{ fontWeight: 'bold', color: '#667eea' }}>
+                  NT$ {(() => {
+                    let total = 0;
+                    selectedFamilyMembers.forEach(fmIndex => {
+                      let itemCost = checkoutData.cost;
+                      const couponId = familyMemberCoupons[fmIndex];
+                      if (couponId) {
+                        const coupon = member.coupons.find(c => c._id === couponId);
+                        if (coupon) {
+                          if (coupon.type === 'trial') {
+                            itemCost = 0;
+                          } else {
+                            itemCost = itemCost - Math.round(itemCost * coupon.discountPercent / 100);
+                          }
+                        }
+                      }
+                      total += itemCost;
+                    });
+                    return total;
+                  })()}
+                </span>
+                {selectedFamilyMembers.length > 0 && (
+                  <span style={{ fontSize: '14px', color: '#666' }}>
+                    {' '}({selectedFamilyMembers.length} {t('language') === 'zh' ? '人' : 'person(s)'})
                   </span>
                 )}
               </p>
-              {selectedCoupon && (
-                <div style={{
-                  marginTop: '15px',
-                  padding: '15px',
-                  background: 'white',
-                  borderRadius: '8px',
-                  border: '2px solid #667eea'
-                }}>
-                  <p style={{ marginBottom: '5px', color: '#667eea', fontWeight: 'bold' }}>
-                    ✓ {t('coupon_selected')}{selectedCoupon.name}
-                  </p>
-                  <button
-                    onClick={() => setSelectedCoupon(null)}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      color: '#c92a2a',
-                      cursor: 'pointer',
-                      textDecoration: 'underline',
-                      fontSize: '14px',
-                      padding: 0
-                    }}
-                  >
-                    {t('remove_coupon')}
-                  </button>
-                </div>
-              )}
             </div>            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginBottom: '30px' }}>
               <button
-                onClick={() => handleCompleteEnrollment('in-person', selectedCoupon)}
+                onClick={() => handleCompleteEnrollment('in-person', null)}
                 className="btn btn-primary"
-                disabled={completingEnrollment}
+                disabled={completingEnrollment || selectedFamilyMembers.length === 0}
                 style={{
                   padding: '20px',
                   fontSize: '18px',
@@ -2994,31 +3103,14 @@ function Profile() {
               >
                 💚 {t('line_pay_under_construction')}
               </button>
-
-              <button
-                onClick={() => setShowCouponModal(true)}
-                className="btn"
-                style={{
-                  padding: '20px',
-                  fontSize: '18px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '10px',
-                  background: selectedCoupon ? '#d3f9d8' : '#667eea',
-                  color: 'white',
-                  border: 'none'
-                }}
-              >
-                🎫 {t('redeem_coupon')}
-              </button>
             </div>
 
             <button
               onClick={() => {
                 setShowCheckout(false);
                 setCheckoutData(null);
-                setSelectedCoupon(null);
+                setSelectedFamilyMembers([]);
+                setFamilyMemberCoupons({});
               }}
               className="btn btn-secondary"
               style={{ width: '100%' }}
@@ -3027,144 +3119,9 @@ function Profile() {
             </button>
           </div>
         </div>
-      )}      {showCouponModal && checkoutData && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0, 0, 0, 0.7)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1001,
-          padding: '20px'
-        }}>
-          <div style={{
-            background: 'white',
-            borderRadius: '16px',
-            padding: '40px',
-            maxWidth: '800px',
-            width: '100%',
-            maxHeight: '90vh',
-            overflow: 'auto',
-            boxShadow: '0 10px 50px rgba(0, 0, 0, 0.3)'
-          }}>
-            <h2 style={{ color: '#667eea', marginBottom: '30px', textAlign: 'center' }}>
-              {t('select_coupon')}
-            </h2>
+      )}
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '20px', marginBottom: '30px' }}>
-              {member.coupons && member.coupons.length > 0 ? (
-                member.coupons
-                  .filter(coupon => (coupon.quantity - coupon.usedCount) > 0) // Only show coupons with remaining quantity
-                  .map((coupon, idx) => {
-
-                    const isValid = coupon.type === 'discount' ||
-                      (coupon.type === 'trial' && coupon.classInfoId === checkoutData.classInfoId);
-
-                    return (
-                      <div
-                        key={idx}
-                        onClick={() => {
-                          if (isValid) {
-                            setSelectedCoupon(coupon);
-                            setShowCouponModal(false);
-                          }
-                        }}
-                        style={{
-                          background: isValid ? 'white' : '#f5f5f5',
-                          border: `2px solid ${isValid ? '#667eea' : '#ddd'}`,
-                          borderRadius: '12px',
-                          padding: '20px',
-                          cursor: isValid ? 'pointer' : 'not-allowed',
-                          opacity: isValid ? 1 : 0.5,
-                          transition: 'all 0.3s ease',
-                          position: 'relative'
-                        }}
-                      >
-                        {coupon.image && (
-                          <img
-                            src={coupon.image}
-                            alt={coupon.name}
-                            style={{
-                              width: '100%',
-                              height: '120px',
-                              objectFit: 'cover',
-                              borderRadius: '8px',
-                              marginBottom: '15px'
-                            }}
-                          />
-                        )}
-                        <div style={{ marginBottom: '10px' }}>
-                          <span style={{
-                            display: 'inline-block',
-                            padding: '4px 12px',
-                            background: coupon.type === 'trial' ? '#d3f9d8' : '#ffe3e3',
-                            color: coupon.type === 'trial' ? '#2b8a3e' : '#c92a2a',
-                            borderRadius: '6px',
-                            fontSize: '11px',
-                            fontWeight: 'bold',
-                            textTransform: 'uppercase'
-                          }}>
-                            {coupon.type === 'trial'
-                              ? (t('trial'))
-                              : (t('discount'))}
-                          </span>
-                        </div>
-                        <h4 style={{ color: '#667eea', marginBottom: '8px', fontSize: '16px' }}>
-                          {coupon.name}
-                        </h4>
-                        <p style={{ color: '#666', fontSize: '13px', marginBottom: '8px' }}>
-                          {coupon.description}
-                        </p>
-                        {coupon.type === 'discount' && (
-                          <p style={{ fontSize: '14px', color: '#c92a2a', fontWeight: 'bold', marginBottom: '8px' }}>
-                            {coupon.discountPercent}% {t('off')}
-                          </p>
-                        )}
-                        <p style={{ fontSize: '13px', color: '#999' }}>
-                          {t('remaining')}
-                          {coupon.quantity - coupon.usedCount}
-                        </p>
-                        {!isValid && (
-                          <div style={{
-                            position: 'absolute',
-                            top: '50%',
-                            left: '50%',
-                            transform: 'translate(-50%, -50%)',
-                            background: 'rgba(0, 0, 0, 0.8)',
-                            color: 'white',
-                            padding: '10px 20px',
-                            borderRadius: '8px',
-                            fontSize: '12px',
-                            fontWeight: 'bold',
-                            textAlign: 'center'
-                          }}>
-                            {t('not_valid_for_this_class')}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })
-              ) : (
-                <p style={{ gridColumn: '1 / -1', textAlign: 'center', color: '#999', padding: '40px' }}>
-                  {t('you_have_no_available_coupons')}
-                </p>
-              )}
-            </div>
-
-            <button
-              onClick={() => setShowCouponModal(false)}
-              className="btn btn-secondary"
-              style={{ width: '100%' }}
-            >
-              {t('cancel')}
-            </button>
-          </div>
-        </div>
-      )}      {showShareModal && shareCoupon && (
+      {showShareModal && shareCoupon && (
         <div style={{
           position: 'fixed',
           top: 0,
