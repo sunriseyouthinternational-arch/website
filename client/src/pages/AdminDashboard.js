@@ -37,7 +37,7 @@ function AdminDashboard() {
     cost: '',
     maxParticipants: '',
     banner: '',
-    ageRange: ''
+    ageRange: []
   });
 
   const [showAddClassForm, setShowAddClassForm] = useState(false);
@@ -65,7 +65,7 @@ function AdminDashboard() {
     maxParticipants: '',
     banner: '',
     status: 'upcoming',
-    ageRange: ''
+    ageRange: []
   });
 
   const [showAddTeacherForm, setShowAddTeacherForm] = useState(false);
