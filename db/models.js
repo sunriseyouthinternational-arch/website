@@ -111,6 +111,7 @@ const classInfoSchema = new mongoose.Schema({
   banner: { type: String },
   cost: { type: Number, required: true },
   maxParticipants: { type: Number, required: true },
+  ageRange: { type: String, enum: ['', 'all', 'children', 'teen', 'adult', 'elderly'], default: '' },
   status: { type: String, enum: ['active', 'inactive'], default: 'active' },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
@@ -181,6 +182,7 @@ const activitySchema = new mongoose.Schema({
   teacherId: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Teacher' }], // Array of teacher references
   teacher: { type: String, required: true }, // Comma-separated teacher names for display
   maxParticipants: { type: Number, required: true },
+  ageRange: { type: String, enum: ['', 'all', 'children', 'teen', 'adult', 'elderly'], default: '' },
   currentParticipants: { type: Number, default: 0 },
   participants: [{
     memberId: { type: mongoose.Schema.Types.ObjectId, ref: 'Member', required: true },
