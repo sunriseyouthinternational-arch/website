@@ -1413,19 +1413,19 @@ function Profile() {
                     <div className="profile-info">
                       <h2>{member.name}</h2>
                       {member.englishAlias && (
-                        <p><strong>{t('englishAlias')}:</strong> {member.englishAlias}</p>
+                        <p><strong>{t('englishAlias')}</strong> {member.englishAlias}</p>
                       )}
-                      <p><strong>{t('member_id')}:</strong> {member.memberId}</p>
-                      <p><strong>{t('gender')}:</strong> {member.gender}</p>
-                      <p><strong>{t('birthDate')}:</strong> {formatDate(member.birthDate)}</p>
+                      <p><strong>{t('member_id')}</strong> {member.memberId}</p>
+                      <p><strong>{t('gender')}</strong> {member.gender}</p>
+                      <p><strong>{t('birthDate')}</strong> {formatDate(member.birthDate)}</p>
                     </div>
                   </div>
 
                   <div className="contact-info">
                     <h3>{t('contact_information')}</h3>
-                    <p><strong>{t('mobile')}:</strong> {member.contact?.mobile}</p>
-                    {member.contact?.phone && <p><strong>{t('phone')}:</strong> {member.contact.phone}</p>}
-                    {member.contact?.lineId && <p><strong>{t('lineId')}:</strong> {member.contact.lineId}</p>}
+                    <p><strong>{t('mobile')}</strong> {member.contact?.mobile}</p>
+                    {member.contact?.phone && <p><strong>{t('phone')}</strong> {member.contact.phone}</p>}
+                    {member.contact?.lineId && <p><strong>{t('lineId')}</strong> {member.contact.lineId}</p>}
                   </div>
 
                   <div className="membership-status" style={{
@@ -1485,12 +1485,12 @@ function Profile() {
                       <h3>{t('familyMembers')}</h3>
                       {member.familyMembers.map((fm, index) => (
                         <div key={index} className="family-member-item">
-                          <p><strong>{t('fullName')}:</strong> {fm.name}</p>
+                          <p><strong>{t('fullName')}</strong> {fm.name}</p>
                           {fm.englishAlias && (
-                            <p><strong>{t('englishAlias')}:</strong> {fm.englishAlias}</p>
+                            <p><strong>{t('englishAlias')}</strong> {fm.englishAlias}</p>
                           )}
-                          <p><strong>{t('gender')}:</strong> {fm.gender}</p>
-                          <p><strong>{t('birthDate')}:</strong> {formatDate(fm.birthDate)}</p>
+                          <p><strong>{t('gender')}</strong> {fm.gender}</p>
+                          <p><strong>{t('birthDate')}</strong> {formatDate(fm.birthDate)}</p>
                         </div>
                       ))}
                     </div>
@@ -1704,24 +1704,24 @@ function Profile() {
                   </h3>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                     <div>
-                      <strong>{t('classDate')}:</strong>
+                      <strong>{t('classDate')}</strong>
                       <p style={{ marginTop: '5px' }}>{formatDate(selectedClass.date)}</p>
                     </div>
                     <div>
-                      <strong>{t('time')}:</strong>
+                      <strong>{t('time')}</strong>
                       <p style={{ marginTop: '5px' }}>{selectedClass.time}</p>
                     </div>
                     <div>
-                      <strong>{t('cost')}:</strong>
+                      <strong>{t('cost')}</strong>
                       <p style={{ marginTop: '5px' }}>NT$ {selectedClass.classInfoId?.cost || 0}</p>
                     </div>
                     <div>
-                      <strong>{t('participants')}:</strong>
+                      <strong>{t('participants')}</strong>
                       <p style={{ marginTop: '5px' }}>{selectedClass.currentParticipants} / {selectedClass.classInfoId?.maxParticipants || 0}</p>
                     </div>
                     {selectedClass.location && (
                       <div>
-                        <strong>{t('location')}:</strong>
+                        <strong>{t('location')}</strong>
                         <p style={{ marginTop: '5px' }}>📍 {selectedClass.location}</p>
                       </div>
                     )}
@@ -1753,19 +1753,19 @@ function Profile() {
                           <h4 style={{ marginBottom: '10px', fontSize: '18px', textAlign: 'center' }}>{teacher.name}</h4>
                           {teacher.bio && (
                             <div style={{ marginBottom: '10px' }}>
-                              <strong>{t('hostBio')}:</strong>
+                              <strong>{t('hostBio')}</strong>
                               <p style={{ marginTop: '5px', lineHeight: '1.6', fontSize: '14px' }}>{teacher.bio}</p>
                             </div>
                           )}
                           {teacher.specialties && (
                             <div style={{ marginBottom: '10px' }}>
-                              <strong>{t('hostSpecialties')}:</strong>
+                              <strong>{t('hostSpecialties')}</strong>
                               <p style={{ marginTop: '5px', fontSize: '14px' }}>{teacher.specialties}</p>
                             </div>
                           )}
                           {teacher.education && (
                             <div style={{ marginBottom: '10px' }}>
-                              <strong>{t('hostEducation')}:</strong>
+                              <strong>{t('hostEducation')}</strong>
                               <p style={{ marginTop: '5px', fontSize: '14px' }}>{teacher.education}</p>
                             </div>
                           )}
@@ -1783,7 +1783,7 @@ function Profile() {
                   border: '2px solid #f0e0c0'
                 }}>
                   <h3 style={{ marginBottom: '10px', color: '#667eea' }}>{t('hostInfo')}</h3>
-                  <p><strong>{t('host')}:</strong> {selectedClass.teacher}</p>
+                  <p><strong>{t('host')}</strong> {selectedClass.teacher}</p>
                 </div>
               )}
 
@@ -2125,11 +2125,11 @@ function Profile() {
                       )}
                       <p className="item-description">{classItem.classInfoId?.description || ''}</p>
                       <div className="item-details">
-                        <p><strong>{t('classDate')}:</strong> {formatDate(classItem.date)}</p>
-                        <p><strong>{t('host')}:</strong> {classItem.teacher}</p>
-                        <p><strong>{t('time')}:</strong> {classItem.time}</p>
-                        <p><strong>{t('cost')}:</strong> NT$ {classItem.classInfoId?.cost || 0}</p>
-                        <p><strong>{t('participants')}:</strong> {classItem.currentParticipants} / {classItem.classInfoId?.maxParticipants || 0}</p>
+                        <p><strong>{t('classDate')}</strong> {formatDate(classItem.date)}</p>
+                        <p><strong>{t('host')}</strong> {classItem.teacher}</p>
+                        <p><strong>{t('time')}</strong> {classItem.time}</p>
+                        <p><strong>{t('cost')}</strong> NT$ {classItem.classInfoId?.cost || 0}</p>
+                        <p><strong>{t('participants')}</strong> {classItem.currentParticipants} / {classItem.classInfoId?.maxParticipants || 0}</p>
                       </div>
                       <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
                         <button
@@ -2204,29 +2204,29 @@ function Profile() {
                 </h3>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   <div>
-                    <strong>{t('date')}:</strong>
+                    <strong>{t('date')}</strong>
                     <p style={{ marginTop: '5px' }}>{formatDate(selectedActivity.date)}</p>
                   </div>
                   <div>
-                    <strong>{t('time')}:</strong>
+                    <strong>{t('time')}</strong>
                     <p style={{ marginTop: '5px' }}>{selectedActivity.time}</p>
                   </div>
                   {selectedActivity.location && (
                     <div>
-                      <strong>{t('location')}:</strong>
+                      <strong>{t('location')}</strong>
                       <p style={{ marginTop: '5px' }}>📍 {selectedActivity.location}</p>
                     </div>
                   )}
                   <div>
-                    <strong>{t('host')}:</strong>
+                    <strong>{t('host')}</strong>
                     <p style={{ marginTop: '5px' }}>{selectedActivity.teacher}</p>
                   </div>
                   <div>
-                    <strong>{t('cost')}:</strong>
+                    <strong>{t('cost')}</strong>
                     <p style={{ marginTop: '5px' }}>NT$ {selectedActivity.cost}</p>
                   </div>
                   <div>
-                    <strong>{t('participants')}:</strong>
+                    <strong>{t('participants')}</strong>
                     <p style={{ marginTop: '5px' }}>{selectedActivity.currentParticipants} / {selectedActivity.maxParticipants}</p>
                   </div>
                 </div>
@@ -2338,13 +2338,13 @@ function Profile() {
                       )}
                       <p className="item-description">{activity.description}</p>
                       <div className="item-details">
-                        <p><strong>{t('host')}:</strong> {activity.teacher}</p>
-                        <p><strong>{t('time')}:</strong> {activity.time}</p>
+                        <p><strong>{t('host')}</strong> {activity.teacher}</p>
+                        <p><strong>{t('time')}</strong> {activity.time}</p>
                         {activity.location && (
-                          <p><strong>{t('location')}:</strong> 📍 {activity.location}</p>
+                          <p><strong>{t('location')}</strong> 📍 {activity.location}</p>
                         )}
-                        <p><strong>{t('cost')}:</strong> NT$ {activity.cost}</p>
-                        <p><strong>{t('participants')}:</strong> {activity.currentParticipants} / {activity.maxParticipants}</p>
+                        <p><strong>{t('cost')}</strong> NT$ {activity.cost}</p>
+                        <p><strong>{t('participants')}</strong> {activity.currentParticipants} / {activity.maxParticipants}</p>
                       </div>
                       {activity.location && (
                         <div style={{ marginTop: '10px', marginBottom: '10px' }}>
@@ -2856,14 +2856,14 @@ function Profile() {
                     <div key={meeting._id} className="item-card">
                       <h4>{meeting.agenda}</h4>
                       <div className="item-details">
-                        <p><strong>{t('date')}:</strong> {new Date(meeting.date).toLocaleDateString('zh-TW')}</p>
-                        <p><strong>{t('time')}:</strong> {meeting.time}</p>
+                        <p><strong>{t('date')}</strong> {new Date(meeting.date).toLocaleDateString('zh-TW')}</p>
+                        <p><strong>{t('time')}</strong> {meeting.time}</p>
                         {meeting.location && (
-                          <p><strong>{t('location')}:</strong> 📍 {meeting.location}</p>
+                          <p><strong>{t('location')}</strong> 📍 {meeting.location}</p>
                         )}
-                        <p><strong>{t('type')}:</strong> {meeting.memberType}</p>
+                        <p><strong>{t('type')}</strong> {meeting.memberType}</p>
                         <p>
-                          <strong>{t('registered')}:</strong> {meeting.participants.length}
+                          <strong>{t('registered')}</strong> {meeting.participants.length}
                         </p>
                       </div>
                       {meeting.location && (
@@ -3987,13 +3987,13 @@ function Profile() {
               <h4 style={{ fontSize: '18px', marginBottom: '15px' }}>{showMeetingDetails.agenda}</h4>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                <p><strong>{t('date')}:</strong> {new Date(showMeetingDetails.date).toLocaleDateString('zh-TW')}</p>
-                <p><strong>{t('time')}:</strong> {showMeetingDetails.time}</p>
-                <p><strong>{t('type')}:</strong> {showMeetingDetails.memberType}</p>
+                <p><strong>{t('date')}</strong> {new Date(showMeetingDetails.date).toLocaleDateString('zh-TW')}</p>
+                <p><strong>{t('time')}</strong> {showMeetingDetails.time}</p>
+                <p><strong>{t('type')}</strong> {showMeetingDetails.memberType}</p>
 
                 {showMeetingDetails.meetingType === 'in-person' && showMeetingDetails.location && (
                   <>
-                    <p><strong>{t('location')}:</strong> 📍 {showMeetingDetails.location}</p>
+                    <p><strong>{t('location')}</strong> 📍 {showMeetingDetails.location}</p>
                     <div style={{ marginTop: '10px' }}>
                       <iframe
                         src={`https://maps.google.com/maps?q=${encodeURIComponent(showMeetingDetails.location)}&output=embed`}
@@ -4011,7 +4011,7 @@ function Profile() {
 
                 {showMeetingDetails.meetingType === 'zoom' && showMeetingDetails.zoomUrl && (
                   <div>
-                    <p><strong>{t('zoom_url')}:</strong></p>
+                    <p><strong>{t('zoom_url')}</strong></p>
                     <a
                       href={showMeetingDetails.zoomUrl}
                       target="_blank"
