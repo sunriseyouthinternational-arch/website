@@ -318,11 +318,37 @@ module.exports = async (req, res) => {
       }
 
       if (req.method === 'PUT') {
-        const classItem = await Class.findByIdAndUpdate(id, req.body, { new: true });
+        const classItem = await Class.findById(id).populate('classInfoId');
 
         if (!classItem) {
           return res.status(404).json({ message: '找不到課程 / Class not found' });
         }
+
+        // Update Class fields (date, time, location, teacher, teacherId)
+        const classUpdates = {};
+        if (req.body.date !== undefined) classUpdates.date = req.body.date;
+        if (req.body.time !== undefined) classUpdates.time = req.body.time;
+        if (req.body.location !== undefined) classUpdates.location = req.body.location;
+        if (req.body.teacher !== undefined) classUpdates.teacher = req.body.teacher;
+        if (req.body.teacherId !== undefined) classUpdates.teacherId = req.body.teacherId;
+        if (req.body.status !== undefined) classUpdates.status = req.body.status;
+
+        // Update ClassInfo fields (name, description, cost, maxParticipants, banner, ageRange)
+        const classInfoUpdates = {};
+        if (req.body.name !== undefined) classInfoUpdates.name = req.body.name;
+        if (req.body.description !== undefined) classInfoUpdates.description = req.body.description;
+        if (req.body.cost !== undefined) classInfoUpdates.cost = req.body.cost;
+        if (req.body.maxParticipants !== undefined) classInfoUpdates.maxParticipants = req.body.maxParticipants;
+        if (req.body.banner !== undefined) classInfoUpdates.banner = req.body.banner;
+        if (req.body.ageRange !== undefined) classInfoUpdates.ageRange = req.body.ageRange;
+
+        // Update ClassInfo if there are changes
+        if (Object.keys(classInfoUpdates).length > 0) {
+          await ClassInfo.findByIdAndUpdate(classItem.classInfoId._id, classInfoUpdates);
+        }
+
+        // Update Class
+        const updatedClass = await Class.findByIdAndUpdate(id, classUpdates, { new: true });
 
         // Update enrollment status when class status changes
         if (req.body.status === 'completed') {
@@ -344,7 +370,7 @@ module.exports = async (req, res) => {
 
         return res.status(200).json({
           message: '課程更新成功 / Class updated successfully',
-          class: classItem
+          class: updatedClass
         });
       }
 
