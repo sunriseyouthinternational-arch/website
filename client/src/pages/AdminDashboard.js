@@ -20,6 +20,7 @@ function AdminDashboard() {
   const [selectedItem, setSelectedItem] = useState(null);
   const [selectedTeacher, setSelectedTeacher] = useState(null);
   const [selectedClassInfo, setSelectedClassInfo] = useState(null);
+  const [selectedActivity, setSelectedActivity] = useState(null);
 
   const [editingTeacherPhoto, setEditingTeacherPhoto] = useState(false);
   const [uploadingTeacherPhoto, setUploadingTeacherPhoto] = useState(false);
@@ -548,6 +549,26 @@ function AdminDashboard() {
       setSelectedClassInfo(null);
     } catch (error) {
       console.error('Error updating class info:', error);
+      setMessage({ type: 'error', text: error.response?.data?.message || t('error') });
+    }
+  };
+
+  const handleUpdateActivity = async (e) => {
+    e.preventDefault();
+    try {
+      await axios.put(`/api/activities?id=${selectedActivity._id}`, selectedActivity, {
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      setMessage({
+        type: 'success',
+        text: t('activity_updated_successfully')
+      });
+
+      fetchData();
+      setSelectedActivity(null);
+    } catch (error) {
+      console.error('Error updating activity:', error);
       setMessage({ type: 'error', text: error.response?.data?.message || t('error') });
     }
   };
@@ -2796,6 +2817,12 @@ function AdminDashboard() {
                     >
                       {t('view_details')}
                     </button>
+                    <button
+                      className="btn btn-small btn-secondary"
+                      onClick={() => setSelectedActivity(activity)}
+                    >
+                      {t('edit')}
+                    </button>
                   </div>
                 </div>
               ))}
@@ -2830,7 +2857,13 @@ function AdminDashboard() {
                       time: selectedItem.time || '',
                       location: selectedItem.location || '',
                       teacher: selectedItem.teacher || '',
-                      teacherId: selectedItem.teacherId || []
+                      teacherId: selectedItem.teacherId || [],
+                      name: selectedItem.name || '',
+                      description: selectedItem.description || '',
+                      cost: selectedItem.cost || '',
+                      maxParticipants: selectedItem.maxParticipants || '',
+                      banner: selectedItem.banner || '',
+                      ageRange: selectedItem.ageRange || []
                     });
                   }
                 }}
@@ -2848,6 +2881,69 @@ function AdminDashboard() {
 
           {editingItem ? (
             <form onSubmit={handleUpdateItem} className="add-form" style={{ marginTop: '20px' }}>
+              {selectedItem.type === 'activity' && (
+                <>
+                  <div className="form-group">
+                    <label>{t('name')} *</label>
+                    <input
+                      type="text"
+                      value={editItemData.name}
+                      onChange={(e) => setEditItemData({ ...editItemData, name: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>{t('description')} *</label>
+                    <textarea
+                      value={editItemData.description}
+                      onChange={(e) => setEditItemData({ ...editItemData, description: e.target.value })}
+                      required
+                      rows="3"
+                    />
+                  </div>
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label>{t('cost')} (NT$) *</label>
+                      <input
+                        type="number"
+                        value={editItemData.cost}
+                        onChange={(e) => setEditItemData({ ...editItemData, cost: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>{t('maxParticipants')} *</label>
+                      <input
+                        type="number"
+                        value={editItemData.maxParticipants}
+                        onChange={(e) => setEditItemData({ ...editItemData, maxParticipants: e.target.value })}
+                        required
+                      />
+                    </div>
+                  </div>
+                  <div className="form-group">
+                    <label>{t('recommendedAge')}</label>
+                    <select
+                      multiple
+                      value={editItemData.ageRange}
+                      onChange={(e) => {
+                        const selected = Array.from(e.target.selectedOptions, option => option.value);
+                        setEditItemData({ ...editItemData, ageRange: selected });
+                      }}
+                      style={{ minHeight: '120px' }}
+                    >
+                      <option value="all">{t('all')}</option>
+                      <option value="children">{t('children')}</option>
+                      <option value="teen">{t('teen')}</option>
+                      <option value="adult">{t('adult')}</option>
+                      <option value="elderly">{t('elderly')}</option>
+                    </select>
+                    <small style={{ color: '#666', marginTop: '5px', display: 'block' }}>
+                      Hold Ctrl/Cmd to select multiple
+                    </small>
+                  </div>
+                </>
+              )}
               <div className="form-group">
                 <label>{selectedItem.type === 'class' ? t('classDate') : t('activity_date')}</label>
                 <input
