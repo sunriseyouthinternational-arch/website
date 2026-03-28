@@ -171,13 +171,13 @@ module.exports = async (req, res) => {
               altText: `📢 新活動通知：${name}`,
               contents: {
                 type: 'bubble',
-                hero: banner && banner.startsWith('http') ? {
+                hero: {
                   type: 'image',
-                  url: banner,
+                  url: `${process.env.BASE_URL}/images/line-broadcast/activity_announcement.jpg`,
                   size: 'full',
                   aspectRatio: '20:13',
                   aspectMode: 'cover'
-                } : undefined,
+                },
                 body: {
                   type: 'box',
                   layout: 'vertical',

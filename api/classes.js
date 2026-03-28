@@ -176,13 +176,13 @@ module.exports = async (req, res) => {
               altText: `📢 新課程通知：${classInfo.name}`,
               contents: {
                 type: 'bubble',
-                hero: classInfo.banner && classInfo.banner.startsWith('http') ? {
+                hero: {
                   type: 'image',
-                  url: classInfo.banner,
+                  url: `${process.env.BASE_URL}/images/line-broadcast/class_announcement.jpg`,
                   size: 'full',
                   aspectRatio: '20:13',
                   aspectMode: 'cover'
-                } : undefined,
+                },
                 body: {
                   type: 'box',
                   layout: 'vertical',
