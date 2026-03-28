@@ -1882,10 +1882,11 @@ function Profile() {
                   {getEnrolledItems('class').length > 0 ? (
                     getEnrolledItems('class').map((enrollment) => {
                       const classItem = classes.find(c => c._id === enrollment.itemId);
-                      const participant = classItem?.participants?.find(p => p.memberId.toString() === member._id.toString());
+                      const myParticipants = classItem?.participants?.filter(p => p.memberId.toString() === member._id.toString()) || [];
                       const itemCost = classItem?.classInfoId?.cost || 0;
-                      const couponDiscount = participant?.couponDiscount || 0;
-                      const finalCost = Math.max(0, itemCost - couponDiscount);
+                      const totalCost = myParticipants.reduce((sum, p) => sum + Math.max(0, itemCost - (p.couponDiscount || 0)), 0);
+                      const totalOriginalCost = itemCost * myParticipants.length;
+                      const hasDiscount = totalCost < totalOriginalCost;
 
                       return (
                         <div key={enrollment._id} className="enrolled-item">
@@ -1898,25 +1899,30 @@ function Profile() {
                             )}
                             {classItem && (
                               <p style={{ fontSize: '14px', marginTop: '5px' }}>
-                                {couponDiscount > 0 ? (
+                                {hasDiscount ? (
                                   <>
                                     <span style={{ textDecoration: 'line-through', color: '#999' }}>
-                                      NT$ {itemCost}
+                                      NT$ {totalOriginalCost}
                                     </span>
                                     {' '}
-                                    <span style={{ color: finalCost === 0 ? '#2b8a3e' : '#667eea', fontWeight: 'bold' }}>
-                                      NT$ {finalCost}
+                                    <span style={{ color: totalCost === 0 ? '#2b8a3e' : '#667eea', fontWeight: 'bold' }}>
+                                      NT$ {totalCost}
                                     </span>
                                   </>
                                 ) : (
-                                  <span>NT$ {itemCost}</span>
+                                  <span>NT$ {totalOriginalCost}</span>
+                                )}
+                                {myParticipants.length > 1 && (
+                                  <span style={{ fontSize: '12px', color: '#666', marginLeft: '8px' }}>
+                                    ({myParticipants.length} {t('language') === 'zh' ? '人' : 'people'})
+                                  </span>
                                 )}
                               </p>
                             )}
                           </div>
                           <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                            <span className={`status-badge ${participant?.paid ? 'paid' : 'unpaid'}`}>
-                              {participant?.paid ? t('paid') : t('unpaid')}
+                            <span className={`status-badge ${myParticipants.every(p => p.paid) ? 'paid' : 'unpaid'}`}>
+                              {myParticipants.every(p => p.paid) ? t('paid') : t('unpaid')}
                             </span>
                             {classItem && (
                               <button
@@ -2148,10 +2154,11 @@ function Profile() {
                   {getEnrolledItems('activity').length > 0 ? (
                     getEnrolledItems('activity').map((enrollment) => {
                       const activity = activities.find(a => a._id === enrollment.itemId);
-                      const participant = activity?.participants?.find(p => p.memberId.toString() === member._id.toString());
+                      const myParticipants = activity?.participants?.filter(p => p.memberId.toString() === member._id.toString()) || [];
                       const itemCost = activity?.cost || 0;
-                      const couponDiscount = participant?.couponDiscount || 0;
-                      const finalCost = Math.max(0, itemCost - couponDiscount);
+                      const totalCost = myParticipants.reduce((sum, p) => sum + Math.max(0, itemCost - (p.couponDiscount || 0)), 0);
+                      const totalOriginalCost = itemCost * myParticipants.length;
+                      const hasDiscount = totalCost < totalOriginalCost;
 
                       return (
                       <div key={enrollment._id} className="enrolled-item">
@@ -2159,24 +2166,29 @@ function Profile() {
                           <p><strong>{enrollment.itemName}</strong></p>
                           {activity && (
                             <p style={{ fontSize: '14px', marginTop: '5px' }}>
-                              {couponDiscount > 0 ? (
+                              {hasDiscount ? (
                                 <>
                                   <span style={{ textDecoration: 'line-through', color: '#999' }}>
-                                    NT$ {itemCost}
+                                    NT$ {totalOriginalCost}
                                   </span>
                                   {' '}
-                                  <span style={{ color: finalCost === 0 ? '#2b8a3e' : '#667eea', fontWeight: 'bold' }}>
-                                    NT$ {finalCost}
+                                  <span style={{ color: totalCost === 0 ? '#2b8a3e' : '#667eea', fontWeight: 'bold' }}>
+                                    NT$ {totalCost}
                                   </span>
                                 </>
                               ) : (
-                                <span>NT$ {itemCost}</span>
+                                <span>NT$ {totalOriginalCost}</span>
+                              )}
+                              {myParticipants.length > 1 && (
+                                <span style={{ fontSize: '12px', color: '#666', marginLeft: '8px' }}>
+                                  ({myParticipants.length} {t('language') === 'zh' ? '人' : 'people'})
+                                </span>
                               )}
                             </p>
                           )}
                         </div>
-                        <span className={`status-badge ${participant?.paid ? 'paid' : 'unpaid'}`}>
-                          {participant?.paid ? t('paid') : t('unpaid')}
+                        <span className={`status-badge ${myParticipants.every(p => p.paid) ? 'paid' : 'unpaid'}`}>
+                          {myParticipants.every(p => p.paid) ? t('paid') : t('unpaid')}
                         </span>
                       </div>
                       );
@@ -3011,7 +3023,25 @@ function Profile() {
               <p style={{ fontSize: '18px', marginBottom: '8px' }}>
                 <strong>{t('cost')}</strong>
                 <span style={{ fontWeight: 'bold', color: '#667eea' }}>
-                  NT$ {checkoutData.cost * selectedFamilyMembers.length}
+                  NT$ {(() => {
+                    let total = 0;
+                    selectedFamilyMembers.forEach(fmIndex => {
+                      let itemCost = checkoutData.cost;
+                      const couponId = familyMemberCoupons[fmIndex];
+                      if (couponId) {
+                        const coupon = member.coupons.find(c => c._id === couponId);
+                        if (coupon) {
+                          if (coupon.type === 'trial') {
+                            itemCost = 0;
+                          } else {
+                            itemCost = itemCost - Math.round(itemCost * coupon.discountPercent / 100);
+                          }
+                        }
+                      }
+                      total += itemCost;
+                    });
+                    return total;
+                  })()}
                 </span>
                 {selectedFamilyMembers.length > 0 && (
                   <span style={{ fontSize: '14px', color: '#666' }}>
