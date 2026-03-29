@@ -100,6 +100,305 @@
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.35);
 }
 
+/* Meetings & Sync Yellow Theme */
+.meetings-sync-container {
+  background: #F4D03F;
+  min-height: 100vh;
+  padding: 20px;
+  margin: -20px;
+}
+
+.meetings-sync-header {
+  text-align: left;
+  margin-bottom: 30px;
+}
+
+.logo-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 20px;
+}
+
+.logo-badge span:first-child {
+  font-size: 16px;
+}
+
+.meetings-title {
+  font-size: 48px;
+  font-weight: 900;
+  line-height: 1.1;
+  margin: 0 0 15px 0;
+  color: #000;
+}
+
+.meetings-subtitle {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #000;
+  max-width: 600px;
+}
+
+.stats-grid {
+  display: grid;
+  gap: 15px;
+  margin-bottom: 30px;
+}
+
+.stat-card {
+  background: white;
+  border-radius: 20px;
+  padding: 25px;
+}
+
+.stat-attendance {
+  background: white;
+}
+
+.stat-completed {
+  background: #1a1a1a;
+  color: white;
+}
+
+.stat-rewards {
+  background: white;
+}
+
+.stat-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  margin-bottom: 10px;
+}
+
+.stat-value {
+  font-size: 48px;
+  font-weight: 900;
+  line-height: 1;
+  margin-bottom: 5px;
+}
+
+.stat-sublabel {
+  font-size: 13px;
+  opacity: 0.7;
+}
+
+.upcoming-sessions-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+
+.section-title {
+  font-size: 28px;
+  font-weight: 900;
+  line-height: 1.1;
+  margin: 0;
+  color: #000;
+}
+
+.pending-badge {
+  background: #1a1a1a;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.sessions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-bottom: 40px;
+}
+
+.session-card {
+  background: white;
+  border-radius: 20px;
+  padding: 20px;
+  display: flex;
+  gap: 20px;
+}
+
+.session-date {
+  text-align: center;
+  min-width: 60px;
+}
+
+.date-month {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  margin-bottom: 5px;
+}
+
+.date-day {
+  font-size: 32px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.session-content {
+  flex: 1;
+}
+
+.session-badges {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.badge {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.badge-mandatory {
+  background: #ff4444;
+  color: white;
+}
+
+.badge-location {
+  background: #ffd700;
+  color: #000;
+}
+
+.session-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0 0 8px 0;
+  color: #000;
+}
+
+.session-location {
+  font-size: 13px;
+  color: #666;
+  margin: 0 0 15px 0;
+}
+
+.btn-register {
+  background: #1a1a1a;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-right: 10px;
+  transition: all 0.2s;
+}
+
+.btn-register:hover {
+  background: #000;
+}
+
+.btn-register:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-cannot-attend {
+  background: #f0f0f0;
+  color: #000;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-cannot-attend:hover {
+  background: #e0e0e0;
+}
+
+.absence-notice {
+  background: #ffe0e0;
+  border-radius: 12px;
+  padding: 15px;
+  margin-top: 15px;
+}
+
+.absence-notice span {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #ff4444;
+}
+
+.absence-notice p {
+  font-size: 12px;
+  margin: 8px 0;
+  color: #000;
+}
+
+.btn-submit-form {
+  background: #ff4444;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.past-engagements-header {
+  margin-bottom: 20px;
+}
+
+.past-engagements-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.past-engagement-card {
+  background: #f0f0f0;
+  border-radius: 12px;
+  padding: 15px;
+  text-align: center;
+}
+
+.engagement-date {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  margin-bottom: 10px;
+  color: #666;
+}
+
+.engagement-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.engagement-icon {
+  font-size: 24px;
+}
+
+.engagement-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: #000;
+  line-height: 1.3;
+}
+
 .profile-info h2 {
   color: #0F172A;
   margin-bottom: 15px;
