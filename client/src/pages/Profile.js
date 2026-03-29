@@ -2788,120 +2788,69 @@ function Profile() {
           )}
 
           {activeTab === 'association' && member && member.membershipStatus === '協會會員' && (
-            <div className="meetings-sync-container">
-              <div className="meetings-sync-header">
-                <div className="logo-badge">
-                  <span>🌅</span>
-                  <span>SUNRISE YOUTH</span>
-                </div>
-                <h1 className="meetings-title">MEETINGS<br/>& SYNC</h1>
-                <p className="meetings-subtitle">Your attendance is the heartbeat of our community progress. Track, register, and stay engaged.</p>
-              </div>
+            <div className="card">
+              <h3>{t('association_meetings')}</h3>
 
               {/* Member Stats */}
               {memberStats && (
-                <div className="stats-grid">
-                  <div className="stat-card stat-attendance">
-                    <div className="stat-label">ATTENDANCE</div>
-                    <div className="stat-value">
-                      {memberStats.meetingsAttendedThisYear > 0
-                        ? Math.round((memberStats.meetingsAttendedThisYear / 12) * 100)
-                        : 0}%
+                <div style={{
+                  background: '#e7f5ff',
+                  border: '2px solid #74c0fc',
+                  borderRadius: '12px',
+                  padding: '20px',
+                  marginBottom: '30px'
+                }}>
+                  <h4 style={{ marginBottom: '15px', color: '#1971c2' }}>
+                    {t('member_statistics')}
+                  </h4>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px' }}>
+                    <div>
+                      <p style={{ fontSize: '14px', color: '#666', marginBottom: '5px' }}>
+                        {t('member_since_')}
+                      </p>
+                      <p style={{ fontSize: '18px', fontWeight: 'bold', color: '#1971c2' }}>
+                        {memberStats.memberSince ? new Date(memberStats.memberSince).toLocaleDateString('zh-TW') : 'N/A'}
+                      </p>
                     </div>
-                    <div className="stat-sublabel">Active Member Status</div>
-                  </div>
-                  <div className="stat-card stat-completed">
-                    <div className="stat-label">COMPLETED</div>
-                    <div className="stat-value">{memberStats.meetingsAttendedThisYear}</div>
-                    <div className="stat-sublabel">Meetings Attended</div>
-                  </div>
-                  <div className="stat-card stat-rewards">
-                    <div className="stat-label">REWARDS</div>
-                    <div className="stat-value">2.4k</div>
-                    <div className="stat-sublabel">Participation Points</div>
+                    <div>
+                      <p style={{ fontSize: '14px', color: '#666', marginBottom: '5px' }}>
+                        {t('language') === 'zh' ? `${memberStats.currentYear}年參與會議` : `Meetings Attended in ${memberStats.currentYear}`}
+                      </p>
+                      <p style={{ fontSize: '18px', fontWeight: 'bold', color: '#1971c2' }}>
+                        {memberStats.meetingsAttendedThisYear} {t('times')}
+                      </p>
+                    </div>
                   </div>
                 </div>
               )}
 
-              {/* Upcoming Sessions */}
-              <div className="upcoming-sessions-header">
-                <h2 className="section-title">UPCOMING<br/>SESSIONS</h2>
-                <span className="pending-badge">PENDING</span>
-              </div>
-
+              {/* Registered Meetings */}
+              <h4 className="section-subtitle">{t('registered_meetings')}</h4>
               {loadingMeetings ? (
                 <div style={{ textAlign: 'center', padding: '40px' }}>
                   <div style={{ fontSize: '24px', marginBottom: '10px' }}>⏳</div>
                   <p style={{ color: '#666' }}>{t('loading')}</p>
                 </div>
               ) : (
-                <div className="sessions-list">
-                  {associationMeetings.filter(m => !isMeetingRegistered(m._id)).length > 0 ? (
-                    associationMeetings.filter(m => !isMeetingRegistered(m._id)).map((meeting) => (
-                      <div key={meeting._id} className="session-card">
-                        <div className="session-date">
-                          <div className="date-month">{new Date(meeting.date).toLocaleDateString('en-US', { month: 'short' }).toUpperCase()}</div>
-                          <div className="date-day">{new Date(meeting.date).getDate()}</div>
-                        </div>
-                        <div className="session-content">
-                          <div className="session-badges">
-                            <span className="badge badge-mandatory">MANDATORY</span>
-                            <span className="badge badge-location">TOWN HALL</span>
-                          </div>
-                          <h3 className="session-title">{meeting.agenda}</h3>
-                          <p className="session-location">📍 {meeting.location || 'Main Auditorium & Online'}</p>
-                          <button
-                            onClick={() => handleRegisterMeeting(meeting._id)}
-                            disabled={registeringMeeting === meeting._id}
-                            className="btn-register"
-                          >
-                            {registeringMeeting === meeting._id ? 'REGISTERING...' : 'REGISTER NOW →'}
-                          </button>
-                          {!isMeetingRegistered(meeting._id) && !hasSubmittedAbsence(meeting._id) && (
-                            <button
-                              onClick={() => handleCannotAttend(meeting._id)}
-                              className="btn-cannot-attend"
-                            >
-                              CANNOT ATTEND
-                            </button>
-                          )}
-                          {hasSubmittedAbsence(meeting._id) && (
-                            <div className="absence-notice">
-                              <span>⚠️ ABSENCE POLICY</span>
-                              <p>Mandatory meeting! If you cannot attend, you must submit the absence form before the meeting date.</p>
-                              <button className="btn-submit-form">SUBMIT FORM</button>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="empty-message">{t('no_upcoming_meetings_available')}</p>
-                  )}
-                </div>
-              )}
-
-              {/* Past Engagements */}
-              <div className="past-engagements-header">
-                <h2 className="section-title">PAST ENGAGEMENTS</h2>
-              </div>
-
-              {loadingMeetings ? (
-                <div style={{ textAlign: 'center', padding: '40px' }}>
-                  <div style={{ fontSize: '24px', marginBottom: '10px' }}>⏳</div>
-                  <p style={{ color: '#666' }}>{t('loading')}</p>
-                </div>
-              ) : (
-                <div className="past-engagements-list">
+                <div className="enrolled-list">
                   {associationMeetings.filter(m => isMeetingRegistered(m._id)).length > 0 ? (
                     associationMeetings.filter(m => isMeetingRegistered(m._id)).map((meeting) => (
-                      <div key={meeting._id} className="past-engagement-card">
-                        <div className="engagement-date">
-                          {new Date(meeting.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }).toUpperCase()}
-                        </div>
-                        <div className="engagement-content">
-                          <div className="engagement-icon">📅</div>
-                          <div className="engagement-title">{meeting.agenda}</div>
+                      <div key={meeting._id} className="enrolled-item">
+                        <p><strong>{meeting.agenda}</strong></p>
+                        <p style={{ fontSize: '14px', color: '#666' }}>
+                          {new Date(meeting.date).toLocaleDateString('zh-TW')} {meeting.time}
+                        </p>
+                        <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginTop: '10px' }}>
+                          <span className="status-badge paid">
+                            {t('registered_')}
+                          </span>
+                          <button
+                            onClick={() => setShowMeetingDetails(meeting)}
+                            className="btn btn-small btn-primary"
+                            style={{ padding: '5px 15px', fontSize: '13px' }}
+                          >
+                            {t('view_details')}
+                          </button>
                         </div>
                       </div>
                     ))
@@ -2909,6 +2858,118 @@ function Profile() {
                     <p className="empty-message">{t('no_registered_meetings')}</p>
                   )}
                 </div>
+              )}
+
+              {/* Upcoming Meetings */}
+              <h4 className="section-subtitle">{t('upcoming_meetings')}</h4>
+              {loadingMeetings ? (
+                <div style={{ textAlign: 'center', padding: '40px' }}>
+                  <div style={{ fontSize: '24px', marginBottom: '10px' }}>⏳</div>
+                  <p style={{ color: '#666' }}>{t('loading')}</p>
+                </div>
+              ) : (
+              <div className="grid">
+                {associationMeetings.filter(m => !isMeetingRegistered(m._id)).length > 0 ? (
+                  associationMeetings.filter(m => !isMeetingRegistered(m._id)).map((meeting) => (
+                    <div key={meeting._id} className="item-card">
+                      <h4>{meeting.agenda}</h4>
+                      <div className="item-details">
+                        <p><strong>{t('date')}</strong> {new Date(meeting.date).toLocaleDateString('zh-TW')}</p>
+                        <p><strong>{t('time')}</strong> {meeting.time}</p>
+                        {meeting.location && (
+                          <p><strong>{t('location')}</strong> 📍 {meeting.location}</p>
+                        )}
+                        <p><strong>{t('type')}</strong> {meeting.memberType}</p>
+                        <p>
+                          <strong>{t('registered')}</strong> {meeting.participants.length}
+                        </p>
+                      </div>
+                      {meeting.location && (
+                        <div style={{ marginTop: '10px', marginBottom: '10px' }}>
+                          <iframe
+                            src={`https://maps.google.com/maps?q=${encodeURIComponent(meeting.location)}&output=embed`}
+                            width="100%"
+                            height="200"
+                            style={{ border: '1px solid #ddd', borderRadius: '8px' }}
+                            allowFullScreen=""
+                            loading="lazy"
+                            referrerPolicy="no-referrer-when-downgrade"
+                            title="Meeting Location Map"
+                          />
+                        </div>
+                      )}
+                      {meeting.mandatory && (
+                        <div style={{
+                          background: '#fff3cd',
+                          border: '2px solid #ffc107',
+                          borderRadius: '8px',
+                          padding: '10px',
+                          marginTop: '10px',
+                          marginBottom: '10px'
+                        }}>
+                          <p style={{ margin: 0, color: '#856404', fontSize: '14px', fontWeight: 'bold' }}>
+                            ⚠️ {t('mandatory_meeting')}
+                          </p>
+                          <p style={{ margin: '5px 0 0 0', color: '#856404', fontSize: '12px' }}>
+                            {t('members_must_attend_or_submit_absence_form')}
+                          </p>
+                        </div>
+                      )}
+                      <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                        <button
+                          onClick={() => handleRegisterMeeting(meeting._id)}
+                          className="btn btn-primary"
+                          disabled={registeringMeeting === meeting._id || hasSubmittedAbsence(meeting._id)}
+                          style={{ flex: 1, minWidth: '120px' }}
+                        >
+                          {registeringMeeting === meeting._id
+                            ? (t('registering'))
+                            : (t('register'))
+                          }
+                        </button>
+                        {meeting.mandatory && !hasSubmittedAbsence(meeting._id) && (
+                          <button
+                            onClick={() => handleCannotAttend(meeting._id)}
+                            className="btn btn-secondary"
+                            style={{ flex: 1, minWidth: '120px' }}
+                          >
+                            {t('cannot_attend')}
+                          </button>
+                        )}
+                        {hasSubmittedAbsence(meeting._id) && (() => {
+                          const absenceStatus = getAbsenceStatus(meeting._id);
+                          const isApproved = absenceStatus?.approved;
+
+                          return (
+                            <div style={{
+                              background: isApproved ? '#d4edda' : '#d1ecf1',
+                              border: `1px solid ${isApproved ? '#c3e6cb' : '#bee5eb'}`,
+                              borderRadius: '4px',
+                              padding: '8px 12px',
+                              flex: 1,
+                              minWidth: '120px',
+                              textAlign: 'center'
+                            }}>
+                              <span style={{
+                                color: isApproved ? '#155724' : '#0c5460',
+                                fontSize: '14px',
+                                fontWeight: 'bold'
+                              }}>
+                                {isApproved
+                                  ? `✓ ${t('absence_approved')}`
+                                  : `⏳ ${t('absence_pending')}`
+                                }
+                              </span>
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="empty-message">{t('no_upcoming_meetings_available')}</p>
+                )}
+              </div>
               )}
             </div>
           )}
