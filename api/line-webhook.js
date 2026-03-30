@@ -183,18 +183,6 @@ async function handleMessageEvent(event) {
       return;
     }
 
-    if (messageText && (messageText.includes('點數') || messageText.toLowerCase().includes('point'))) {
-      const points = member.points || 0;
-      await client.replyMessage({
-        replyToken,
-        messages: [{
-          type: 'text',
-          text: `💎 您的會員點數 Your Points:\n\n${points} 點 points\n\n點擊下方連結查看可兌換的禮物：\nClick below to view redeemable gifts:\n\n${baseUrl}/profile?tab=points`
-        }]
-      });
-      return;
-    }
-
     if (messageText && (messageText.includes('邀請') || messageText.toLowerCase().includes('referral'))) {
       await client.replyMessage({
         replyToken,

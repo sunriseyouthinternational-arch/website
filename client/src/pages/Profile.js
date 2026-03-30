@@ -32,7 +32,6 @@ function Profile() {
     tabFromUrl === 'courses' || tabFromUrl === 'classes' ? 'classes' :
     tabFromUrl === 'activities' ? 'activities' :
     tabFromUrl === 'coupons' ? 'coupons' :
-    tabFromUrl === 'points' || tabFromUrl === 'gifts' ? 'points' :
     tabFromUrl === 'association' || tabFromUrl === 'meetings' ? 'association' :
     'profile'
   );
@@ -317,8 +316,6 @@ function Profile() {
       setActiveTab('activities');
     } else if (tabFromUrl === 'coupons') {
       setActiveTab('coupons');
-    } else if (tabFromUrl === 'points' || tabFromUrl === 'gifts') {
-      setActiveTab('points');
     } else if (tabFromUrl === 'association' || tabFromUrl === 'meetings') {
       setActiveTab('association');
     } else if (tabFromUrl === 'profile') {
@@ -1378,12 +1375,6 @@ function Profile() {
               onClick={() => setActiveTab('coupons')}
             >
               {t('coupons')}
-            </button>
-            <button
-              className={`tab-button ${activeTab === 'points' ? 'active' : ''}`}
-              onClick={() => setActiveTab('points')}
-            >
-              {t('points_and_gifts')}
             </button>
             {member && member.membershipStatus === '協會會員' && (
               <button
@@ -2754,31 +2745,6 @@ function Profile() {
                   </p>
                 </div>
               )}
-            </div>
-          )}
-
-          {activeTab === 'points' && (
-            <div className="card">
-              <div className="points-gifts-section">
-                <div className="points-display-large">
-                  <h3>{t('your_member_points')}</h3>
-                  <div className="points-value-large">
-                    <span className="points-number-large">{member.points || 0}</span>
-                    <span className="points-label-large">{t('points')}</span>
-                  </div>
-                </div>
-
-                <div className="gifts-under-construction">
-                  <div className="construction-icon">🚧</div>
-                  <h3>{t('gift_redemption')}</h3>
-                  <p className="construction-message">
-                    {t('under_construction')}
-                  </p>
-                  <p className="construction-description">
-                    {t('this_feature_is_currently_under_development_stay_t')}
-                  </p>
-                </div>
-              </div>
             </div>
           )}
 
