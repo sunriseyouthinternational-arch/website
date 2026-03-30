@@ -116,15 +116,6 @@ function Profile() {
     return `${apiUrl}${imagePath}`;
   };
 
-  const getGenderBasedProfilePic = (gender) => {
-    // Default to male if gender is not specified or is "prefer-not-to-say"
-    const normalizedGender = !gender || gender === 'prefer-not-to-say' ? '男' : gender;
-
-    if (normalizedGender === '女') {
-      return `${process.env.PUBLIC_URL}/images/profile_pics/female.jpg`;
-    }
-    return `${process.env.PUBLIC_URL}/images/profile_pics/male.jpg`;
-  };
 
   // eslint-disable-next-line no-unused-vars
   const validateAndSaveSession = async (sessionToken, id) => {
@@ -1411,10 +1402,6 @@ function Profile() {
               {!editMode ? (
                 <>
                   <div className="profile-header">
-                    <div className="profile-picture-section">
-                      <img src={getGenderBasedProfilePic(member.gender)} alt={t('profile_picture')} className="profile-picture" />
-                    </div>
-
                     <div className="profile-info">
                       <h2>{member.name}</h2>
                       {member.englishAlias && (
