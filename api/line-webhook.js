@@ -196,26 +196,11 @@ async function handleMessageEvent(event) {
     }
 
     if (messageText && (messageText.includes('邀請') || messageText.toLowerCase().includes('referral'))) {
-      if (!member.referralCode) {
-        console.log(`[handleMessageEvent] Generating referral code for ${member.memberId}`);
-        let uniqueCode = false;
-        let generatedCode = '';
-        while (!uniqueCode) {
-          generatedCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-          const existing = await Member.findOne({ referralCode: generatedCode });
-          if (!existing) uniqueCode = true;
-        }
-        member.referralCode = generatedCode;
-        await member.save();
-        console.log(`[handleMessageEvent] Generated referral code ${generatedCode} for ${member.memberId}`);
-      }
-
-      const referralCode = member.referralCode;
       await client.replyMessage({
         replyToken,
         messages: [{
           type: 'text',
-          text: `🎯 您的推薦碼 Your Referral Code:\n\n${referralCode}\n\n分享此推薦碼邀請朋友加入！\nShare this code to invite friends!`
+          text: `🎯 您的推薦碼 Your Referral Code:\n\n${member.referralCode}\n\n分享此推薦碼邀請朋友加入！\nShare this code to invite friends!`
         }]
       });
       return;
@@ -249,31 +234,11 @@ async function handlePostbackEvent(event) {
         return;
       }
 
-      if (!member.referralCode) {
-        console.log(`[handlePostbackEvent] Generating referral code for ${member.memberId}`);
-
-        let uniqueCode = false;
-        let generatedCode = '';
-
-        while (!uniqueCode) {
-          generatedCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-          const existing = await Member.findOne({ referralCode: generatedCode });
-          if (!existing) {
-            uniqueCode = true;
-          }
-        }
-
-        member.referralCode = generatedCode;
-        await member.save();
-        console.log(`[handlePostbackEvent] Generated referral code ${generatedCode} for ${member.memberId}`);
-      }
-
-      const referralCode = member.referralCode;
       await client.replyMessage({
         replyToken,
         messages: [{
           type: 'text',
-          text: `🎯 您的推薦碼 Your Referral Code:\n\n${referralCode}\n\n分享此推薦碼邀請朋友加入！\nShare this code to invite friends!`
+          text: `🎯 您的推薦碼 Your Referral Code:\n\n${member.referralCode}\n\n分享此推薦碼邀請朋友加入！\nShare this code to invite friends!`
         }]
       });
     }
