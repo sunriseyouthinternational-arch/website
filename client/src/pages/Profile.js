@@ -754,16 +754,17 @@ function Profile() {
     // Clear localStorage cache
     localStorage.removeItem('lineUserCache');
 
-    if (window.liff && window.liff.isLoggedIn()) {
+    if (window.liff && liffReady && window.liff.isLoggedIn()) {
       window.liff.logout();
-      setIsLoggedIn(false);
-      setLineUserId(null);
-      setLineProfile(null);
-      setMember(null);
-      setMemberId('');
-      setNeedsRegistration(false);
-      navigate('/profile', { replace: true });
     }
+
+    setIsLoggedIn(false);
+    setLineUserId(null);
+    setLineProfile(null);
+    setMember(null);
+    setMemberId('');
+    setNeedsRegistration(false);
+    navigate('/profile', { replace: true });
   };
 
   // eslint-disable-next-line no-unused-vars
