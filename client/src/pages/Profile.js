@@ -1082,6 +1082,7 @@ function Profile() {
               <span className="sun-icon">☀️</span>
               <span className="logo-text">SUNRISE YOUTH</span>
             </div>
+            <button className="close-button" onClick={() => navigate('/')}>✕</button>
           </div>
 
           <div className="login-image-container">

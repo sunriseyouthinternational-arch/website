@@ -12,12 +12,17 @@
 /* Login Page Styles */
 .login-container {
   background: #F4D142;
-  min-height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   padding: 20px;
-  position: relative;
+  overflow-y: auto;
+  z-index: 9999;
 }
 
 .login-header {
@@ -44,6 +49,21 @@
   font-weight: 800;
   color: #000;
   letter-spacing: 0.5px;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  font-size: 28px;
+  color: #000;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
 }
 
 .login-image-container {
@@ -79,6 +99,7 @@
   line-height: 1.5;
   margin-bottom: 40px;
   font-weight: 500;
+  max-width: 350px;
 }
 
 .login-button {
@@ -117,24 +138,30 @@
   line-height: 1.6;
   font-weight: 600;
   letter-spacing: 0.3px;
+  max-width: 350px;
 }
 
 @media (max-width: 480px) {
   .login-title {
-    font-size: 42px;
+    font-size: 48px;
   }
 
   .login-subtitle {
-    font-size: 14px;
+    font-size: 15px;
   }
 
   .login-button {
-    font-size: 16px;
+    font-size: 17px;
     padding: 16px 30px;
+  }
+
+  .login-image-container {
+    max-width: 320px;
   }
 }
 
 /* End Login Page Styles */
+
 
 
 .profile-tabs {
