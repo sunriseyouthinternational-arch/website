@@ -1076,32 +1076,38 @@ function Profile() {
         </div>
       ) : !isLoggedIn ? (
         /* Show LINE login button if user is not logged in */
-        <div className="card" style={{ textAlign: 'center', padding: '60px 20px' }}>
-          <div style={{ fontSize: '64px', marginBottom: '20px' }}>🔐</div>
-          <h2 style={{ color: '#667eea', marginBottom: '20px' }}>
-            {t('member_login')}
-          </h2>
-          <p style={{ textAlign: 'center', marginBottom: '30px', color: '#666' }}>
-            {t('please_login_with_line_to_view_or_register_your_me')}
+        <div className="login-container">
+          <div className="login-header">
+            <div className="login-logo">
+              <span className="sun-icon">☀️</span>
+              <span className="logo-text">SUNRISE YOUTH</span>
+            </div>
+          </div>
+
+          <div className="login-image-container">
+            <div className="login-image-placeholder">
+              <span style={{ fontSize: '80px' }}>👥</span>
+            </div>
+          </div>
+
+          <h1 className="login-title">WELCOME<br/>BACK</h1>
+
+          <p className="login-subtitle">
+            Join the energy. Your community<br/>is waiting for your next big spark.
           </p>
+
           <button
             onClick={() => window.liff.login()}
-            className="btn btn-primary"
-            style={{
-              width: '100%',
-              maxWidth: '300px',
-              padding: '15px',
-              fontSize: '16px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '10px',
-              margin: '0 auto'
-            }}
+            className="login-button"
           >
-            <span style={{ fontSize: '20px' }}>📱</span>
-            {t('login_with_line')}
+            <span className="line-icon">💬</span>
+            Login with LINE
           </button>
+
+          <p className="login-terms">
+            BY CONTINUING, YOU AGREE TO OUR<br/>
+            <span style={{ textDecoration: 'underline', fontWeight: '700' }}>TERMS & PRIVACY POLICY</span>
+          </p>
         </div>
       ) : needsRegistration ? (
         /* Show registration form if member needs to complete registration */
