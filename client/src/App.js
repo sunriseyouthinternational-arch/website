@@ -17,8 +17,8 @@ function AppContent() {
       <div className="App">
         <main className="main-content">
           <Routes>
-            <Route path="/" element={<Navigate to="/login" replace />} />
-            <Route path="/login" element={<Login />} />
+            <Route path="/" element={<Navigate to="/profile" replace />} />
+            <Route path="/profile" element={<Login />} />
             <Route path="/member" element={<MemberPortal />} />
             <Route path="/checkout/:itemType/:itemId" element={<CheckoutPage />} />
             <Route path="/claim" element={<CouponClaim />} />
