@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { useLanguage } from '../contexts/LanguageContext';
+import MemberLogin from '../components/member/MemberLogin';
 import './Profile.css';
 
 function Profile() {
@@ -1064,40 +1065,12 @@ function Profile() {
         </div>
       ) : !isLoggedIn ? (
         /* Show LINE login button if user is not logged in */
-        <div className="login-container">
-          <div className="login-header">
-            <div className="login-logo">
-              <span className="sun-icon">☀️</span>
-              <span className="logo-text">SUNRISE YOUTH</span>
-            </div>
-            <button className="close-button" onClick={() => navigate('/')}>✕</button>
-          </div>
-
-          <div className="login-image-container">
-            <div className="login-image-placeholder">
-              <span style={{ fontSize: '80px' }}>👥</span>
-            </div>
-          </div>
-
-          <h1 className="login-title">WELCOME<br/>BACK</h1>
-
-          <p className="login-subtitle">
-            Join the energy. Your community<br/>is waiting for your next big spark.
-          </p>
-
-          <button
-            onClick={() => window.liff.login()}
-            className="login-button"
-          >
-            <span className="line-icon">💬</span>
-            Login with LINE
-          </button>
-
-          <p className="login-terms">
-            BY CONTINUING, YOU AGREE TO OUR<br/>
-            <span style={{ textDecoration: 'underline', fontWeight: '700' }}>TERMS & PRIVACY POLICY</span>
-          </p>
-        </div>
+        <MemberLogin onLoginSuccess={async (profile) => {
+          setLineUserId(profile.userId);
+          setLineProfile(profile);
+          setIsLoggedIn(true);
+          await fetchOrCreateMember(profile.userId, profile);
+        }} />
       ) : needsRegistration ? (
         /* Show registration form if member needs to complete registration */
         <div className="card">
