@@ -20,7 +20,7 @@ function ClassExplorer() {
     try {
       setLoading(true);
       const response = await classesAPI.getAll();
-      const classData = response.data;
+      const classData = response.data.classes || [];
       setClasses(classData);
 
       // Extract unique dates

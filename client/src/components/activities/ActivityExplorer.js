@@ -20,7 +20,7 @@ function ActivityExplorer() {
     try {
       setLoading(true);
       const response = await activitiesAPI.getAll();
-      const activityData = response.data;
+      const activityData = response.data.activities || [];
       setActivities(activityData);
 
       const uniqueDates = [...new Set(activityData.map(a => a.date))].sort();
