@@ -355,3 +355,26 @@ function ProfileView({ member, setMember }) {
           onSuccess={handleEditSuccess}
         />
       )}
+
+      {/* Class Detail Modal */}
+      {selectedClass && (
+        <ClassDetail
+          classData={selectedClass}
+          onClose={() => setSelectedClass(null)}
+          memberId={member.memberId}
+        />
+      )}
+
+      {/* Activity Detail Modal */}
+      {selectedActivity && (
+        <ActivityDetail
+          activityData={selectedActivity}
+          onClose={() => setSelectedActivity(null)}
+          memberId={member.memberId}
+        />
+      )}
+    </>
+  );
+}
+
+export default ProfileView;
