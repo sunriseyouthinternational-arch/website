@@ -4,7 +4,7 @@ const LanguageContext = createContext();
 
 export const translations = {
   zh: {
-    please_pay_nt_3000_instructions: '1. 請於現場繳費 NT$ 3,000\\n2. 繳費後，管理員將確認並更新您的會員狀態\\n3. 確認後您將享有協會會員權益',
+    please_pay_nt_3000_instructions: '1. 請於現場繳費 NT$ 3,000\n2. 繳費後，管理員將確認並更新您的會員狀態\n3. 確認後您將享有協會會員權益',
     absence_approved: '請假已核准',
     absence_pending: '請假待審核',
     absence_request_approved_successfully: '請假申請已核准',

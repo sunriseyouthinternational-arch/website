@@ -23,12 +23,12 @@ function Header() {
 
   return (
     <>
-      <header className="w-full top-0 sticky bg-surface-container-highest text-on-surface flex items-center justify-between px-6 py-6 z-50">
+      <header className="w-full top-0 sticky bg-surface-container-highest text-on-surface flex items-center justify-between px-6 py-6 z-50 shadow-sm">
         <div className="flex items-center gap-2">
           <div className="relative">
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="hover:bg-surface-container rounded-full p-2 transition-colors -ml-2"
+              className="hover:bg-surface-container-high rounded-full p-2 transition-all -ml-2"
               aria-label="Open menu"
             >
               <span className="material-symbols-outlined text-3xl">menu</span>
@@ -39,12 +39,12 @@ function Header() {
               <>
                 {/* Backdrop */}
                 <div
-                  className="fixed inset-0 bg-transparent z-40"
+                  className="fixed inset-0 bg-black/20 z-40"
                   onClick={() => setIsMenuOpen(false)}
                 />
 
                 {/* Dropdown Content */}
-                <div className="absolute top-full left-0 mt-2 w-80 bg-surface-container-lowest rounded-xl shadow-[0_12px_40px_0_rgba(32,28,0,0.12)] z-50 overflow-hidden">
+                <div className="absolute top-full left-0 mt-1 w-80 bg-surface-container-highest rounded-2xl shadow-[0_8px_32px_0_rgba(0,0,0,0.12)] z-50 overflow-hidden border border-surface-container-high">
                   <div className="p-6">
                     <h2 className="font-headline font-bold text-xl mb-4 text-on-surface">
                       {language === 'zh' ? '導航選單' : 'Navigation Menu'}
@@ -53,12 +53,12 @@ function Header() {
                       {menuItems.map((item, index) => (
                         <div
                           key={index}
-                          className={`p-4 rounded-lg ${
+                          className={`p-4 rounded-xl transition-all ${
                             item.current
-                              ? 'bg-primary-container text-on-primary-container'
+                              ? 'bg-primary-container text-on-primary-container shadow-sm'
                               : item.underConstruction
                               ? 'bg-surface-container text-on-surface-variant opacity-60'
-                              : 'bg-surface-container text-on-surface hover:bg-surface-container-high transition-colors cursor-pointer'
+                              : 'bg-surface-container text-on-surface hover:bg-surface-container-high hover:shadow-sm cursor-pointer'
                           }`}
                         >
                           <div className="flex items-center justify-between">

@@ -29,7 +29,7 @@ function Modal({ isOpen, onClose, children, size = 'default' }) {
       />
 
       {/* Modal Content */}
-      <div className={`relative bg-surface-container-lowest rounded-xl shadow-ambient-lg max-h-[90vh] overflow-y-auto w-full ${sizeClasses[size]}`}>
+      <div className={`relative bg-surface-container-lowest rounded-xl shadow-ambient-lg max-h-[85vh] overflow-y-auto w-full ${sizeClasses[size]} mb-20`}>
         {/* Close Button */}
         <button
           onClick={onClose}

@@ -58,10 +58,11 @@ const memberSchema = new mongoose.Schema({
   qrCode: { type: String },
   enrollments: [{
     type: { type: String, enum: ['class', 'activity'], required: true },
-    itemId: { type: mongoose.Schema.Types.ObjectId, required: true },
-    itemName: { type: String, required: true },
+    classId: { type: mongoose.Schema.Types.ObjectId, ref: 'Class' },
+    activityId: { type: mongoose.Schema.Types.ObjectId, ref: 'Activity' },
+    memberName: { type: String },
     enrolledAt: { type: Date, default: Date.now },
-    status: { type: String, enum: ['active', 'completed', 'cancelled'], default: 'active' }
+    status: { type: String, enum: ['enrolled', 'upcoming', 'completed', 'cancelled'], default: 'enrolled' }
   }],
   coupons: [{
     type: { type: String, enum: ['trial', 'discount'], required: true },

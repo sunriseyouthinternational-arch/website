@@ -16,7 +16,7 @@ export const membersAPI = {
     api.get('/members', { params: { memberId, sessionToken } }),
 
   updateProfile: (memberId, data) =>
-    api.put('/members', data, { params: { memberId, action: 'update-profile' } }),
+    api.put('/members', data, { params: { memberId } }),
 
   getCoupons: (memberId) =>
     api.get('/members', { params: { memberId, action: 'get-coupons' } }),
@@ -28,7 +28,7 @@ export const membersAPI = {
     api.post('/members', { memberId, couponForSaleId, quantity, paymentMethod }, { params: { action: 'purchase-coupon' } }),
 
   requestUpgrade: (memberId, paymentMethod) =>
-    api.post('/members', { memberId, paymentMethod }, { params: { action: 'request-upgrade' } }),
+    api.post('/members', { memberId, paymentMethod }, { params: { action: 'upgrade-membership' } }),
 };
 
 // Classes API

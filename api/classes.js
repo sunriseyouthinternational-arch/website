@@ -106,8 +106,9 @@ module.exports = async (req, res) => {
 
       member.enrollments.push({
         type: 'class',
-        itemId: classItem._id,
-        itemName: classItem.classInfoId.name
+        classId: classItem._id,
+        memberName: member.name,
+        status: 'enrolled'
       });
 
       await member.save();
@@ -354,16 +355,16 @@ module.exports = async (req, res) => {
         if (req.body.status === 'completed') {
           console.log('Updating enrollment status to completed for class:', id);
           const result = await Member.updateMany(
-            { 'enrollments.itemId': new mongoose.Types.ObjectId(id) },
+            { 'enrollments.classId': new mongoose.Types.ObjectId(id) },
             { $set: { 'enrollments.$[elem].status': 'completed' } },
-            { arrayFilters: [{ 'elem.itemId': new mongoose.Types.ObjectId(id) }] }
+            { arrayFilters: [{ 'elem.classId': new mongoose.Types.ObjectId(id) }] }
           );
           console.log('Update result:', result);
         } else if (req.body.status === 'cancelled') {
           const result = await Member.updateMany(
-            { 'enrollments.itemId': new mongoose.Types.ObjectId(id) },
+            { 'enrollments.classId': new mongoose.Types.ObjectId(id) },
             { $set: { 'enrollments.$[elem].status': 'cancelled' } },
-            { arrayFilters: [{ 'elem.itemId': new mongoose.Types.ObjectId(id) }] }
+            { arrayFilters: [{ 'elem.classId': new mongoose.Types.ObjectId(id) }] }
           );
           console.log('Update result:', result);
         }
@@ -383,9 +384,9 @@ module.exports = async (req, res) => {
 
         // Update enrollment status for all participants
         await Member.updateMany(
-          { 'enrollments.itemId': id },
+          { 'enrollments.classId': id },
           { $set: { 'enrollments.$[elem].status': 'cancelled' } },
-          { arrayFilters: [{ 'elem.itemId': id }] }
+          { arrayFilters: [{ 'elem.classId': id }] }
         );
 
         return res.status(200).json({ message: '課程刪除成功 / Class deleted successfully' });

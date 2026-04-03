@@ -322,7 +322,7 @@ function ProfileView({ member, setMember }) {
                 </div>
               )}
 
-              <div className="bg-surface-container p-4 rounded-lg text-sm text-on-surface-variant">
+              <div className="bg-surface-container p-4 rounded-lg text-sm text-on-surface-variant whitespace-pre-line">
                 {t('please_pay_nt_3000_instructions')}
               </div>
             </div>

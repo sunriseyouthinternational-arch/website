@@ -104,8 +104,9 @@ module.exports = async (req, res) => {
 
       member.enrollments.push({
         type: 'activity',
-        itemId: activity._id,
-        itemName: activity.name
+        activityId: activity._id,
+        memberName: member.name,
+        status: 'enrolled'
       });
 
       await member.save();
@@ -323,15 +324,15 @@ module.exports = async (req, res) => {
         // Update enrollment status when activity status changes
         if (req.body.status === 'completed') {
           await Member.updateMany(
-            { 'enrollments.itemId': new mongoose.Types.ObjectId(id) },
+            { 'enrollments.activityId': new mongoose.Types.ObjectId(id) },
             { $set: { 'enrollments.$[elem].status': 'completed' } },
-            { arrayFilters: [{ 'elem.itemId': new mongoose.Types.ObjectId(id) }] }
+            { arrayFilters: [{ 'elem.activityId': new mongoose.Types.ObjectId(id) }] }
           );
         } else if (req.body.status === 'cancelled') {
           await Member.updateMany(
-            { 'enrollments.itemId': new mongoose.Types.ObjectId(id) },
+            { 'enrollments.activityId': new mongoose.Types.ObjectId(id) },
             { $set: { 'enrollments.$[elem].status': 'cancelled' } },
-            { arrayFilters: [{ 'elem.itemId': new mongoose.Types.ObjectId(id) }] }
+            { arrayFilters: [{ 'elem.activityId': new mongoose.Types.ObjectId(id) }] }
           );
         }
 
@@ -350,9 +351,9 @@ module.exports = async (req, res) => {
 
         // Update enrollment status for all participants
         await Member.updateMany(
-          { 'enrollments.itemId': id },
+          { 'enrollments.activityId': id },
           { $set: { 'enrollments.$[elem].status': 'cancelled' } },
-          { arrayFilters: [{ 'elem.itemId': id }] }
+          { arrayFilters: [{ 'elem.activityId': id }] }
         );
 
         return res.status(200).json({ message: '活動刪除成功 / Activity deleted successfully' });
