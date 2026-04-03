@@ -15,45 +15,63 @@ function MemberPortal() {
   const [member, setMember] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchMemberData = async () => {
-    const cachedMember = localStorage.getItem('memberData');
-    if (!cachedMember) {
-      navigate('/login');
-      return;
-    }
-
-    const memberData = JSON.parse(cachedMember);
-
-    try {
-      // Fetch fresh data from server
-      const response = await fetch(`/api/members/${memberData.memberId}`);
-      if (response.ok) {
-        const freshData = await response.json();
-        // Update localStorage with fresh data
-        localStorage.setItem('memberData', JSON.stringify(freshData));
-        setMember(freshData);
-      } else {
-        // Fallback to cached data if fetch fails
-        setMember(memberData);
-      }
-    } catch (error) {
-      console.error('Failed to fetch fresh member data:', error);
-      // Fallback to cached data
-      setMember(memberData);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
+    const fetchMemberData = async () => {
+      const cachedMember = localStorage.getItem('memberData');
+      if (!cachedMember) {
+        navigate('/profile');
+        return;
+      }
+
+      const memberData = JSON.parse(cachedMember);
+
+      try {
+        // Fetch fresh data from server
+        const response = await fetch(`/api/members/${memberData.memberId}`);
+        if (response.ok) {
+          const freshData = await response.json();
+          // Update localStorage with fresh data
+          localStorage.setItem('memberData', JSON.stringify(freshData));
+          setMember(freshData);
+        } else {
+          // Fallback to cached data if fetch fails
+          setMember(memberData);
+        }
+      } catch (error) {
+        console.error('Failed to fetch fresh member data:', error);
+        // Fallback to cached data
+        setMember(memberData);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchMemberData();
   }, [navigate]);
 
   // Refresh data when tab becomes visible
   useEffect(() => {
+    const fetchFreshData = async () => {
+      const cachedMember = localStorage.getItem('memberData');
+      if (!cachedMember) return;
+
+      const memberData = JSON.parse(cachedMember);
+
+      try {
+        const response = await fetch(`/api/members/${memberData.memberId}`);
+        if (response.ok) {
+          const freshData = await response.json();
+          localStorage.setItem('memberData', JSON.stringify(freshData));
+          setMember(freshData);
+        }
+      } catch (error) {
+        console.error('Failed to refresh member data:', error);
+      }
+    };
+
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
-        fetchMemberData();
+        fetchFreshData();
       }
     };
 
