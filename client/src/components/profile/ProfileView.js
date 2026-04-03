@@ -1,10 +1,15 @@
 import React, { useState } from 'react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import ProfileEdit from './ProfileEdit';
+import ClassDetail from '../classes/ClassDetail';
+import ActivityDetail from '../activities/ActivityDetail';
 
 function ProfileView({ member, onUpdate }) {
   const { t } = useLanguage();
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isMembershipModalOpen, setIsMembershipModalOpen] = useState(false);
+  const [selectedClass, setSelectedClass] = useState(null);
+  const [selectedActivity, setSelectedActivity] = useState(null);
 
   const formatDate = (date) => {
     if (!date) return '';
@@ -16,8 +21,10 @@ function ProfileView({ member, onUpdate }) {
     if (onUpdate) onUpdate(updatedMember);
   };
 
-  const completedClasses = member.enrollments?.filter(e => e.type === 'class' && e.status === 'completed').length || 0;
-  const completedActivities = member.enrollments?.filter(e => e.type === 'activity' && e.status === 'completed').length || 0;
+  const isAssociationMember = member.membershipStatus === '協會會員';
+  const currentEnrollments = member.enrollments?.filter(e =>
+    e.status === 'enrolled' || e.status === 'upcoming'
+  ) || [];
 
   return (
     <>
@@ -37,7 +44,7 @@ function ProfileView({ member, onUpdate }) {
               <div className="space-y-4 w-full md:w-auto">
                 <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                   <div className="inline-flex items-center px-4 py-1.5 bg-secondary-container text-on-secondary-container rounded-full text-xs font-bold tracking-widest uppercase">
-                    {member.membershipStatus === '協會會員' ? t('association_member') : t('association_friend')}
+                    {isAssociationMember ? t('association_member') : t('association_friend')}
                   </div>
                   <button
                     onClick={() => setIsEditOpen(true)}
@@ -46,6 +53,23 @@ function ProfileView({ member, onUpdate }) {
                     <span className="material-symbols-outlined text-[14px]">edit</span>
                     {t('edit_profile')}
                   </button>
+                  {isAssociationMember ? (
+                    <button
+                      onClick={() => setIsMembershipModalOpen(true)}
+                      className="inline-flex items-center gap-2 px-4 py-1.5 bg-primary text-on-primary rounded-full text-xs font-bold tracking-widest uppercase hover:bg-primary/90 transition-colors"
+                    >
+                      <span className="material-symbols-outlined text-[14px]">card_membership</span>
+                      {t('view_membership')}
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => window.location.href = '/membership/upgrade'}
+                      className="inline-flex items-center gap-2 px-4 py-1.5 bg-primary text-on-primary rounded-full text-xs font-bold tracking-widest uppercase hover:bg-primary/90 transition-colors"
+                    >
+                      <span className="material-symbols-outlined text-[14px]">upgrade</span>
+                      {t('upgrade_membership')}
+                    </button>
+                  )}
                 </div>
                 <h2 className="text-4xl md:text-5xl font-extrabold tracking-tight text-on-surface">{member.name}</h2>
                 <p className="text-on-surface-variant font-medium">{t('member_since_')} {formatDate(member.membershipStartDate)}</p>
@@ -62,20 +86,8 @@ function ProfileView({ member, onUpdate }) {
               </div>
             </div>
 
-            {/* Stats Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8 pt-8 border-t border-surface-container-low">
-              <div className="text-center">
-                <span className="text-5xl font-black text-on-surface">{completedClasses}</span>
-                <span className="block text-xs font-bold tracking-widest uppercase text-on-surface-variant">{t('classes_attended')}</span>
-              </div>
-              <div className="text-center">
-                <span className="text-5xl font-black text-on-surface">{completedActivities}</span>
-                <span className="block text-xs font-bold tracking-widest uppercase text-on-surface-variant">{t('activities_joined')}</span>
-              </div>
-              <div className="text-center">
-                <span className="text-5xl font-black text-on-surface">{member.coupons?.length || 0}</span>
-                <span className="block text-xs font-bold tracking-widest uppercase text-on-surface-variant">{t('coupons')}</span>
-              </div>
+            {/* Stats Grid - Only Points */}
+            <div className="flex justify-center mt-8 pt-8 border-t border-surface-container-low">
               <div className="text-center">
                 <span className="text-5xl font-black text-on-surface">{member.points || 0}</span>
                 <span className="block text-xs font-bold tracking-widest uppercase text-on-surface-variant">{t('points')}</span>
@@ -86,32 +98,51 @@ function ProfileView({ member, onUpdate }) {
 
         {/* Main Content Area */}
         <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Contact Information */}
+          {/* Current Enrollments */}
           <div className="bg-surface-container-lowest rounded-xl p-8">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-2xl font-extrabold tracking-tight uppercase">{t('contact_information')}</h3>
-              <span className="material-symbols-outlined text-on-surface-variant">contact_phone</span>
+              <h3 className="text-2xl font-extrabold tracking-tight uppercase">{t('current_enrollments')}</h3>
+              <span className="material-symbols-outlined text-on-surface-variant">event_available</span>
             </div>
-            <div className="space-y-4">
-              {member.contact?.mobile && (
-                <div>
-                  <p className="text-xs font-bold text-on-surface-variant uppercase tracking-widest">{t('mobile')}</p>
-                  <p className="font-bold text-on-surface">{member.contact.mobile}</p>
-                </div>
-              )}
-              {member.contact?.phone && (
-                <div>
-                  <p className="text-xs font-bold text-on-surface-variant uppercase tracking-widest">{t('phone')}</p>
-                  <p className="font-bold text-on-surface">{member.contact.phone}</p>
-                </div>
-              )}
-              {member.contact?.lineId && (
-                <div>
-                  <p className="text-xs font-bold text-on-surface-variant uppercase tracking-widest">LINE ID</p>
-                  <p className="font-bold text-on-surface">{member.contact.lineId}</p>
-                </div>
-              )}
-            </div>
+            {currentEnrollments.length > 0 ? (
+              <div className="space-y-4">
+                {currentEnrollments.map((enrollment, index) => (
+                  <div key={index} className="flex items-center justify-between p-4 bg-surface-container rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center">
+                        <span className="material-symbols-outlined text-on-primary-container">
+                          {enrollment.type === 'class' ? 'school' : 'celebration'}
+                        </span>
+                      </div>
+                      <div>
+                        <p className="font-bold text-on-surface">
+                          {enrollment.type === 'class'
+                            ? enrollment.classId?.classInfoId?.name
+                            : enrollment.activityId?.activityInfoId?.name}
+                        </p>
+                        <p className="text-xs text-on-surface-variant">
+                          {enrollment.memberName || member.name}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        if (enrollment.type === 'class') {
+                          setSelectedClass(enrollment.classId);
+                        } else {
+                          setSelectedActivity(enrollment.activityId);
+                        }
+                      }}
+                      className="px-3 py-1.5 bg-on-surface text-surface rounded-full text-xs font-bold tracking-widest uppercase hover:scale-105 transition-transform"
+                    >
+                      {t('view_details')}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-on-surface-variant">{t('no_current_enrollments')}</p>
+            )}
           </div>
 
           {/* Family Group */}
@@ -161,6 +192,71 @@ function ProfileView({ member, onUpdate }) {
         member={member}
         onSuccess={handleEditSuccess}
       />
+
+      {/* Membership Details Modal */}
+      {isMembershipModalOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-surface rounded-xl max-w-2xl w-full p-8 space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-3xl font-extrabold tracking-tight uppercase">{t('membership_details')}</h2>
+              <button
+                onClick={() => setIsMembershipModalOpen(false)}
+                className="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center hover:bg-surface-container-high transition-colors"
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div className="p-6 bg-primary-container rounded-xl">
+                <p className="text-xs font-bold tracking-widest uppercase text-on-primary-container mb-2">{t('membership_status')}</p>
+                <p className="text-2xl font-black text-on-primary-container">{t('association_member')}</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-4 bg-surface-container-low rounded-xl">
+                  <p className="text-xs font-bold tracking-widest uppercase text-on-surface-variant mb-2">{t('member_id')}</p>
+                  <p className="text-xl font-black text-on-surface">{member.memberId}</p>
+                </div>
+                <div className="p-4 bg-surface-container-low rounded-xl">
+                  <p className="text-xs font-bold tracking-widest uppercase text-on-surface-variant mb-2">{t('member_since')}</p>
+                  <p className="text-xl font-black text-on-surface">{formatDate(member.membershipStartDate)}</p>
+                </div>
+              </div>
+
+              {member.membershipExpiryDate && (
+                <div className="p-4 bg-surface-container-low rounded-xl">
+                  <p className="text-xs font-bold tracking-widest uppercase text-on-surface-variant mb-2">{t('expiry_date')}</p>
+                  <p className="text-xl font-black text-on-surface">{formatDate(member.membershipExpiryDate)}</p>
+                </div>
+              )}
+            </div>
+
+            <button
+              onClick={() => setIsMembershipModalOpen(false)}
+              className="w-full bg-on-surface text-surface py-4 rounded-full font-black text-lg tracking-wide hover:scale-105 active:scale-95 transition-all"
+            >
+              {t('close')}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Class Detail Modal */}
+      {selectedClass && (
+        <ClassDetail
+          classData={selectedClass}
+          onClose={() => setSelectedClass(null)}
+        />
+      )}
+
+      {/* Activity Detail Modal */}
+      {selectedActivity && (
+        <ActivityDetail
+          activityData={selectedActivity}
+          onClose={() => setSelectedActivity(null)}
+        />
+      )}
     </>
   );
 }
