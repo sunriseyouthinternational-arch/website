@@ -27,12 +27,12 @@ function MemberPortal() {
 
       try {
         // Fetch fresh data from server
-        const response = await fetch(`/api/members/${memberData.memberId}`);
+        const response = await fetch(`/api/members?memberId=${memberData.memberId}`);
         if (response.ok) {
           const freshData = await response.json();
           // Update localStorage with fresh data
-          localStorage.setItem('memberData', JSON.stringify(freshData));
-          setMember(freshData);
+          localStorage.setItem('memberData', JSON.stringify(freshData.member));
+          setMember(freshData.member);
         } else {
           // Fallback to cached data if fetch fails
           setMember(memberData);
@@ -58,11 +58,11 @@ function MemberPortal() {
       const memberData = JSON.parse(cachedMember);
 
       try {
-        const response = await fetch(`/api/members/${memberData.memberId}`);
+        const response = await fetch(`/api/members?memberId=${memberData.memberId}`);
         if (response.ok) {
           const freshData = await response.json();
-          localStorage.setItem('memberData', JSON.stringify(freshData));
-          setMember(freshData);
+          localStorage.setItem('memberData', JSON.stringify(freshData.member));
+          setMember(freshData.member);
         }
       } catch (error) {
         console.error('Failed to refresh member data:', error);

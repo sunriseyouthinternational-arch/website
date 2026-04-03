@@ -511,6 +511,18 @@ module.exports = async (req, res) => {
         });
       }
 
+      // Populate enrollments with class and activity details
+      await member.populate([
+        {
+          path: 'enrollments.classId',
+          populate: { path: 'classInfoId' }
+        },
+        {
+          path: 'enrollments.activityId',
+          populate: { path: 'activityInfoId' }
+        }
+      ]);
+
       return res.status(200).json({ member });
     }
 

@@ -64,13 +64,13 @@ function CouponWallet({ memberId }) {
 
   return (
     <div className="min-h-screen bg-surface-container-highest pb-32">
-      <main className="pt-24 pb-32 px-6 max-w-5xl mx-auto">
+      <main className="px-6 max-w-4xl mx-auto space-y-8 pt-8">
         <section className="mb-12">
           <div className="flex flex-col gap-2 mb-8">
             <span className="text-xs font-bold tracking-[0.2em] text-on-surface-variant uppercase">
               Member Dashboard
             </span>
-            <h1 className="text-5xl md:text-7xl font-extrabold tracking-tighter leading-none">
+            <h1 className="text-5xl md:text-7xl font-extrabold tracking-tighter leading-none uppercase">
               MY WALLET.
             </h1>
           </div>

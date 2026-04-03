@@ -48,16 +48,12 @@ function ClassExplorer() {
 
   return (
     <div className="min-h-screen bg-primary-container pb-32">
-      <main className="pt-24 px-6 space-y-8">
-        {/* Hero Header */}
-        <header className="space-y-2">
-          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-on-surface-variant">
-            {t('discovery_mode') || 'Discovery Mode'}
-          </p>
-          <h1 className="text-5xl font-extrabold tracking-tighter leading-none text-on-surface">
-            Level up your<br />skills today.
-          </h1>
-        </header>
+      <main className="px-6 max-w-4xl mx-auto space-y-8 pt-8">
+        {/* Section Header */}
+        <div className="flex flex-col gap-2 mb-8">
+          <span className="text-xs font-bold tracking-[0.2em] text-on-surface-variant uppercase">{t('discovery_mode') || 'Discovery Mode'}</span>
+          <h1 className="text-5xl md:text-7xl font-extrabold tracking-tighter leading-none uppercase">{t('classes')}.</h1>
+        </div>
 
         {/* Date Selector */}
         <section className="space-y-4">

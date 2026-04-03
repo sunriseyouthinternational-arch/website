@@ -3,13 +3,18 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import ProfileEdit from './ProfileEdit';
 import ClassDetail from '../classes/ClassDetail';
 import ActivityDetail from '../activities/ActivityDetail';
+import Modal from '../shared/Modal';
 
-function ProfileView({ member, onUpdate }) {
+function ProfileView({ member, setMember }) {
   const { t } = useLanguage();
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isMembershipModalOpen, setIsMembershipModalOpen] = useState(false);
+  const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
   const [selectedClass, setSelectedClass] = useState(null);
   const [selectedActivity, setSelectedActivity] = useState(null);
+  const [upgradePaymentMethod, setUpgradePaymentMethod] = useState('');
+  const [upgradeLoading, setUpgradeLoading] = useState(false);
+  const [upgradeError, setUpgradeError] = useState('');
 
   const formatDate = (date) => {
     if (!date) return '';
@@ -18,7 +23,31 @@ function ProfileView({ member, onUpdate }) {
 
   const handleEditSuccess = (updatedMember) => {
     setIsEditOpen(false);
-    if (onUpdate) onUpdate(updatedMember);
+    if (setMember) setMember(updatedMember);
+  };
+
+  const handleUpgradeRequest = async () => {
+    if (!upgradePaymentMethod) {
+      setUpgradeError(t('choose_payment_method'));
+      return;
+    }
+
+    setUpgradeLoading(true);
+    setUpgradeError('');
+
+    try {
+      const { membersAPI } = require('../../services/api');
+      await membersAPI.requestUpgrade(member.memberId, upgradePaymentMethod);
+
+      setIsUpgradeModalOpen(false);
+      setUpgradePaymentMethod('');
+      alert(t('upgrade_request_submitted_successfully') || 'Upgrade request submitted successfully!');
+    } catch (error) {
+      console.error('Upgrade request failed:', error);
+      setUpgradeError(error.response?.data?.message || t('upgrade_failed'));
+    } finally {
+      setUpgradeLoading(false);
+    }
   };
 
   const isAssociationMember = member.membershipStatus === '協會會員';
@@ -40,58 +69,70 @@ function ProfileView({ member, onUpdate }) {
           <div className="bg-surface-container-lowest rounded-xl p-8 shadow-[0_12px_40px_0_rgba(32,28,0,0.06)] relative z-10 overflow-hidden">
             <div className="absolute -top-10 -right-10 w-40 h-40 bg-surface-container rounded-full opacity-50"></div>
 
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-              <div className="space-y-4 w-full md:w-auto">
-                <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                  <div className="inline-flex items-center px-4 py-1.5 bg-secondary-container text-on-secondary-container rounded-full text-xs font-bold tracking-widest uppercase">
-                    {isAssociationMember ? t('association_member') : t('association_friend')}
-                  </div>
-                  <button
-                    onClick={() => setIsEditOpen(true)}
-                    className="inline-flex items-center gap-2 px-4 py-1.5 border-2 border-on-surface text-on-surface rounded-full text-xs font-bold tracking-widest uppercase hover:bg-on-surface hover:text-white transition-colors"
-                  >
-                    <span className="material-symbols-outlined text-[14px]">edit</span>
-                    {t('edit_profile')}
-                  </button>
-                  {isAssociationMember ? (
-                    <button
-                      onClick={() => setIsMembershipModalOpen(true)}
-                      className="inline-flex items-center gap-2 px-4 py-1.5 bg-primary text-on-primary rounded-full text-xs font-bold tracking-widest uppercase hover:bg-primary/90 transition-colors"
-                    >
-                      <span className="material-symbols-outlined text-[14px]">card_membership</span>
-                      {t('view_membership')}
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => window.location.href = '/membership/upgrade'}
-                      className="inline-flex items-center gap-2 px-4 py-1.5 bg-primary text-on-primary rounded-full text-xs font-bold tracking-widest uppercase hover:bg-primary/90 transition-colors"
-                    >
-                      <span className="material-symbols-outlined text-[14px]">upgrade</span>
-                      {t('upgrade_membership')}
-                    </button>
+            {/* Header Row: Name and Member ID */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+              <div className="flex-1">
+                <h2 className="text-4xl md:text-5xl font-extrabold tracking-tight text-on-surface">
+                  {member.name}
+                  {member.englishAlias && (
+                    <span className="text-on-surface-variant font-medium text-2xl ml-3">
+                      ({member.englishAlias})
+                    </span>
                   )}
-                </div>
-                <h2 className="text-4xl md:text-5xl font-extrabold tracking-tight text-on-surface">{member.name}</h2>
-                <p className="text-on-surface-variant font-medium">{t('member_since_')} {formatDate(member.membershipStartDate)}</p>
+                </h2>
               </div>
-
-              <div className="flex flex-col items-end gap-2">
-                <div className="text-right">
-                  <span className="text-xs font-bold tracking-widest uppercase text-on-surface-variant">{t('member_id')}</span>
-                  <p className="text-2xl font-black text-on-surface">{member.memberId}</p>
-                </div>
-                {member.qrCode && (
-                  <img src={member.qrCode} alt="QR Code" className="w-24 h-24 rounded-lg border-2 border-surface-container" />
-                )}
+              <div className="text-right">
+                <span className="text-xs font-bold tracking-widest uppercase text-on-surface-variant">{t('member_id')}</span>
+                <p className="text-2xl font-black text-on-surface">{member.memberId}</p>
               </div>
             </div>
 
-            {/* Stats Grid - Only Points */}
-            <div className="flex justify-center mt-8 pt-8 border-t border-surface-container-low">
-              <div className="text-center">
-                <span className="text-5xl font-black text-on-surface">{member.points || 0}</span>
-                <span className="block text-xs font-bold tracking-widest uppercase text-on-surface-variant">{t('points')}</span>
+            {/* Status Badge and Member Since */}
+            <div className="flex flex-col gap-3 mb-6">
+              <div className="inline-flex items-center px-4 py-1.5 bg-secondary-container text-on-secondary-container rounded-full text-xs font-bold tracking-widest uppercase w-fit">
+                {isAssociationMember ? t('association_member') : t('association_friend')}
               </div>
+              <p className="text-on-surface-variant font-medium">{t('member_since_')} {formatDate(member.membershipStartDate)}</p>
+            </div>
+
+            {/* Points Display - Left Aligned */}
+            <div className="mb-6 pb-6 border-b border-surface-container-low">
+              <div className="text-left">
+                <span className="text-5xl font-black text-on-surface">{member.points || 0}</span>
+                <span className="block text-xs font-bold tracking-widest uppercase text-on-surface-variant mt-2">{t('points')}</span>
+              </div>
+            </div>
+
+            {/* Action Buttons Row */}
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+              <button
+                onClick={() => setIsEditOpen(true)}
+                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 border-2 border-on-surface text-on-surface rounded-full text-xs font-bold tracking-widest uppercase hover:bg-on-surface hover:text-white transition-colors"
+              >
+                <span className="material-symbols-outlined text-[14px]">edit</span>
+                {t('edit_profile')}
+              </button>
+              {isAssociationMember ? (
+                <button
+                  onClick={() => setIsMembershipModalOpen(true)}
+                  className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-primary text-on-primary rounded-full text-xs font-bold tracking-widest uppercase hover:bg-primary/90 transition-colors"
+                >
+                  <span className="material-symbols-outlined text-[14px]">card_membership</span>
+                  {t('view_membership')}
+                </button>
+              ) : (
+                <button
+                  onClick={() => setIsUpgradeModalOpen(true)}
+                  className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-full text-xs font-bold tracking-widest uppercase transition-colors"
+                  style={{ backgroundColor: '#fae44b', color: '#000' }}
+                >
+                  <span className="material-symbols-outlined text-[14px]">upgrade</span>
+                  {t('upgrade_membership')}
+                </button>
+              )}
+              {member.qrCode && (
+                <img src={member.qrCode} alt="QR Code" className="w-20 h-20 rounded-lg border-2 border-surface-container ml-auto" />
+              )}
             </div>
           </div>
         </section>
@@ -242,23 +283,75 @@ function ProfileView({ member, onUpdate }) {
         </div>
       )}
 
-      {/* Class Detail Modal */}
-      {selectedClass && (
-        <ClassDetail
-          classData={selectedClass}
-          onClose={() => setSelectedClass(null)}
-        />
+      {/* Upgrade Membership Modal */}
+      {isUpgradeModalOpen && (
+        <Modal isOpen={isUpgradeModalOpen} onClose={() => setIsUpgradeModalOpen(false)}>
+          <div className="space-y-6">
+            <h2 className="font-headline font-bold text-3xl text-on-surface">
+              {t('upgrade_membership')}
+            </h2>
+
+            <div className="bg-primary-container p-6 rounded-xl">
+              <p className="text-on-primary-container font-medium mb-2">
+                {t('upgrade_to_association_member')}
+              </p>
+              <p className="text-2xl font-black text-on-primary-container">
+                NT$ 3,000
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <label className="block">
+                <span className="text-sm font-bold text-on-surface-variant uppercase tracking-widest">
+                  {t('choose_payment_method')} *
+                </span>
+                <select
+                  value={upgradePaymentMethod}
+                  onChange={(e) => setUpgradePaymentMethod(e.target.value)}
+                  className="mt-2 w-full px-4 py-3 bg-surface-container text-on-surface rounded-lg border-2 border-surface-container-high focus:border-primary focus:outline-none"
+                >
+                  <option value="">{t('select_payment_method')}</option>
+                  <option value="cash">{t('cash')}</option>
+                  <option value="transfer">{t('bank_transfer')}</option>
+                </select>
+              </label>
+
+              {upgradeError && (
+                <div className="bg-error-container text-on-error-container p-4 rounded-lg">
+                  {upgradeError}
+                </div>
+              )}
+
+              <div className="bg-surface-container p-4 rounded-lg text-sm text-on-surface-variant">
+                {t('please_pay_nt_3000_instructions')}
+              </div>
+            </div>
+
+            <div className="flex gap-4">
+              <button
+                onClick={() => setIsUpgradeModalOpen(false)}
+                className="flex-1 px-6 py-3 bg-surface-container text-on-surface rounded-full font-bold hover:bg-surface-container-high transition-colors"
+                disabled={upgradeLoading}
+              >
+                {t('cancel')}
+              </button>
+              <button
+                onClick={handleUpgradeRequest}
+                className="flex-1 px-6 py-3 bg-primary text-on-primary rounded-full font-bold hover:bg-primary/90 transition-colors disabled:opacity-50"
+                disabled={upgradeLoading || !upgradePaymentMethod}
+              >
+                {upgradeLoading ? t('submitting') : t('submit_request')}
+              </button>
+            </div>
+          </div>
+        </Modal>
       )}
 
-      {/* Activity Detail Modal */}
-      {selectedActivity && (
-        <ActivityDetail
-          activityData={selectedActivity}
-          onClose={() => setSelectedActivity(null)}
+      {/* Profile Edit Modal */}
+      {isEditOpen && (
+        <ProfileEdit
+          member={member}
+          onClose={() => setIsEditOpen(false)}
+          onSuccess={handleEditSuccess}
         />
       )}
-    </>
-  );
-}
-
-export default ProfileView;
