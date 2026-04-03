@@ -15,18 +15,53 @@ function MemberPortal() {
   const [member, setMember] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    // Get member data from localStorage (set by Login component)
+  const fetchMemberData = async () => {
     const cachedMember = localStorage.getItem('memberData');
-    if (cachedMember) {
-      const memberData = JSON.parse(cachedMember);
-      setMember(memberData);
-      setLoading(false);
-    } else {
-      // Redirect to login if no member data
+    if (!cachedMember) {
       navigate('/login');
+      return;
     }
+
+    const memberData = JSON.parse(cachedMember);
+
+    try {
+      // Fetch fresh data from server
+      const response = await fetch(`/api/members/${memberData.memberId}`);
+      if (response.ok) {
+        const freshData = await response.json();
+        // Update localStorage with fresh data
+        localStorage.setItem('memberData', JSON.stringify(freshData));
+        setMember(freshData);
+      } else {
+        // Fallback to cached data if fetch fails
+        setMember(memberData);
+      }
+    } catch (error) {
+      console.error('Failed to fetch fresh member data:', error);
+      // Fallback to cached data
+      setMember(memberData);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchMemberData();
   }, [navigate]);
+
+  // Refresh data when tab becomes visible
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchMemberData();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
 
   useEffect(() => {
     // Update URL when tab changes
