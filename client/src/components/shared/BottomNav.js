@@ -12,20 +12,22 @@ function BottomNav({ activeTab, onTabChange, showMeetings = false }) {
     tabs.push({ id: 'meetings', icon: 'groups', label: 'Meetings' });
   }
 
+  const isFiveTabs = tabs.length === 5;
+
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-surface-container-lowest/90 backdrop-blur-xl rounded-t-[3rem] shadow-ambient z-50 flex items-center justify-around px-4 py-3">
+    <nav className={`fixed bottom-0 left-0 right-0 bg-surface-container-lowest/90 backdrop-blur-xl rounded-t-[3rem] shadow-ambient z-50 flex items-center justify-around ${isFiveTabs ? 'px-2 py-2' : 'px-4 py-3'}`}>
       {tabs.map((tab) => (
         <button
           key={tab.id}
           onClick={() => onTabChange(tab.id)}
-          className={`flex flex-col items-center justify-center px-4 py-2 rounded-full transition-all ${
+          className={`flex flex-col items-center justify-center ${isFiveTabs ? 'px-2 py-1.5' : 'px-4 py-2'} rounded-full transition-all ${
             activeTab === tab.id
               ? 'bg-primary-container text-on-primary-fixed scale-105'
               : 'text-secondary hover:bg-surface-container-low'
           }`}
         >
-          <span className="material-symbols-outlined">{tab.icon}</span>
-          <span className="font-label text-[10px] font-bold uppercase tracking-widest mt-1">
+          <span className={`material-symbols-outlined ${isFiveTabs ? 'text-xl' : ''}`}>{tab.icon}</span>
+          <span className={`font-label ${isFiveTabs ? 'text-[9px]' : 'text-[10px]'} font-bold uppercase tracking-widest mt-1`}>
             {tab.label}
           </span>
         </button>

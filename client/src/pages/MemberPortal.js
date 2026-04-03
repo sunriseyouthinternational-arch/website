@@ -51,10 +51,10 @@ function MemberPortal() {
   const showMeetings = member?.membershipStatus === '協會會員';
 
   return (
-    <div className="min-h-screen bg-surface-container-highest pb-32">
+    <div className="min-h-screen bg-surface-container-highest pb-20">
       <Header />
 
-      <main className="pt-6">
+      <main>
         {activeTab === 'profile' && <ProfileView member={member} setMember={setMember} />}
         {activeTab === 'classes' && <ClassExplorer memberId={member?.memberId} />}
         {activeTab === 'activities' && <ActivityExplorer memberId={member?.memberId} />}
