@@ -62,7 +62,7 @@ const memberSchema = new mongoose.Schema({
     activityId: { type: mongoose.Schema.Types.ObjectId, ref: 'Activity' },
     memberName: { type: String },
     enrolledAt: { type: Date, default: Date.now },
-    status: { type: String, enum: ['enrolled', 'upcoming', 'completed', 'cancelled'], default: 'enrolled' }
+    status: { type: String, enum: ['active', 'enrolled', 'upcoming', 'completed', 'cancelled'], default: 'enrolled' }
   }],
   coupons: [{
     type: { type: String, enum: ['trial', 'discount'], required: true },
