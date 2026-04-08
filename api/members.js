@@ -784,18 +784,11 @@ module.exports = async (req, res) => {
         });
       }
 
-      return res.status(200).json({
-        message: '會員刪除成功 / Member deleted successfully',
-        memberId
-      });
-    }
-    if (req.method === 'DELETE' && action === 'delete-member' && memberId) {
-      const member = await Member.findOneAndDelete({ memberId });
-
-      if (!member) {
-        return res.status(404).json({
-          message: '找不到團員 / Member not found'
-        });
+      // Delete from Google Sheets
+      try {
+        await googleSheets.deleteMember(memberId);
+      } catch (sheetError) {
+        console.error('[Delete Member] Google Sheets delete error:', sheetError.message);
       }
 
       return res.status(200).json({
