@@ -93,6 +93,7 @@ function Profile() {
   // eslint-disable-next-line no-unused-vars
   const [lineProfile, setLineProfile] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [liffInitializing, setLiffInitializing] = useState(true);
   const [needsRegistration, setNeedsRegistration] = useState(false);
 
   const [registrationData, setRegistrationData] = useState({
@@ -282,6 +283,7 @@ function Profile() {
             pictureUrl: userData.pictureUrl
           });
           setIsLoggedIn(true);
+          setLiffInitializing(false);
           hasCachedUser = true;
 
           // Fetch member data with cached userId
@@ -614,6 +616,7 @@ function Profile() {
         setLineUserId(profile.userId);
         setLineProfile(profile);
         setIsLoggedIn(true);
+        setLiffInitializing(false);
 
         // fetchOrCreateMember will manage loading state
         await fetchOrCreateMember(profile.userId, profile);
@@ -623,6 +626,7 @@ function Profile() {
         // Clear cache if user is not logged in
         localStorage.removeItem('lineUserCache');
         setIsLoggedIn(false);
+        setLiffInitializing(false);
         setLineUserId(null);
         setLineProfile(null);
         // Only set loading=false if we're managing it from initializeLIFF
@@ -632,6 +636,7 @@ function Profile() {
     } catch (error) {
       console.error('[Profile] LIFF initialization failed:', error);
       console.error('[Profile] Error details:', error.message, error.stack);
+      setLiffInitializing(false);
       setMessage({
         type: 'error',
         text: t('language') === 'zh'
@@ -1052,7 +1057,7 @@ function Profile() {
     <div className="container">
       <div className="page-title">
         <h2>{t('myProfile')}</h2>
-      </div>      {loading ? (
+      </div>      {liffInitializing || loading ? (
         <div className="card" style={{ textAlign: 'center', padding: '60px 20px' }}>
           <div style={{ fontSize: '64px', marginBottom: '20px' }}>⏳</div>
           <h3 style={{ color: '#667eea', marginBottom: '15px' }}>
