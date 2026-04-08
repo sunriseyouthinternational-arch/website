@@ -96,7 +96,7 @@ GOOGLE_SERVICE_ACCOUNT_JSON={"type":"service_account","project_id":"...","privat
 ### Test 1: Check Configuration
 
 ```bash
-curl http://localhost:3000/api/sheets-sync
+curl http://localhost:3000/api/admin?resource=sheets-sync
 ```
 
 Expected response:
@@ -111,7 +111,7 @@ Expected response:
 ### Test 2: Sync All Existing Members
 
 ```bash
-curl -X POST http://localhost:3000/api/sheets-sync
+curl -X POST http://localhost:3000/api/admin?resource=sheets-sync
 ```
 
 Expected response:
@@ -195,10 +195,10 @@ The system creates the following columns automatically:
 
 ## API Endpoints
 
-### GET /api/sheets-sync
+### GET /api/admin?resource=sheets-sync
 Check sync service status and configuration
 
-### POST /api/sheets-sync
+### POST /api/admin?resource=sheets-sync
 Manually sync all members to Google Sheets (admin use)
 
 ## Automatic Sync Triggers

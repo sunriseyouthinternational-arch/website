@@ -12,11 +12,7 @@ A complete Google Sheets integration that automatically syncs all member data to
    - Handles individual member sync and bulk sync operations
    - Creates sheet and headers automatically
 
-2. **api/sheets-sync.js** - Admin endpoint for manual sync
-   - `GET /api/sheets-sync` - Check sync status
-   - `POST /api/sheets-sync` - Manually sync all members
-
-3. **GOOGLE_SHEETS_SETUP.md** - Complete setup guide
+2. **GOOGLE_SHEETS_SETUP.md** - Complete setup guide
    - Step-by-step Google Cloud setup
    - Service account creation
    - Environment configuration
@@ -30,11 +26,15 @@ A complete Google Sheets integration that automatically syncs all member data to
    - Membership upgrades (line 1055)
    - Upgrade approvals (line 1095)
 
-2. **.env.example** - Added Google Sheets configuration variables
+2. **api/admin.js** - Added sheets sync endpoints:
+   - `GET /api/admin?resource=sheets-sync` - Check sync status
+   - `POST /api/admin?resource=sheets-sync` - Manually sync all members
 
-3. **.gitignore** - Added service account JSON file patterns
+3. **.env.example** - Added Google Sheets configuration variables
 
-4. **package.json** - Added googleapis dependency
+4. **.gitignore** - Added service account JSON file patterns
+
+5. **package.json** - Added googleapis dependency
 
 ## How It Works
 
@@ -87,8 +87,8 @@ GOOGLE_SERVICE_ACCOUNT_PATH=./service-account-key.json
 
 ## Testing
 
-1. Check configuration: `GET /api/sheets-sync`
-2. Sync all members: `POST /api/sheets-sync`
+1. Check configuration: `GET /api/admin?resource=sheets-sync`
+2. Sync all members: `POST /api/admin?resource=sheets-sync`
 3. Register new member and verify it appears in sheet
 4. Update member profile and verify changes sync
 
@@ -96,5 +96,5 @@ GOOGLE_SERVICE_ACCOUNT_PATH=./service-account-key.json
 
 1. Follow GOOGLE_SHEETS_SETUP.md to configure Google Cloud
 2. Add environment variables to .env
-3. Test with `POST /api/sheets-sync`
+3. Test with `POST /api/admin?resource=sheets-sync`
 4. Verify automatic sync on new registrations

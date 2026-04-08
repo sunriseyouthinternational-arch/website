@@ -1,6 +1,7 @@
 const connectDB = require('../lib/mongodb');
 const { Member, Class, Activity } = require('../db/models');
 const line = require('@line/bot-sdk');
+const googleSheets = require('../lib/googleSheets');
 
 const lineClient = new line.messagingApi.MessagingApiClient({
   channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN,
@@ -11,6 +12,35 @@ module.exports = async (req, res) => {
 
   try {
     await connectDB();
+
+    // Google Sheets sync
+    if (resource === 'sheets-sync') {
+      // POST - Sync all members to Google Sheets
+      if (req.method === 'POST') {
+        console.log('[Sheets Sync] Starting bulk sync...');
+
+        const members = await Member.find({}).populate('referredBy', 'memberId').lean();
+        console.log(`[Sheets Sync] Found ${members.length} members to sync`);
+
+        const result = await googleSheets.syncAllMembers(members);
+
+        return res.status(200).json({
+          message: `成功同步 ${result.count} 位會員 / Successfully synced ${result.count} members`,
+          count: result.count
+        });
+      }
+
+      // GET - Check sync status
+      if (req.method === 'GET') {
+        const memberCount = await Member.countDocuments({});
+
+        return res.status(200).json({
+          message: 'Google Sheets sync service is ready',
+          totalMembers: memberCount,
+          configured: !!process.env.GOOGLE_SHEET_ID
+        });
+      }
+    }
 
     // Dashboard stats
     if (resource === 'stats') {
