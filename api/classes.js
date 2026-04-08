@@ -144,7 +144,7 @@ module.exports = async (req, res) => {
       }
 
       if (req.method === 'POST') {
-        const { classInfoId, teacherId, teacher, time, date, location, sendLineAnnouncement } = req.body;
+        const { classInfoId, name, description, teacherId, teacher, time, date, location, sendLineAnnouncement } = req.body;
 
         // Verify classInfo exists
         const classInfo = await ClassInfo.findById(classInfoId);
@@ -154,6 +154,8 @@ module.exports = async (req, res) => {
 
         const classItem = new Class({
           classInfoId,
+          name: name || classInfo.name,
+          description: description || classInfo.description,
           teacherId: teacherId || null,
           teacher,
           time,

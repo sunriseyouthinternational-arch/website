@@ -125,6 +125,8 @@ classInfoSchema.pre('save', function(next) {
 // Class Schema (Host Class) - Actual class instance with teacher and schedule
 const classSchema = new mongoose.Schema({
   classInfoId: { type: mongoose.Schema.Types.ObjectId, ref: 'ClassInfo', required: true },
+  name: { type: String },
+  description: { type: String },
   teacherId: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Teacher' }], // Array of teacher references
   teacher: { type: String, required: true }, // Comma-separated teacher names for display
   time: { type: String, required: true },

@@ -44,6 +44,8 @@ function AdminDashboard() {
   const [showAddClassForm, setShowAddClassForm] = useState(false);
   const [newClass, setNewClass] = useState({
     classInfoId: '',
+    name: '',
+    description: '',
     teacherId: [],
     teacher: '',
     time: '',
@@ -414,6 +416,8 @@ function AdminDashboard() {
       setShowAddClassForm(false);
       setNewClass({
         classInfoId: '',
+        name: '',
+        description: '',
         teacherId: [],
         teacher: '',
         time: '',
@@ -1339,8 +1343,6 @@ function AdminDashboard() {
                   <th>{t('member_id')}</th>
                   <th>{t('name')}</th>
                   <th>{t('membership')}</th>
-                  <th>{t('referrals')}</th>
-                  <th>{t('points')}</th>
                   <th>{t('actions')}</th>
                 </tr>
               </thead>
@@ -1361,8 +1363,6 @@ function AdminDashboard() {
                         {member.membershipStatus || '會友'}
                       </span>
                     </td>
-                    <td>{member.referralCount || 0}</td>
-                    <td>{member.points || 0}</td>
                     <td>
                       <button
                         className="btn btn-small btn-primary"
@@ -1446,6 +1446,12 @@ function AdminDashboard() {
 
             <div className="detail-section">
               <h4>{t('membership_info')}</h4>
+              <div className="detail-row">
+                <strong>{t('referrals')}:</strong>
+                <span style={{ fontSize: '1.2em', color: '#667eea', fontWeight: 'bold' }}>
+                  {selectedMember.referralCount || 0}
+                </span>
+              </div>
               <div className="detail-row">
                 <strong>{t('points')}:</strong>
                 <span style={{ fontSize: '1.2em', color: '#667eea', fontWeight: 'bold' }}>
@@ -2296,7 +2302,15 @@ function AdminDashboard() {
                   <label>{t('classInfo')} *</label>
                   <select
                     value={newClass.classInfoId}
-                    onChange={(e) => setNewClass({ ...newClass, classInfoId: e.target.value })}
+                    onChange={(e) => {
+                      const selectedClassInfo = classInfos.find(ci => ci._id === e.target.value);
+                      setNewClass({
+                        ...newClass,
+                        classInfoId: e.target.value,
+                        name: selectedClassInfo?.name || '',
+                        description: selectedClassInfo?.description || ''
+                      });
+                    }}
                     required
                   >
                     <option value="">{t('select_class')}</option>
@@ -2306,6 +2320,26 @@ function AdminDashboard() {
                       </option>
                     ))}
                   </select>
+                </div>
+
+                <div className="form-group">
+                  <label>{t('name')} *</label>
+                  <input
+                    type="text"
+                    value={newClass.name}
+                    onChange={(e) => setNewClass({ ...newClass, name: e.target.value })}
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>{t('description')} *</label>
+                  <textarea
+                    value={newClass.description}
+                    onChange={(e) => setNewClass({ ...newClass, description: e.target.value })}
+                    required
+                    rows="3"
+                  />
                 </div>
 
                 <div className="form-group">
