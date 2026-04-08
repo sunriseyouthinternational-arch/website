@@ -137,14 +137,20 @@ module.exports = async (req, res) => {
 
       // Handle referral code
       if (referralCode) {
+        console.log('[API /register] Processing referral code:', referralCode.trim().toUpperCase());
         const referrer = await Member.findOne({
           referralCode: referralCode.trim().toUpperCase(),
           registrationCompleted: true
         });
 
         if (referrer) {
+          console.log('[API /register] Found referrer:', referrer.memberId, referrer.name);
           member.referredBy = referrer._id;
+        } else {
+          console.log('[API /register] No referrer found for code:', referralCode.trim().toUpperCase());
         }
+      } else {
+        console.log('[API /register] No referral code provided');
       }
 
       // Generate unique referral code for this member
@@ -238,6 +244,8 @@ module.exports = async (req, res) => {
       await member.save();
 
       console.log('[API /register] Registration completed for member:', member.memberId);
+      console.log('[API /register] Member referredBy:', member.referredBy);
+      console.log('[API /register] Member referralCode:', member.referralCode);
 
       if (member.line && member.line.userId) {
         try {

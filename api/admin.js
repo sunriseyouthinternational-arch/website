@@ -363,6 +363,8 @@ module.exports = async (req, res) => {
             registrationCompleted: true
           });
 
+          console.log(`[Admin] Member ${member.memberId} (${member.name}): referredBy=${member.referredBy}, referralCount=${referralCount}`);
+
           return {
             ...member,
             referralCount,
