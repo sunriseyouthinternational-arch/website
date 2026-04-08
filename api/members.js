@@ -2,6 +2,7 @@ const connectDB = require('../lib/mongodb');
 const { Member, CouponShareToken, CouponForSale } = require('../db/models');
 const line = require('@line/bot-sdk');
 const crypto = require('crypto');
+const googleSheets = require('../lib/googleSheets');
 
 module.exports = async (req, res) => {
   const { memberId, lineUserId, token, sessionToken, action, couponId } = req.query;
@@ -247,6 +248,14 @@ module.exports = async (req, res) => {
       console.log('[API /register] Member referredBy:', member.referredBy);
       console.log('[API /register] Member referralCode:', member.referralCode);
 
+      // Sync to Google Sheets
+      try {
+        const populatedMember = await Member.findById(member._id).populate('referredBy', 'memberId');
+        await googleSheets.syncMember(populatedMember);
+      } catch (sheetError) {
+        console.error('[API /register] Google Sheets sync error:', sheetError.message);
+      }
+
       if (member.line && member.line.userId) {
         try {
           const client = new line.messagingApi.MessagingApiClient({
@@ -394,6 +403,14 @@ module.exports = async (req, res) => {
       member.registrationTokenExpires = undefined;
 
       await member.save();
+
+      // Sync to Google Sheets
+      try {
+        const populatedMember = await Member.findById(member._id).populate('referredBy', 'memberId');
+        await googleSheets.syncMember(populatedMember);
+      } catch (sheetError) {
+        console.error('[Registration] Google Sheets sync error:', sheetError.message);
+      }
 
       // Send welcome message if user has LINE account
       if (member.line && member.line.userId) {
@@ -549,6 +566,14 @@ module.exports = async (req, res) => {
       if (contact) member.contact = { ...member.contact, ...contact };
 
       await member.save();
+
+      // Sync to Google Sheets
+      try {
+        const populatedMember = await Member.findById(member._id).populate('referredBy', 'memberId');
+        await googleSheets.syncMember(populatedMember);
+      } catch (sheetError) {
+        console.error('[Update] Google Sheets sync error:', sheetError.message);
+      }
 
       return res.status(200).json({
         message: '更新成功 / Update successful',
@@ -1022,6 +1047,14 @@ module.exports = async (req, res) => {
 
       await member.save();
 
+      // Sync to Google Sheets
+      try {
+        const populatedMember = await Member.findById(member._id).populate('referredBy', 'memberId');
+        await googleSheets.syncMember(populatedMember);
+      } catch (sheetError) {
+        console.error('[Upgrade] Google Sheets sync error:', sheetError.message);
+      }
+
       return res.status(200).json({
         message: '升級成功 / Upgrade successful',
         member,
@@ -1061,6 +1094,14 @@ module.exports = async (req, res) => {
       member.membershipUpgradeRequest.status = 'approved';
 
       await member.save();
+
+      // Sync to Google Sheets
+      try {
+        const populatedMember = await Member.findById(member._id).populate('referredBy', 'memberId');
+        await googleSheets.syncMember(populatedMember);
+      } catch (sheetError) {
+        console.error('[Approve Upgrade] Google Sheets sync error:', sheetError.message);
+      }
 
       return res.status(200).json({
         message: '升級請求已批准 / Upgrade request approved',

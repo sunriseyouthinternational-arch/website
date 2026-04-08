@@ -5,3 +5,7 @@ client/node_modules/
 client/build/
 *.log
 .DS_Store
+
+# Google service account credentials
+*-key.json
+service-account*.json
