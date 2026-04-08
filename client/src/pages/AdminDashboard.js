@@ -1339,6 +1339,8 @@ function AdminDashboard() {
                   <th>{t('member_id')}</th>
                   <th>{t('name')}</th>
                   <th>{t('membership')}</th>
+                  <th>{t('referrals')}</th>
+                  <th>{t('points')}</th>
                   <th>{t('actions')}</th>
                 </tr>
               </thead>
@@ -1359,6 +1361,8 @@ function AdminDashboard() {
                         {member.membershipStatus || '會友'}
                       </span>
                     </td>
+                    <td>{member.referralCount || 0}</td>
+                    <td>{member.points || 0}</td>
                     <td>
                       <button
                         className="btn btn-small btn-primary"

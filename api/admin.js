@@ -353,8 +353,25 @@ module.exports = async (req, res) => {
 
     // List all members
     if (resource === 'members' && !action) {
-      const members = await Member.find().sort({ createdAt: -1 });
-      return res.status(200).json({ members });
+      const members = await Member.find().sort({ createdAt: -1 }).lean();
+
+      // Add referral count and points to each member
+      const membersWithStats = await Promise.all(
+        members.map(async (member) => {
+          const referralCount = await Member.countDocuments({
+            referredBy: member._id,
+            registrationCompleted: true
+          });
+
+          return {
+            ...member,
+            referralCount,
+            points: member.points || 0
+          };
+        })
+      );
+
+      return res.status(200).json({ members: membersWithStats });
     }
 
     // Update class payment status
