@@ -2466,17 +2466,6 @@ function AdminDashboard() {
                   />
                 </div>
 
-                <div className="form-group">
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
-                    <input
-                      type="checkbox"
-                      checked={newActivity.isVolunteeringWork || false}
-                      onChange={(e) => setNewActivity({ ...newActivity, isVolunteeringWork: e.target.checked })}
-                    />
-                    <span>{t('language') === 'zh' ? '此活動屬於志工服務' : 'This activity is volunteering work'}</span>
-                  </label>
-                </div>
-
                 <div className="form-group" style={{ background: '#f0f8ff', padding: '15px', borderRadius: '8px', border: '1px solid #d0e8ff' }}>
                   <p style={{ margin: 0, color: '#1a5490', fontSize: '14px', lineHeight: '1.6' }}>
                     ℹ️ {t('members_can_view_and_enroll_in_this_class_by_clicking_class_and_activity')}
@@ -2764,6 +2753,17 @@ function AdminDashboard() {
                     onChange={(e) => setNewActivity({ ...newActivity, location: e.target.value })}
                     placeholder={t('example_address_taipei')}
                   />
+                </div>
+
+                <div className="form-group">
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      checked={newActivity.isVolunteeringWork || false}
+                      onChange={(e) => setNewActivity({ ...newActivity, isVolunteeringWork: e.target.checked })}
+                    />
+                    <span>{t('language') === 'zh' ? '此活動屬於志工服務' : 'This activity is volunteering work'}</span>
+                  </label>
                 </div>
 
                 {newActivity.location && (
