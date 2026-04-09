@@ -21,8 +21,8 @@ module.exports = async (req, res) => {
       }
 
       const admin = new Admin({
-        username: process.env.ADMIN_USERNAME || 'admin',
-        password: process.env.ADMIN_PASSWORD || 'admin123'
+        username: 'admin',
+        password: 'admin123'
       });
 
       await admin.save();
