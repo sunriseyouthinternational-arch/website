@@ -2755,17 +2755,6 @@ function AdminDashboard() {
                   />
                 </div>
 
-                <div className="form-group">
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
-                    <input
-                      type="checkbox"
-                      checked={newActivity.isVolunteeringWork || false}
-                      onChange={(e) => setNewActivity({ ...newActivity, isVolunteeringWork: e.target.checked })}
-                    />
-                    <span>{t('language') === 'zh' ? '此活動屬於志工服務' : 'This activity is volunteering work'}</span>
-                  </label>
-                </div>
-
                 {newActivity.location && (
                   <div className="form-group">
                     <label>{t('map_preview')}</label>
@@ -2823,6 +2812,17 @@ function AdminDashboard() {
                       </button>
                     </div>
                   )}
+                </div>
+
+                <div className="form-group">
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      checked={newActivity.isVolunteeringWork || false}
+                      onChange={(e) => setNewActivity({ ...newActivity, isVolunteeringWork: e.target.checked })}
+                    />
+                    <span>{t('language') === 'zh' ? '此活動屬於志工服務' : 'This activity is volunteering work'}</span>
+                  </label>
                 </div>
 
                 <div className="form-group">

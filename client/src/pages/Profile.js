@@ -110,7 +110,12 @@ function Profile() {
   const getImageSrc = (imagePath) => {
     if (!imagePath) return null;
 
-    if (imagePath.startsWith('data:')) return imagePath;
+    if (
+      imagePath.startsWith('data:') ||
+      imagePath.startsWith('http://') ||
+      imagePath.startsWith('https://') ||
+      imagePath.startsWith('blob:')
+    ) return imagePath;
 
     const apiUrl = process.env.REACT_APP_API_URL || '';
     return `${apiUrl}${imagePath}`;
@@ -2207,6 +2212,83 @@ function Profile() {
                 {selectedActivity.description || ''}
               </p>
 
+              {selectedActivity.teacherId && Array.isArray(selectedActivity.teacherId) && selectedActivity.teacherId.length > 0 && (
+                <div style={{
+                  background: '#fff8f0',
+                  padding: '20px',
+                  borderRadius: '8px',
+                  marginBottom: '20px',
+                  border: '2px solid #f0e0c0'
+                }}>
+                  <h3 style={{ marginBottom: '15px', color: '#667eea' }}>{t('hostInfo')}</h3>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                    {selectedActivity.teacherId.map((teacher, index) => (
+                      <div
+                        key={teacher._id || index}
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '15px',
+                          alignItems: 'center',
+                          textAlign: 'center',
+                          marginBottom: index < selectedActivity.teacherId.length - 1 ? '20px' : '0',
+                          paddingBottom: index < selectedActivity.teacherId.length - 1 ? '20px' : '0',
+                          borderBottom: index < selectedActivity.teacherId.length - 1 ? '1px solid #f0e0c0' : 'none'
+                        }}
+                      >
+                        {teacher.photo && (
+                          <img
+                            src={getImageSrc(teacher.photo)}
+                            alt={teacher.name}
+                            style={{
+                              width: '120px',
+                              height: '120px',
+                              objectFit: 'cover',
+                              borderRadius: '50%',
+                              border: '3px solid #667eea'
+                            }}
+                          />
+                        )}
+                        <div style={{ width: '100%', textAlign: 'left' }}>
+                          <h4 style={{ marginBottom: '10px', fontSize: '18px', textAlign: 'center' }}>{teacher.name}</h4>
+                          {teacher.bio && (
+                            <div style={{ marginBottom: '10px' }}>
+                              <strong>{t('hostBio')}</strong>
+                              <p style={{ marginTop: '5px', lineHeight: '1.6', fontSize: '14px' }}>{teacher.bio}</p>
+                            </div>
+                          )}
+                          {teacher.specialties && (
+                            <div style={{ marginBottom: '10px' }}>
+                              <strong>{t('hostSpecialties')}</strong>
+                              <p style={{ marginTop: '5px', fontSize: '14px' }}>{teacher.specialties}</p>
+                            </div>
+                          )}
+                          {teacher.education && (
+                            <div style={{ marginBottom: '10px' }}>
+                              <strong>{t('hostEducation')}</strong>
+                              <p style={{ marginTop: '5px', fontSize: '14px' }}>{teacher.education}</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {(!selectedActivity.teacherId || (Array.isArray(selectedActivity.teacherId) && selectedActivity.teacherId.length === 0)) && selectedActivity.teacher && (
+                <div style={{
+                  background: '#fff8f0',
+                  padding: '20px',
+                  borderRadius: '8px',
+                  marginBottom: '20px',
+                  border: '2px solid #f0e0c0'
+                }}>
+                  <h3 style={{ marginBottom: '10px', color: '#667eea' }}>{t('hostInfo')}</h3>
+                  <p><strong>{t('host')}</strong> {selectedActivity.teacher}</p>
+                </div>
+              )}
+
               <div style={{
                 background: '#f8f9ff',
                 padding: '20px',
@@ -2232,10 +2314,6 @@ function Profile() {
                       <p style={{ marginTop: '5px' }}>📍 {selectedActivity.location}</p>
                     </div>
                   )}
-                  <div>
-                    <strong>{t('host')}</strong>
-                    <p style={{ marginTop: '5px' }}>{selectedActivity.teacher}</p>
-                  </div>
                   <div>
                     <strong>{t('cost')}</strong>
                     <p style={{ marginTop: '5px' }}>NT$ {selectedActivity.cost}</p>
