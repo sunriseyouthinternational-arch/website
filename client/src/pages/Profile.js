@@ -2196,6 +2196,14 @@ function Profile() {
                   alt={selectedActivity.name}
                   loading="lazy"
                   decoding="async"
+                  onError={(e) => {
+                    if (e.currentTarget.dataset.fallbackApplied === 'true') {
+                      e.currentTarget.style.display = 'none';
+                      return;
+                    }
+                    e.currentTarget.dataset.fallbackApplied = 'true';
+                    e.currentTarget.src = selectedActivity.banner;
+                  }}
                   style={{
                     width: '100%',
                     aspectRatio: '16 / 9',
@@ -2211,31 +2219,64 @@ function Profile() {
               <p style={{ fontSize: '18px', lineHeight: '1.6', marginBottom: '20px', color: '#666' }}>
                 {selectedActivity.description || ''}
               </p>
-
-              {selectedActivity.teacherId && Array.isArray(selectedActivity.teacherId) && selectedActivity.teacherId.length > 0 && (
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: selectedActivity.teacherId ? '1.5fr 1fr' : '1fr',
+                gap: '20px',
+                marginBottom: '20px'
+              }}>
                 <div style={{
-                  background: '#fff8f0',
+                  background: '#f8f9ff',
                   padding: '20px',
                   borderRadius: '8px',
-                  marginBottom: '20px',
-                  border: '2px solid #f0e0c0'
+                  border: '2px solid #e0e8ff'
                 }}>
-                  <h3 style={{ marginBottom: '15px', color: '#667eea' }}>{t('hostInfo')}</h3>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  <h3 style={{ marginBottom: '15px', color: '#667eea', fontSize: '20px' }}>
+                    {t('activity_details')}
+                  </h3>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div>
+                      <strong>{t('date')}</strong>
+                      <p style={{ marginTop: '5px' }}>{formatDate(selectedActivity.date)}</p>
+                    </div>
+                    <div>
+                      <strong>{t('time')}</strong>
+                      <p style={{ marginTop: '5px' }}>{selectedActivity.time}</p>
+                    </div>
+                    <div>
+                      <strong>{t('cost')}</strong>
+                      <p style={{ marginTop: '5px' }}>NT$ {selectedActivity.cost}</p>
+                    </div>
+                    <div>
+                      <strong>{t('participants')}</strong>
+                      <p style={{ marginTop: '5px' }}>{selectedActivity.currentParticipants} / {selectedActivity.maxParticipants}</p>
+                    </div>
+                    <div>
+                      <strong>{t('recommendedAge')}</strong>
+                      <p style={{ marginTop: '5px' }}>
+                        {Array.isArray(selectedActivity.ageRange)
+                          ? selectedActivity.ageRange.join(', ')
+                          : selectedActivity.ageRange || 'all'}
+                      </p>
+                    </div>
+                    {selectedActivity.location && (
+                      <div>
+                        <strong>{t('location')}</strong>
+                        <p style={{ marginTop: '5px' }}>📍 {selectedActivity.location}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                {selectedActivity.teacherId && Array.isArray(selectedActivity.teacherId) && selectedActivity.teacherId.length > 0 && (
+                  <div style={{
+                    background: '#fff8f0',
+                    padding: '20px',
+                    borderRadius: '8px',
+                    border: '2px solid #f0e0c0'
+                  }}>
+                    <h3 style={{ marginBottom: '15px', color: '#667eea', fontSize: '20px' }}>{t('hostInfo')}</h3>
                     {selectedActivity.teacherId.map((teacher, index) => (
-                      <div
-                        key={teacher._id || index}
-                        style={{
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: '15px',
-                          alignItems: 'center',
-                          textAlign: 'center',
-                          marginBottom: index < selectedActivity.teacherId.length - 1 ? '20px' : '0',
-                          paddingBottom: index < selectedActivity.teacherId.length - 1 ? '20px' : '0',
-                          borderBottom: index < selectedActivity.teacherId.length - 1 ? '1px solid #f0e0c0' : 'none'
-                        }}
-                      >
+                      <div key={teacher._id || index} style={{ display: 'flex', flexDirection: 'column', gap: '15px', alignItems: 'center', textAlign: 'center', marginBottom: index < selectedActivity.teacherId.length - 1 ? '20px' : '0', paddingBottom: index < selectedActivity.teacherId.length - 1 ? '20px' : '0', borderBottom: index < selectedActivity.teacherId.length - 1 ? '1px solid #f0e0c0' : 'none' }}>
                         {teacher.photo && (
                           <img
                             src={getImageSrc(teacher.photo)}
@@ -2273,8 +2314,8 @@ function Profile() {
                       </div>
                     ))}
                   </div>
-                </div>
-              )}
+                )}
+              </div>
 
               {(!selectedActivity.teacherId || (Array.isArray(selectedActivity.teacherId) && selectedActivity.teacherId.length === 0)) && selectedActivity.teacher && (
                 <div style={{
@@ -2288,50 +2329,6 @@ function Profile() {
                   <p><strong>{t('host')}</strong> {selectedActivity.teacher}</p>
                 </div>
               )}
-
-              <div style={{
-                background: '#f8f9ff',
-                padding: '20px',
-                borderRadius: '8px',
-                border: '2px solid #e0e8ff',
-                marginBottom: '20px'
-              }}>
-                <h3 style={{ marginBottom: '15px', color: '#667eea', fontSize: '20px' }}>
-                  {t('activity_details')}
-                </h3>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  <div>
-                    <strong>{t('date')}</strong>
-                    <p style={{ marginTop: '5px' }}>{formatDate(selectedActivity.date)}</p>
-                  </div>
-                  <div>
-                    <strong>{t('time')}</strong>
-                    <p style={{ marginTop: '5px' }}>{selectedActivity.time}</p>
-                  </div>
-                  {selectedActivity.location && (
-                    <div>
-                      <strong>{t('location')}</strong>
-                      <p style={{ marginTop: '5px' }}>📍 {selectedActivity.location}</p>
-                    </div>
-                  )}
-                  <div>
-                    <strong>{t('cost')}</strong>
-                    <p style={{ marginTop: '5px' }}>NT$ {selectedActivity.cost}</p>
-                  </div>
-                  <div>
-                    <strong>{t('participants')}</strong>
-                    <p style={{ marginTop: '5px' }}>{selectedActivity.currentParticipants} / {selectedActivity.maxParticipants}</p>
-                  </div>
-                  <div>
-                    <strong>{t('recommendedAge')}</strong>
-                    <p style={{ marginTop: '5px' }}>
-                      {Array.isArray(selectedActivity.ageRange)
-                        ? selectedActivity.ageRange.join(', ')
-                        : selectedActivity.ageRange || 'all'}
-                    </p>
-                  </div>
-                </div>
-              </div>
 
               {selectedActivity.location && (
                 <div style={{ marginBottom: '20px' }}>
@@ -2458,6 +2455,14 @@ function Profile() {
                           alt={activity.name}
                           loading="lazy"
                           decoding="async"
+                          onError={(e) => {
+                            if (e.currentTarget.dataset.fallbackApplied === 'true') {
+                              e.currentTarget.style.display = 'none';
+                              return;
+                            }
+                            e.currentTarget.dataset.fallbackApplied = 'true';
+                            e.currentTarget.src = activity.banner;
+                          }}
                           style={{
                             width: '100%',
                             aspectRatio: '16 / 9',
