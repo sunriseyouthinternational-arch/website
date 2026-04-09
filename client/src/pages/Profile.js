@@ -2192,7 +2192,7 @@ function Profile() {
 
               {selectedActivity.banner && (
                 <img
-                  src={selectedActivity.banner}
+                  src={getImageSrc(selectedActivity.banner)}
                   alt={selectedActivity.name}
                   loading="lazy"
                   decoding="async"
@@ -2443,7 +2443,7 @@ function Profile() {
                       )}
                       {activity.banner && (
                         <img
-                          src={activity.banner}
+                          src={getImageSrc(activity.banner)}
                           alt={activity.name}
                           loading="lazy"
                           decoding="async"

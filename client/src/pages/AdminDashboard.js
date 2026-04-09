@@ -275,28 +275,13 @@ function AdminDashboard() {
       return;
     }
 
-    const img = new Image();
     const reader = new FileReader();
-
-    reader.onload = (event) => {
-      img.onload = () => {
-        if (img.width !== 500 || img.height !== 300) {
-          setMessage({
-            type: 'error',
-            text: t('language') === 'zh'
-              ? `圖片尺寸必須為 500x300 像素（目前為 ${img.width}x${img.height}）`
-              : `Image dimensions must be 500x300 pixels (current: ${img.width}x${img.height})`
-          });
-          return;
-        }
-
-        setNewActivity({ ...newActivity, banner: event.target.result });
-        setMessage({
-          type: 'success',
-          text: t('image_uploaded_successfully')
-        });
-      };
-      img.src = event.target.result;
+    reader.onloadend = () => {
+      setNewActivity(prev => ({ ...prev, banner: reader.result }));
+      setMessage({
+        type: 'success',
+        text: t('image_uploaded_successfully')
+      });
     };
 
     reader.onerror = () => {
@@ -329,28 +314,13 @@ function AdminDashboard() {
       return;
     }
 
-    const img = new Image();
     const reader = new FileReader();
-
-    reader.onload = (event) => {
-      img.onload = () => {
-        if (img.width !== 500 || img.height !== 300) {
-          setMessage({
-            type: 'error',
-            text: t('language') === 'zh'
-              ? `圖片尺寸必須為 500x300 像素（目前為 ${img.width}x${img.height}）`
-              : `Image dimensions must be 500x300 pixels (current: ${img.width}x${img.height})`
-          });
-          return;
-        }
-
-        setEditItemData(prev => ({ ...prev, banner: event.target.result }));
-        setMessage({
-          type: 'success',
-          text: t('image_uploaded_successfully')
-        });
-      };
-      img.src = event.target.result;
+    reader.onloadend = () => {
+      setEditItemData(prev => ({ ...prev, banner: reader.result }));
+      setMessage({
+        type: 'success',
+        text: t('image_uploaded_successfully')
+      });
     };
 
     reader.onerror = () => {
@@ -2838,7 +2808,7 @@ function AdminDashboard() {
                     }}
                   />
                   <small style={{ color: '#666', display: 'block', marginTop: '5px' }}>
-                    {t('upload_image_max_2mb_dimensions_must_be_500x300px')}
+                    {t('upload_image_max_2mb')}
                   </small>
                   {newActivity.banner && (
                     <div style={{ marginTop: '15px' }}>
@@ -3060,7 +3030,7 @@ function AdminDashboard() {
                       }}
                     />
                     <small style={{ color: '#666', display: 'block', marginTop: '5px' }}>
-                      {t('upload_image_max_2mb_dimensions_must_be_500x300px')}
+                      {t('upload_image_max_2mb')}
                     </small>
                     {editItemData.banner && (
                       <div style={{ marginTop: '15px' }}>
