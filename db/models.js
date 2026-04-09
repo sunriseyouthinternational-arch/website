@@ -184,6 +184,7 @@ const activitySchema = new mongoose.Schema({
   teacherId: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Teacher' }], // Array of teacher references
   teacher: { type: String, required: true }, // Comma-separated teacher names for display
   maxParticipants: { type: Number, required: true },
+  isVolunteeringWork: { type: Boolean, default: false },
   ageRange: [{ type: String, enum: ['all', 'children', 'teen', 'adult', 'elderly'] }],
   currentParticipants: { type: Number, default: 0 },
   participants: [{

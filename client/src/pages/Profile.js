@@ -2164,6 +2164,27 @@ function Profile() {
 
               <h2>{selectedActivity.name}</h2>
 
+              {selectedActivity.isVolunteeringWork && (
+                <div style={{ marginTop: '10px', marginBottom: '15px' }}>
+                  <span
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      background: '#e8f7ee',
+                      color: '#1f7a45',
+                      border: '1px solid #b7e4c7',
+                      borderRadius: '999px',
+                      padding: '6px 12px',
+                      fontSize: '13px',
+                      fontWeight: '700'
+                    }}
+                  >
+                    {t('language') === 'zh' ? '志工服務' : 'Volunteering Work'}
+                  </span>
+                </div>
+              )}
+
               {selectedActivity.banner && (
                 <img
                   src={getImageSrc(selectedActivity.banner)}
@@ -2306,9 +2327,20 @@ function Profile() {
                             </p>
                           )}
                         </div>
-                        <span className={`status-badge ${itemCost === 0 ? 'paid' : (myParticipants.every(p => p.paid) ? 'paid' : 'unpaid')}`}>
-                          {itemCost === 0 ? t('free') : (myParticipants.every(p => p.paid) ? t('paid') : t('unpaid'))}
-                        </span>
+                        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                          <span className={`status-badge ${itemCost === 0 ? 'paid' : (myParticipants.every(p => p.paid) ? 'paid' : 'unpaid')}`}>
+                            {itemCost === 0 ? t('free') : (myParticipants.every(p => p.paid) ? t('paid') : t('unpaid'))}
+                          </span>
+                          {activity && (
+                            <button
+                              onClick={() => setSelectedActivity(activity)}
+                              className="btn btn-small"
+                              style={{ padding: '6px 12px', fontSize: '14px' }}
+                            >
+                              {t('view_details')}
+                            </button>
+                          )}
+                        </div>
                       </div>
                       );
                     })
@@ -2322,6 +2354,26 @@ function Profile() {
                   {activities.map((activity) => (
                     <div key={activity._id} className="item-card">
                       <h4>{activity.name}</h4>
+                      {activity.isVolunteeringWork && (
+                        <div style={{ marginTop: '10px', marginBottom: '5px' }}>
+                          <span
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              background: '#e8f7ee',
+                              color: '#1f7a45',
+                              border: '1px solid #b7e4c7',
+                              borderRadius: '999px',
+                              padding: '6px 12px',
+                              fontSize: '13px',
+                              fontWeight: '700'
+                            }}
+                          >
+                            {t('language') === 'zh' ? '志工服務' : 'Volunteering Work'}
+                          </span>
+                        </div>
+                      )}
                       {activity.banner && (
                         <img
                           src={getImageSrc(activity.banner)}
@@ -2349,31 +2401,27 @@ function Profile() {
                         <p><strong>{t('participants')}</strong> {activity.currentParticipants} / {activity.maxParticipants}</p>
                         <p><strong>{t('recommendedAge')}</strong> {Array.isArray(activity.ageRange) ? activity.ageRange.join(', ') : activity.ageRange || 'all'}</p>
                       </div>
-                      {activity.location && (
-                        <div style={{ marginTop: '10px', marginBottom: '10px' }}>
-                          <iframe
-                            src={`https://maps.google.com/maps?q=${encodeURIComponent(activity.location)}&output=embed`}
-                            width="100%"
-                            height="200"
-                            style={{ border: '1px solid #ddd', borderRadius: '8px' }}
-                            allowFullScreen=""
-                            loading="lazy"
-                            referrerPolicy="no-referrer-when-downgrade"
-                            title="Activity Location Map"
-                          />
-                        </div>
-                      )}
-                      {isEnrolled('activity', activity._id) ? (
-                        <button className="btn btn-secondary" disabled>{t('enrolled')}</button>
-                      ) : (
+                      <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
                         <button
-                          onClick={() => handleEnroll('activity', activity._id, activity.name)}
-                          className="btn btn-primary"
-                          disabled={activity.currentParticipants >= activity.maxParticipants}
+                          onClick={() => setSelectedActivity(activity)}
+                          className="btn btn-secondary"
+                          style={{ flex: 1 }}
                         >
-                          {activity.currentParticipants >= activity.maxParticipants ? t('activityFull') : t('enroll')}
+                          {t('view_details')}
                         </button>
-                      )}
+                        {isEnrolled('activity', activity._id) ? (
+                          <button className="btn btn-secondary" disabled style={{ flex: 1 }}>{t('enrolled')}</button>
+                        ) : (
+                          <button
+                            onClick={() => handleEnroll('activity', activity._id, activity.name)}
+                            className="btn btn-primary"
+                            disabled={activity.currentParticipants >= activity.maxParticipants}
+                            style={{ flex: 1 }}
+                          >
+                            {activity.currentParticipants >= activity.maxParticipants ? t('activityFull') : t('enroll')}
+                          </button>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>

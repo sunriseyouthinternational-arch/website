@@ -141,7 +141,7 @@ module.exports = async (req, res) => {
       }
 
       if (req.method === 'POST') {
-        const { name, description, banner, date, time, location, cost, teacherId, teacher, maxParticipants, sendLineAnnouncement, ageRange } = req.body;
+        const { name, description, banner, date, time, location, cost, teacherId, teacher, maxParticipants, sendLineAnnouncement, ageRange, isVolunteeringWork } = req.body;
 
         const activity = new Activity({
           name,
@@ -154,6 +154,7 @@ module.exports = async (req, res) => {
           teacherId: teacherId || null,
           teacher,
           maxParticipants: parseInt(maxParticipants),
+          isVolunteeringWork: Boolean(isVolunteeringWork),
           ageRange: ageRange || []
         });
 
