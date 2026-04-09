@@ -309,6 +309,60 @@ function AdminDashboard() {
     reader.readAsDataURL(file);
   };
 
+  const handleEditActivityBannerUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      setMessage({
+        type: 'error',
+        text: t('image_size_must_be_less_than_2mb')
+      });
+      return;
+    }
+
+    if (!file.type.startsWith('image/')) {
+      setMessage({
+        type: 'error',
+        text: t('please_upload_an_image_file')
+      });
+      return;
+    }
+
+    const img = new Image();
+    const reader = new FileReader();
+
+    reader.onload = (event) => {
+      img.onload = () => {
+        if (img.width !== 500 || img.height !== 300) {
+          setMessage({
+            type: 'error',
+            text: t('language') === 'zh'
+              ? `圖片尺寸必須為 500x300 像素（目前為 ${img.width}x${img.height}）`
+              : `Image dimensions must be 500x300 pixels (current: ${img.width}x${img.height})`
+          });
+          return;
+        }
+
+        setEditItemData(prev => ({ ...prev, banner: event.target.result }));
+        setMessage({
+          type: 'success',
+          text: t('image_uploaded_successfully')
+        });
+      };
+      img.src = event.target.result;
+    };
+
+    reader.onerror = () => {
+      setMessage({
+        type: 'error',
+        text: t('failed_to_upload_image')
+      });
+    };
+
+    reader.readAsDataURL(file);
+  };
+
   const handleAddClassInfo = async (e) => {
     e.preventDefault();
     try {
@@ -3062,6 +3116,50 @@ function AdminDashboard() {
                       />
                       <span>{t('language') === 'zh' ? '此活動屬於志工服務' : 'This activity is volunteering work'}</span>
                     </label>
+                  </div>
+                  <div className="form-group">
+                    <label>{t('banner_image_optional')}</label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleEditActivityBannerUpload}
+                      style={{
+                        padding: '10px',
+                        border: '2px dashed #667eea',
+                        borderRadius: '8px',
+                        width: '100%',
+                        cursor: 'pointer'
+                      }}
+                    />
+                    <small style={{ color: '#666', display: 'block', marginTop: '5px' }}>
+                      {t('upload_image_max_2mb_dimensions_must_be_500x300px')}
+                    </small>
+                    {editItemData.banner && (
+                      <div style={{ marginTop: '15px' }}>
+                        <p style={{ fontWeight: 'bold', marginBottom: '10px' }}>
+                          {t('preview')}
+                        </p>
+                        <img
+                          src={editItemData.banner}
+                          alt={t('bannerPreview')}
+                          style={{
+                            width: '100%',
+                            maxHeight: '200px',
+                            objectFit: 'cover',
+                            borderRadius: '8px',
+                            border: '2px solid #e0e0e0'
+                          }}
+                        />
+                        <button
+                          type="button"
+                          className="btn btn-secondary btn-small"
+                          onClick={() => setEditItemData({ ...editItemData, banner: '' })}
+                          style={{ marginTop: '10px' }}
+                        >
+                          {t('remove_image')}
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </>
               )}
