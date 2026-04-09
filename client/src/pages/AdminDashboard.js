@@ -3045,6 +3045,60 @@ function AdminDashboard() {
                       Hold Ctrl/Cmd to select multiple
                     </small>
                   </div>
+                  <div className="form-group">
+                    <label>{t('banner_image_optional')}</label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleEditActivityBannerUpload}
+                      style={{
+                        padding: '10px',
+                        border: '2px dashed #667eea',
+                        borderRadius: '8px',
+                        width: '100%',
+                        cursor: 'pointer'
+                      }}
+                    />
+                    <small style={{ color: '#666', display: 'block', marginTop: '5px' }}>
+                      {t('upload_image_max_2mb_dimensions_must_be_500x300px')}
+                    </small>
+                    {editItemData.banner && (
+                      <div style={{ marginTop: '15px' }}>
+                        <p style={{ fontWeight: 'bold', marginBottom: '10px' }}>
+                          {t('preview')}
+                        </p>
+                        <img
+                          src={editItemData.banner}
+                          alt={t('bannerPreview')}
+                          style={{
+                            width: '100%',
+                            maxHeight: '200px',
+                            objectFit: 'cover',
+                            borderRadius: '8px',
+                            border: '2px solid #e0e0e0'
+                          }}
+                        />
+                        <button
+                          type="button"
+                          className="btn btn-secondary btn-small"
+                          onClick={() => setEditItemData({ ...editItemData, banner: '' })}
+                          style={{ marginTop: '10px' }}
+                        >
+                          {t('remove_image')}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  <div className="form-group">
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+                      <input
+                        type="checkbox"
+                        checked={editItemData.isVolunteeringWork || false}
+                        onChange={(e) => setEditItemData({ ...editItemData, isVolunteeringWork: e.target.checked })}
+                      />
+                      <span>{t('language') === 'zh' ? '此活動屬於志工服務' : 'This activity is volunteering work'}</span>
+                    </label>
+                  </div>
                 </>
               ) : (
                 <>
@@ -3106,60 +3160,6 @@ function AdminDashboard() {
                     <small style={{ color: '#666', marginTop: '5px', display: 'block' }}>
                       Hold Ctrl/Cmd to select multiple
                     </small>
-                  </div>
-                  <div className="form-group">
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
-                      <input
-                        type="checkbox"
-                        checked={editItemData.isVolunteeringWork || false}
-                        onChange={(e) => setEditItemData({ ...editItemData, isVolunteeringWork: e.target.checked })}
-                      />
-                      <span>{t('language') === 'zh' ? '此活動屬於志工服務' : 'This activity is volunteering work'}</span>
-                    </label>
-                  </div>
-                  <div className="form-group">
-                    <label>{t('banner_image_optional')}</label>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleEditActivityBannerUpload}
-                      style={{
-                        padding: '10px',
-                        border: '2px dashed #667eea',
-                        borderRadius: '8px',
-                        width: '100%',
-                        cursor: 'pointer'
-                      }}
-                    />
-                    <small style={{ color: '#666', display: 'block', marginTop: '5px' }}>
-                      {t('upload_image_max_2mb_dimensions_must_be_500x300px')}
-                    </small>
-                    {editItemData.banner && (
-                      <div style={{ marginTop: '15px' }}>
-                        <p style={{ fontWeight: 'bold', marginBottom: '10px' }}>
-                          {t('preview')}
-                        </p>
-                        <img
-                          src={editItemData.banner}
-                          alt={t('bannerPreview')}
-                          style={{
-                            width: '100%',
-                            maxHeight: '200px',
-                            objectFit: 'cover',
-                            borderRadius: '8px',
-                            border: '2px solid #e0e0e0'
-                          }}
-                        />
-                        <button
-                          type="button"
-                          className="btn btn-secondary btn-small"
-                          onClick={() => setEditItemData({ ...editItemData, banner: '' })}
-                          style={{ marginTop: '10px' }}
-                        >
-                          {t('remove_image')}
-                        </button>
-                      </div>
-                    )}
                   </div>
                 </>
               )}

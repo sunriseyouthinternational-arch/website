@@ -2192,18 +2192,10 @@ function Profile() {
 
               {selectedActivity.banner && (
                 <img
-                  src={getImageSrc(selectedActivity.banner)}
+                  src={selectedActivity.banner}
                   alt={selectedActivity.name}
                   loading="lazy"
                   decoding="async"
-                  onError={(e) => {
-                    if (e.currentTarget.dataset.fallbackApplied === 'true') {
-                      e.currentTarget.style.display = 'none';
-                      return;
-                    }
-                    e.currentTarget.dataset.fallbackApplied = 'true';
-                    e.currentTarget.src = selectedActivity.banner;
-                  }}
                   style={{
                     width: '100%',
                     aspectRatio: '16 / 9',
@@ -2451,18 +2443,10 @@ function Profile() {
                       )}
                       {activity.banner && (
                         <img
-                          src={getImageSrc(activity.banner)}
+                          src={activity.banner}
                           alt={activity.name}
                           loading="lazy"
                           decoding="async"
-                          onError={(e) => {
-                            if (e.currentTarget.dataset.fallbackApplied === 'true') {
-                              e.currentTarget.style.display = 'none';
-                              return;
-                            }
-                            e.currentTarget.dataset.fallbackApplied = 'true';
-                            e.currentTarget.src = activity.banner;
-                          }}
                           style={{
                             width: '100%',
                             aspectRatio: '16 / 9',
