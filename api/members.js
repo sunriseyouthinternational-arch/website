@@ -7,6 +7,11 @@ const googleSheets = require('../lib/googleSheets');
 module.exports = async (req, res) => {
   const { memberId, lineUserId, token, sessionToken, action, couponId } = req.query;
 
+  const normalizeContact = (contact = {}) => ({
+    mobile: contact.mobile || '',
+    lineId: contact.lineId || ''
+  });
+
   try {
     await connectDB();
 
@@ -178,7 +183,7 @@ module.exports = async (req, res) => {
       member.gender = gender;
       member.birthDate = birthDate;
       member.familyMembers = familyMembers || [];
-      member.contact = contact;
+      member.contact = normalizeContact(contact);
       member.referralCode = generatedCode;
       member.registrationCompleted = true;
 
@@ -563,7 +568,7 @@ module.exports = async (req, res) => {
       if (gender) member.gender = gender;
       if (birthDate) member.birthDate = birthDate;
       if (familyMembers !== undefined) member.familyMembers = familyMembers;
-      if (contact) member.contact = { ...member.contact, ...contact };
+      if (contact) member.contact = normalizeContact(contact);
 
       await member.save();
 

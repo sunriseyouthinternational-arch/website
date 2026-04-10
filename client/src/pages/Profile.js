@@ -43,7 +43,7 @@ function Profile() {
     gender: '男',
     birthDate: '',
     familyMembers: [],
-    contact: { phone: '', mobile: '', lineId: '' }
+    contact: { mobile: '', lineId: '' }
   });
 
   const [showCheckout, setShowCheckout] = useState(false);
@@ -102,7 +102,7 @@ function Profile() {
     gender: '男',
     birthDate: '',
     familyMembers: [],
-    contact: { phone: '', mobile: '', lineId: '' },
+    contact: { mobile: '', lineId: '' },
     referralCode: ''
   });
   const [submittingRegistration, setSubmittingRegistration] = useState(false);
@@ -794,7 +794,6 @@ function Profile() {
       birthDate: member.birthDate ? member.birthDate.split('T')[0] : '',
       familyMembers: member.familyMembers || [],
       contact: {
-        phone: member.contact?.phone || '',
         mobile: member.contact?.mobile || '',
         lineId: member.contact?.lineId || ''
       }
@@ -1411,7 +1410,6 @@ function Profile() {
                   <div className="contact-info">
                     <h3>{t('contact_information')}</h3>
                     <p><strong>{t('mobile')}</strong> {member.contact?.mobile}</p>
-                    {member.contact?.phone && <p><strong>{t('phone')}</strong> {member.contact.phone}</p>}
                     {member.contact?.lineId && <p><strong>{t('lineId')}</strong> {member.contact.lineId}</p>}
                   </div>
 
@@ -1547,16 +1545,6 @@ function Profile() {
                       value={editFormData.contact.mobile}
                       onChange={handleEditChange}
                       required
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label>{t('phone')}</label>
-                    <input
-                      type="tel"
-                      name="contact.phone"
-                      value={editFormData.contact.phone}
-                      onChange={handleEditChange}
                     />
                   </div>
 

@@ -15,14 +15,14 @@ module.exports = async (req, res) => {
       }
 
       if (req.method === 'POST') {
-        const { name, bio, specialties, education, phone, lineId, photo } = req.body;
+        const { name, bio, specialties, education, mobile, lineId, photo } = req.body;
 
         const teacher = new Teacher({
           name,
           bio: bio || '',
           specialties: specialties || '',
           education: education || '',
-          phone: phone || '',
+          mobile: mobile || '',
           lineId: lineId || '',
           photo: photo || ''
         });

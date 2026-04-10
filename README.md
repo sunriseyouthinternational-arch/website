@@ -95,8 +95,6 @@ This project is optimized for Vercel serverless deployment!
    MONGODB_URI=mongodb://localhost:27017/sunrise-youth
    JWT_SECRET=sunrise_youth_secret_key_2024_change_in_production
    NODE_ENV=development
-   ADMIN_USERNAME=admin
-   ADMIN_PASSWORD=admin123
    ```
 
    **重要 / Important**: 生產環境請更改 JWT_SECRET 和管理員密碼！

@@ -8,12 +8,6 @@ Your MongoDB Atlas connection string.
 mongodb+srv://username:password@cluster.mongodb.net/database?retryWrites=true&w=majority
 ```
 
-### ADMIN_USERNAME (optional)
-Default admin username. Defaults to `admin` if not set.
-
-### ADMIN_PASSWORD (optional)
-Default admin password. Defaults to `admin123` if not set.
-
 ### JWT_SECRET (optional)
 Secret key for JWT token generation. Defaults to `default_secret` if not set.
 **Important**: Set a secure random string in production!
