@@ -36,7 +36,6 @@ const memberSchema = new mongoose.Schema({
     birthDate: { type: Date, required: true }
   }],
   contact: {
-    phone: { type: String },
     mobile: { type: String },
     lineId: { type: String }
   },
