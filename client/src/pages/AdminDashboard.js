@@ -910,7 +910,16 @@ function AdminDashboard() {
     try {
       // Check if changing to completed and if there are unpaid participants
       if (status === 'completed' && selectedItem && selectedItem._id === itemId) {
-        const hasUnpaid = selectedItem.participants?.some(p => !p.paid);
+        const itemCost = type === 'class'
+          ? selectedItem.classInfoId?.cost || 0
+          : selectedItem.cost || 0;
+        const hasUnpaid = selectedItem.participants?.some((participant) => {
+          const couponDiscount = participant.couponDiscount || 0;
+          const pointsDiscount = participant.pointsDiscount || 0;
+          const finalCost = Math.max(0, itemCost - couponDiscount - pointsDiscount);
+
+          return finalCost > 0 && !participant.paid;
+        });
         if (hasUnpaid) {
           setMessage({
             type: 'error',
