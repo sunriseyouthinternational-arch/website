@@ -53,7 +53,6 @@ const memberSchema = new mongoose.Schema({
   referralCode: { type: String, unique: true, sparse: true }, // This member's unique referral code
   referredBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Member' }, // Member who referred this person
   points: { type: Number, default: 0 }, // Membership points for gift redemption
-  profilePicture: { type: String, default: '' },
   qrCode: { type: String },
   enrollments: [{
     type: { type: String, enum: ['class', 'activity'], required: true },
