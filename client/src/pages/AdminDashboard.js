@@ -3471,7 +3471,7 @@ function AdminDashboard() {
                   />
                 </div>
                 <div className="form-group">
-                  <label>LINE ID</label>
+                  <label>{t('lineId')}</label>
                   <input
                     type="text"
                     value={newTeacher.lineId}
@@ -3738,7 +3738,7 @@ function AdminDashboard() {
                 )}
               </div>
               <div className="detail-row">
-                <strong>LINE ID:</strong>
+                <strong>{t('lineId')}:</strong>
                 {editingTeacher ? (
                   <input
                     type="text"
