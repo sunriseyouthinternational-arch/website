@@ -79,7 +79,7 @@ function AdminDashboard() {
     bio: '',
     specialties: '',
     education: '',
-    phone: '',
+    mobile: '',
     lineId: '',
     photo: ''
   });
@@ -715,7 +715,7 @@ function AdminDashboard() {
         bio: '',
         specialties: '',
         education: '',
-        phone: '',
+        mobile: '',
         lineId: '',
         photo: ''
       });
@@ -3463,11 +3463,11 @@ function AdminDashboard() {
 
               <div className="form-row">
                 <div className="form-group">
-                  <label>{t('phone')}</label>
+                  <label>{t('mobile')}</label>
                   <input
                     type="tel"
-                    value={newTeacher.phone}
-                    onChange={(e) => setNewTeacher({ ...newTeacher, phone: e.target.value })}
+                    value={newTeacher.mobile}
+                    onChange={(e) => setNewTeacher({ ...newTeacher, mobile: e.target.value })}
                   />
                 </div>
                 <div className="form-group">
@@ -3583,7 +3583,7 @@ function AdminDashboard() {
                       bio: selectedTeacher.bio || '',
                       specialties: selectedTeacher.specialties || '',
                       education: selectedTeacher.education || '',
-                      phone: selectedTeacher.phone || '',
+                      mobile: selectedTeacher.mobile || selectedTeacher.phone || '',
                       lineId: selectedTeacher.lineId || ''
                     });
                   }}
@@ -3725,16 +3725,16 @@ function AdminDashboard() {
             <div className="detail-section">
               <h4>{t('contact_information')}</h4>
               <div className="detail-row">
-                <strong>{t('phone')}:</strong>
+                <strong>{t('mobile')}:</strong>
                 {editingTeacher ? (
                   <input
                     type="text"
-                    value={editTeacherData.phone}
-                    onChange={(e) => setEditTeacherData({ ...editTeacherData, phone: e.target.value })}
+                    value={editTeacherData.mobile}
+                    onChange={(e) => setEditTeacherData({ ...editTeacherData, mobile: e.target.value })}
                     style={{ padding: '5px', border: '1px solid #ddd', borderRadius: '4px', width: '100%' }}
                   />
                 ) : (
-                  <span>{selectedTeacher.phone || 'N/A'}</span>
+                  <span>{selectedTeacher.mobile || selectedTeacher.phone || 'N/A'}</span>
                 )}
               </div>
               <div className="detail-row">

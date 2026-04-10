@@ -157,7 +157,7 @@ const teacherSchema = new mongoose.Schema({
   bio: { type: String },
   specialties: { type: String },
   education: { type: String },
-  phone: { type: String },
+  mobile: { type: String },
   lineId: { type: String },
   photo: { type: String },
   status: { type: String, enum: ['active', 'inactive'], default: 'active' },
