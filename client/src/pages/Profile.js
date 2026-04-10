@@ -168,6 +168,13 @@ function Profile() {
     };
   };
 
+  const attendanceProgress = member?.attendanceProgress || {
+    completedCount: 0,
+    targetCount: 12,
+    remainingCount: 12,
+    windowDays: 90
+  };
+
 
   // eslint-disable-next-line no-unused-vars
   const validateAndSaveSession = async (sessionToken, id) => {
@@ -1448,6 +1455,108 @@ function Profile() {
                     <h3>{t('contact_information')}</h3>
                     <p><strong>{t('mobile')}</strong> {member.contact?.mobile}</p>
                     {member.contact?.lineId && <p><strong>{t('lineId')}</strong> {member.contact.lineId}</p>}
+                  </div>
+
+                  <div style={{
+                    background: '#f8f9ff',
+                    border: '2px solid #dbe4ff',
+                    borderRadius: '12px',
+                    padding: '20px',
+                    marginTop: '20px'
+                  }}>
+                    <h3 style={{ marginBottom: '16px', color: '#495057' }}>
+                      {t('rewards_and_referrals')}
+                    </h3>
+                    <div style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+                      gap: '14px',
+                      marginBottom: '18px'
+                    }}>
+                      <div style={{ background: '#fff', borderRadius: '10px', padding: '14px' }}>
+                        <p style={{ fontSize: '13px', color: '#666', marginBottom: '6px' }}>{t('yourReferralCode')}</p>
+                        <p style={{ fontSize: '20px', fontWeight: 'bold', color: '#667eea', margin: 0 }}>
+                          {member.referralCode || 'N/A'}
+                        </p>
+                      </div>
+                      <div style={{ background: '#fff', borderRadius: '10px', padding: '14px' }}>
+                        <p style={{ fontSize: '13px', color: '#666', marginBottom: '6px' }}>{t('people_referred')}</p>
+                        <p style={{ fontSize: '20px', fontWeight: 'bold', color: '#667eea', margin: 0 }}>
+                          {member.referralCount || 0}
+                        </p>
+                      </div>
+                      <div style={{ background: '#fff', borderRadius: '10px', padding: '14px' }}>
+                        <p style={{ fontSize: '13px', color: '#666', marginBottom: '6px' }}>{t('points')}</p>
+                        <p style={{ fontSize: '20px', fontWeight: 'bold', color: '#667eea', margin: 0 }}>
+                          {member.points || 0}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div style={{ background: '#fff', borderRadius: '10px', padding: '16px', marginBottom: '16px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap', marginBottom: '10px' }}>
+                        <strong style={{ color: '#495057' }}>{t('attendance_progress')}</strong>
+                        <span style={{ color: '#667eea', fontWeight: 'bold' }}>
+                          {attendanceProgress.completedCount}/{attendanceProgress.targetCount}
+                        </span>
+                      </div>
+                      <div style={{ height: '10px', background: '#e9ecef', borderRadius: '999px', overflow: 'hidden', marginBottom: '10px' }}>
+                        <div
+                          style={{
+                            width: `${Math.min(100, (attendanceProgress.completedCount / attendanceProgress.targetCount) * 100)}%`,
+                            height: '100%',
+                            background: 'linear-gradient(90deg, #4c6ef5 0%, #74c0fc 100%)'
+                          }}
+                        />
+                      </div>
+                      <p style={{ margin: 0, color: '#666', fontSize: '14px' }}>
+                        {attendanceProgress.remainingCount > 0
+                          ? `${t('classes_until_next_reward')}: ${attendanceProgress.remainingCount}`
+                          : t('attendance_reward_ready')}
+                      </p>
+                      <p style={{ margin: '6px 0 0', color: '#868e96', fontSize: '13px' }}>
+                        {t('language') === 'zh'
+                          ? `統計最近 ${attendanceProgress.windowDays} 天內已完成課程`
+                          : `Tracks completed classes in the last ${attendanceProgress.windowDays} days`}
+                      </p>
+                    </div>
+
+                    <div style={{ background: '#fff', borderRadius: '10px', padding: '16px' }}>
+                      <h4 style={{ marginBottom: '12px', color: '#495057' }}>{t('volunteering_history')}</h4>
+                      {member.volunteeringHistory && member.volunteeringHistory.length > 0 ? (
+                        <div style={{ display: 'grid', gap: '10px' }}>
+                          {member.volunteeringHistory.map((activity) => (
+                            <div
+                              key={`${activity.itemId}-${activity.completedAt || activity.date}`}
+                              style={{
+                                border: '1px solid #e9ecef',
+                                borderRadius: '8px',
+                                padding: '12px 14px',
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                gap: '12px',
+                                flexWrap: 'wrap'
+                              }}
+                            >
+                              <div>
+                                <div style={{ fontWeight: 'bold', color: '#333' }}>{activity.itemName}</div>
+                                {activity.location && (
+                                  <div style={{ fontSize: '13px', color: '#666', marginTop: '4px' }}>
+                                    {activity.location}
+                                  </div>
+                                )}
+                              </div>
+                              <div style={{ fontSize: '13px', color: '#666', textAlign: 'right' }}>
+                                <div>{formatDate(activity.date || activity.completedAt)}</div>
+                                {activity.time && <div style={{ marginTop: '4px' }}>{activity.time}</div>}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p style={{ margin: 0, color: '#868e96' }}>{t('no_volunteering_history')}</p>
+                      )}
+                    </div>
                   </div>
 
                   <div className="membership-status" style={{
