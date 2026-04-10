@@ -1999,12 +1999,12 @@ function Profile() {
                 ← {t('back')}
               </button>
 
-              <h2>{selectedClass.classInfoId?.name || t('noData')}</h2>
+              <h2>{selectedClass.name || selectedClass.classInfoId?.name || t('noData')}</h2>
 
               {selectedClass.classInfoId?.banner && (
                 <img
                   src={getImageSrc(selectedClass.classInfoId.banner)}
-                  alt={selectedClass.classInfoId?.name}
+                  alt={selectedClass.name || selectedClass.classInfoId?.name}
                   loading="lazy"
                   decoding="async"
                   style={{
@@ -2020,7 +2020,7 @@ function Profile() {
               )}
 
               <p style={{ fontSize: '18px', lineHeight: '1.6', marginBottom: '20px', color: '#666' }}>
-                {selectedClass.classInfoId?.description || ''}
+                {selectedClass.description || selectedClass.classInfoId?.description || ''}
               </p>              <div style={{
                 display: 'grid',
                 gridTemplateColumns: selectedClass.teacherId ? '1.5fr 1fr' : '1fr',
@@ -2208,7 +2208,7 @@ function Profile() {
                 ) : (
                   <button
                     onClick={() => {
-                      handleEnroll('class', selectedClass._id, selectedClass.classInfoId?.name);
+                      handleEnroll('class', selectedClass._id, selectedClass.name || selectedClass.classInfoId?.name);
                       setSelectedClass(null);
                     }}
                     className="btn btn-primary"
@@ -2325,11 +2325,11 @@ function Profile() {
                 <div className="grid">
                   {getFilteredClasses().map((classItem) => (
                     <div key={classItem._id} className="item-card">
-                      <h4>{classItem.classInfoId?.name || t('noData')}</h4>
+                      <h4>{classItem.name || classItem.classInfoId?.name || t('noData')}</h4>
                       {classItem.classInfoId?.banner && (
                         <img
                           src={getImageSrc(classItem.classInfoId.banner)}
-                          alt={classItem.classInfoId?.name}
+                          alt={classItem.name || classItem.classInfoId?.name}
                           loading="lazy"
                           decoding="async"
                           style={{
@@ -2342,7 +2342,7 @@ function Profile() {
                           }}
                         />
                       )}
-                      <p className="item-description">{classItem.classInfoId?.description || ''}</p>
+                      <p className="item-description">{classItem.description || classItem.classInfoId?.description || ''}</p>
                       <div className="item-details">
                         <p><strong>{t('classDate')}</strong> {formatDate(classItem.date)}</p>
                         <p><strong>{t('host')}</strong> {classItem.teacher}</p>
@@ -2363,7 +2363,7 @@ function Profile() {
                           <button className="btn btn-secondary" disabled style={{ flex: 1 }}>{t('enrolled')}</button>
                         ) : (
                           <button
-                            onClick={() => handleEnroll('class', classItem._id, classItem.classInfoId?.name)}
+                            onClick={() => handleEnroll('class', classItem._id, classItem.name || classItem.classInfoId?.name)}
                             className="btn btn-primary"
                             disabled={classItem.currentParticipants >= (classItem.classInfoId?.maxParticipants || 0)}
                             style={{ flex: 1 }}

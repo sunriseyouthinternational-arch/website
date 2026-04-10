@@ -139,7 +139,7 @@ module.exports = async (req, res) => {
       upsertEnrollment(member, {
         type: 'class',
         itemId: classItem._id,
-        itemName: classItem.classInfoId.name,
+        itemName: classItem.name || classItem.classInfoId.name,
         paid: false,
         paymentMethod: paymentMethod || 'in-person',
         couponDiscount: couponDiscountTotal,
@@ -195,10 +195,13 @@ module.exports = async (req, res) => {
           return res.status(404).json({ message: '找不到課程資訊 / Class info not found' });
         }
 
+        const className = name || classInfo.name;
+        const classDescription = description || classInfo.description;
+
         const classItem = new Class({
           classInfoId,
-          name: name || classInfo.name,
-          description: description || classInfo.description,
+          name: className,
+          description: classDescription,
           teacherId: teacherId || null,
           teacher,
           time,
@@ -213,12 +216,12 @@ module.exports = async (req, res) => {
           try {
             const axios = require('axios');
 
-            console.log('Sending LINE broadcast for class:', classInfo.name);
+            console.log('Sending LINE broadcast for class:', className);
             console.log('LINE_CHANNEL_ACCESS_TOKEN exists:', !!process.env.LINE_CHANNEL_ACCESS_TOKEN);
 
             const flexMessage = {
               type: 'flex',
-              altText: `📢 新課程通知：${classInfo.name}`,
+              altText: `📢 新課程通知：${className}`,
               contents: {
                 type: 'bubble',
                 hero: {
@@ -241,7 +244,7 @@ module.exports = async (req, res) => {
                     },
                     {
                       type: 'text',
-                      text: classInfo.name,
+                      text: className,
                       weight: 'bold',
                       size: 'xl',
                       wrap: true,
@@ -369,28 +372,16 @@ module.exports = async (req, res) => {
           return res.status(404).json({ message: '找不到課程 / Class not found' });
         }
 
-        // Update Class fields (date, time, location, teacher, teacherId)
+        // Update hosted class fields only. Shared template fields belong in ClassInfo management.
         const classUpdates = {};
+        if (req.body.name !== undefined) classUpdates.name = req.body.name;
+        if (req.body.description !== undefined) classUpdates.description = req.body.description;
         if (req.body.date !== undefined) classUpdates.date = req.body.date;
         if (req.body.time !== undefined) classUpdates.time = req.body.time;
         if (req.body.location !== undefined) classUpdates.location = req.body.location;
         if (req.body.teacher !== undefined) classUpdates.teacher = req.body.teacher;
         if (req.body.teacherId !== undefined) classUpdates.teacherId = req.body.teacherId;
         if (req.body.status !== undefined) classUpdates.status = req.body.status;
-
-        // Update ClassInfo fields (name, description, cost, maxParticipants, banner, ageRange)
-        const classInfoUpdates = {};
-        if (req.body.name !== undefined) classInfoUpdates.name = req.body.name;
-        if (req.body.description !== undefined) classInfoUpdates.description = req.body.description;
-        if (req.body.cost !== undefined) classInfoUpdates.cost = req.body.cost;
-        if (req.body.maxParticipants !== undefined) classInfoUpdates.maxParticipants = req.body.maxParticipants;
-        if (req.body.banner !== undefined) classInfoUpdates.banner = req.body.banner;
-        if (req.body.ageRange !== undefined) classInfoUpdates.ageRange = req.body.ageRange;
-
-        // Update ClassInfo if there are changes
-        if (Object.keys(classInfoUpdates).length > 0) {
-          await ClassInfo.findByIdAndUpdate(classItem.classInfoId._id, classInfoUpdates);
-        }
 
         // Update Class
         const updatedClass = await Class.findByIdAndUpdate(id, classUpdates, { new: true });

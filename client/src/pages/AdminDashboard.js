@@ -954,7 +954,19 @@ function AdminDashboard() {
     e.preventDefault();
     try {
       const endpoint = selectedItem.type === 'class' ? '/api/classes' : '/api/activities';
-      await axios.put(`${endpoint}?id=${selectedItem._id}`, editItemData);
+      const payload = selectedItem.type === 'class'
+        ? {
+            name: editItemData.name,
+            description: editItemData.description,
+            date: editItemData.date,
+            time: editItemData.time,
+            location: editItemData.location,
+            teacher: editItemData.teacher,
+            teacherId: editItemData.teacherId
+          }
+        : editItemData;
+
+      await axios.put(`${endpoint}?id=${selectedItem._id}`, payload);
 
       setMessage({
         type: 'success',
@@ -2544,10 +2556,10 @@ function AdminDashboard() {
                 .map(classItem => (
                 <div key={classItem._id} className="item-summary-card">
                   {classItem.classInfoId?.banner && (
-                    <img src={classItem.classInfoId.banner} alt={classItem.classInfoId?.name} className="item-summary-banner" />
+                    <img src={classItem.classInfoId.banner} alt={classItem.name || classItem.classInfoId?.name} className="item-summary-banner" />
                   )}
                   <div className="item-summary-content">
-                    <h5>{classItem.classInfoId?.name || 'N/A'}</h5>
+                    <h5>{classItem.name || classItem.classInfoId?.name || 'N/A'}</h5>
                     <p className="item-summary-meta">
                       {formatDate(classItem.date)} | {classItem.time} | {t('host')}: {classItem.teacher}
                     </p>
@@ -2926,7 +2938,7 @@ function AdminDashboard() {
               ← {t('back_to_list')}
             </button>
             <h3>
-              {selectedItem.type === 'class' ? t('classes') : t('activities')} - {selectedItem.type === 'class' ? selectedItem.classInfoId?.name : selectedItem.name}
+              {selectedItem.type === 'class' ? t('classes') : t('activities')} - {selectedItem.type === 'class' ? (selectedItem.name || selectedItem.classInfoId?.name) : selectedItem.name}
             </h3>
             <div style={{ display: 'flex', gap: '10px', marginLeft: 'auto' }}>
               <button
@@ -2940,12 +2952,12 @@ function AdminDashboard() {
                       location: selectedItem.location || '',
                       teacher: selectedItem.teacher || '',
                       teacherId: selectedItem.teacherId || [],
-                      name: selectedItem.name || '',
-                      description: selectedItem.description || '',
-                      cost: selectedItem.type === 'class' ? selectedItem.classInfoId?.cost : selectedItem.cost || '',
-                      maxParticipants: selectedItem.type === 'class' ? selectedItem.classInfoId?.maxParticipants : selectedItem.maxParticipants || '',
-                      banner: selectedItem.type === 'class' ? selectedItem.classInfoId?.banner : selectedItem.banner || '',
-                      ageRange: selectedItem.type === 'class' ? selectedItem.classInfoId?.ageRange || [] : selectedItem.ageRange || []
+                      name: selectedItem.name || selectedItem.classInfoId?.name || '',
+                      description: selectedItem.description || selectedItem.classInfoId?.description || '',
+                      cost: selectedItem.type === 'class' ? '' : selectedItem.cost || '',
+                      maxParticipants: selectedItem.type === 'class' ? '' : selectedItem.maxParticipants || '',
+                      banner: selectedItem.type === 'class' ? '' : selectedItem.banner || '',
+                      ageRange: selectedItem.type === 'class' ? [] : selectedItem.ageRange || []
                     });
                   }
                 }}
@@ -3099,47 +3111,6 @@ function AdminDashboard() {
                       rows="3"
                     />
                   </div>
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label>{t('cost')} (NT$) *</label>
-                      <input
-                        type="number"
-                        value={editItemData.cost}
-                        onChange={(e) => setEditItemData({ ...editItemData, cost: e.target.value })}
-                        required
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label>{t('maxParticipants')} *</label>
-                      <input
-                        type="number"
-                        value={editItemData.maxParticipants}
-                        onChange={(e) => setEditItemData({ ...editItemData, maxParticipants: e.target.value })}
-                        required
-                      />
-                    </div>
-                  </div>
-                  <div className="form-group">
-                    <label>{t('recommendedAge')}</label>
-                    <select
-                      multiple
-                      value={editItemData.ageRange}
-                      onChange={(e) => {
-                        const selected = Array.from(e.target.selectedOptions, option => option.value);
-                        setEditItemData({ ...editItemData, ageRange: selected });
-                      }}
-                      style={{ minHeight: '120px' }}
-                    >
-                      <option value="all">{t('all')}</option>
-                      <option value="children">{t('children')}</option>
-                      <option value="teen">{t('teen')}</option>
-                      <option value="adult">{t('adult')}</option>
-                      <option value="elderly">{t('elderly')}</option>
-                    </select>
-                    <small style={{ color: '#666', marginTop: '5px', display: 'block' }}>
-                      Hold Ctrl/Cmd to select multiple
-                    </small>
-                  </div>
                 </>
               )}
               <div className="form-group">
@@ -3196,7 +3167,7 @@ function AdminDashboard() {
               {((selectedItem.type === 'class' && selectedItem.classInfoId?.banner) || (selectedItem.type === 'activity' && selectedItem.banner)) && (
             <img
               src={selectedItem.type === 'class' ? selectedItem.classInfoId.banner : selectedItem.banner}
-              alt={selectedItem.type === 'class' ? selectedItem.classInfoId?.name : selectedItem.name}
+              alt={selectedItem.type === 'class' ? (selectedItem.name || selectedItem.classInfoId?.name) : selectedItem.name}
               style={{
                 width: '100%',
                 maxHeight: '300px',
@@ -3212,11 +3183,11 @@ function AdminDashboard() {
               <h4>{t('basic_information')}</h4>
               <div className="detail-row">
                 <strong>{t('name')}</strong>
-                <span>{selectedItem.type === 'class' ? selectedItem.classInfoId?.name : selectedItem.name}</span>
+                <span>{selectedItem.type === 'class' ? (selectedItem.name || selectedItem.classInfoId?.name) : selectedItem.name}</span>
               </div>
               <div className="detail-row">
                 <strong>{t('description')}</strong>
-                <span>{selectedItem.type === 'class' ? selectedItem.classInfoId?.description : selectedItem.description}</span>
+                <span>{selectedItem.type === 'class' ? (selectedItem.description || selectedItem.classInfoId?.description) : selectedItem.description}</span>
               </div>
               {selectedItem.date && selectedItem.type === 'class' && (
                 <div className="detail-row">
