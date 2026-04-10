@@ -3,6 +3,42 @@ const { Member, CouponShareToken, CouponForSale } = require('../db/models');
 const line = require('@line/bot-sdk');
 const crypto = require('crypto');
 const googleSheets = require('../lib/googleSheets');
+const {
+  REFERRAL_REGISTRATION_POINTS,
+  REGISTRATION_POINTS,
+  awardPoints
+} = require('../lib/memberRewards');
+
+async function awardRegistrationBonuses(member) {
+  awardPoints(member, {
+    key: `registration:${member._id.toString()}`,
+    type: 'registration_bonus',
+    points: REGISTRATION_POINTS,
+    description: '完成首次註冊獎勵 / First-time registration bonus'
+  });
+
+  if (!member.referredBy) {
+    return;
+  }
+
+  const referrer = await Member.findById(member.referredBy);
+  if (!referrer) {
+    return;
+  }
+
+  const referrerAwarded = awardPoints(referrer, {
+    key: `referral-registration:${member._id.toString()}`,
+    type: 'referral_registration_bonus',
+    points: REFERRAL_REGISTRATION_POINTS,
+    itemId: member._id,
+    relatedMemberId: member._id,
+    description: `推薦會員 ${member.memberId} 完成註冊 / Referral registration bonus for ${member.memberId}`
+  });
+
+  if (referrerAwarded) {
+    await referrer.save();
+  }
+}
 
 module.exports = async (req, res) => {
   const { memberId, lineUserId, token, sessionToken, action, couponId } = req.query;
@@ -248,6 +284,8 @@ module.exports = async (req, res) => {
       }
 
       await member.save();
+      await awardRegistrationBonuses(member);
+      await member.save();
 
       console.log('[API /register] Registration completed for member:', member.memberId);
       console.log('[API /register] Member referredBy:', member.referredBy);
@@ -407,6 +445,8 @@ module.exports = async (req, res) => {
       member.registrationToken = undefined;
       member.registrationTokenExpires = undefined;
 
+      await member.save();
+      await awardRegistrationBonuses(member);
       await member.save();
 
       // Sync to Google Sheets

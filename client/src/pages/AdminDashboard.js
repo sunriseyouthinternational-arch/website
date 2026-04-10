@@ -3310,7 +3310,8 @@ function AdminDashboard() {
                         ? selectedItem.classInfoId?.cost || 0
                         : selectedItem.cost || 0;
                       const couponDiscount = participant.couponDiscount || 0;
-                      const finalCost = Math.max(0, itemCost - couponDiscount);
+                      const pointsDiscount = participant.pointsDiscount || 0;
+                      const finalCost = Math.max(0, itemCost - couponDiscount - pointsDiscount);
 
                       return (
                       <tr key={participant._id}>
@@ -3348,7 +3349,7 @@ function AdminDashboard() {
                           </select>
                         </td>
                         <td>
-                          {couponDiscount > 0 ? (
+                          {couponDiscount > 0 || pointsDiscount > 0 ? (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                               <span style={{ textDecoration: 'line-through', color: '#999', fontSize: '12px' }}>
                                 NT$ {itemCost}
@@ -3356,14 +3357,17 @@ function AdminDashboard() {
                               <span style={{ color: finalCost === 0 ? '#2b8a3e' : '#667eea', fontWeight: 'bold' }}>
                                 NT$ {finalCost}
                               </span>
+                              <span style={{ color: '#666', fontSize: '12px' }}>
+                                -NT$ {couponDiscount + pointsDiscount}
+                              </span>
                             </div>
                           ) : (
                             <span>NT$ {itemCost}</span>
                           )}
                         </td>
                         <td>
-                          <span className={`status-badge ${itemCost === 0 ? 'paid' : (participant.paid ? 'paid' : 'unpaid')}`}>
-                            {itemCost === 0 ? t('free') : (participant.paid ? t('paid') : t('unpaid'))}
+                          <span className={`status-badge ${finalCost === 0 ? 'paid' : (participant.paid ? 'paid' : 'unpaid')}`}>
+                            {finalCost === 0 ? t('free') : (participant.paid ? t('paid') : t('unpaid'))}
                           </span>
                         </td>
                         <td>

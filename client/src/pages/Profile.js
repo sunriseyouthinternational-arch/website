@@ -50,6 +50,7 @@ function Profile() {
   const [checkoutData, setCheckoutData] = useState(null);
   const [selectedFamilyMembers, setSelectedFamilyMembers] = useState([]);
   const [familyMemberCoupons, setFamilyMemberCoupons] = useState({});
+  const [useAvailablePoints, setUseAvailablePoints] = useState(false);
 
   const [showShareModal, setShowShareModal] = useState(false);
   const [shareCoupon, setShareCoupon] = useState(null);
@@ -119,6 +120,52 @@ function Profile() {
 
     const apiUrl = process.env.REACT_APP_API_URL || '';
     return `${apiUrl}${imagePath}`;
+  };
+
+  const getParticipantDiscountTotal = (participant) => (
+    (participant?.couponDiscount || 0) + (participant?.pointsDiscount || 0)
+  );
+
+  const getParticipantFinalCost = (participant, itemCost) => (
+    Math.max(0, itemCost - getParticipantDiscountTotal(participant))
+  );
+
+  const getCheckoutPricing = () => {
+    if (!checkoutData || !member) {
+      return {
+        subtotal: 0,
+        couponDiscount: 0,
+        pointsDiscount: 0,
+        finalCost: 0
+      };
+    }
+
+    const subtotal = checkoutData.cost * selectedFamilyMembers.length;
+    const couponDiscount = selectedFamilyMembers.reduce((sum, fmIndex) => {
+      let itemDiscount = 0;
+      const couponId = familyMemberCoupons[fmIndex];
+      const coupon = member.coupons.find((entry) => entry._id?.toString() === couponId?.toString());
+
+      if (coupon) {
+        if (coupon.type === 'trial') {
+          itemDiscount = checkoutData.cost;
+        } else {
+          itemDiscount = Math.round(checkoutData.cost * coupon.discountPercent / 100);
+        }
+      }
+
+      return sum + itemDiscount;
+    }, 0);
+
+    const totalAfterCoupons = Math.max(0, subtotal - couponDiscount);
+    const pointsDiscount = useAvailablePoints ? Math.min(member.points || 0, totalAfterCoupons) : 0;
+
+    return {
+      subtotal,
+      couponDiscount,
+      pointsDiscount,
+      finalCost: Math.max(0, totalAfterCoupons - pointsDiscount)
+    };
   };
 
 
@@ -892,6 +939,7 @@ function Profile() {
     });
     setSelectedFamilyMembers([]);
     setFamilyMemberCoupons({});
+    setUseAvailablePoints(false);
     setShowCheckout(true);
   };
 
@@ -915,38 +963,26 @@ function Profile() {
         couponId: coupon?._id,
         familyMembers: selectedFamilyMembers,
         familyMemberCoupons,
+        pointsToUse: useAvailablePoints ? getCheckoutPricing().pointsDiscount : 0,
         enrollSelfOnly: false
       });
 
-      // Calculate final price
-      let originalCost = checkoutData.cost * selectedFamilyMembers.length;
-      let finalCost = originalCost;
-      let discount = 0;
-
-      if (response.data.familyCouponsUsed && response.data.familyCouponsUsed.length > 0) {
-        response.data.familyCouponsUsed.forEach(fmCoupon => {
-          if (fmCoupon.type === 'trial') {
-            finalCost -= checkoutData.cost;
-            discount += checkoutData.cost;
-          } else {
-            const fmDiscount = Math.round(checkoutData.cost * fmCoupon.discountPercent / 100);
-            finalCost -= fmDiscount;
-            discount += fmDiscount;
-          }
-        });
-      }
+      const pricing = response.data.pricing || getCheckoutPricing();
 
       // Store payment confirmation data
       setPaymentConfirmationData({
         type: checkoutData.type,
         item: checkoutData.type === 'class' ? response.data.class : response.data.activity,
         itemName: checkoutData.name,
-        originalCost,
-        finalCost,
-        discount,
+        originalCost: pricing.subtotal,
+        finalCost: pricing.finalCost,
+        discount: pricing.couponDiscount + pricing.pointsDiscount,
+        couponDiscount: pricing.couponDiscount,
+        pointsDiscount: pricing.pointsDiscount,
         familyCouponsUsed: response.data.familyCouponsUsed,
         paymentMethod,
-        familyMembersCount: selectedFamilyMembers.length
+        familyMembersCount: selectedFamilyMembers.length,
+        remainingPoints: response.data.remainingPoints
       });
 
       const memberResponse = await axios.get(`/api/members?memberId=${member.memberId}`);
@@ -956,6 +992,7 @@ function Profile() {
       setCheckoutData(null);
       setSelectedFamilyMembers([]);
       setFamilyMemberCoupons({});
+      setUseAvailablePoints(false);
 
       // Show payment confirmation modal
       setShowPaymentConfirmation(true);
@@ -1807,8 +1844,8 @@ function Profile() {
                     .filter(p => p.memberId.toString() === member._id.toString())
                     .map((p, idx) => {
                       const itemCost = selectedClass.classInfoId?.cost || 0;
-                      const discount = p.couponDiscount || 0;
-                      const final = Math.max(0, itemCost - discount);
+                      const discount = getParticipantDiscountTotal(p);
+                      const final = getParticipantFinalCost(p, itemCost);
                       return (
                         <div key={idx} style={{ marginBottom: '10px', paddingBottom: '10px', borderBottom: idx < selectedClass.participants.filter(p => p.memberId.toString() === member._id.toString()).length - 1 ? '1px solid #e0e8ff' : 'none' }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -1827,7 +1864,7 @@ function Profile() {
                           </div>
                           {discount > 0 && (
                             <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
-                              ✓ {t('coupon_applied')}
+                              ✓ {t('discount_applied')}
                             </div>
                           )}
                         </div>
@@ -1838,7 +1875,7 @@ function Profile() {
                     <span style={{ color: '#667eea' }}>
                       NT$ {selectedClass.participants
                         .filter(p => p.memberId.toString() === member._id.toString())
-                        .reduce((sum, p) => sum + Math.max(0, (selectedClass.classInfoId?.cost || 0) - (p.couponDiscount || 0)), 0)}
+                        .reduce((sum, p) => sum + getParticipantFinalCost(p, selectedClass.classInfoId?.cost || 0), 0)}
                     </span>
                   </div>
                 </div>
@@ -1880,7 +1917,7 @@ function Profile() {
                       const classItem = classes.find(c => c._id === enrollment.itemId);
                       const myParticipants = classItem?.participants?.filter(p => p.memberId.toString() === member._id.toString()) || [];
                       const itemCost = classItem?.classInfoId?.cost || 0;
-                      const totalCost = myParticipants.reduce((sum, p) => sum + Math.max(0, itemCost - (p.couponDiscount || 0)), 0);
+                      const totalCost = myParticipants.reduce((sum, p) => sum + getParticipantFinalCost(p, itemCost), 0);
                       const totalOriginalCost = itemCost * myParticipants.length;
                       const hasDiscount = totalCost < totalOriginalCost;
 
@@ -2351,7 +2388,7 @@ function Profile() {
                       const activity = activities.find(a => a._id === enrollment.itemId);
                       const myParticipants = activity?.participants?.filter(p => p.memberId.toString() === member._id.toString()) || [];
                       const itemCost = activity?.cost || 0;
-                      const totalCost = myParticipants.reduce((sum, p) => sum + Math.max(0, itemCost - (p.couponDiscount || 0)), 0);
+                      const totalCost = myParticipants.reduce((sum, p) => sum + getParticipantFinalCost(p, itemCost), 0);
                       const totalOriginalCost = itemCost * myParticipants.length;
                       const hasDiscount = totalCost < totalOriginalCost;
 
@@ -3208,6 +3245,10 @@ function Profile() {
               </div>
             )}
 
+            {(() => {
+              const checkoutPricing = getCheckoutPricing();
+
+              return (
             <div style={{
               background: '#f8f9ff',
               padding: '20px',
@@ -3221,25 +3262,7 @@ function Profile() {
               <p style={{ fontSize: '18px', marginBottom: '8px' }}>
                 <strong>{t('cost')}</strong>
                 <span style={{ fontWeight: 'bold', color: '#667eea' }}>
-                  NT$ {(() => {
-                    let total = 0;
-                    selectedFamilyMembers.forEach(fmIndex => {
-                      let itemCost = checkoutData.cost;
-                      const couponId = familyMemberCoupons[fmIndex];
-                      if (couponId) {
-                        const coupon = member.coupons.find(c => c._id === couponId);
-                        if (coupon) {
-                          if (coupon.type === 'trial') {
-                            itemCost = 0;
-                          } else {
-                            itemCost = itemCost - Math.round(itemCost * coupon.discountPercent / 100);
-                          }
-                        }
-                      }
-                      total += itemCost;
-                    });
-                    return total;
-                  })()}
+                  NT$ {checkoutPricing.finalCost}
                 </span>
                 {selectedFamilyMembers.length > 0 && (
                   <span style={{ fontSize: '14px', color: '#666' }}>
@@ -3247,7 +3270,48 @@ function Profile() {
                   </span>
                 )}
               </p>
-            </div>            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginBottom: '30px' }}>
+              <div style={{ display: 'grid', gap: '8px', color: '#555', fontSize: '14px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span>{t('subtotal')}</span>
+                  <strong>NT$ {checkoutPricing.subtotal}</strong>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span>{t('coupon_discount')}</span>
+                  <strong>-NT$ {checkoutPricing.couponDiscount}</strong>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span>{t('points_discount')}</span>
+                  <strong>-NT$ {checkoutPricing.pointsDiscount}</strong>
+                </div>
+              </div>
+              <div style={{ marginTop: '18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                <div>
+                  <strong>{t('points_available')}</strong>{' '}
+                  <span style={{ color: '#667eea', fontWeight: 'bold' }}>
+                    {member.points || 0}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setUseAvailablePoints(!useAvailablePoints)}
+                  className="btn btn-secondary"
+                  disabled={selectedFamilyMembers.length === 0 || !member.points || checkoutPricing.subtotal - checkoutPricing.couponDiscount <= 0}
+                  style={{
+                    whiteSpace: 'nowrap',
+                    background: useAvailablePoints ? '#667eea' : undefined,
+                    color: useAvailablePoints ? '#fff' : undefined,
+                    borderColor: useAvailablePoints ? '#667eea' : undefined
+                  }}
+                >
+                  {useAvailablePoints
+                    ? `${t('remove_points')} (-NT$ ${checkoutPricing.pointsDiscount})`
+                    : t('use_points')}
+                </button>
+              </div>
+            </div>
+              );
+            })()}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginBottom: '30px' }}>
               <button
                 onClick={() => handleCompleteEnrollment('in-person', null)}
                 className="btn btn-primary"
@@ -3651,12 +3715,26 @@ function Profile() {
                   <p style={{ fontSize: '16px', textDecoration: 'line-through', color: '#999' }}>
                     NT$ {paymentConfirmationData.originalCost}
                   </p>
-                  <p style={{ fontSize: '14px', color: '#c92a2a', fontWeight: 'bold', marginTop: '5px' }}>
-                    {paymentConfirmationData.couponUsed?.type === 'trial'
-                      ? (t('trial_coupon_applied_free'))
-                      : (t('language') === 'zh'
-                        ? `✓ 折扣券已使用 (-NT$ ${paymentConfirmationData.discount})`
-                        : `✓ Discount Applied (-NT$ ${paymentConfirmationData.discount})`)}
+                  {paymentConfirmationData.couponDiscount > 0 && (
+                    <p style={{ fontSize: '14px', color: '#c92a2a', fontWeight: 'bold', marginTop: '5px' }}>
+                      {t('coupon_discount')} (-NT$ {paymentConfirmationData.couponDiscount})
+                    </p>
+                  )}
+                  {paymentConfirmationData.pointsDiscount > 0 && (
+                    <p style={{ fontSize: '14px', color: '#2b8a3e', fontWeight: 'bold', marginTop: '5px' }}>
+                      {t('points_discount')} (-NT$ {paymentConfirmationData.pointsDiscount})
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {paymentConfirmationData.pointsDiscount > 0 && (
+                <div style={{ marginBottom: '15px', paddingBottom: '15px', borderBottom: '1px solid #e9ecef' }}>
+                  <p style={{ fontSize: '14px', color: '#666', marginBottom: '5px' }}>
+                    {t('remaining_points')}
+                  </p>
+                  <p style={{ fontSize: '16px', fontWeight: '600', color: '#333' }}>
+                    {paymentConfirmationData.remainingPoints ?? member?.points ?? 0}
                   </p>
                 </div>
               )}
