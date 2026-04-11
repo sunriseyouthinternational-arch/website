@@ -416,6 +416,23 @@
   margin-top: 40px;
 }
 
+.filter-inline-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 220px;
+}
+
+.filter-inline-group label {
+  color: #475569;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.filter-inline-group select {
+  min-width: 220px;
+}
+
 .item-summary-card {
   display: flex;
   align-items: center;
@@ -432,6 +449,49 @@
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   border-color: #CBD5E1;
+}
+
+.class-template-card {
+  display: block;
+}
+
+.class-template-card-main {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.class-template-card-active {
+  border-color: #93C5FD;
+  box-shadow: 0 10px 30px rgba(59, 130, 246, 0.12);
+}
+
+.class-host-panel {
+  margin-top: 18px;
+  padding: 24px;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #F8FBFF 0%, #FFFFFF 100%);
+  border: 1px solid #DBEAFE;
+}
+
+.class-host-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.class-host-panel-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
+.class-filters-row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
 }
 
 .item-summary-banner {
@@ -520,6 +580,16 @@
     flex-direction: column;
     align-items: flex-start;
     gap: 10px;
+  }
+
+  .class-template-card-main,
+  .class-host-panel-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .class-host-panel-actions {
+    justify-content: flex-start;
   }
 
   .checkbox-group {

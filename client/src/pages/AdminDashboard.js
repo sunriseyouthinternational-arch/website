@@ -4,6 +4,26 @@ import axios from 'axios';
 import { useLanguage } from '../contexts/LanguageContext';
 import './AdminDashboard.css';
 
+const createEmptyClassDraft = () => ({
+  classInfoId: '',
+  name: '',
+  description: '',
+  teacherId: [],
+  teacher: '',
+  time: '',
+  date: '',
+  location: '',
+  status: 'upcoming',
+  sendLineAnnouncement: false
+});
+
+const createClassDraftFromInfo = (classInfo) => ({
+  ...createEmptyClassDraft(),
+  classInfoId: classInfo?._id || '',
+  name: classInfo?.name || '',
+  description: classInfo?.description || ''
+});
+
 function AdminDashboard() {
   const { t } = useLanguage();
   const navigate = useNavigate();
@@ -41,19 +61,9 @@ function AdminDashboard() {
     ageRange: []
   });
 
-  const [showAddClassForm, setShowAddClassForm] = useState(false);
-  const [newClass, setNewClass] = useState({
-    classInfoId: '',
-    name: '',
-    description: '',
-    teacherId: [],
-    teacher: '',
-    time: '',
-    date: '',
-    location: '',
-    status: 'upcoming',
-    sendLineAnnouncement: false
-  });
+  const [hostingClassInfoId, setHostingClassInfoId] = useState(null);
+  const [hostingClassDraft, setHostingClassDraft] = useState(createEmptyClassDraft());
+  const [showExpandedHostForm, setShowExpandedHostForm] = useState(false);
 
   const [showAddActivityForm, setShowAddActivityForm] = useState(false);
   const [newActivity, setNewActivity] = useState({
@@ -136,7 +146,9 @@ function AdminDashboard() {
   });
 
   // Filter states for status
+  const [classInfoFilter, setClassInfoFilter] = useState('all');
   const [classStatusFilter, setClassStatusFilter] = useState('all');
+  const [hostedClassTemplateFilter, setHostedClassTemplateFilter] = useState('all');
   const [activityStatusFilter, setActivityStatusFilter] = useState('all');
   const [meetingStatusFilter, setMeetingStatusFilter] = useState('all');
 
@@ -350,7 +362,8 @@ function AdminDashboard() {
         description: '',
         cost: '',
         maxParticipants: '',
-        banner: ''
+        banner: '',
+        ageRange: []
       });
       fetchData();
     } catch (error) {
@@ -359,16 +372,10 @@ function AdminDashboard() {
     }
   };
 
-  const handleAddClass = async (e) => {
-    e.preventDefault();
-
-    const timeParts = newClass.time.split(/[:\s-]+/);
+  const validateAndFormatClassTime = (timeValue) => {
+    const timeParts = timeValue.split(/[:\s-]+/);
     if (timeParts.length !== 4) {
-      setMessage({
-        type: 'error',
-        text: t('please_fill_in_complete_time')
-      });
-      return;
+      return { error: t('please_fill_in_complete_time') };
     }
 
     const startHour = parseInt(timeParts[0]);
@@ -377,61 +384,82 @@ function AdminDashboard() {
     const endMin = parseInt(timeParts[3]);
 
     if (isNaN(startHour) || isNaN(startMin) || isNaN(endHour) || isNaN(endMin)) {
-      setMessage({
-        type: 'error',
-        text: t('invalid_time_format')
-      });
-      return;
+      return { error: t('invalid_time_format') };
     }
 
     if (startHour < 0 || startHour > 23 || endHour < 0 || endHour > 23) {
-      setMessage({
-        type: 'error',
-        text: t('hours_must_be_between_0_23')
-      });
-      return;
+      return { error: t('hours_must_be_between_0_23') };
     }
 
     if (startMin < 0 || startMin > 59 || endMin < 0 || endMin > 59) {
-      setMessage({
-        type: 'error',
-        text: t('minutes_must_be_between_0_59')
-      });
-      return;
+      return { error: t('minutes_must_be_between_0_59') };
     }
 
     const startTotalMin = startHour * 60 + startMin;
     const endTotalMin = endHour * 60 + endMin;
 
     if (endTotalMin <= startTotalMin) {
-      setMessage({
-        type: 'error',
-        text: t('end_time_must_be_after_start_time')
-      });
-      return;
+      return { error: t('end_time_must_be_after_start_time') };
     }
 
     const duration = endTotalMin - startTotalMin;
     if (duration < 15) {
-      setMessage({
-        type: 'error',
-        text: t('class_must_be_at_least_15_minutes_long')
-      });
-      return;
+      return { error: t('class_must_be_at_least_15_minutes_long') };
     }
 
     if (duration > 720) { // 12 hours
+      return { error: t('class_cannot_exceed_12_hours') };
+    }
+
+    return {
+      formattedTime: `${String(startHour).padStart(2, '0')}:${String(startMin).padStart(2, '0')} - ${String(endHour).padStart(2, '0')}:${String(endMin).padStart(2, '0')}`
+    };
+  };
+
+  const updateDraftTimePart = (draft, setter, index, value) => {
+    const normalizedValue = String(value || '').padStart(2, '0');
+    const parts = draft.time.split(/[:\s-]+/);
+    const nextParts = [
+      parts[0] || '00',
+      parts[1] || '00',
+      parts[2] || '00',
+      parts[3] || '00'
+    ];
+    nextParts[index] = normalizedValue;
+
+    setter({
+      ...draft,
+      time: `${nextParts[0]}:${nextParts[1]} - ${nextParts[2]}:${nextParts[3]}`
+    });
+  };
+
+  const openHostClassPanel = (classInfo) => {
+    if (hostingClassInfoId === classInfo._id) {
+      setHostingClassInfoId(null);
+      setHostingClassDraft(createEmptyClassDraft());
+      setShowExpandedHostForm(false);
+      return;
+    }
+
+    setHostingClassInfoId(classInfo._id);
+    setHostingClassDraft(createClassDraftFromInfo(classInfo));
+    setShowExpandedHostForm(false);
+  };
+
+  const handleHostClass = async (e) => {
+    e.preventDefault();
+
+    const { formattedTime, error } = validateAndFormatClassTime(hostingClassDraft.time);
+    if (error) {
       setMessage({
         type: 'error',
-        text: t('class_cannot_exceed_12_hours')
+        text: error
       });
       return;
     }
 
-    const formattedTime = `${String(startHour).padStart(2, '0')}:${String(startMin).padStart(2, '0')} - ${String(endHour).padStart(2, '0')}:${String(endMin).padStart(2, '0')}`;
-
     try {
-      await axios.post('/api/classes', { ...newClass, time: formattedTime }, {
+      await axios.post('/api/classes', { ...hostingClassDraft, time: formattedTime }, {
         headers: { 'Content-Type': 'application/json' }
       });
 
@@ -439,24 +467,14 @@ function AdminDashboard() {
         type: 'success',
         text: t('class_hosted_successfully')
       });
-      setShowAddClassForm(false);
-      setNewClass({
-        classInfoId: '',
-        name: '',
-        description: '',
-        teacherId: [],
-        teacher: '',
-        time: '',
-        date: '',
-        location: '',
-        status: 'upcoming',
-        sendLineAnnouncement: false
-      });
+      setHostingClassInfoId(null);
+      setHostingClassDraft(createEmptyClassDraft());
+      setShowExpandedHostForm(false);
 
       const classesRes = await axios.get('/api/classes');
       setClasses(classesRes.data.classes);
     } catch (error) {
-      console.error('Error adding class:', error);
+      console.error('Error hosting class:', error);
       setMessage({ type: 'error', text: error.response?.data?.message || t('error') });
     }
   };
@@ -1348,6 +1366,16 @@ function AdminDashboard() {
     return new Date(dateString).toLocaleDateString('zh-TW');
   };
 
+  const filteredClassInfos = classInfos.filter((classInfo) =>
+    classInfoFilter === 'all' || classInfo._id === classInfoFilter
+  );
+
+  const filteredHostedClasses = classes.filter((classItem) => {
+    const matchesStatus = classStatusFilter === 'all' || classItem.status === classStatusFilter;
+    const matchesTemplate = hostedClassTemplateFilter === 'all' || classItem.classInfoId?._id === hostedClassTemplateFilter;
+    return matchesStatus && matchesTemplate;
+  });
+
   if (loading && members.length === 0) {
     return <div className="container"><div className="loading">{t('loading')}</div></div>;
   }
@@ -2168,17 +2196,34 @@ function AdminDashboard() {
 
       {activeTab === 'classes' && !selectedItem && !selectedClassInfo && (
         <div className="card">
-          <h3>{t('class_management')}</h3>          <div className="items-section" style={{ marginTop: '30px' }}>
+          <h3>{t('class_management')}</h3>
+          <div className="items-section" style={{ marginTop: '30px' }}>
             <div className="section-header">
               <h4 style={{ color: '#667eea' }}>
                 {t('classInformation')} ({classInfos.length})
               </h4>
-              <button
-                onClick={() => setShowAddClassInfoForm(!showAddClassInfoForm)}
-                className="btn btn-primary"
-              >
-                {showAddClassInfoForm ? t('cancel') : t('addNew')}
-              </button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                <div className="filter-inline-group">
+                  <label>{t('classInformation')}</label>
+                  <select
+                    value={classInfoFilter}
+                    onChange={(e) => setClassInfoFilter(e.target.value)}
+                  >
+                    <option value="all">{t('all')}</option>
+                    {classInfos.map((classInfo) => (
+                      <option key={classInfo._id} value={classInfo._id}>
+                        {classInfo.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <button
+                  onClick={() => setShowAddClassInfoForm(!showAddClassInfoForm)}
+                  className="btn btn-primary"
+                >
+                  {showAddClassInfoForm ? t('cancel') : t('addNew')}
+                </button>
+              </div>
             </div>
 
             {showAddClassInfoForm && (
@@ -2296,264 +2341,252 @@ function AdminDashboard() {
                   {t('addClassInfo')}
                 </button>
               </form>
-            )}            <div className="items-list" style={{ marginTop: '20px' }}>
-              {classInfos.map(classInfo => (
-                <div key={classInfo._id} className="item-summary-card">
-                  {classInfo.banner && (
-                    <img src={classInfo.banner} alt={classInfo.name} className="item-summary-banner" />
-                  )}
-                  <div className="item-summary-content">
-                    <h5>{classInfo.name}</h5>
-                    <p className="item-summary-meta">
-                      NT$ {classInfo.cost} | {t('max')} {classInfo.maxParticipants} {t('participants')}
-                    </p>
+            )}
+
+            <div className="items-list" style={{ marginTop: '20px' }}>
+              {filteredClassInfos.map((classInfo) => {
+                const isHostingThisClass = hostingClassInfoId === classInfo._id;
+
+                return (
+                  <div
+                    key={classInfo._id}
+                    className={`item-summary-card class-template-card ${isHostingThisClass ? 'class-template-card-active' : ''}`}
+                  >
+                    <div className="class-template-card-main">
+                      {classInfo.banner && (
+                        <img src={classInfo.banner} alt={classInfo.name} className="item-summary-banner" />
+                      )}
+                      <div className="item-summary-content">
+                        <h5>{classInfo.name}</h5>
+                        <p className="item-summary-meta">
+                          NT$ {classInfo.cost} | {t('max')} {classInfo.maxParticipants} {t('participants')}
+                        </p>
+                      </div>
+                      <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                        <button
+                          className="btn btn-small btn-secondary"
+                          onClick={() => openHostClassPanel(classInfo)}
+                        >
+                          {isHostingThisClass ? t('cancel') : t('hostClass')}
+                        </button>
+                        <button
+                          className="btn btn-small btn-primary"
+                          onClick={() => setSelectedClassInfo(classInfo)}
+                        >
+                          {t('edit')}
+                        </button>
+                      </div>
+                    </div>
+
+                    {isHostingThisClass && (
+                      <form onSubmit={handleHostClass} className="class-host-panel">
+                        <div className="class-host-panel-header">
+                          <div>
+                            <h5 style={{ margin: 0 }}>{t('hostClass')}</h5>
+                            <p style={{ margin: '6px 0 0', color: '#64748B', fontSize: '14px' }}>
+                              {classInfo.name}
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            className="btn btn-small btn-primary"
+                            onClick={() => setShowExpandedHostForm((prev) => !prev)}
+                          >
+                            {showExpandedHostForm ? t('cancel') : t('edit')}
+                          </button>
+                        </div>
+
+                        {showExpandedHostForm && (
+                          <>
+                            <div className="form-group">
+                              <label>{t('name')} *</label>
+                              <input
+                                type="text"
+                                value={hostingClassDraft.name}
+                                onChange={(e) => setHostingClassDraft({ ...hostingClassDraft, name: e.target.value })}
+                                required
+                              />
+                            </div>
+
+                            <div className="form-group">
+                              <label>{t('description')} *</label>
+                              <textarea
+                                value={hostingClassDraft.description}
+                                onChange={(e) => setHostingClassDraft({ ...hostingClassDraft, description: e.target.value })}
+                                required
+                                rows="3"
+                              />
+                            </div>
+
+                            <div className="form-group">
+                              <label>{t('host')} *</label>
+                              <select
+                                multiple
+                                value={hostingClassDraft.teacherId}
+                                onChange={(e) => {
+                                  const selectedIds = Array.from(e.target.selectedOptions, option => option.value);
+                                  const selectedNames = selectedIds.map(id => teachers.find(ti => ti._id === id)?.name).filter(Boolean).join(', ');
+                                  setHostingClassDraft({
+                                    ...hostingClassDraft,
+                                    teacherId: selectedIds,
+                                    teacher: selectedNames
+                                  });
+                                }}
+                                required
+                                style={{ minHeight: '80px' }}
+                              >
+                                {teachers.map((teacher) => (
+                                  <option key={teacher._id} value={teacher._id}>
+                                    {teacher.name}
+                                  </option>
+                                ))}
+                              </select>
+                              <small style={{ color: '#666', fontSize: '12px' }}>Hold Ctrl/Cmd to select multiple hosts</small>
+                            </div>
+                          </>
+                        )}
+
+                        <div className="form-row">
+                          <div className="form-group">
+                            <label>{t('classDate')} *</label>
+                            <input
+                              type="date"
+                              value={hostingClassDraft.date}
+                              onChange={(e) => setHostingClassDraft({ ...hostingClassDraft, date: e.target.value })}
+                              min={new Date().toISOString().split('T')[0]}
+                              required
+                            />
+                          </div>
+                          <div className="form-group">
+                            <label>{t('time')} *</label>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                              <input
+                                type="number"
+                                min="0"
+                                max="23"
+                                placeholder="HH"
+                                value={hostingClassDraft.time.split(/[:\s-]+/)[0] || ''}
+                                onChange={(e) => updateDraftTimePart(hostingClassDraft, setHostingClassDraft, 0, e.target.value)}
+                                style={{ width: '60px', textAlign: 'center' }}
+                                required
+                              />
+                              <span style={{ fontWeight: 'bold' }}>:</span>
+                              <input
+                                type="number"
+                                min="0"
+                                max="59"
+                                placeholder="MM"
+                                value={hostingClassDraft.time.split(/[:\s-]+/)[1] || ''}
+                                onChange={(e) => updateDraftTimePart(hostingClassDraft, setHostingClassDraft, 1, e.target.value)}
+                                style={{ width: '60px', textAlign: 'center' }}
+                                required
+                              />
+                              <span style={{ fontWeight: 'bold', margin: '0 8px' }}>-</span>
+                              <input
+                                type="number"
+                                min="0"
+                                max="23"
+                                placeholder="HH"
+                                value={hostingClassDraft.time.split(/[:\s-]+/)[2] || ''}
+                                onChange={(e) => updateDraftTimePart(hostingClassDraft, setHostingClassDraft, 2, e.target.value)}
+                                style={{ width: '60px', textAlign: 'center' }}
+                                required
+                              />
+                              <span style={{ fontWeight: 'bold' }}>:</span>
+                              <input
+                                type="number"
+                                min="0"
+                                max="59"
+                                placeholder="MM"
+                                value={hostingClassDraft.time.split(/[:\s-]+/)[3] || ''}
+                                onChange={(e) => updateDraftTimePart(hostingClassDraft, setHostingClassDraft, 3, e.target.value)}
+                                style={{ width: '60px', textAlign: 'center' }}
+                                required
+                              />
+                            </div>
+                            <small style={{ color: '#666', display: 'block', marginTop: '5px' }}>
+                              {t('start_time_end_time')}
+                            </small>
+                          </div>
+                        </div>
+
+                        <div className="form-group">
+                          <label>{t('location')}</label>
+                          <input
+                            type="text"
+                            value={hostingClassDraft.location}
+                            onChange={(e) => setHostingClassDraft({ ...hostingClassDraft, location: e.target.value })}
+                            placeholder={t('example_address_taipei')}
+                          />
+                        </div>
+
+                        <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <input
+                            type="checkbox"
+                            id={`sendLineAnnouncementClass-${classInfo._id}`}
+                            checked={hostingClassDraft.sendLineAnnouncement}
+                            onChange={(e) => setHostingClassDraft({ ...hostingClassDraft, sendLineAnnouncement: e.target.checked })}
+                            style={{ width: 'auto' }}
+                          />
+                          <label htmlFor={`sendLineAnnouncementClass-${classInfo._id}`} style={{ margin: 0 }}>
+                            {t('send_line_announcement_to_all_line_followers')}
+                          </label>
+                        </div>
+
+                        <div className="class-host-panel-actions">
+                          <button type="submit" className="btn btn-primary">
+                            {t('hostClass')}
+                          </button>
+                        </div>
+                      </form>
+                    )}
                   </div>
-                  <div style={{ display: 'flex', gap: '10px' }}>
-                    <button
-                      className="btn btn-small btn-primary"
-                      onClick={() => setSelectedClassInfo(classInfo)}
-                    >
-                      {t('edit')}
-                    </button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
-          </div>          <div className="items-section" style={{ marginTop: '40px' }}>
+          </div>
+
+          <div className="items-section" style={{ marginTop: '40px' }}>
             <div className="section-header">
               <h4 style={{ color: '#667eea' }}>
                 {t('hostClass')} ({classes.length})
               </h4>
-              <button
-                onClick={() => setShowAddClassForm(!showAddClassForm)}
-                className="btn btn-primary"
-              >
-                {showAddClassForm ? t('cancel') : t('addNew')}
-              </button>
             </div>
 
-            <div className="form-group" style={{ marginTop: '20px', maxWidth: '300px' }}>
-              <label>{t('filter_by_status')}</label>
-              <select
-                value={classStatusFilter}
-                onChange={(e) => setClassStatusFilter(e.target.value)}
-                style={{ width: '100%' }}
-              >
-                <option value="all">{t('all')}</option>
-                <option value="upcoming">{t('upcoming')}</option>
-                <option value="completed">{t('completed')}</option>
-                <option value="cancelled">{t('cancelled')}</option>
-              </select>
+            <div className="class-filters-row" style={{ marginTop: '20px' }}>
+              <div className="form-group" style={{ maxWidth: '300px', marginBottom: 0 }}>
+                <label>{t('filter_by_status')}</label>
+                <select
+                  value={classStatusFilter}
+                  onChange={(e) => setClassStatusFilter(e.target.value)}
+                  style={{ width: '100%' }}
+                >
+                  <option value="all">{t('all')}</option>
+                  <option value="upcoming">{t('upcoming')}</option>
+                  <option value="completed">{t('completed')}</option>
+                  <option value="cancelled">{t('cancelled')}</option>
+                </select>
+              </div>
+
+              <div className="form-group" style={{ maxWidth: '320px', marginBottom: 0 }}>
+                <label>{t('classInformation')}</label>
+                <select
+                  value={hostedClassTemplateFilter}
+                  onChange={(e) => setHostedClassTemplateFilter(e.target.value)}
+                  style={{ width: '100%' }}
+                >
+                  <option value="all">{t('all')}</option>
+                  {classInfos.map((classInfo) => (
+                    <option key={classInfo._id} value={classInfo._id}>
+                      {classInfo.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
 
-            {showAddClassForm && (
-              <form onSubmit={handleAddClass} className="add-form" style={{ marginTop: '20px' }}>
-                <div className="form-group">
-                  <label>{t('classInfo')} *</label>
-                  <select
-                    value={newClass.classInfoId}
-                    onChange={(e) => {
-                      const selectedClassInfo = classInfos.find(ci => ci._id === e.target.value);
-                      setNewClass({
-                        ...newClass,
-                        classInfoId: e.target.value,
-                        name: selectedClassInfo?.name || '',
-                        description: selectedClassInfo?.description || ''
-                      });
-                    }}
-                    required
-                  >
-                    <option value="">{t('select_class')}</option>
-                    {classInfos.map(classInfo => (
-                      <option key={classInfo._id} value={classInfo._id}>
-                        {classInfo.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="form-group">
-                  <label>{t('name')} *</label>
-                  <input
-                    type="text"
-                    value={newClass.name}
-                    onChange={(e) => setNewClass({ ...newClass, name: e.target.value })}
-                    required
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>{t('description')} *</label>
-                  <textarea
-                    value={newClass.description}
-                    onChange={(e) => setNewClass({ ...newClass, description: e.target.value })}
-                    required
-                    rows="3"
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>{t('host')} *</label>
-                  <select
-                    multiple
-                    value={newClass.teacherId}
-                    onChange={(e) => {
-                      const selectedIds = Array.from(e.target.selectedOptions, option => option.value);
-                      const selectedNames = selectedIds.map(id => teachers.find(t => t._id === id)?.name).filter(Boolean).join(', ');
-                      setNewClass({
-                        ...newClass,
-                        teacherId: selectedIds,
-                        teacher: selectedNames
-                      });
-                    }}
-                    required
-                    style={{ minHeight: '80px' }}
-                  >
-                    {teachers.map(teacher => (
-                      <option key={teacher._id} value={teacher._id}>
-                        {teacher.name}
-                      </option>
-                    ))}
-                  </select>
-                  <small style={{ color: '#666', fontSize: '12px' }}>Hold Ctrl/Cmd to select multiple hosts</small>
-                </div>
-
-                <div className="form-row">
-                  <div className="form-group">
-                    <label>{t('classDate')} *</label>
-                    <input
-                      type="date"
-                      value={newClass.date}
-                      onChange={(e) => setNewClass({ ...newClass, date: e.target.value })}
-                      min={new Date().toISOString().split('T')[0]}
-                      required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>{t('time')} *</label>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <input
-                        type="number"
-                        min="0"
-                        max="23"
-                        placeholder="HH"
-                        value={newClass.time.split(':')[0] || ''}
-                        onChange={(e) => {
-                          const val = e.target.value.padStart(2, '0');
-                          const parts = newClass.time.split(/[:\s-]+/);
-                          setNewClass({ ...newClass, time: `${val}:${parts[1] || '00'} - ${parts[2] || '00'}:${parts[3] || '00'}` });
-                        }}
-                        style={{ width: '60px', textAlign: 'center' }}
-                        required
-                      />
-                      <span style={{ fontWeight: 'bold' }}>:</span>
-                      <input
-                        type="number"
-                        min="0"
-                        max="59"
-                        placeholder="MM"
-                        value={newClass.time.split(/[:\s-]+/)[1] || ''}
-                        onChange={(e) => {
-                          const val = e.target.value.padStart(2, '0');
-                          const parts = newClass.time.split(/[:\s-]+/);
-                          const newTime = `${parts[0] || '00'}:${val} - ${parts[2] || '00'}:${parts[3] || '00'}`;
-                          setNewClass({ ...newClass, time: newTime });
-                        }}
-                        style={{ width: '60px', textAlign: 'center' }}
-                        required
-                      />
-                      <span style={{ fontWeight: 'bold', margin: '0 8px' }}>-</span>
-                      <input
-                        type="number"
-                        min="0"
-                        max="23"
-                        placeholder="HH"
-                        value={newClass.time.split(/[:\s-]+/)[2] || ''}
-                        onChange={(e) => {
-                          const val = e.target.value.padStart(2, '0');
-                          const parts = newClass.time.split(/[:\s-]+/);
-                          const newTime = `${parts[0] || '00'}:${parts[1] || '00'} - ${val}:${parts[3] || '00'}`;
-                          setNewClass({ ...newClass, time: newTime });
-                        }}
-                        style={{ width: '60px', textAlign: 'center' }}
-                        required
-                      />
-                      <span style={{ fontWeight: 'bold' }}>:</span>
-                      <input
-                        type="number"
-                        min="0"
-                        max="59"
-                        placeholder="MM"
-                        value={newClass.time.split(/[:\s-]+/)[3] || ''}
-                        onChange={(e) => {
-                          const val = e.target.value.padStart(2, '0');
-                          const parts = newClass.time.split(/[:\s-]+/);
-                          const newTime = `${parts[0] || '00'}:${parts[1] || '00'} - ${parts[2] || '00'}:${val}`;
-                          setNewClass({ ...newClass, time: newTime });
-                        }}
-                        style={{ width: '60px', textAlign: 'center' }}
-                        required
-                      />
-                    </div>
-                    <small style={{ color: '#666', display: 'block', marginTop: '5px' }}>
-                      {t('start_time_end_time')}
-                    </small>
-                  </div>
-                </div>
-
-                <div className="form-group">
-                  <label>{t('location')}</label>
-                  <input
-                    type="text"
-                    value={newClass.location}
-                    onChange={(e) => setNewClass({ ...newClass, location: e.target.value })}
-                    placeholder={t('example_address_taipei')}
-                  />
-                </div>
-
-                <div className="form-group" style={{ background: '#f0f8ff', padding: '15px', borderRadius: '8px', border: '1px solid #d0e8ff' }}>
-                  <p style={{ margin: 0, color: '#1a5490', fontSize: '14px', lineHeight: '1.6' }}>
-                    ℹ️ {t('members_can_view_and_enroll_in_this_class_by_clicking_class_and_activity')}
-                  </p>
-                </div>
-
-                {newClass.location && (
-                  <div className="form-group">
-                    <label>{t('map_preview')}</label>
-                    <iframe
-                      src={`https://maps.google.com/maps?q=${encodeURIComponent(newClass.location)}&output=embed`}
-                      width="100%"
-                      height="300"
-                      style={{ border: '1px solid #ddd', borderRadius: '8px' }}
-                      allowFullScreen=""
-                      loading="lazy"
-                      referrerPolicy="no-referrer-when-downgrade"
-                      title="Location Map"
-                    />
-                  </div>
-                )}
-
-                <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <input
-                    type="checkbox"
-                    id="sendLineAnnouncementClass"
-                    checked={newClass.sendLineAnnouncement}
-                    onChange={(e) => setNewClass({ ...newClass, sendLineAnnouncement: e.target.checked })}
-                    style={{ width: 'auto' }}
-                  />
-                  <label htmlFor="sendLineAnnouncementClass" style={{ margin: 0 }}>
-                    {t('send_line_announcement_to_all_line_followers')}
-                  </label>
-                </div>
-
-                <button type="submit" className="btn btn-primary">
-                  {t('hostClass')}
-                </button>
-              </form>
-            )}            <div className="items-list" style={{ marginTop: '20px' }}>
-              {classes
-                .filter(classItem => classStatusFilter === 'all' || classItem.status === classStatusFilter)
-                .map(classItem => (
+            <div className="items-list" style={{ marginTop: '20px' }}>
+              {filteredHostedClasses.map((classItem) => (
                 <div key={classItem._id} className="item-summary-card">
                   {classItem.classInfoId?.banner && (
                     <img src={classItem.classInfoId.banner} alt={classItem.name || classItem.classInfoId?.name} className="item-summary-banner" />
