@@ -24,6 +24,25 @@ const createClassDraftFromInfo = (classInfo) => ({
   description: classInfo?.description || ''
 });
 
+const formatHostedClassDateSuffix = (dateValue) => {
+  if (!dateValue) return '';
+
+  const [year, month, day] = dateValue.split('-').map(Number);
+  if (!year || !month || !day) return '';
+
+  return `${month}/${day}`;
+};
+
+const buildHostedClassName = (baseName, dateValue) => {
+  const trimmedBaseName = (baseName || '').trim();
+  const dateSuffix = formatHostedClassDateSuffix(dateValue);
+
+  if (!trimmedBaseName) return dateSuffix;
+  if (!dateSuffix) return trimmedBaseName;
+
+  return `${trimmedBaseName} ${dateSuffix}`;
+};
+
 function AdminDashboard() {
   const { t } = useLanguage();
   const navigate = useNavigate();
@@ -64,6 +83,7 @@ function AdminDashboard() {
   const [hostingClassInfoId, setHostingClassInfoId] = useState(null);
   const [hostingClassDraft, setHostingClassDraft] = useState(createEmptyClassDraft());
   const [showExpandedHostForm, setShowExpandedHostForm] = useState(false);
+  const [hostingClassNameManuallyEdited, setHostingClassNameManuallyEdited] = useState(false);
 
   const [showAddActivityForm, setShowAddActivityForm] = useState(false);
   const [newActivity, setNewActivity] = useState({
@@ -438,12 +458,24 @@ function AdminDashboard() {
       setHostingClassInfoId(null);
       setHostingClassDraft(createEmptyClassDraft());
       setShowExpandedHostForm(false);
+      setHostingClassNameManuallyEdited(false);
       return;
     }
 
     setHostingClassInfoId(classInfo._id);
     setHostingClassDraft(createClassDraftFromInfo(classInfo));
     setShowExpandedHostForm(false);
+    setHostingClassNameManuallyEdited(false);
+  };
+
+  const handleHostingClassDateChange = (classInfo, dateValue) => {
+    setHostingClassDraft((prev) => ({
+      ...prev,
+      date: dateValue,
+      name: hostingClassNameManuallyEdited
+        ? prev.name
+        : buildHostedClassName(classInfo?.name || prev.name, dateValue)
+    }));
   };
 
   const handleHostClass = async (e) => {
@@ -470,6 +502,7 @@ function AdminDashboard() {
       setHostingClassInfoId(null);
       setHostingClassDraft(createEmptyClassDraft());
       setShowExpandedHostForm(false);
+      setHostingClassNameManuallyEdited(false);
 
       const classesRes = await axios.get('/api/classes');
       setClasses(classesRes.data.classes);
@@ -2403,7 +2436,10 @@ function AdminDashboard() {
                               <input
                                 type="text"
                                 value={hostingClassDraft.name}
-                                onChange={(e) => setHostingClassDraft({ ...hostingClassDraft, name: e.target.value })}
+                                onChange={(e) => {
+                                  setHostingClassNameManuallyEdited(true);
+                                  setHostingClassDraft({ ...hostingClassDraft, name: e.target.value });
+                                }}
                                 required
                               />
                             </div>
@@ -2452,7 +2488,7 @@ function AdminDashboard() {
                             <input
                               type="date"
                               value={hostingClassDraft.date}
-                              onChange={(e) => setHostingClassDraft({ ...hostingClassDraft, date: e.target.value })}
+                              onChange={(e) => handleHostingClassDateChange(classInfo, e.target.value)}
                               min={new Date().toISOString().split('T')[0]}
                               required
                             />

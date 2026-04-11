@@ -15,6 +15,7 @@ function Profile() {
   const [classes, setClasses] = useState([]);
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingClassesAndActivities, setLoadingClassesAndActivities] = useState(true);
   const [message, setMessage] = useState({ type: '', text: '' });
   const [selectedClass, setSelectedClass] = useState(null);
   const [selectedActivity, setSelectedActivity] = useState(null);
@@ -208,6 +209,8 @@ function Profile() {
   };
 
   const fetchClassesAndActivities = async () => {
+    setLoadingClassesAndActivities(true);
+
     try {
       const [classesRes, activitiesRes] = await Promise.all([
         axios.get('/api/classes'),
@@ -240,6 +243,8 @@ function Profile() {
       setActivities(activeActivities);
     } catch (error) {
       console.error('Error fetching classes/activities:', error);
+    } finally {
+      setLoadingClassesAndActivities(false);
     }
   };
 
@@ -1313,6 +1318,13 @@ function Profile() {
     return date.toLocaleDateString('zh-TW');
   };
 
+  const renderClassesActivitiesLoading = () => (
+    <div className="classes-activities-loading">
+      <div className="classes-activities-spinner" />
+      <p>{t('loading')}</p>
+    </div>
+  );
+
   return (
     <div className="container">
       <div className="page-title">
@@ -2231,6 +2243,10 @@ function Profile() {
             <div className="card">
               <h3>{t('classes')}</h3>
 
+                {loadingClassesAndActivities ? (
+                  renderClassesActivitiesLoading()
+                ) : (
+                  <>
                 <h4 className="section-subtitle">{t('registeredClasses')}</h4>
                 <div className="enrolled-list">
                   {getEnrolledItems('class').length > 0 ? (
@@ -2375,6 +2391,8 @@ function Profile() {
                     </div>
                   ))}
                 </div>
+                  </>
+                )}
             </div>
           )}
 
@@ -2577,6 +2595,10 @@ function Profile() {
             <div className="card">
               <h3>{t('activities')}</h3>
 
+                {loadingClassesAndActivities ? (
+                  renderClassesActivitiesLoading()
+                ) : (
+                  <>
                 <h4 className="section-subtitle">{t('registeredActivities')}</h4>
                 <div className="enrolled-list">
                   {getEnrolledItems('activity').length > 0 ? (
@@ -2714,6 +2736,8 @@ function Profile() {
                     </div>
                   ))}
                 </div>
+                  </>
+                )}
             </div>
           )}
 
