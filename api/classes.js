@@ -1,6 +1,14 @@
 const connectDB = require('../lib/mongodb');
 const { Class, ClassInfo, Member } = require('../db/models');
-const mongoose = require('mongoose');
+const {
+  POINTS_PER_NTD,
+  REFERRAL_CLASS_COMPLETION_POINTS,
+  awardPoints,
+  maybeAwardAttendanceCoupon,
+  redeemPoints,
+  updateEnrollmentStatus,
+  upsertEnrollment
+} = require('../lib/memberRewards');
 
 module.exports = async (req, res) => {
   const { id, action } = req.query;
@@ -10,7 +18,7 @@ module.exports = async (req, res) => {
 
     // Enroll in class
     if (action === 'enroll' && req.method === 'POST') {
-      const { memberId, paymentMethod, couponId, familyMembers = [], familyMemberCoupons = {} } = req.body;
+      const { memberId, paymentMethod, familyMembers = [], familyMemberCoupons = {}, pointsToUse = 0 } = req.body;
 
       const classItem = await Class.findById(id).populate('classInfoId').populate('teacherId');
       const member = await Member.findOne({ memberId });
@@ -33,6 +41,8 @@ module.exports = async (req, res) => {
       }
 
       const familyCouponsUsed = [];
+      const participantEntries = [];
+
       familyMembers.forEach(fmIndex => {
         // Handle main member enrollment
         if (fmIndex === 'self') {
@@ -56,7 +66,7 @@ module.exports = async (req, res) => {
             }
           }
 
-          classItem.participants.push({
+          participantEntries.push({
             memberId: member._id,
             memberName: member.name,
             paid: false,
@@ -88,7 +98,7 @@ module.exports = async (req, res) => {
               }
             }
 
-            classItem.participants.push({
+            participantEntries.push({
               memberId: member._id,
               memberName: `${familyMember.name} (${member.name}的家人)`,
               paid: false,
@@ -100,14 +110,40 @@ module.exports = async (req, res) => {
         }
       });
 
+      const subtotal = classItem.classInfoId.cost * participantEntries.length;
+      const couponDiscountTotal = participantEntries.reduce((sum, participant) => sum + (participant.couponDiscount || 0), 0);
+      const totalAfterCoupons = Math.max(0, subtotal - couponDiscountTotal);
+      const requestedPoints = Math.max(0, Math.floor(Number(pointsToUse) || 0));
+      const pointsRequestedNtd = requestedPoints * POINTS_PER_NTD;
+      const pointsDiscountTotal = redeemPoints(member, {
+        key: `points-redemption:class:${classItem._id.toString()}:${member._id.toString()}`,
+        type: 'points_redemption',
+        points: Math.min(pointsRequestedNtd, totalAfterCoupons),
+        itemId: classItem._id,
+        description: `課程報名折抵 / Points redemption for class ${classItem._id.toString()}`
+      });
+
+      let remainingPointsDiscount = pointsDiscountTotal;
+      participantEntries.forEach((participant) => {
+        const participantSubtotal = Math.max(0, classItem.classInfoId.cost - (participant.couponDiscount || 0));
+        const participantPointsDiscount = Math.min(participantSubtotal, remainingPointsDiscount);
+        remainingPointsDiscount -= participantPointsDiscount;
+        participant.pointsDiscount = participantPointsDiscount;
+        classItem.participants.push(participant);
+      });
+
       await classItem.save();
 
       console.log('[Enrollment] Saved class participants:', JSON.stringify(classItem.participants, null, 2));
 
-      member.enrollments.push({
+      upsertEnrollment(member, {
         type: 'class',
         itemId: classItem._id,
-        itemName: classItem.classInfoId.name
+        itemName: classItem.name || classItem.classInfoId.name,
+        paid: false,
+        paymentMethod: paymentMethod || 'in-person',
+        couponDiscount: couponDiscountTotal,
+        pointsDiscount: pointsDiscountTotal
       });
 
       await member.save();
@@ -129,7 +165,14 @@ module.exports = async (req, res) => {
       return res.status(200).json({
         message,
         class: classItem,
-        familyCouponsUsed
+        familyCouponsUsed,
+        pricing: {
+          subtotal,
+          couponDiscount: couponDiscountTotal,
+          pointsDiscount: pointsDiscountTotal,
+          finalCost: Math.max(0, totalAfterCoupons - pointsDiscountTotal)
+        },
+        remainingPoints: member.points || 0
       });
     }
 
@@ -152,10 +195,13 @@ module.exports = async (req, res) => {
           return res.status(404).json({ message: '找不到課程資訊 / Class info not found' });
         }
 
+        const className = name || classInfo.name;
+        const classDescription = description || classInfo.description;
+
         const classItem = new Class({
           classInfoId,
-          name: name || classInfo.name,
-          description: description || classInfo.description,
+          name: className,
+          description: classDescription,
           teacherId: teacherId || null,
           teacher,
           time,
@@ -170,12 +216,12 @@ module.exports = async (req, res) => {
           try {
             const axios = require('axios');
 
-            console.log('Sending LINE broadcast for class:', classInfo.name);
+            console.log('Sending LINE broadcast for class:', className);
             console.log('LINE_CHANNEL_ACCESS_TOKEN exists:', !!process.env.LINE_CHANNEL_ACCESS_TOKEN);
 
             const flexMessage = {
               type: 'flex',
-              altText: `📢 新課程通知：${classInfo.name}`,
+              altText: `📢 新課程通知：${className}`,
               contents: {
                 type: 'bubble',
                 hero: {
@@ -198,7 +244,7 @@ module.exports = async (req, res) => {
                     },
                     {
                       type: 'text',
-                      text: classInfo.name,
+                      text: className,
                       weight: 'bold',
                       size: 'xl',
                       wrap: true,
@@ -326,8 +372,10 @@ module.exports = async (req, res) => {
           return res.status(404).json({ message: '找不到課程 / Class not found' });
         }
 
-        // Update Class fields (date, time, location, teacher, teacherId)
+        // Update hosted class fields only. Shared template fields belong in ClassInfo management.
         const classUpdates = {};
+        if (req.body.name !== undefined) classUpdates.name = req.body.name;
+        if (req.body.description !== undefined) classUpdates.description = req.body.description;
         if (req.body.date !== undefined) classUpdates.date = req.body.date;
         if (req.body.time !== undefined) classUpdates.time = req.body.time;
         if (req.body.location !== undefined) classUpdates.location = req.body.location;
@@ -335,39 +383,42 @@ module.exports = async (req, res) => {
         if (req.body.teacherId !== undefined) classUpdates.teacherId = req.body.teacherId;
         if (req.body.status !== undefined) classUpdates.status = req.body.status;
 
-        // Update ClassInfo fields (name, description, cost, maxParticipants, banner, ageRange)
-        const classInfoUpdates = {};
-        if (req.body.name !== undefined) classInfoUpdates.name = req.body.name;
-        if (req.body.description !== undefined) classInfoUpdates.description = req.body.description;
-        if (req.body.cost !== undefined) classInfoUpdates.cost = req.body.cost;
-        if (req.body.maxParticipants !== undefined) classInfoUpdates.maxParticipants = req.body.maxParticipants;
-        if (req.body.banner !== undefined) classInfoUpdates.banner = req.body.banner;
-        if (req.body.ageRange !== undefined) classInfoUpdates.ageRange = req.body.ageRange;
-
-        // Update ClassInfo if there are changes
-        if (Object.keys(classInfoUpdates).length > 0) {
-          await ClassInfo.findByIdAndUpdate(classItem.classInfoId._id, classInfoUpdates);
-        }
-
         // Update Class
         const updatedClass = await Class.findByIdAndUpdate(id, classUpdates, { new: true });
 
         // Update enrollment status when class status changes
-        if (req.body.status === 'completed') {
-          console.log('Updating enrollment status to completed for class:', id);
-          const result = await Member.updateMany(
-            { 'enrollments.itemId': new mongoose.Types.ObjectId(id) },
-            { $set: { 'enrollments.$[elem].status': 'completed' } },
-            { arrayFilters: [{ 'elem.itemId': new mongoose.Types.ObjectId(id) }] }
-          );
-          console.log('Update result:', result);
-        } else if (req.body.status === 'cancelled') {
-          const result = await Member.updateMany(
-            { 'enrollments.itemId': new mongoose.Types.ObjectId(id) },
-            { $set: { 'enrollments.$[elem].status': 'cancelled' } },
-            { arrayFilters: [{ 'elem.itemId': new mongoose.Types.ObjectId(id) }] }
-          );
-          console.log('Update result:', result);
+        if (req.body.status === 'completed' || req.body.status === 'cancelled') {
+          const participantMemberIds = [...new Set(classItem.participants.map((participant) => participant.memberId.toString()))];
+          const participantMembers = await Member.find({ _id: { $in: participantMemberIds } });
+
+          for (const member of participantMembers) {
+            const enrollment = updateEnrollmentStatus(member, 'class', classItem._id, req.body.status);
+            if (!enrollment) {
+              continue;
+            }
+
+            if (req.body.status === 'completed' && member.referredBy) {
+              const referrer = await Member.findById(member.referredBy);
+              if (referrer) {
+                const referralAwarded = awardPoints(referrer, {
+                  key: `referral-class-completion:${member._id.toString()}:${classItem._id.toString()}`,
+                  type: 'referral_class_completion_bonus',
+                  points: REFERRAL_CLASS_COMPLETION_POINTS,
+                  itemId: classItem._id,
+                  relatedMemberId: member._id,
+                  description: `推薦會員 ${member.memberId} 完成課程 / Referral class completion bonus for ${member.memberId}`
+                });
+
+                if (referralAwarded) {
+                  await referrer.save();
+                }
+              }
+
+              maybeAwardAttendanceCoupon(member);
+            }
+
+            await member.save();
+          }
         }
 
         return res.status(200).json({
@@ -384,11 +435,11 @@ module.exports = async (req, res) => {
         }
 
         // Update enrollment status for all participants
-        await Member.updateMany(
-          { 'enrollments.itemId': id },
-          { $set: { 'enrollments.$[elem].status': 'cancelled' } },
-          { arrayFilters: [{ 'elem.itemId': id }] }
-        );
+        const enrolledMembers = await Member.find({ 'enrollments.itemId': id });
+        for (const member of enrolledMembers) {
+          updateEnrollmentStatus(member, 'class', id, 'cancelled');
+          await member.save();
+        }
 
         return res.status(200).json({ message: '課程刪除成功 / Class deleted successfully' });
       }

@@ -1,8 +1,109 @@
 const connectDB = require('../lib/mongodb');
-const { Member, CouponShareToken, CouponForSale } = require('../db/models');
+const { Member, CouponShareToken, CouponForSale, Activity } = require('../db/models');
 const line = require('@line/bot-sdk');
 const crypto = require('crypto');
 const googleSheets = require('../lib/googleSheets');
+const {
+  ATTENDANCE_REWARD_CLASS_COUNT,
+  ATTENDANCE_REWARD_WINDOW_DAYS,
+  REFERRAL_REGISTRATION_POINTS,
+  REGISTRATION_POINTS,
+  awardPoints
+} = require('../lib/memberRewards');
+
+async function buildMemberPayload(memberDoc) {
+  if (!memberDoc) {
+    return null;
+  }
+
+  const member = memberDoc.toObject ? memberDoc.toObject() : memberDoc;
+  const referralCount = await Member.countDocuments({
+    referredBy: member._id,
+    registrationCompleted: true
+  });
+
+  const attendanceCutoff = new Date(Date.now() - ATTENDANCE_REWARD_WINDOW_DAYS * 24 * 60 * 60 * 1000);
+  const completedClassEnrollments = (member.enrollments || [])
+    .filter((entry) => entry.type === 'class' && entry.status === 'completed' && entry.completedAt && new Date(entry.completedAt) >= attendanceCutoff)
+    .sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt));
+
+  const volunteeringEnrollmentIds = (member.enrollments || [])
+    .filter((entry) => entry.type === 'activity' && entry.status === 'completed')
+    .map((entry) => entry.itemId);
+
+  const volunteeringActivities = volunteeringEnrollmentIds.length > 0
+    ? await Activity.find({ _id: { $in: volunteeringEnrollmentIds }, isVolunteeringWork: true })
+        .select('_id name date time location')
+        .lean()
+    : [];
+
+  const volunteeringActivityMap = new Map(
+    volunteeringActivities.map((activity) => [activity._id.toString(), activity])
+  );
+
+  const volunteeringHistory = (member.enrollments || [])
+    .filter((entry) => entry.type === 'activity' && entry.status === 'completed')
+    .map((entry) => {
+      const activity = volunteeringActivityMap.get(entry.itemId.toString());
+      if (!activity) {
+        return null;
+      }
+
+      return {
+        itemId: entry.itemId,
+        itemName: activity.name || entry.itemName,
+        completedAt: entry.completedAt || entry.enrolledAt,
+        date: activity.date,
+        time: activity.time,
+        location: activity.location
+      };
+    })
+    .filter(Boolean)
+    .sort((a, b) => new Date(b.completedAt || b.date || 0) - new Date(a.completedAt || a.date || 0));
+
+  return {
+    ...member,
+    referralCount,
+    attendanceProgress: {
+      completedCount: completedClassEnrollments.length,
+      targetCount: ATTENDANCE_REWARD_CLASS_COUNT,
+      remainingCount: Math.max(0, ATTENDANCE_REWARD_CLASS_COUNT - completedClassEnrollments.length),
+      windowDays: ATTENDANCE_REWARD_WINDOW_DAYS
+    },
+    volunteeringHistory
+  };
+}
+
+async function awardRegistrationBonuses(member) {
+  awardPoints(member, {
+    key: `registration:${member._id.toString()}`,
+    type: 'registration_bonus',
+    points: REGISTRATION_POINTS,
+    description: '完成首次註冊獎勵 / First-time registration bonus'
+  });
+
+  if (!member.referredBy) {
+    return;
+  }
+
+  const referrer = await Member.findById(member.referredBy);
+  if (!referrer) {
+    return;
+  }
+
+  const referrerAwarded = awardPoints(referrer, {
+    key: `referral-registration:${member._id.toString()}`,
+    type: 'referral_registration_bonus',
+    points: REFERRAL_REGISTRATION_POINTS,
+    itemId: member._id,
+    relatedMemberId: member._id,
+    description: `推薦會員 ${member.memberId} 完成註冊 / Referral registration bonus for ${member.memberId}`
+  });
+
+  if (referrerAwarded) {
+    await referrer.save();
+  }
+}
 
 module.exports = async (req, res) => {
   const { memberId, lineUserId, token, sessionToken, action, couponId } = req.query;
@@ -63,7 +164,7 @@ module.exports = async (req, res) => {
       }
 
       return res.status(200).json({
-        member,
+        member: await buildMemberPayload(member),
         needsRegistration: !member.registrationCompleted,
         senderReferralCode
       });
@@ -248,6 +349,8 @@ module.exports = async (req, res) => {
       }
 
       await member.save();
+      await awardRegistrationBonuses(member);
+      await member.save();
 
       console.log('[API /register] Registration completed for member:', member.memberId);
       console.log('[API /register] Member referredBy:', member.referredBy);
@@ -408,6 +511,8 @@ module.exports = async (req, res) => {
       member.registrationTokenExpires = undefined;
 
       await member.save();
+      await awardRegistrationBonuses(member);
+      await member.save();
 
       // Sync to Google Sheets
       try {
@@ -471,7 +576,7 @@ module.exports = async (req, res) => {
         registrationCompleted: member.registrationCompleted
       });
 
-      return res.status(200).json({ member });
+      return res.status(200).json({ member: await buildMemberPayload(member) });
     }
 
     // Get member by ID
@@ -497,7 +602,7 @@ module.exports = async (req, res) => {
           });
         }
 
-        return res.status(200).json({ member });
+        return res.status(200).json({ member: await buildMemberPayload(member) });
       }
 
       // No session token, normal member lookup
@@ -541,7 +646,7 @@ module.exports = async (req, res) => {
         });
       }
 
-      return res.status(200).json({ member });
+      return res.status(200).json({ member: await buildMemberPayload(member) });
     }
 
     // Update member profile
@@ -582,7 +687,7 @@ module.exports = async (req, res) => {
 
       return res.status(200).json({
         message: '更新成功 / Update successful',
-        member
+        member: await buildMemberPayload(member)
       });
     }
 

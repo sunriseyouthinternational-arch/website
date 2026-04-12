@@ -1,6 +1,13 @@
 const connectDB = require('../lib/mongodb');
 const { Activity, Member } = require('../db/models');
-const mongoose = require('mongoose');
+const {
+  POINTS_PER_NTD,
+  VOLUNTEERING_ACTIVITY_POINTS,
+  awardPoints,
+  redeemPoints,
+  updateEnrollmentStatus,
+  upsertEnrollment
+} = require('../lib/memberRewards');
 
 module.exports = async (req, res) => {
   const { id, action } = req.query;
@@ -10,7 +17,7 @@ module.exports = async (req, res) => {
 
     // Enroll in activity
     if (action === 'enroll' && req.method === 'POST') {
-      const { memberId, paymentMethod, couponId, familyMembers = [], familyMemberCoupons = {} } = req.body;
+      const { memberId, paymentMethod, familyMembers = [], familyMemberCoupons = {}, pointsToUse = 0 } = req.body;
 
       const activity = await Activity.findById(id).populate('teacherId');
       const member = await Member.findOne({ memberId });
@@ -33,6 +40,8 @@ module.exports = async (req, res) => {
       }
 
       const familyCouponsUsed = [];
+      const participantEntries = [];
+
       familyMembers.forEach(fmIndex => {
         // Handle main member enrollment
         if (fmIndex === 'self') {
@@ -56,7 +65,7 @@ module.exports = async (req, res) => {
             }
           }
 
-          activity.participants.push({
+          participantEntries.push({
             memberId: member._id,
             memberName: member.name,
             paid: false,
@@ -88,7 +97,7 @@ module.exports = async (req, res) => {
               }
             }
 
-            activity.participants.push({
+            participantEntries.push({
               memberId: member._id,
               memberName: `${familyMember.name} (${member.name}的家人)`,
               paid: false,
@@ -100,12 +109,38 @@ module.exports = async (req, res) => {
         }
       });
 
+      const subtotal = activity.cost * participantEntries.length;
+      const couponDiscountTotal = participantEntries.reduce((sum, participant) => sum + (participant.couponDiscount || 0), 0);
+      const totalAfterCoupons = Math.max(0, subtotal - couponDiscountTotal);
+      const requestedPoints = Math.max(0, Math.floor(Number(pointsToUse) || 0));
+      const pointsRequestedNtd = requestedPoints * POINTS_PER_NTD;
+      const pointsDiscountTotal = redeemPoints(member, {
+        key: `points-redemption:activity:${activity._id.toString()}:${member._id.toString()}`,
+        type: 'points_redemption',
+        points: Math.min(pointsRequestedNtd, totalAfterCoupons),
+        itemId: activity._id,
+        description: `活動報名折抵 / Points redemption for activity ${activity._id.toString()}`
+      });
+
+      let remainingPointsDiscount = pointsDiscountTotal;
+      participantEntries.forEach((participant) => {
+        const participantSubtotal = Math.max(0, activity.cost - (participant.couponDiscount || 0));
+        const participantPointsDiscount = Math.min(participantSubtotal, remainingPointsDiscount);
+        remainingPointsDiscount -= participantPointsDiscount;
+        participant.pointsDiscount = participantPointsDiscount;
+        activity.participants.push(participant);
+      });
+
       await activity.save();
 
-      member.enrollments.push({
+      upsertEnrollment(member, {
         type: 'activity',
         itemId: activity._id,
-        itemName: activity.name
+        itemName: activity.name,
+        paid: false,
+        paymentMethod: paymentMethod || 'in-person',
+        couponDiscount: couponDiscountTotal,
+        pointsDiscount: pointsDiscountTotal
       });
 
       await member.save();
@@ -127,7 +162,14 @@ module.exports = async (req, res) => {
       return res.status(200).json({
         message,
         activity,
-        familyCouponsUsed
+        familyCouponsUsed,
+        pricing: {
+          subtotal,
+          couponDiscount: couponDiscountTotal,
+          pointsDiscount: pointsDiscountTotal,
+          finalCost: Math.max(0, totalAfterCoupons - pointsDiscountTotal)
+        },
+        remainingPoints: member.points || 0
       });
     }
 
@@ -322,18 +364,28 @@ module.exports = async (req, res) => {
         }
 
         // Update enrollment status when activity status changes
-        if (req.body.status === 'completed') {
-          await Member.updateMany(
-            { 'enrollments.itemId': new mongoose.Types.ObjectId(id) },
-            { $set: { 'enrollments.$[elem].status': 'completed' } },
-            { arrayFilters: [{ 'elem.itemId': new mongoose.Types.ObjectId(id) }] }
-          );
-        } else if (req.body.status === 'cancelled') {
-          await Member.updateMany(
-            { 'enrollments.itemId': new mongoose.Types.ObjectId(id) },
-            { $set: { 'enrollments.$[elem].status': 'cancelled' } },
-            { arrayFilters: [{ 'elem.itemId': new mongoose.Types.ObjectId(id) }] }
-          );
+        if (req.body.status === 'completed' || req.body.status === 'cancelled') {
+          const participantMemberIds = [...new Set(activity.participants.map((participant) => participant.memberId.toString()))];
+          const participantMembers = await Member.find({ _id: { $in: participantMemberIds } });
+
+          for (const member of participantMembers) {
+            const enrollment = updateEnrollmentStatus(member, 'activity', activity._id, req.body.status);
+            if (!enrollment) {
+              continue;
+            }
+
+            if (req.body.status === 'completed' && activity.isVolunteeringWork) {
+              awardPoints(member, {
+                key: `volunteering-activity:${activity._id.toString()}:${member._id.toString()}`,
+                type: 'volunteering_activity_completion_bonus',
+                points: VOLUNTEERING_ACTIVITY_POINTS,
+                itemId: activity._id,
+                description: `志工活動完成獎勵 / Volunteering activity completion bonus for ${activity.name}`
+              });
+            }
+
+            await member.save();
+          }
         }
 
         return res.status(200).json({
@@ -350,11 +402,11 @@ module.exports = async (req, res) => {
         }
 
         // Update enrollment status for all participants
-        await Member.updateMany(
-          { 'enrollments.itemId': id },
-          { $set: { 'enrollments.$[elem].status': 'cancelled' } },
-          { arrayFilters: [{ 'elem.itemId': id }] }
-        );
+        const enrolledMembers = await Member.find({ 'enrollments.itemId': id });
+        for (const member of enrolledMembers) {
+          updateEnrollmentStatus(member, 'activity', id, 'cancelled');
+          await member.save();
+        }
 
         return res.status(200).json({ message: '活動刪除成功 / Activity deleted successfully' });
       }

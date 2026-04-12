@@ -54,12 +54,37 @@ const memberSchema = new mongoose.Schema({
   referredBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Member' }, // Member who referred this person
   points: { type: Number, default: 0 }, // Membership points for gift redemption
   qrCode: { type: String },
+  rewardHistory: [{
+    key: { type: String, required: true },
+    type: {
+      type: String,
+      enum: [
+        'registration_bonus',
+        'referral_registration_bonus',
+        'referral_class_completion_bonus',
+        'volunteering_activity_completion_bonus',
+        'attendance_coupon_reward',
+        'points_redemption'
+      ],
+      required: true
+    },
+    points: { type: Number, default: 0 },
+    itemId: { type: mongoose.Schema.Types.ObjectId },
+    relatedMemberId: { type: mongoose.Schema.Types.ObjectId, ref: 'Member' },
+    description: { type: String },
+    createdAt: { type: Date, default: Date.now }
+  }],
   enrollments: [{
     type: { type: String, enum: ['class', 'activity'], required: true },
     itemId: { type: mongoose.Schema.Types.ObjectId, required: true },
     itemName: { type: String, required: true },
     enrolledAt: { type: Date, default: Date.now },
-    status: { type: String, enum: ['active', 'completed', 'cancelled'], default: 'active' }
+    status: { type: String, enum: ['active', 'completed', 'cancelled'], default: 'active' },
+    paid: { type: Boolean, default: false },
+    paymentMethod: { type: String, enum: ['in-person', 'credit', 'linepay'], default: 'in-person' },
+    couponDiscount: { type: Number, default: 0 },
+    pointsDiscount: { type: Number, default: 0 },
+    completedAt: { type: Date }
   }],
   coupons: [{
     type: { type: String, enum: ['trial', 'discount'], required: true },
@@ -101,6 +126,7 @@ memberSchema.index({ 'line.userId': 1 });
 memberSchema.index({ registrationToken: 1 });
 memberSchema.index({ sessionToken: 1 });
 memberSchema.index({ referralCode: 1 });
+memberSchema.index({ 'rewardHistory.key': 1 });
 
 // ClassInfo Schema - General information about a class type
 const classInfoSchema = new mongoose.Schema({
@@ -138,7 +164,8 @@ const classSchema = new mongoose.Schema({
     paid: { type: Boolean, default: false },
     paymentMethod: { type: String, enum: ['in-person', 'credit', 'linepay'], default: 'in-person' },
     isFamilyMember: { type: Boolean, default: false },
-    couponDiscount: { type: Number, default: 0 }
+    couponDiscount: { type: Number, default: 0 },
+    pointsDiscount: { type: Number, default: 0 }
   }],
   status: { type: String, enum: ['upcoming', 'completed', 'cancelled'], default: 'upcoming' },
   createdAt: { type: Date, default: Date.now },
@@ -192,7 +219,8 @@ const activitySchema = new mongoose.Schema({
     paid: { type: Boolean, default: false },
     paymentMethod: { type: String, enum: ['in-person', 'credit', 'linepay'], default: 'in-person' },
     isFamilyMember: { type: Boolean, default: false },
-    couponDiscount: { type: Number, default: 0 }
+    couponDiscount: { type: Number, default: 0 },
+    pointsDiscount: { type: Number, default: 0 }
   }],
   status: { type: String, enum: ['upcoming', 'completed', 'cancelled'], default: 'upcoming' },
   createdAt: { type: Date, default: Date.now },

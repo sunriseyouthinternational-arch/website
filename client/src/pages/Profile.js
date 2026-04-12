@@ -15,14 +15,15 @@ function Profile() {
   const [classes, setClasses] = useState([]);
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingClassesAndActivities, setLoadingClassesAndActivities] = useState(true);
   const [message, setMessage] = useState({ type: '', text: '' });
   const [selectedClass, setSelectedClass] = useState(null);
   const [selectedActivity, setSelectedActivity] = useState(null);
 
   const [selectedClassInfo, setSelectedClassInfo] = useState('all');
   const [selectedDate, setSelectedDate] = useState('all');
-  const [dateOffset, setDateOffset] = useState(0);
   const [showCalendar, setShowCalendar] = useState(false);
+  const [calendarMonth, setCalendarMonth] = useState(new Date());
 
   const tabFromUrl = searchParams.get('tab');
   const sessionFromUrl = searchParams.get('session');
@@ -50,6 +51,7 @@ function Profile() {
   const [checkoutData, setCheckoutData] = useState(null);
   const [selectedFamilyMembers, setSelectedFamilyMembers] = useState([]);
   const [familyMemberCoupons, setFamilyMemberCoupons] = useState({});
+  const [useAvailablePoints, setUseAvailablePoints] = useState(false);
 
   const [showShareModal, setShowShareModal] = useState(false);
   const [shareCoupon, setShareCoupon] = useState(null);
@@ -121,6 +123,59 @@ function Profile() {
     return `${apiUrl}${imagePath}`;
   };
 
+  const getParticipantDiscountTotal = (participant) => (
+    (participant?.couponDiscount || 0) + (participant?.pointsDiscount || 0)
+  );
+
+  const getParticipantFinalCost = (participant, itemCost) => (
+    Math.max(0, itemCost - getParticipantDiscountTotal(participant))
+  );
+
+  const getCheckoutPricing = () => {
+    if (!checkoutData || !member) {
+      return {
+        subtotal: 0,
+        couponDiscount: 0,
+        pointsDiscount: 0,
+        finalCost: 0
+      };
+    }
+
+    const subtotal = checkoutData.cost * selectedFamilyMembers.length;
+    const couponDiscount = selectedFamilyMembers.reduce((sum, fmIndex) => {
+      let itemDiscount = 0;
+      const couponId = familyMemberCoupons[fmIndex];
+      const coupon = member.coupons.find((entry) => entry._id?.toString() === couponId?.toString());
+
+      if (coupon) {
+        if (coupon.type === 'trial') {
+          itemDiscount = checkoutData.cost;
+        } else {
+          itemDiscount = Math.round(checkoutData.cost * coupon.discountPercent / 100);
+        }
+      }
+
+      return sum + itemDiscount;
+    }, 0);
+
+    const totalAfterCoupons = Math.max(0, subtotal - couponDiscount);
+    const pointsDiscount = useAvailablePoints ? Math.min(member.points || 0, totalAfterCoupons) : 0;
+
+    return {
+      subtotal,
+      couponDiscount,
+      pointsDiscount,
+      finalCost: Math.max(0, totalAfterCoupons - pointsDiscount)
+    };
+  };
+
+  const attendanceProgress = member?.attendanceProgress || {
+    completedCount: 0,
+    targetCount: 12,
+    remainingCount: 12,
+    windowDays: 90
+  };
+
 
   // eslint-disable-next-line no-unused-vars
   const validateAndSaveSession = async (sessionToken, id) => {
@@ -154,6 +209,8 @@ function Profile() {
   };
 
   const fetchClassesAndActivities = async () => {
+    setLoadingClassesAndActivities(true);
+
     try {
       const [classesRes, activitiesRes] = await Promise.all([
         axios.get('/api/classes'),
@@ -186,6 +243,8 @@ function Profile() {
       setActivities(activeActivities);
     } catch (error) {
       console.error('Error fetching classes/activities:', error);
+    } finally {
+      setLoadingClassesAndActivities(false);
     }
   };
 
@@ -199,32 +258,23 @@ function Profile() {
     }
   };
 
-  const getDateOptions = () => {
-    const dates = [];
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = today.getMonth();
-    const day = today.getDate();
-
-    for (let i = dateOffset; i < dateOffset + 7; i++) {
-      const date = new Date(year, month, day + i);
-      dates.push(date);
-    }
-    return dates;
+  const formatDateKey = (value) => {
+    if (!value) return '';
+    const date = value instanceof Date ? value : new Date(value);
+    if (Number.isNaN(date.getTime())) return '';
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
   };
 
-  const getFilteredClasses = () => {
+  const parseDateKey = (dateKey) => {
+    const [year, month, day] = dateKey.split('-').map(Number);
+    return new Date(year, month - 1, day);
+  };
+
+  const getFilteredClassesBase = () => {
     let filtered = [...classes];
 
     if (selectedClassInfo !== 'all') {
       filtered = filtered.filter(c => c.classInfoId?._id === selectedClassInfo);
-    }
-
-    if (selectedDate !== 'all') {
-      filtered = filtered.filter(c => {
-        const classDateStr = c.date.split('T')[0];
-        return classDateStr === selectedDate;
-      });
     }
 
     filtered.sort((a, b) => {
@@ -248,6 +298,213 @@ function Profile() {
     });
 
     return filtered;
+  };
+
+  const getAvailableDateKeys = (items) => (
+    [...new Set(items.map((item) => formatDateKey(item.date)).filter(Boolean))]
+      .sort((a, b) => parseDateKey(a) - parseDateKey(b))
+  );
+
+  const getFilteredClasses = () => {
+    let filtered = getFilteredClassesBase();
+
+    if (selectedDate !== 'all') {
+      filtered = filtered.filter(c => {
+        const classDateStr = formatDateKey(c.date);
+        return classDateStr === selectedDate;
+      });
+    }
+
+    return filtered;
+  };
+
+  const getFilteredActivities = () => {
+    let filtered = [...activities];
+
+    if (selectedDate !== 'all') {
+      filtered = filtered.filter(activity => formatDateKey(activity.date) === selectedDate);
+    }
+
+    return filtered;
+  };
+
+  const availableClassDateKeys = getAvailableDateKeys(getFilteredClassesBase());
+  const availableActivityDateKeys = getAvailableDateKeys(activities);
+  const activeDateKeys = activeTab === 'activities' ? availableActivityDateKeys : availableClassDateKeys;
+
+  const shiftSelectedDate = (direction) => {
+    if (activeDateKeys.length === 0) return;
+
+    if (selectedDate === 'all') {
+      if (direction > 0) {
+        setSelectedDate(activeDateKeys[0]);
+      }
+      return;
+    }
+
+    const currentIndex = activeDateKeys.indexOf(selectedDate);
+    if (currentIndex === -1) {
+      setSelectedDate(activeDateKeys[0]);
+      return;
+    }
+
+    const nextIndex = currentIndex + direction;
+    if (nextIndex >= 0 && nextIndex < activeDateKeys.length) {
+      setSelectedDate(activeDateKeys[nextIndex]);
+    }
+  };
+
+  const openDateCalendar = () => {
+    const dateForCalendar = selectedDate !== 'all'
+      ? parseDateKey(selectedDate)
+      : activeDateKeys[0]
+        ? parseDateKey(activeDateKeys[0])
+        : new Date();
+    setCalendarMonth(new Date(dateForCalendar.getFullYear(), dateForCalendar.getMonth(), 1));
+    setShowCalendar(true);
+  };
+
+  const renderDateSelector = () => {
+    const canGoPrev = selectedDate !== 'all' && activeDateKeys.indexOf(selectedDate) > 0;
+    const canGoNext = selectedDate === 'all'
+      ? activeDateKeys.length > 0
+      : activeDateKeys.indexOf(selectedDate) < activeDateKeys.length - 1;
+
+    const monthStart = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), 1);
+    const monthEnd = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1, 0);
+    const startWeekday = monthStart.getDay();
+    const daysInMonth = monthEnd.getDate();
+    const monthDates = [];
+
+    for (let i = 0; i < startWeekday; i++) {
+      monthDates.push(null);
+    }
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      monthDates.push(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), day));
+    }
+
+    const weekdayLabels = t('language') === 'zh'
+      ? ['日', '一', '二', '三', '四', '五', '六']
+      : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+    return (
+      <div style={{ marginBottom: '20px' }}>
+        <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', color: '#667eea' }}>
+          {t('filterByDate')}
+        </label>
+        <div className="date-selector-row">
+          <button
+            onClick={() => shiftSelectedDate(-1)}
+            disabled={!canGoPrev}
+            className="date-nav-button"
+          >
+            ←
+          </button>
+
+          <button
+            onClick={() => setSelectedDate('all')}
+            className={`date-chip ${selectedDate === 'all' ? 'active' : ''}`}
+          >
+            {t('all')}
+          </button>
+
+          {activeDateKeys.map((dateKey) => {
+            const date = parseDateKey(dateKey);
+            const label = `${date.getMonth() + 1}/${date.getDate()}`;
+
+            return (
+              <button
+                key={dateKey}
+                onClick={() => setSelectedDate(dateKey)}
+                className={`date-chip ${selectedDate === dateKey ? 'active' : ''}`}
+              >
+                {label}
+              </button>
+            );
+          })}
+
+          <button
+            onClick={() => shiftSelectedDate(1)}
+            disabled={!canGoNext}
+            className="date-nav-button"
+          >
+            →
+          </button>
+
+          <div className="date-calendar-wrapper">
+            <button
+              onClick={() => {
+                if (showCalendar) {
+                  setShowCalendar(false);
+                } else {
+                  openDateCalendar();
+                }
+              }}
+              className="date-calendar-button"
+            >
+              📅 {t('selectFromCalendar')}
+            </button>
+
+            {showCalendar && (
+              <div className="date-calendar-popover">
+                <div className="date-calendar-header">
+                  <button
+                    onClick={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() - 1, 1))}
+                    className="date-calendar-month-nav"
+                  >
+                    ←
+                  </button>
+                  <strong>
+                    {calendarMonth.toLocaleDateString(t('en_us'), { year: 'numeric', month: 'long' })}
+                  </strong>
+                  <button
+                    onClick={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1, 1))}
+                    className="date-calendar-month-nav"
+                  >
+                    →
+                  </button>
+                </div>
+
+                <div className="date-calendar-grid weekday">
+                  {weekdayLabels.map((label) => (
+                    <div key={label} className="date-calendar-weekday">{label}</div>
+                  ))}
+                </div>
+
+                <div className="date-calendar-grid">
+                  {monthDates.map((date, index) => {
+                    if (!date) {
+                      return <div key={`empty-${index}`} className="date-calendar-empty" />;
+                    }
+
+                    const dateKey = formatDateKey(date);
+                    const isAvailable = activeDateKeys.includes(dateKey);
+                    const isSelected = selectedDate === dateKey;
+
+                    return (
+                      <button
+                        key={dateKey}
+                        type="button"
+                        disabled={!isAvailable}
+                        onClick={() => {
+                          if (!isAvailable) return;
+                          setSelectedDate(dateKey);
+                          setShowCalendar(false);
+                        }}
+                        className={`date-calendar-day ${isSelected ? 'selected' : ''} ${!isAvailable ? 'disabled' : ''}`}
+                      >
+                        {date.getDate()}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
   };
 
   const getUniqueClassInfos = () => {
@@ -354,6 +611,20 @@ function Profile() {
     if (activeTab === 'coupons') {
       fetchCouponsForSale();
     }
+  }, [activeTab]);
+
+  useEffect(() => {
+    if (selectedDate === 'all') {
+      return;
+    }
+
+    if (!activeDateKeys.includes(selectedDate)) {
+      setSelectedDate('all');
+    }
+  }, [activeDateKeys, selectedDate]);
+
+  useEffect(() => {
+    setShowCalendar(false);
   }, [activeTab]);
 
   useEffect(() => {
@@ -892,6 +1163,7 @@ function Profile() {
     });
     setSelectedFamilyMembers(['self']);
     setFamilyMemberCoupons({});
+    setUseAvailablePoints(false);
     setShowCheckout(true);
   };
 
@@ -915,38 +1187,26 @@ function Profile() {
         couponId: coupon?._id,
         familyMembers: selectedFamilyMembers,
         familyMemberCoupons,
+        pointsToUse: useAvailablePoints ? getCheckoutPricing().pointsDiscount : 0,
         enrollSelfOnly: false
       });
 
-      // Calculate final price
-      let originalCost = checkoutData.cost * selectedFamilyMembers.length;
-      let finalCost = originalCost;
-      let discount = 0;
-
-      if (response.data.familyCouponsUsed && response.data.familyCouponsUsed.length > 0) {
-        response.data.familyCouponsUsed.forEach(fmCoupon => {
-          if (fmCoupon.type === 'trial') {
-            finalCost -= checkoutData.cost;
-            discount += checkoutData.cost;
-          } else {
-            const fmDiscount = Math.round(checkoutData.cost * fmCoupon.discountPercent / 100);
-            finalCost -= fmDiscount;
-            discount += fmDiscount;
-          }
-        });
-      }
+      const pricing = response.data.pricing || getCheckoutPricing();
 
       // Store payment confirmation data
       setPaymentConfirmationData({
         type: checkoutData.type,
         item: checkoutData.type === 'class' ? response.data.class : response.data.activity,
         itemName: checkoutData.name,
-        originalCost,
-        finalCost,
-        discount,
+        originalCost: pricing.subtotal,
+        finalCost: pricing.finalCost,
+        discount: pricing.couponDiscount + pricing.pointsDiscount,
+        couponDiscount: pricing.couponDiscount,
+        pointsDiscount: pricing.pointsDiscount,
         familyCouponsUsed: response.data.familyCouponsUsed,
         paymentMethod,
-        familyMembersCount: selectedFamilyMembers.length
+        familyMembersCount: selectedFamilyMembers.length,
+        remainingPoints: response.data.remainingPoints
       });
 
       const memberResponse = await axios.get(`/api/members?memberId=${member.memberId}`);
@@ -956,6 +1216,7 @@ function Profile() {
       setCheckoutData(null);
       setSelectedFamilyMembers([]);
       setFamilyMemberCoupons({});
+      setUseAvailablePoints(false);
 
       // Show payment confirmation modal
       setShowPaymentConfirmation(true);
@@ -1056,6 +1317,13 @@ function Profile() {
 
     return date.toLocaleDateString('zh-TW');
   };
+
+  const renderClassesActivitiesLoading = () => (
+    <div className="classes-activities-loading">
+      <div className="classes-activities-spinner" />
+      <p>{t('loading')}</p>
+    </div>
+  );
 
   return (
     <div className="container">
@@ -1413,6 +1681,108 @@ function Profile() {
                     {member.contact?.lineId && <p><strong>{t('lineId')}</strong> {member.contact.lineId}</p>}
                   </div>
 
+                  <div style={{
+                    background: '#f8f9ff',
+                    border: '2px solid #dbe4ff',
+                    borderRadius: '12px',
+                    padding: '20px',
+                    marginTop: '20px'
+                  }}>
+                    <h3 style={{ marginBottom: '16px', color: '#495057' }}>
+                      {t('rewards_and_referrals')}
+                    </h3>
+                    <div style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+                      gap: '14px',
+                      marginBottom: '18px'
+                    }}>
+                      <div style={{ background: '#fff', borderRadius: '10px', padding: '14px' }}>
+                        <p style={{ fontSize: '13px', color: '#666', marginBottom: '6px' }}>{t('yourReferralCode')}</p>
+                        <p style={{ fontSize: '20px', fontWeight: 'bold', color: '#667eea', margin: 0 }}>
+                          {member.referralCode || 'N/A'}
+                        </p>
+                      </div>
+                      <div style={{ background: '#fff', borderRadius: '10px', padding: '14px' }}>
+                        <p style={{ fontSize: '13px', color: '#666', marginBottom: '6px' }}>{t('people_referred')}</p>
+                        <p style={{ fontSize: '20px', fontWeight: 'bold', color: '#667eea', margin: 0 }}>
+                          {member.referralCount || 0}
+                        </p>
+                      </div>
+                      <div style={{ background: '#fff', borderRadius: '10px', padding: '14px' }}>
+                        <p style={{ fontSize: '13px', color: '#666', marginBottom: '6px' }}>{t('points')}</p>
+                        <p style={{ fontSize: '20px', fontWeight: 'bold', color: '#667eea', margin: 0 }}>
+                          {member.points || 0}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div style={{ background: '#fff', borderRadius: '10px', padding: '16px', marginBottom: '16px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap', marginBottom: '10px' }}>
+                        <strong style={{ color: '#495057' }}>{t('attendance_progress')}</strong>
+                        <span style={{ color: '#667eea', fontWeight: 'bold' }}>
+                          {attendanceProgress.completedCount}/{attendanceProgress.targetCount}
+                        </span>
+                      </div>
+                      <div style={{ height: '10px', background: '#e9ecef', borderRadius: '999px', overflow: 'hidden', marginBottom: '10px' }}>
+                        <div
+                          style={{
+                            width: `${Math.min(100, (attendanceProgress.completedCount / attendanceProgress.targetCount) * 100)}%`,
+                            height: '100%',
+                            background: 'linear-gradient(90deg, #4c6ef5 0%, #74c0fc 100%)'
+                          }}
+                        />
+                      </div>
+                      <p style={{ margin: 0, color: '#666', fontSize: '14px' }}>
+                        {attendanceProgress.remainingCount > 0
+                          ? `${t('classes_until_next_reward')}: ${attendanceProgress.remainingCount}`
+                          : t('attendance_reward_ready')}
+                      </p>
+                      <p style={{ margin: '6px 0 0', color: '#868e96', fontSize: '13px' }}>
+                        {t('language') === 'zh'
+                          ? `統計最近 ${attendanceProgress.windowDays} 天內已完成課程`
+                          : `Tracks completed classes in the last ${attendanceProgress.windowDays} days`}
+                      </p>
+                    </div>
+
+                    <div style={{ background: '#fff', borderRadius: '10px', padding: '16px' }}>
+                      <h4 style={{ marginBottom: '12px', color: '#495057' }}>{t('volunteering_history')}</h4>
+                      {member.volunteeringHistory && member.volunteeringHistory.length > 0 ? (
+                        <div style={{ display: 'grid', gap: '10px' }}>
+                          {member.volunteeringHistory.map((activity) => (
+                            <div
+                              key={`${activity.itemId}-${activity.completedAt || activity.date}`}
+                              style={{
+                                border: '1px solid #e9ecef',
+                                borderRadius: '8px',
+                                padding: '12px 14px',
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                gap: '12px',
+                                flexWrap: 'wrap'
+                              }}
+                            >
+                              <div>
+                                <div style={{ fontWeight: 'bold', color: '#333' }}>{activity.itemName}</div>
+                                {activity.location && (
+                                  <div style={{ fontSize: '13px', color: '#666', marginTop: '4px' }}>
+                                    {activity.location}
+                                  </div>
+                                )}
+                              </div>
+                              <div style={{ fontSize: '13px', color: '#666', textAlign: 'right' }}>
+                                <div>{formatDate(activity.date || activity.completedAt)}</div>
+                                {activity.time && <div style={{ marginTop: '4px' }}>{activity.time}</div>}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p style={{ margin: 0, color: '#868e96' }}>{t('no_volunteering_history')}</p>
+                      )}
+                    </div>
+                  </div>
+
                   <div className="membership-status" style={{
                     background: member.membershipStatus === '協會會員' ? '#e7f5ff' : '#f8f9fa',
                     border: `2px solid ${member.membershipStatus === '協會會員' ? '#74c0fc' : '#dee2e6'}`,
@@ -1641,12 +2011,12 @@ function Profile() {
                 ← {t('back')}
               </button>
 
-              <h2>{selectedClass.classInfoId?.name || t('noData')}</h2>
+              <h2>{selectedClass.name || selectedClass.classInfoId?.name || t('noData')}</h2>
 
               {selectedClass.classInfoId?.banner && (
                 <img
                   src={getImageSrc(selectedClass.classInfoId.banner)}
-                  alt={selectedClass.classInfoId?.name}
+                  alt={selectedClass.name || selectedClass.classInfoId?.name}
                   loading="lazy"
                   decoding="async"
                   style={{
@@ -1662,7 +2032,7 @@ function Profile() {
               )}
 
               <p style={{ fontSize: '18px', lineHeight: '1.6', marginBottom: '20px', color: '#666' }}>
-                {selectedClass.classInfoId?.description || ''}
+                {selectedClass.description || selectedClass.classInfoId?.description || ''}
               </p>              <div style={{
                 display: 'grid',
                 gridTemplateColumns: selectedClass.teacherId ? '1.5fr 1fr' : '1fr',
@@ -1807,8 +2177,8 @@ function Profile() {
                     .filter(p => p.memberId.toString() === member._id.toString())
                     .map((p, idx) => {
                       const itemCost = selectedClass.classInfoId?.cost || 0;
-                      const discount = p.couponDiscount || 0;
-                      const final = Math.max(0, itemCost - discount);
+                      const discount = getParticipantDiscountTotal(p);
+                      const final = getParticipantFinalCost(p, itemCost);
                       return (
                         <div key={idx} style={{ marginBottom: '10px', paddingBottom: '10px', borderBottom: idx < selectedClass.participants.filter(p => p.memberId.toString() === member._id.toString()).length - 1 ? '1px solid #e0e8ff' : 'none' }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -1827,7 +2197,7 @@ function Profile() {
                           </div>
                           {discount > 0 && (
                             <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
-                              ✓ {t('coupon_applied')}
+                              ✓ {t('discount_applied')}
                             </div>
                           )}
                         </div>
@@ -1838,7 +2208,7 @@ function Profile() {
                     <span style={{ color: '#667eea' }}>
                       NT$ {selectedClass.participants
                         .filter(p => p.memberId.toString() === member._id.toString())
-                        .reduce((sum, p) => sum + Math.max(0, (selectedClass.classInfoId?.cost || 0) - (p.couponDiscount || 0)), 0)}
+                        .reduce((sum, p) => sum + getParticipantFinalCost(p, selectedClass.classInfoId?.cost || 0), 0)}
                     </span>
                   </div>
                 </div>
@@ -1850,7 +2220,7 @@ function Profile() {
                 ) : (
                   <button
                     onClick={() => {
-                      handleEnroll('class', selectedClass._id, selectedClass.classInfoId?.name);
+                      handleEnroll('class', selectedClass._id, selectedClass.name || selectedClass.classInfoId?.name);
                       setSelectedClass(null);
                     }}
                     className="btn btn-primary"
@@ -1873,6 +2243,10 @@ function Profile() {
             <div className="card">
               <h3>{t('classes')}</h3>
 
+                {loadingClassesAndActivities ? (
+                  renderClassesActivitiesLoading()
+                ) : (
+                  <>
                 <h4 className="section-subtitle">{t('registeredClasses')}</h4>
                 <div className="enrolled-list">
                   {getEnrolledItems('class').length > 0 ? (
@@ -1880,7 +2254,7 @@ function Profile() {
                       const classItem = classes.find(c => c._id === enrollment.itemId);
                       const myParticipants = classItem?.participants?.filter(p => p.memberId.toString() === member._id.toString()) || [];
                       const itemCost = classItem?.classInfoId?.cost || 0;
-                      const totalCost = myParticipants.reduce((sum, p) => sum + Math.max(0, itemCost - (p.couponDiscount || 0)), 0);
+                      const totalCost = myParticipants.reduce((sum, p) => sum + getParticipantFinalCost(p, itemCost), 0);
                       const totalOriginalCost = itemCost * myParticipants.length;
                       const hasDiscount = totalCost < totalOriginalCost;
 
@@ -1961,142 +2335,17 @@ function Profile() {
                       </option>
                     ))}
                   </select>
-                </div>                <div style={{ marginBottom: '20px' }}>
-                  <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', color: '#667eea' }}>
-                    {t('filterByDate')}
-                  </label>
-                  <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
-                    <button
-                      onClick={() => setDateOffset(prev => Math.max(0, prev - 7))}
-                      disabled={dateOffset === 0}
-                      style={{
-                        padding: '10px 15px',
-                        background: dateOffset === 0 ? '#ccc' : '#667eea',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '8px',
-                        cursor: dateOffset === 0 ? 'not-allowed' : 'pointer',
-                        fontSize: '16px'
-                      }}
-                    >
-                      ←
-                    </button>
-
-                    <button
-                      onClick={() => setSelectedDate('all')}
-                      style={{
-                        padding: '10px 20px',
-                        background: selectedDate === 'all' ? '#667eea' : 'white',
-                        color: selectedDate === 'all' ? 'white' : '#667eea',
-                        border: '2px solid #667eea',
-                        borderRadius: '8px',
-                        cursor: 'pointer',
-                        fontSize: '15px',
-                        fontWeight: '600'
-                      }}
-                    >
-                      {t('all')}
-                    </button>
-
-                    {getDateOptions().map((date, index) => {
-                      const year = date.getFullYear();
-                      const month = String(date.getMonth() + 1).padStart(2, '0');
-                      const day = String(date.getDate()).padStart(2, '0');
-                      const dateStr = `${year}-${month}-${day}`;
-                      const isSelected = selectedDate === dateStr;
-                      const monthDay = `${date.getMonth() + 1}/${date.getDate()}`;
-
-                      return (
-                        <button
-                          key={index}
-                          onClick={() => setSelectedDate(dateStr)}
-                          style={{
-                            padding: '10px 15px',
-                            background: isSelected ? '#667eea' : 'white',
-                            color: isSelected ? 'white' : '#667eea',
-                            border: '2px solid #667eea',
-                            borderRadius: '8px',
-                            cursor: 'pointer',
-                            fontSize: '14px',
-                            fontWeight: '600',
-                            minWidth: '60px'
-                          }}
-                        >
-                          {monthDay}
-                        </button>
-                      );
-                    })}
-
-                    <button
-                      onClick={() => setDateOffset(prev => prev + 7)}
-                      style={{
-                        padding: '10px 15px',
-                        background: '#667eea',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '8px',
-                        cursor: 'pointer',
-                        fontSize: '16px'
-                      }}
-                    >
-                      →
-                    </button>
-
-                    <div style={{ position: 'relative' }}>
-                      <button
-                        onClick={() => setShowCalendar(!showCalendar)}
-                        style={{
-                          padding: '10px 20px',
-                          background: '#764ba2',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '8px',
-                          cursor: 'pointer',
-                          fontSize: '15px',
-                          fontWeight: '600'
-                        }}
-                      >
-                        📅 {t('selectFromCalendar')}
-                      </button>
-                      {showCalendar && (
-                        <div style={{
-                          position: 'absolute',
-                          top: '100%',
-                          left: 0,
-                          marginTop: '10px',
-                          background: 'white',
-                          padding: '15px',
-                          borderRadius: '8px',
-                          boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
-                          zIndex: 1000
-                        }}>
-                          <input
-                            type="date"
-                            onChange={(e) => {
-                              setSelectedDate(e.target.value);
-                              setShowCalendar(false);
-                            }}
-                            style={{
-                              padding: '10px',
-                              border: '2px solid #667eea',
-                              borderRadius: '8px',
-                              fontSize: '16px'
-                            }}
-                          />
-                        </div>
-                      )}
-                    </div>
-                  </div>
                 </div>
+                {renderDateSelector()}
 
                 <div className="grid">
                   {getFilteredClasses().map((classItem) => (
                     <div key={classItem._id} className="item-card">
-                      <h4>{classItem.classInfoId?.name || t('noData')}</h4>
+                      <h4>{classItem.name || classItem.classInfoId?.name || t('noData')}</h4>
                       {classItem.classInfoId?.banner && (
                         <img
                           src={getImageSrc(classItem.classInfoId.banner)}
-                          alt={classItem.classInfoId?.name}
+                          alt={classItem.name || classItem.classInfoId?.name}
                           loading="lazy"
                           decoding="async"
                           style={{
@@ -2109,7 +2358,7 @@ function Profile() {
                           }}
                         />
                       )}
-                      <p className="item-description">{classItem.classInfoId?.description || ''}</p>
+                      <p className="item-description">{classItem.description || classItem.classInfoId?.description || ''}</p>
                       <div className="item-details">
                         <p><strong>{t('classDate')}</strong> {formatDate(classItem.date)}</p>
                         <p><strong>{t('host')}</strong> {classItem.teacher}</p>
@@ -2130,7 +2379,7 @@ function Profile() {
                           <button className="btn btn-secondary" disabled style={{ flex: 1 }}>{t('enrolled')}</button>
                         ) : (
                           <button
-                            onClick={() => handleEnroll('class', classItem._id, classItem.classInfoId?.name)}
+                            onClick={() => handleEnroll('class', classItem._id, classItem.name || classItem.classInfoId?.name)}
                             className="btn btn-primary"
                             disabled={classItem.currentParticipants >= (classItem.classInfoId?.maxParticipants || 0)}
                             style={{ flex: 1 }}
@@ -2142,6 +2391,8 @@ function Profile() {
                     </div>
                   ))}
                 </div>
+                  </>
+                )}
             </div>
           )}
 
@@ -2344,6 +2595,10 @@ function Profile() {
             <div className="card">
               <h3>{t('activities')}</h3>
 
+                {loadingClassesAndActivities ? (
+                  renderClassesActivitiesLoading()
+                ) : (
+                  <>
                 <h4 className="section-subtitle">{t('registeredActivities')}</h4>
                 <div className="enrolled-list">
                   {getEnrolledItems('activity').length > 0 ? (
@@ -2351,7 +2606,7 @@ function Profile() {
                       const activity = activities.find(a => a._id === enrollment.itemId);
                       const myParticipants = activity?.participants?.filter(p => p.memberId.toString() === member._id.toString()) || [];
                       const itemCost = activity?.cost || 0;
-                      const totalCost = myParticipants.reduce((sum, p) => sum + Math.max(0, itemCost - (p.couponDiscount || 0)), 0);
+                      const totalCost = myParticipants.reduce((sum, p) => sum + getParticipantFinalCost(p, itemCost), 0);
                       const totalOriginalCost = itemCost * myParticipants.length;
                       const hasDiscount = totalCost < totalOriginalCost;
 
@@ -2405,8 +2660,9 @@ function Profile() {
                 </div>
 
                 <h4 className="section-subtitle">{t('availableActivities')}</h4>
+                {renderDateSelector()}
                 <div className="grid">
-                  {activities.map((activity) => (
+                  {getFilteredActivities().map((activity) => (
                     <div key={activity._id} className="item-card">
                       <h4>{activity.name}</h4>
                       {activity.isVolunteeringWork && (
@@ -2480,6 +2736,8 @@ function Profile() {
                     </div>
                   ))}
                 </div>
+                  </>
+                )}
             </div>
           )}
 
@@ -3205,6 +3463,10 @@ function Profile() {
               })}
             </div>
 
+            {(() => {
+              const checkoutPricing = getCheckoutPricing();
+
+              return (
             <div style={{
               background: '#f8f9ff',
               padding: '20px',
@@ -3218,25 +3480,7 @@ function Profile() {
               <p style={{ fontSize: '18px', marginBottom: '8px' }}>
                 <strong>{t('cost')}</strong>
                 <span style={{ fontWeight: 'bold', color: '#667eea' }}>
-                  NT$ {(() => {
-                    let total = 0;
-                    selectedFamilyMembers.forEach(fmIndex => {
-                      let itemCost = checkoutData.cost;
-                      const couponId = familyMemberCoupons[fmIndex];
-                      if (couponId) {
-                        const coupon = member.coupons.find(c => c._id === couponId);
-                        if (coupon) {
-                          if (coupon.type === 'trial') {
-                            itemCost = 0;
-                          } else {
-                            itemCost = itemCost - Math.round(itemCost * coupon.discountPercent / 100);
-                          }
-                        }
-                      }
-                      total += itemCost;
-                    });
-                    return total;
-                  })()}
+                  NT$ {checkoutPricing.finalCost}
                 </span>
                 {selectedFamilyMembers.length > 0 && (
                   <span style={{ fontSize: '14px', color: '#666' }}>
@@ -3244,7 +3488,48 @@ function Profile() {
                   </span>
                 )}
               </p>
-            </div>            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginBottom: '30px' }}>
+              <div style={{ display: 'grid', gap: '8px', color: '#555', fontSize: '14px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span>{t('subtotal')}</span>
+                  <strong>NT$ {checkoutPricing.subtotal}</strong>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span>{t('coupon_discount')}</span>
+                  <strong>-NT$ {checkoutPricing.couponDiscount}</strong>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span>{t('points_discount')}</span>
+                  <strong>-NT$ {checkoutPricing.pointsDiscount}</strong>
+                </div>
+              </div>
+              <div style={{ marginTop: '18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                <div>
+                  <strong>{t('points_available')}</strong>{' '}
+                  <span style={{ color: '#667eea', fontWeight: 'bold' }}>
+                    {member.points || 0}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setUseAvailablePoints(!useAvailablePoints)}
+                  className="btn btn-secondary"
+                  disabled={selectedFamilyMembers.length === 0 || !member.points || checkoutPricing.subtotal - checkoutPricing.couponDiscount <= 0}
+                  style={{
+                    whiteSpace: 'nowrap',
+                    background: useAvailablePoints ? '#667eea' : undefined,
+                    color: useAvailablePoints ? '#fff' : undefined,
+                    borderColor: useAvailablePoints ? '#667eea' : undefined
+                  }}
+                >
+                  {useAvailablePoints
+                    ? `${t('remove_points')} (-NT$ ${checkoutPricing.pointsDiscount})`
+                    : t('use_points')}
+                </button>
+              </div>
+            </div>
+              );
+            })()}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginBottom: '30px' }}>
               <button
                 onClick={() => handleCompleteEnrollment('in-person', null)}
                 className="btn btn-primary"
@@ -3648,12 +3933,26 @@ function Profile() {
                   <p style={{ fontSize: '16px', textDecoration: 'line-through', color: '#999' }}>
                     NT$ {paymentConfirmationData.originalCost}
                   </p>
-                  <p style={{ fontSize: '14px', color: '#c92a2a', fontWeight: 'bold', marginTop: '5px' }}>
-                    {paymentConfirmationData.couponUsed?.type === 'trial'
-                      ? (t('trial_coupon_applied_free'))
-                      : (t('language') === 'zh'
-                        ? `✓ 折扣券已使用 (-NT$ ${paymentConfirmationData.discount})`
-                        : `✓ Discount Applied (-NT$ ${paymentConfirmationData.discount})`)}
+                  {paymentConfirmationData.couponDiscount > 0 && (
+                    <p style={{ fontSize: '14px', color: '#c92a2a', fontWeight: 'bold', marginTop: '5px' }}>
+                      {t('coupon_discount')} (-NT$ {paymentConfirmationData.couponDiscount})
+                    </p>
+                  )}
+                  {paymentConfirmationData.pointsDiscount > 0 && (
+                    <p style={{ fontSize: '14px', color: '#2b8a3e', fontWeight: 'bold', marginTop: '5px' }}>
+                      {t('points_discount')} (-NT$ {paymentConfirmationData.pointsDiscount})
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {paymentConfirmationData.pointsDiscount > 0 && (
+                <div style={{ marginBottom: '15px', paddingBottom: '15px', borderBottom: '1px solid #e9ecef' }}>
+                  <p style={{ fontSize: '14px', color: '#666', marginBottom: '5px' }}>
+                    {t('remaining_points')}
+                  </p>
+                  <p style={{ fontSize: '16px', fontWeight: '600', color: '#333' }}>
+                    {paymentConfirmationData.remainingPoints ?? member?.points ?? 0}
                   </p>
                 </div>
               )}
