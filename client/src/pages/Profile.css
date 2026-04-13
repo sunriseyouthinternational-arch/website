@@ -67,8 +67,7 @@
 .stitch-hero-header span,
 .stitch-wallet-section h3,
 .stitch-ready-section h3,
-.stitch-store-section h3,
-.stitch-coupon-terms h4 {
+.stitch-store-section h3 {
   font-size: 12px;
   font-weight: 800;
   letter-spacing: 0.2em;
@@ -351,7 +350,6 @@
 .stitch-coupon-stats span,
 .stitch-coupon-value span,
 .stitch-meeting-summary span,
-.stitch-facilitator-card p,
 .stitch-absence-alert p,
 .stitch-points-copy p,
 .stitch-summary-panel span,
@@ -457,7 +455,6 @@
 .stitch-referral-card,
 .stitch-progress-box,
 .stitch-coupon-stats > div,
-.stitch-store-more,
 .stitch-ready-strip .stitch-empty-card {
   background: var(--portal-cream);
   border-radius: 2.5rem;
@@ -599,8 +596,7 @@
 
 .stitch-image-fallback,
 .stitch-host-avatar,
-.stitch-host-avatar.large,
-.stitch-facilitator-avatar {
+.stitch-host-avatar.large {
   background: var(--portal-yellow-soft);
   color: var(--portal-ink);
   display: grid;
@@ -667,8 +663,7 @@
   margin: 16px 0 20px;
 }
 
-.stitch-host-avatar,
-.stitch-facilitator-avatar {
+.stitch-host-avatar {
   width: 32px;
   height: 32px;
   border-radius: 999px;
@@ -818,28 +813,6 @@
   color: #2e7d32;
 }
 
-.stitch-store-more {
-  border: 2px dashed rgba(124, 119, 98, 0.4);
-  text-align: center;
-  display: grid;
-  gap: 8px;
-  place-items: center;
-}
-
-.stitch-store-more p {
-  margin: 0;
-  font-weight: 700;
-}
-
-.stitch-store-more-icon {
-  width: 64px;
-  height: 64px;
-  border-radius: 999px;
-  background: var(--portal-white);
-  display: grid;
-  place-items: center;
-}
-
 .stitch-meeting-summary {
   display: flex;
   justify-content: space-between;
@@ -904,8 +877,7 @@
   padding: 14px 20px;
 }
 
-.stitch-absence-alert,
-.stitch-facilitator-card {
+.stitch-absence-alert {
   background: var(--portal-cream);
   border-radius: 1rem;
   padding: 16px;
@@ -934,12 +906,6 @@
   margin-top: 8px;
   font-weight: 800;
   text-decoration: underline;
-}
-
-.stitch-facilitator-card div {
-  display: flex;
-  align-items: center;
-  gap: 12px;
 }
 
 .stitch-bottom-nav {
@@ -1099,7 +1065,6 @@
 .stitch-detail-grid strong,
 .stitch-detail-footer strong,
 .stitch-coupon-head p,
-.stitch-coupon-terms li,
 .stitch-payment-actions p {
   margin: 0;
 }
@@ -1149,8 +1114,7 @@
   font-size: 2rem;
 }
 
-.stitch-description-card ul,
-.stitch-coupon-terms ul {
+.stitch-description-card ul {
   list-style: none;
   padding: 0;
   margin: 16px 0 0;
@@ -1158,15 +1122,13 @@
   gap: 12px;
 }
 
-.stitch-description-card li,
-.stitch-coupon-terms li {
+.stitch-description-card li {
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
-.stitch-map-section,
-.stitch-coupon-terms {
+.stitch-map-section {
   display: grid;
   gap: 16px;
 }
@@ -1191,6 +1153,19 @@
   background: linear-gradient(135deg, #f0f0f0, #d8d8d8);
   color: #444;
   font-weight: 700;
+}
+
+.stitch-map-link {
+  display: block;
+  width: 100%;
+  min-height: inherit;
+}
+
+.stitch-map-link iframe {
+  display: block;
+  width: 100%;
+  min-height: inherit;
+  border: 0;
 }
 
 .stitch-map-card button {
@@ -1705,6 +1680,17 @@
   font-size: 12px;
   font-weight: 800;
   text-transform: uppercase;
+}
+
+.stitch-social-icon {
+  width: 24px;
+  height: 24px;
+  fill: currentColor;
+}
+
+.stitch-line-social {
+  font-size: 12px;
+  font-weight: 900;
 }
 
 .stitch-logout-link {

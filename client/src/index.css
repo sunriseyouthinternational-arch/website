@@ -1,6 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
-@import url('https://fonts.cdnfonts.com/css/line-seed-sans-app');
 
 :root {
   --portal-yellow: #fae44b;
@@ -28,7 +27,7 @@ html {
 body {
   margin: 0;
   min-height: 100vh;
-  font-family: 'LINE Seed Sans App', 'Plus Jakarta Sans', 'Microsoft JhengHei', 'PingFang TC', sans-serif;
+  font-family: 'Plus Jakarta Sans', 'Microsoft JhengHei', 'PingFang TC', sans-serif;
   background: var(--portal-yellow);
   color: var(--portal-ink);
   -webkit-font-smoothing: antialiased;
