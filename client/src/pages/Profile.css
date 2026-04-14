@@ -1462,6 +1462,7 @@
 .stitch-loading-screen {
   display: grid;
   place-items: center;
+  min-height: 100vh;
   padding: 24px;
 }
 
@@ -1656,6 +1657,27 @@
   font-weight: 800;
   letter-spacing: 0.12em;
   text-transform: uppercase;
+}
+
+.stitch-drawer-links button span:nth-child(2) {
+  display: grid;
+  gap: 4px;
+  text-align: left;
+}
+
+.stitch-drawer-links button small {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  opacity: 1;
+  color: #b42318;
+  text-transform: uppercase;
+}
+
+.stitch-drawer-links button .stitch-drawer-under-construction {
+  text-decoration: line-through;
+  text-decoration-thickness: 2px;
+  text-decoration-color: rgba(32, 28, 0, 0.55);
 }
 
 .stitch-drawer-links button.primary {

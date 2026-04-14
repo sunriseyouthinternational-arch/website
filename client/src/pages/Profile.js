@@ -749,11 +749,7 @@ function Profile() {
   if (loading || liffInitializing) {
     return (
       <div className="stitch-loading-screen">
-        <div className="stitch-loading-card">
-          <div className="stitch-spinner" />
-          <h2>{t('loading')}</h2>
-          <p>{t('initializing')}</p>
-        </div>
+        <div className="stitch-spinner" />
       </div>
     );
   }
@@ -940,7 +936,7 @@ function Profile() {
           <button type="button" onClick={() => showComingSoonMessage('Landing page')}>
             <span className="material-symbols-outlined">home</span>
             <span>
-              Landing Page
+              <span className="stitch-drawer-under-construction">Landing Page</span>
               <small>Under Construction</small>
             </span>
             <span className="material-symbols-outlined">construction</span>

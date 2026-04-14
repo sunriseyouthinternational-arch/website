@@ -10,6 +10,7 @@ function AdminLogin() {
   const [credentials, setCredentials] = useState({ username: '', password: '' });
   const [message, setMessage] = useState({ type: '', text: '' });
   const [loading, setLoading] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const handleChange = (e) => {
     setCredentials(prev => ({
@@ -44,7 +45,28 @@ function AdminLogin() {
 
   return (
     <div className="admin-login-shell">
+      {drawerOpen ? <div className="admin-login-drawer-overlay" onClick={() => setDrawerOpen(false)} /> : null}
+      <aside className={`admin-login-drawer ${drawerOpen ? 'open' : ''}`}>
+        <div className="admin-login-drawer-header">
+          <div className="admin-login-drawer-brand">Admin Portal</div>
+          <button type="button" className="admin-login-menu-button" onClick={() => setDrawerOpen(false)}>
+            <span className="material-symbols-outlined">close</span>
+          </button>
+        </div>
+        <nav className="admin-login-drawer-nav">
+          <button type="button" className="active" onClick={() => setDrawerOpen(false)}>
+            Admin Login
+          </button>
+          <button type="button" onClick={() => navigate('/profile')}>
+            Member Portal
+          </button>
+        </nav>
+      </aside>
+
       <header className="admin-login-topbar">
+        <button type="button" className="admin-login-menu-button" onClick={() => setDrawerOpen(true)}>
+          <span className="material-symbols-outlined">menu</span>
+        </button>
         <div className="admin-login-brand">Admin Portal</div>
       </header>
 

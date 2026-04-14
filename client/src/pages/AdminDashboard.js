@@ -47,6 +47,7 @@ function AdminDashboard() {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [members, setMembers] = useState([]);
   const [classes, setClasses] = useState([]);
   const [classInfos, setClassInfos] = useState([]);
@@ -177,6 +178,15 @@ function AdminDashboard() {
   const [classSearch, setClassSearch] = useState('');
   const [activityView, setActivityView] = useState('grid');
   const [meetingTypeFilter, setMeetingTypeFilter] = useState('all');
+  const adminNavItems = [
+    ['overview', 'OVERVIEW'],
+    ['members', 'MEMBERS'],
+    ['classes', 'CLASSES'],
+    ['coupons', 'COUPONS'],
+    ['association', 'MEETINGS'],
+    ['activities', 'ACTIVITIES'],
+    ['teachers', 'HOSTS']
+  ];
 
   useEffect(() => {
     const token = localStorage.getItem('adminToken');
@@ -227,6 +237,11 @@ function AdminDashboard() {
     localStorage.removeItem('adminToken');
     delete axios.defaults.headers.common['Authorization'];
     navigate('/admin');
+  };
+
+  const openAdminSection = (tabKey) => {
+    setActiveTab(tabKey);
+    setDrawerOpen(false);
   };
 
   const handleDeleteMember = async (memberIdToDelete) => {
@@ -1475,27 +1490,43 @@ function AdminDashboard() {
 
   return (
     <>
+    {drawerOpen ? <div className="admin-drawer-overlay" onClick={() => setDrawerOpen(false)} /> : null}
+    <aside className={`admin-drawer ${drawerOpen ? 'open' : ''}`}>
+      <div className="admin-drawer-header">
+        <div className="admin-drawer-brand">Admin Portal</div>
+        <button type="button" className="admin-top-icon" onClick={() => setDrawerOpen(false)}>
+          <span className="material-symbols-outlined">close</span>
+        </button>
+      </div>
+      <nav className="admin-drawer-nav">
+        {adminNavItems.map(([key, label]) => (
+          <button
+            key={key}
+            type="button"
+            className={`admin-drawer-button ${activeTab === key ? 'active' : ''}`}
+            onClick={() => openAdminSection(key)}
+          >
+            {label}
+          </button>
+        ))}
+      </nav>
+      <button type="button" className="admin-logout-button admin-drawer-logout" onClick={handleLogout}>
+        {t('logout')}
+      </button>
+    </aside>
     <div className="admin-portal">
       <header className="admin-portal-topbar">
         <div className="admin-portal-topbar-left">
-          <button type="button" className="admin-top-icon">
+          <button type="button" className="admin-top-icon" onClick={() => setDrawerOpen(true)}>
             <span className="material-symbols-outlined">menu</span>
           </button>
           <nav className="admin-portal-nav">
-            {[
-              ['overview', 'OVERVIEW'],
-              ['members', 'MEMBERS'],
-              ['classes', 'CLASSES'],
-              ['coupons', 'COUPONS'],
-              ['association', 'MEETINGS'],
-              ['activities', 'ACTIVITIES'],
-              ['teachers', 'HOSTS']
-            ].map(([key, label]) => (
+            {adminNavItems.map(([key, label]) => (
               <button
                 key={key}
                 type="button"
                 className={`admin-portal-nav-button ${activeTab === key ? 'active' : ''}`}
-                onClick={() => setActiveTab(key)}
+                onClick={() => openAdminSection(key)}
               >
                 {label}
               </button>
