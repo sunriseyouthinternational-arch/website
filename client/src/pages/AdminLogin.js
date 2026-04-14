@@ -43,55 +43,88 @@ function AdminLogin() {
   };
 
   return (
-    <div className="container">
-      <div className="admin-login-page">
-        <div className="card admin-login-card">
-          <div className="admin-login-header">
-            <h2>{t('adminPanel')}</h2>
-            <p>{t('adminPanelTitle')}</p>
+    <div className="admin-login-shell">
+      <header className="admin-login-topbar">
+        <div className="admin-login-brand">Admin Portal</div>
+      </header>
+
+      <main className="admin-login-main">
+        <div className="admin-login-card">
+          <div className="admin-login-copy">
+            <h1>Welcome Back.</h1>
+            <p>Authenticate to access the management dashboard.</p>
           </div>
 
-          <form onSubmit={handleSubmit}>
-            <div className="form-group">
-              <label>{t('username')}</label>
-              <input
-                type="text"
-                name="username"
-                value={credentials.username}
-                onChange={handleChange}
-                required
-                autoComplete="username"
-              />
-            </div>
-
-            <div className="form-group">
-              <label>{t('password')}</label>
-              <input
-                type="password"
-                name="password"
-                value={credentials.password}
-                onChange={handleChange}
-                required
-                autoComplete="current-password"
-              />
-            </div>
-
-            {message.text && (
-              <div className={`message ${message.type}`}>
-                {message.text}
+          <form className="admin-login-form" onSubmit={handleSubmit}>
+            <div className="admin-login-field">
+              <label>System Identity</label>
+              <div className="admin-login-input-row">
+                <span className="material-symbols-outlined">person</span>
+                <input
+                  type="text"
+                  name="username"
+                  placeholder="Username"
+                  value={credentials.username}
+                  onChange={handleChange}
+                  required
+                  autoComplete="username"
+                />
               </div>
-            )}
+            </div>
 
-            <button type="submit" className="btn btn-primary btn-large" disabled={loading}>
-              {loading ? t('loading') : t('login')}
-            </button>
+            <div className="admin-login-field">
+              <label>Secure Credential</label>
+              <div className="admin-login-input-row">
+                <span className="material-symbols-outlined">lock</span>
+                <input
+                  type="password"
+                  name="password"
+                  placeholder="Password"
+                  value={credentials.password}
+                  onChange={handleChange}
+                  required
+                  autoComplete="current-password"
+                />
+              </div>
+            </div>
+
+            {message.text ? <div className={`message ${message.type}`}>{message.text}</div> : null}
+
+            <div className="admin-login-actions">
+              <button type="button" className="admin-login-link">
+                Forgot Access?
+              </button>
+              <button type="submit" className="admin-login-submit" disabled={loading}>
+                <span>{loading ? t('loading') : t('login')}</span>
+                <span className="material-symbols-outlined">arrow_forward</span>
+              </button>
+            </div>
           </form>
 
-          <div className="admin-info">
-            <p><small>{t('defaultLoginCredentials')}</small></p>
+          <div className="admin-login-notice">
+            <span className="material-symbols-outlined">info</span>
+            <div>
+              <strong>Support Notice</strong>
+              <p>
+                If this is your first session, please refer to the documentation regarding{' '}
+                <button type="button" className="admin-login-inline-link">
+                  Default Credentials
+                </button>{' '}
+                for internal provisioning.
+              </p>
+            </div>
           </div>
         </div>
-      </div>
+      </main>
+
+      <footer className="admin-login-footer">
+        <span>© 2024 Management Portal. High-Energy Precision.</span>
+        <div className="admin-login-footer-links">
+          <button type="button">Privacy Policy</button>
+          <button type="button">Terms of Service</button>
+          <button type="button">Security</button>
+        </div>
+      </footer>
     </div>
   );
 }

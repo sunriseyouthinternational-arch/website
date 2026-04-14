@@ -1,41 +1,199 @@
-.admin-login-page {
+.admin-login-shell {
+  min-height: 100vh;
+  background: #ffe950;
+  color: #1b1b1b;
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-login-topbar {
+  width: 100%;
+  padding: 48px 24px 24px;
   display: flex;
   justify-content: center;
+}
+
+.admin-login-brand {
+  font-size: 32px;
+  font-weight: 900;
+  letter-spacing: -0.05em;
+}
+
+.admin-login-main {
+  flex: 1;
+  display: flex;
   align-items: center;
-  min-height: 60vh;
+  justify-content: center;
+  padding: 16px;
 }
 
 .admin-login-card {
-  max-width: 500px;
-  width: 100%;
+  width: min(100%, 760px);
+  background: #fff;
+  border-radius: 28px;
+  padding: 40px;
+  box-shadow: 0 32px 64px -12px rgba(0, 0, 0, 0.1);
+  display: grid;
+  gap: 32px;
 }
 
-.admin-login-header {
-  text-align: center;
-  margin-bottom: 30px;
+.admin-login-copy h1 {
+  margin: 0 0 12px;
+  font-size: clamp(3rem, 7vw, 4.5rem);
+  line-height: 0.95;
+  letter-spacing: -0.06em;
 }
 
-.admin-login-header h2 {
-  color: #0F172A;
-  font-size: 32px;
-  margin-bottom: 10px;
-  font-weight: 700;
-  letter-spacing: -0.5px;
-}
-
-.admin-login-header p {
-  color: #64748B;
-  font-size: 15px;
+.admin-login-copy p {
+  margin: 0;
+  font-size: 18px;
+  color: rgba(27, 27, 27, 0.6);
   font-weight: 500;
-  letter-spacing: 0.2px;
 }
 
-.admin-info {
-  margin-top: 20px;
-  padding-top: 20px;
-  border-top: 1px solid #E2E8F0;
-  text-align: center;
-  color: #64748B;
-  font-weight: 500;
-  font-size: 14px;
+.admin-login-form {
+  display: grid;
+  gap: 28px;
+}
+
+.admin-login-field label {
+  display: block;
+  margin: 0 0 8px 4px;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(27, 27, 27, 0.4);
+}
+
+.admin-login-input-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 4px;
+  border-bottom: 2px solid #1b1b1b;
+}
+
+.admin-login-input-row input {
+  flex: 1;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  font-size: 24px;
+  font-weight: 800;
+  color: #1b1b1b;
+}
+
+.admin-login-input-row input::placeholder {
+  color: rgba(27, 27, 27, 0.2);
+}
+
+.admin-login-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding-top: 8px;
+}
+
+.admin-login-link,
+.admin-login-inline-link,
+.admin-login-footer-links button {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: rgba(27, 27, 27, 0.6);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.admin-login-inline-link {
+  color: #1b1b1b;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
+}
+
+.admin-login-submit {
+  border: 0;
+  background: #1b1b1b;
+  color: #fff;
+  border-radius: 999px;
+  padding: 18px 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.admin-login-notice {
+  background: #fff9d1;
+  border-radius: 18px;
+  padding: 20px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.admin-login-notice strong {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.admin-login-notice p {
+  margin: 0;
+  color: rgba(27, 27, 27, 0.6);
+  line-height: 1.6;
+}
+
+.admin-login-footer {
+  width: min(100%, 1440px);
+  margin: 0 auto;
+  padding: 32px 24px 40px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+}
+
+.admin-login-footer > span {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(27, 27, 27, 0.4);
+}
+
+.admin-login-footer-links {
+  display: flex;
+  gap: 24px;
+}
+
+@media (max-width: 768px) {
+  .admin-login-card {
+    padding: 28px;
+  }
+
+  .admin-login-actions,
+  .admin-login-footer {
+    display: grid;
+    justify-items: stretch;
+  }
+
+  .admin-login-submit {
+    width: 100%;
+  }
+
+  .admin-login-footer-links {
+    flex-wrap: wrap;
+    gap: 16px;
+  }
 }

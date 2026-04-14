@@ -46,7 +46,7 @@ const buildHostedClassName = (baseName, dateValue) => {
 function AdminDashboard() {
   const { t } = useLanguage();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState('members');
   const [members, setMembers] = useState([]);
   const [classes, setClasses] = useState([]);
   const [classInfos, setClassInfos] = useState([]);
@@ -171,12 +171,6 @@ function AdminDashboard() {
   const [hostedClassTemplateFilter, setHostedClassTemplateFilter] = useState('all');
   const [activityStatusFilter, setActivityStatusFilter] = useState('all');
   const [meetingStatusFilter, setMeetingStatusFilter] = useState('all');
-  const [memberTypeFilter, setMemberTypeFilter] = useState('all');
-  const [memberSearch, setMemberSearch] = useState('');
-  const [hostSearch, setHostSearch] = useState('');
-  const [classSearch, setClassSearch] = useState('');
-  const [activityView, setActivityView] = useState('grid');
-  const [meetingTypeFilter, setMeetingTypeFilter] = useState('all');
 
   useEffect(() => {
     const token = localStorage.getItem('adminToken');
@@ -1406,781 +1400,101 @@ function AdminDashboard() {
   };
 
   const filteredClassInfos = classInfos.filter((classInfo) =>
-    (classInfoFilter === 'all' || classInfo._id === classInfoFilter)
-    && (!classSearch.trim()
-      || classInfo.name?.toLowerCase().includes(classSearch.toLowerCase())
-      || classInfo.description?.toLowerCase().includes(classSearch.toLowerCase()))
+    classInfoFilter === 'all' || classInfo._id === classInfoFilter
   );
 
   const filteredHostedClasses = classes.filter((classItem) => {
     const matchesStatus = classStatusFilter === 'all' || classItem.status === classStatusFilter;
     const matchesTemplate = hostedClassTemplateFilter === 'all' || classItem.classInfoId?._id === hostedClassTemplateFilter;
-    const matchesSearch = !classSearch.trim()
-      || classItem.name?.toLowerCase().includes(classSearch.toLowerCase())
-      || classItem.teacher?.toLowerCase().includes(classSearch.toLowerCase());
-    return matchesStatus && matchesTemplate && matchesSearch;
+    return matchesStatus && matchesTemplate;
   });
-
-  const filteredMembers = members.filter((member) => {
-    const matchesType = memberTypeFilter === 'all'
-      || (memberTypeFilter === 'friend' && member.membershipStatus !== '協會會員')
-      || (memberTypeFilter === 'member' && member.membershipStatus === '協會會員');
-    const query = memberSearch.trim().toLowerCase();
-    const matchesSearch = !query
-      || member.name?.toLowerCase().includes(query)
-      || member.memberId?.toLowerCase().includes(query)
-      || member.contact?.mobile?.toLowerCase().includes(query);
-    return matchesType && matchesSearch;
-  });
-
-  const filteredActivities = activities.filter((activity) => {
-    const matchesStatus = activityStatusFilter === 'all' || activity.status === activityStatusFilter;
-    return matchesStatus;
-  });
-
-  const filteredTeachers = teachers.filter((teacher) => {
-    const query = hostSearch.trim().toLowerCase();
-    return !query
-      || teacher.name?.toLowerCase().includes(query)
-      || teacher.specialties?.toLowerCase().includes(query)
-      || teacher.education?.toLowerCase().includes(query);
-  });
-
-  const filteredMeetings = associationMeetings.filter((meeting) => {
-    const matchesStatus = meetingStatusFilter === 'all' || meeting.status === meetingStatusFilter;
-    const matchesType = meetingTypeFilter === 'all' || meeting.meetingType === meetingTypeFilter;
-    return matchesStatus && matchesType;
-  });
-
-  const associationMemberCount = members.filter((member) => member.membershipStatus === '協會會員').length;
-  const communityFriendCount = Math.max(0, members.length - associationMemberCount);
-  const totalRevenue = [...classes, ...activities].reduce((sum, item) => {
-    const participants = item.participants || [];
-    const itemCost = item.classInfoId?.cost || item.cost || 0;
-    const revenue = participants.reduce((participantTotal, participant) => {
-      const couponDiscount = participant.couponDiscount || 0;
-      const pointsDiscount = participant.pointsDiscount || 0;
-      return participantTotal + Math.max(0, itemCost - couponDiscount - pointsDiscount);
-    }, 0);
-    return sum + revenue;
-  }, 0);
-  const activeClassesCount = classes.filter((entry) => entry.status === 'upcoming').length;
-  const liveAttendance = associationMeetings.reduce((sum, meeting) => sum + (meeting.participants?.length || 0), 0);
-  const pendingTasksCount = members.filter((member) => member.membershipUpgradeRequest?.status === 'pending').length
-    + couponsForSale.filter((coupon) => coupon.active === false || (coupon.stock !== -1 && coupon.stock <= 10)).length;
 
   if (loading && members.length === 0) {
     return <div className="container"><div className="loading">{t('loading')}</div></div>;
   }
 
   return (
-    <>
-    <div className="admin-portal">
-      <header className="admin-portal-topbar">
-        <div className="admin-portal-topbar-left">
-          <button type="button" className="admin-top-icon">
-            <span className="material-symbols-outlined">menu</span>
-          </button>
-          <nav className="admin-portal-nav">
-            {[
-              ['overview', 'OVERVIEW'],
-              ['members', 'MEMBERS'],
-              ['classes', 'CLASSES'],
-              ['coupons', 'COUPONS'],
-              ['association', 'MEETINGS'],
-              ['activities', 'ACTIVITIES'],
-              ['teachers', 'HOSTS']
-            ].map(([key, label]) => (
-              <button
-                key={key}
-                type="button"
-                className={`admin-portal-nav-button ${activeTab === key ? 'active' : ''}`}
-                onClick={() => setActiveTab(key)}
-              >
-                {label}
-              </button>
-            ))}
-          </nav>
-        </div>
-        <div className="admin-portal-topbar-right">
-          <button type="button" className="admin-top-icon">
-            <span className="material-symbols-outlined">notifications</span>
-          </button>
-          <button type="button" className="admin-top-icon">
-            <span className="material-symbols-outlined">settings</span>
-          </button>
-          <button type="button" className="admin-logout-button" onClick={handleLogout}>
-            {t('logout')}
-          </button>
-        </div>
-      </header>
+    <div className="container">
+      <div className="admin-header">
+        <h2>{t('adminPanel')}</h2>
+        <button onClick={handleLogout} className="btn btn-secondary">
+          {t('logout')}
+        </button>
+      </div>
 
-      <main className="admin-portal-main">
-        {message.text && <div className={`message ${message.type} admin-message`}>{message.text}</div>}
+      {message.text && <div className={`message ${message.type}`}>{message.text}</div>}
 
-        {activeTab === 'overview' && (
-          <div className="admin-overview-page">
-            <section className="admin-hero">
-              <div>
-                <span className="admin-kicker">System Status: Optimal</span>
-                <h1 className="admin-display">
-                  Pulse <span>Dashboard</span>
-                </h1>
-              </div>
-              <div className="admin-live-pill">
-                <span className="admin-live-dot" />
-                <span>Live Attendance: {liveAttendance} Members</span>
-              </div>
-            </section>
+      <div className="admin-tabs">
+        <button className={`tab-button ${activeTab === 'members' ? 'active' : ''}`} onClick={() => setActiveTab('members')}>
+          {t('memberManagement')}
+        </button>
+        <button className={`tab-button ${activeTab === 'classes' ? 'active' : ''}`} onClick={() => setActiveTab('classes')}>
+          {t('class_management')}
+        </button>
+        <button className={`tab-button ${activeTab === 'activities' ? 'active' : ''}`} onClick={() => setActiveTab('activities')}>
+          {t('activity_management')}
+        </button>
+        <button className={`tab-button ${activeTab === 'teachers' ? 'active' : ''}`} onClick={() => setActiveTab('teachers')}>
+          {t('host_management')}
+        </button>
+        <button className={`tab-button ${activeTab === 'coupons' ? 'active' : ''}`} onClick={() => setActiveTab('coupons')}>
+          {t('coupon_management')}
+        </button>
+        <button className={`tab-button ${activeTab === 'association' ? 'active' : ''}`} onClick={() => setActiveTab('association')}>
+          {t('association_management')}
+        </button>
+      </div>
 
-            <section className="admin-overview-metrics">
-              <article className="admin-revenue-card">
-                <div className="admin-card-header">
-                  <span className="material-symbols-outlined">trending_up</span>
-                  <span className="admin-chip">Live</span>
-                </div>
-                <div>
-                  <p>Total Revenue</p>
-                  <strong>NT$ {totalRevenue.toLocaleString('en-US')}</strong>
-                </div>
-                <button type="button" className="admin-inline-link" onClick={() => setActiveTab('classes')}>
-                  View breakdown
-                  <span className="material-symbols-outlined">arrow_forward</span>
-                </button>
-              </article>
-              <article className="admin-metric-card">
-                <span className="material-symbols-outlined">school</span>
-                <p>Active Classes</p>
-                <strong>{activeClassesCount}</strong>
-              </article>
-              <article className="admin-metric-card">
-                <span className="material-symbols-outlined">diversity_3</span>
-                <p>Total Members</p>
-                <strong>{members.length}</strong>
-              </article>
-            </section>
-
-            <section className="admin-overview-grid">
-              <div className="admin-priority-panel">
-                <div className="admin-panel-head">
-                  <h3>Priority Actions</h3>
-                  <span className="admin-urgent-pill">{pendingTasksCount} urgent</span>
-                </div>
-                <div className="admin-priority-list">
-                  <button type="button" className="admin-priority-item error" onClick={() => setActiveTab('members')}>
-                    <span className="material-symbols-outlined">warning</span>
-                    <div>
-                      <strong>Pending Membership Reviews</strong>
-                      <p>{members.filter((member) => member.membershipUpgradeRequest?.status === 'pending').length} upgrade requests need attention</p>
-                    </div>
-                  </button>
-                  <button type="button" className="admin-priority-item" onClick={() => setActiveTab('coupons')}>
-                    <span className="material-symbols-outlined">local_activity</span>
-                    <div>
-                      <strong>Coupon Stock Monitoring</strong>
-                      <p>{couponsForSale.filter((coupon) => coupon.stock !== -1 && coupon.stock <= 10).length} low-stock listings</p>
-                    </div>
-                  </button>
-                  <button type="button" className="admin-priority-item muted" onClick={() => setActiveTab('association')}>
-                    <span className="material-symbols-outlined">event</span>
-                    <div>
-                      <strong>Meeting Absence Requests</strong>
-                      <p>{associationMeetings.reduce((sum, meeting) => sum + (meeting.absences?.filter((absence) => !absence.approved).length || 0), 0)} pending approvals</p>
-                    </div>
-                  </button>
-                </div>
-              </div>
-
-              <div className="admin-monitor-panel">
-                <div className="admin-panel-head">
-                  <div>
-                    <h3>Performance Monitoring</h3>
-                    <p>Class capacity and engagement metrics</p>
-                  </div>
-                </div>
-                <div className="admin-monitor-bars">
-                  {[...filteredHostedClasses.slice(0, 5)].map((classItem) => {
-                    const max = classItem.classInfoId?.maxParticipants || 0;
-                    const pct = max ? Math.min(100, Math.round(((classItem.currentParticipants || 0) / max) * 100)) : 0;
-                    return (
-                      <div key={classItem._id} className="admin-monitor-bar">
-                        <div className="admin-monitor-bar-fill" style={{ height: `${Math.max(12, pct)}%` }} />
-                        <span>{pct}%</span>
-                      </div>
-                    );
-                  })}
-                </div>
-                <div className="admin-monitor-stats">
-                  <div>
-                    <span>Total Activities</span>
-                    <strong>{activities.length}</strong>
-                  </div>
-                  <div>
-                    <span>Association Meetings</span>
-                    <strong>{associationMeetings.length}</strong>
-                  </div>
-                </div>
-              </div>
-            </section>
-          </div>
-        )}
-
-        {activeTab === 'members' && !selectedMember && (
-          <div className="admin-members-page">
-            <section className="admin-section-header">
-              <div>
-                <p className="admin-kicker">Operational Dashboard</p>
-                <h1 className="admin-section-title">Member Oversight</h1>
-              </div>
-            </section>
-
-            <section className="admin-member-stats">
-              <article className="admin-stat-panel wide">
-                <p>Total Community</p>
-                <strong>{members.length}</strong>
-              </article>
-              <article className="admin-stat-panel dark">
-                <p>Association Members</p>
-                <strong>{associationMemberCount}</strong>
-              </article>
-              <article className="admin-stat-panel">
-                <p>Community Friends</p>
-                <strong>{communityFriendCount}</strong>
-              </article>
-            </section>
-
-            <section className="admin-filter-row">
-              <div className="admin-pill-group">
-                <button type="button" className={memberTypeFilter === 'all' ? 'active' : ''} onClick={() => setMemberTypeFilter('all')}>All Types</button>
-                <button type="button" className={memberTypeFilter === 'friend' ? 'active' : ''} onClick={() => setMemberTypeFilter('friend')}>Association Friend</button>
-                <button type="button" className={memberTypeFilter === 'member' ? 'active' : ''} onClick={() => setMemberTypeFilter('member')}>Association Member</button>
-              </div>
-              <label className="admin-search">
-                <span className="material-symbols-outlined">search</span>
-                <input value={memberSearch} onChange={(e) => setMemberSearch(e.target.value)} placeholder="Search members..." />
-              </label>
-            </section>
-
-            <section className="admin-table-shell">
-              <table className="admin-data-table modern">
-                <thead>
-                  <tr>
-                    <th>Member &amp; ID</th>
-                    <th>Status</th>
-                    <th className="center">Points</th>
-                    <th className="center">Referrals</th>
-                    <th>Joined Date</th>
-                    <th className="right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredMembers.map((member) => (
-                    <tr key={member._id}>
-                      <td>
-                        <div className="admin-identity">
-                          <div className="admin-avatar-badge">{(member.name || 'M').slice(0, 2).toUpperCase()}</div>
-                          <div>
-                            <strong>{member.name}</strong>
-                            <span>{member.memberId}</span>
-                          </div>
-                        </div>
-                      </td>
-                      <td>
-                        <span className={`admin-status-pill ${member.membershipStatus === '協會會員' ? 'member' : 'friend'}`}>
-                          {member.membershipStatus || '會友'}
-                        </span>
-                      </td>
-                      <td className="center"><strong>{member.points || 0}</strong></td>
-                      <td className="center">{member.referralCount || 0}</td>
-                      <td>{formatDate(member.createdAt)}</td>
-                      <td className="right">
-                        <button
-                          type="button"
-                          className="admin-dark-action"
-                          onClick={async () => {
-                            try {
-                              const res = await axios.get(`/api/members?id=${member._id}`);
-                              setSelectedMember(res.data.member);
-                            } catch (error) {
-                              setSelectedMember(member);
-                            }
-                          }}
-                        >
-                          VIEW
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </section>
-          </div>
-        )}
-
-        {activeTab === 'classes' && !selectedItem && !selectedClassInfo && (
-          <div className="admin-classes-page">
-            <section className="admin-section-header with-actions">
-              <div>
-                <span className="admin-tag">Curriculum Hub</span>
-                <h1 className="admin-section-title">Class Management</h1>
-                <p>Architecting future-proof education modules with real-time capacity monitoring and template precision.</p>
-              </div>
-              <div className="admin-header-actions">
-                <button type="button" className="admin-soft-action">Export Logs</button>
-                <button type="button" className="admin-dark-action large" onClick={() => setShowAddClassInfoForm((prev) => !prev)}>
-                  <span className="material-symbols-outlined">add</span>
-                  New Template
-                </button>
-              </div>
-            </section>
-
-            <section className="admin-template-section">
-              <div className="admin-panel-head">
-                <h3>Curriculum Templates</h3>
-                <label className="admin-search narrow">
-                  <span className="material-symbols-outlined">search</span>
-                  <input value={classSearch} onChange={(e) => setClassSearch(e.target.value)} placeholder="Search sessions..." />
-                </label>
-              </div>
-              <div className="admin-template-grid">
-                {filteredClassInfos.map((classInfo) => (
-                  <article key={classInfo._id} className="admin-template-card">
-                    <div className="admin-template-media">
-                      {classInfo.banner ? <img src={classInfo.banner} alt={classInfo.name} /> : <div className="admin-image-fallback">{classInfo.name?.slice(0, 1)}</div>}
-                    </div>
-                    <div className="admin-template-body">
-                      <h4>{classInfo.name}</h4>
-                      <p>{classInfo.description}</p>
-                      <div className="admin-template-meta">
-                        <div><span>Price</span><strong>NT$ {classInfo.cost}</strong></div>
-                        <div><span>Max</span><strong>{classInfo.maxParticipants}</strong></div>
-                        <div><span>Level</span><strong>{Array.isArray(classInfo.ageRange) ? classInfo.ageRange.join(', ') : (classInfo.ageRange || 'all')}</strong></div>
-                      </div>
-                      <div className="admin-icon-actions">
-                        <button type="button" onClick={() => setSelectedClassInfo(classInfo)} title="Edit">
-                          <span className="material-symbols-outlined">edit</span>
-                        </button>
-                        <button type="button" className="dark" onClick={() => openHostClassPanel(classInfo)} title="Host Class">
-                          <span className="material-symbols-outlined">present_to_all</span>
-                        </button>
-                      </div>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            </section>
-
-            <section className="admin-filter-row">
-              <div className="admin-pill-group">
-                <button type="button" className={classStatusFilter === 'all' ? 'active' : ''} onClick={() => setClassStatusFilter('all')}>All Status</button>
-                <button type="button" className={classStatusFilter === 'upcoming' ? 'active' : ''} onClick={() => setClassStatusFilter('upcoming')}>Upcoming</button>
-                <button type="button" className={classStatusFilter === 'completed' ? 'active' : ''} onClick={() => setClassStatusFilter('completed')}>Completed</button>
-                <button type="button" className={classStatusFilter === 'cancelled' ? 'active' : ''} onClick={() => setClassStatusFilter('cancelled')}>Cancelled</button>
-              </div>
-            </section>
-
-            <section className="admin-table-shell">
-              <div className="admin-panel-head">
-                <h3>Live Hosted Sessions</h3>
-              </div>
-              <table className="admin-data-table modern">
-                <thead>
-                  <tr>
-                    <th>Session &amp; Instructor</th>
-                    <th>Schedule</th>
-                    <th>Capacity Monitoring</th>
-                    <th>Status</th>
-                    <th className="right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredHostedClasses.map((classItem) => {
-                    const max = classItem.classInfoId?.maxParticipants || 0;
-                    const current = classItem.currentParticipants || 0;
-                    const pct = max ? Math.min(100, Math.round((current / max) * 100)) : 0;
-                    return (
-                      <tr key={classItem._id}>
-                        <td>
-                          <strong>{classItem.name || classItem.classInfoId?.name}</strong>
-                          <span>Lead: {classItem.teacher || '-'}</span>
-                        </td>
-                        <td>
-                          <strong>{formatDate(classItem.date)}</strong>
-                          <span>{classItem.time}</span>
-                        </td>
-                        <td>
-                          <div className="admin-capacity-cell">
-                            <div className="admin-capacity-top">
-                              <span>{current} / {max} Enrolled</span>
-                              <span>{pct}%</span>
-                            </div>
-                            <div className="admin-capacity-track"><div style={{ width: `${pct}%` }} /></div>
-                          </div>
-                        </td>
-                        <td>
-                          <span className={`admin-status-pill ${classItem.status || 'upcoming'}`}>{classItem.status || 'upcoming'}</span>
-                        </td>
-                        <td className="right">
-                          <div className="admin-row-actions">
-                            <button type="button" className="admin-dark-action" onClick={() => setSelectedItem({ ...classItem, type: 'class' })}>VIEW</button>
-                            <button type="button" className="admin-outline-action" onClick={() => setSelectedItem({ ...classItem, type: 'class' })}>EDIT</button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </section>
-          </div>
-        )}
-
-        {activeTab === 'activities' && !selectedItem && (
-          <div className="admin-activities-page">
-            <section className="admin-section-header with-actions">
-              <div>
-                <span className="admin-tag">Admin Panel</span>
-                <h1 className="admin-section-title">Activity Management</h1>
-              </div>
-              <button type="button" className="admin-dark-action large" onClick={() => setShowAddActivityForm((prev) => !prev)}>
-                <span className="material-symbols-outlined">add</span>
-                + New Activity
-              </button>
-            </section>
-
-            <section className="admin-filter-row">
-              <button type="button" className="admin-filter-icon">
-                <span className="material-symbols-outlined">filter_list</span>
-              </button>
-              <div className="admin-spacer" />
-              <div className="admin-pill-group">
-                <button type="button" className={activityView === 'grid' ? 'active' : ''} onClick={() => setActivityView('grid')}>Grid View</button>
-                <button type="button" className={activityView === 'list' ? 'active' : ''} onClick={() => setActivityView('list')}>List View</button>
-              </div>
-            </section>
-
-            <section className={activityView === 'grid' ? 'admin-activity-grid' : 'admin-activity-list'}>
-              {filteredActivities.map((activity) => {
-                const max = activity.maxParticipants || 0;
-                const current = activity.currentParticipants || 0;
-                const pct = max ? Math.min(100, Math.round((current / max) * 100)) : 0;
-                return (
-                  <article key={activity._id} className="admin-activity-card">
-                    <div className="admin-activity-media">
-                      {activity.banner ? <img src={activity.banner} alt={activity.name} /> : <div className="admin-image-fallback">{activity.name?.slice(0, 1)}</div>}
-                      <span className={`admin-status-pill floating ${activity.status || 'upcoming'}`}>{activity.status || 'upcoming'}</span>
-                    </div>
-                    <div className="admin-activity-body">
-                      <div className="admin-card-header">
-                        <h3>{activity.name}</h3>
-                        <button type="button" className="admin-inline-icon" onClick={() => setSelectedItem({ ...activity, type: 'activity' })}>
-                          <span className="material-symbols-outlined">more_horiz</span>
-                        </button>
-                      </div>
-                      <div className="admin-activity-meta">
-                        <p><span className="material-symbols-outlined">schedule</span>{activity.time}</p>
-                        <p><span className="material-symbols-outlined">person</span>{activity.teacher || '-'}</p>
-                        <p><span className="material-symbols-outlined">location_on</span>{activity.location || '-'}</p>
-                      </div>
-                      <div className="admin-capacity-cell">
-                        <div className="admin-capacity-top">
-                          <span>Enrolled: {current}/{max}</span>
-                          <span>{pct}% Full</span>
-                        </div>
-                        <div className="admin-capacity-track"><div style={{ width: `${pct}%` }} /></div>
-                      </div>
-                      <button type="button" className="admin-dark-action full" onClick={() => setSelectedItem({ ...activity, type: 'activity' })}>
-                        View Details
-                        <span className="material-symbols-outlined">arrow_forward</span>
-                      </button>
-                    </div>
-                  </article>
-                );
-              })}
-            </section>
-          </div>
-        )}
-
-        {activeTab === 'teachers' && !selectedTeacher && (
-          <div className="admin-hosts-page">
-            <section className="admin-section-header with-actions">
-              <div>
-                <h1 className="admin-section-title">Host Management</h1>
-                <p>Managing our community of expert educators and mentors.</p>
-              </div>
-              <button type="button" className="admin-dark-action large" onClick={() => setShowAddTeacherForm((prev) => !prev)}>
-                <span>+ Add Host</span>
-                <span className="material-symbols-outlined">arrow_forward</span>
-              </button>
-            </section>
-
-            <section className="admin-filter-row">
-              <label className="admin-search narrow">
-                <span className="material-symbols-outlined">search</span>
-                <input value={hostSearch} onChange={(e) => setHostSearch(e.target.value)} placeholder="Search hosts..." />
-              </label>
-            </section>
-
-            <section className="admin-table-shell">
-              <table className="admin-data-table modern">
-                <thead>
-                  <tr>
-                    <th>Name &amp; Identity</th>
-                    <th>Specialty</th>
-                    <th>Education</th>
-                    <th>Contact Details</th>
-                    <th className="right">Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredTeachers.map((teacher) => (
-                    <tr key={teacher._id}>
-                      <td>
-                        <div className="admin-identity">
-                          {teacher.photo ? <img className="admin-table-avatar" src={teacher.photo} alt={teacher.name} /> : <div className="admin-avatar-badge">{(teacher.name || 'H').slice(0, 2).toUpperCase()}</div>}
-                          <div>
-                            <strong>{teacher.name}</strong>
-                            <span>{teacher.bio || 'Host profile'}</span>
-                          </div>
-                        </div>
-                      </td>
-                      <td>{teacher.specialties || 'N/A'}</td>
-                      <td>
-                        <strong>{teacher.education || 'N/A'}</strong>
-                      </td>
-                      <td>
-                        <div className="admin-contact-stack">
-                          <span>{teacher.mobile || teacher.phone || 'N/A'}</span>
-                          <span>{teacher.lineId || 'N/A'}</span>
-                        </div>
-                      </td>
-                      <td className="right">
-                        <button type="button" className="admin-dark-action" onClick={() => setSelectedTeacher(teacher)}>
-                          VIEW
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </section>
-          </div>
-        )}
-
-        {activeTab === 'coupons' && !selectedCouponProfile && (
-          <div className="admin-coupons-page">
-            <section className="admin-section-header rewards">
-              <div>
-                <h1 className="admin-rewards-title">Manage Rewards.</h1>
-                <p>Architect the perfect incentive program. Create reusable coupon profiles or browse the community marketplace for trending rewards.</p>
-              </div>
-              <div className="admin-stat-tile">
-                <span>Total Distributed</span>
-                <strong>{members.reduce((sum, member) => sum + (member.coupons?.length || 0), 0)}</strong>
-              </div>
-            </section>
-
-            <section className="admin-template-section">
-              <div className="admin-panel-head">
-                <h3>Coupon Profiles</h3>
-                <button type="button" className="admin-dark-action" onClick={() => setShowAddProfileForm((prev) => !prev)}>
-                  <span className="material-symbols-outlined">add</span>
-                  New Template
-                </button>
-              </div>
-              <div className="admin-coupon-profile-grid">
-                {couponProfiles.map((profile) => (
-                  <article key={profile._id} className={`admin-coupon-profile-card ${profile.type === 'discount' ? 'dark' : ''}`}>
-                    <div className="admin-card-header">
-                      <div className="admin-square-icon">
-                        <span className="material-symbols-outlined">{profile.type === 'discount' ? 'percent' : 'auto_awesome'}</span>
-                      </div>
-                      <span className="admin-chip">{profile.type}</span>
-                    </div>
-                    <h4>{profile.name}</h4>
-                    <p>{profile.description}</p>
-                    <div className="admin-card-footer-actions">
-                      <button type="button" className="admin-inline-icon" onClick={() => {
-                        setShowAddForSaleForm(true);
-                        setNewForSale((prev) => ({ ...prev, couponProfileId: profile._id }));
-                      }}>
-                        <span className="material-symbols-outlined">playlist_add</span>
-                      </button>
-                      <button type="button" className="admin-inline-icon" onClick={() => setSelectedCouponProfile(profile)}>
-                        <span className="material-symbols-outlined">edit</span>
-                      </button>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            </section>
-
-            <section className="admin-market-section">
-              <div className="admin-panel-head">
-                <div>
-                  <h3>Coupons Marketplace</h3>
-                  <p>Community-sourced rewards and active listings</p>
-                </div>
-                <button type="button" className="admin-soft-action">
-                  <span className="material-symbols-outlined">filter_list</span>
-                  Filter
-                </button>
-              </div>
-              <div className="admin-market-grid">
-                {couponsForSale.map((coupon) => {
-                  const profile = coupon.couponProfileId;
-                  const image = profile?.image || profile?.classInfoId?.banner;
-                  return (
-                    <article key={coupon._id} className="admin-market-card">
-                      <div className="admin-market-media">
-                        {image ? <img src={image} alt={profile?.name} /> : <div className="admin-image-fallback">{profile?.name?.slice(0, 1) || 'C'}</div>}
-                        <span className="admin-price-chip">{coupon.price} PTS</span>
-                        <span className={`admin-status-pill floating ${coupon.active ? 'upcoming' : 'cancelled'}`}>{coupon.active ? 'active' : 'inactive'}</span>
-                      </div>
-                      <div className="admin-market-body">
-                        <h5>{profile?.name}</h5>
-                        <p>{profile?.description}</p>
-                        <div className="admin-market-footer">
-                          <div>
-                            <span>Stock Level</span>
-                            <strong>{coupon.stock === -1 ? 'Unlimited' : `${coupon.stock} Left`}</strong>
-                          </div>
-                          <div className="admin-card-footer-actions">
-                            <button type="button" className="admin-inline-icon danger" onClick={async () => {
-                              if (window.confirm(t('remove_this_coupon_from_sale'))) {
-                                setDeletingForSaleId(coupon._id);
-                                try {
-                                  await axios.delete(`/api/coupons?resource=for-sale&couponId=${coupon._id}`);
-                                  setMessage({ type: 'success', text: t('coupon_removed_from_sale') });
-                                  fetchData();
-                                } catch (error) {
-                                  setMessage({ type: 'error', text: error.response?.data?.message || t('error') });
-                                } finally {
-                                  setDeletingForSaleId(null);
-                                }
-                              }
-                            }}>
-                              <span className="material-symbols-outlined">playlist_remove</span>
-                            </button>
-                            <button type="button" className="admin-inline-icon" onClick={() => {
-                              setShowAddForSaleForm(true);
-                              setNewForSale({ couponProfileId: profile?._id || '', price: coupon.price || '', stock: coupon.stock ?? -1 });
-                            }}>
-                              <span className="material-symbols-outlined">edit</span>
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </article>
-                  );
-                })}
-              </div>
-            </section>
-          </div>
-        )}
-
-        {activeTab === 'association' && !selectedMeeting && (
-          <div className="admin-meetings-page">
-            <section className="admin-section-header with-actions">
-              <div>
-                <p className="admin-kicker">Operational Dashboard</p>
-                <h1 className="admin-section-title">Association Meetings</h1>
-              </div>
-              <button type="button" className="admin-dark-action large" onClick={() => setShowAddMeetingForm(true)}>
-                Create Meeting
-                <span className="material-symbols-outlined">arrow_forward</span>
-              </button>
-            </section>
-
-            <section className="admin-filter-row">
-              <div className="admin-pill-group">
-                <button type="button" className={meetingTypeFilter === 'all' ? 'active' : ''} onClick={() => setMeetingTypeFilter('all')}>All Types</button>
-                <button type="button" className={meetingTypeFilter === 'in-person' ? 'active' : ''} onClick={() => setMeetingTypeFilter('in-person')}>In-person</button>
-                <button type="button" className={meetingTypeFilter === 'zoom' ? 'active' : ''} onClick={() => setMeetingTypeFilter('zoom')}>Zoom</button>
-              </div>
-              <div className="admin-pill-group">
-                <button type="button" className={meetingStatusFilter === 'all' ? 'active' : ''} onClick={() => setMeetingStatusFilter('all')}>All Status</button>
-                <button type="button" className={meetingStatusFilter === 'upcoming' ? 'active' : ''} onClick={() => setMeetingStatusFilter('upcoming')}>Upcoming</button>
-                <button type="button" className={meetingStatusFilter === 'completed' ? 'active' : ''} onClick={() => setMeetingStatusFilter('completed')}>Completed</button>
-                <button type="button" className={meetingStatusFilter === 'cancelled' ? 'active' : ''} onClick={() => setMeetingStatusFilter('cancelled')}>Cancelled</button>
-              </div>
-            </section>
-
-            <section className="admin-meetings-grid">
-              <div className="admin-table-shell">
-                <table className="admin-data-table modern">
-                  <thead>
-                    <tr>
-                      <th>Agenda</th>
-                      <th>Date &amp; Time</th>
-                      <th>Type</th>
-                      <th className="center">Reg.</th>
-                      <th>Status</th>
-                      <th className="right">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredMeetings.map((meeting) => (
-                      <tr key={meeting._id}>
-                        <td>
-                          <strong>{meeting.agenda}</strong>
-                          <span>{meeting.location || meeting.zoomUrl || '-'}</span>
-                        </td>
-                        <td>
-                          <strong>{formatDate(meeting.date)}</strong>
-                          <span>{meeting.time}</span>
-                        </td>
-                        <td>
-                          <span className={`admin-status-pill ${meeting.memberType === '協會會員' ? 'member' : 'friend'}`}>{meeting.memberType}</span>
-                        </td>
-                        <td className="center"><strong>{meeting.participants?.length || 0}</strong></td>
-                        <td>
-                          <span className={`admin-status-pill ${meeting.status || 'upcoming'}`}>{meeting.status || 'upcoming'}</span>
-                        </td>
-                        <td className="right">
-                          <button type="button" className="admin-dark-action" onClick={() => setSelectedMeeting(meeting)}>
-                            Manage
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              <aside className="admin-absence-panel">
-                <div className="admin-panel-head">
-                  <h3>Absence Requests</h3>
-                  <span className="admin-urgent-pill">
-                    {associationMeetings.reduce((sum, meeting) => sum + (meeting.absences?.filter((absence) => !absence.approved).length || 0), 0)} Pending
-                  </span>
-                </div>
-                <div className="admin-absence-list">
-                  {associationMeetings.flatMap((meeting) => (meeting.absences || [])
-                    .filter((absence) => !absence.approved)
-                    .map((absence) => ({ ...absence, meetingAgenda: meeting.agenda, meetingId: meeting._id })))
-                    .slice(0, 6)
-                    .map((absence) => (
-                      <div key={absence._id} className="admin-absence-item">
-                        <div>
-                          <strong>{absence.memberName || absence.memberId}</strong>
-                          <p>{absence.meetingAgenda}</p>
-                        </div>
-                        <button type="button" className="admin-outline-action" onClick={() => setSelectedMeeting(associationMeetings.find((meeting) => meeting._id === absence.meetingId) || null)}>
-                          Review
-                        </button>
-                      </div>
-                    ))}
-                </div>
-              </aside>
-            </section>
-          </div>
-        )}
-      </main>
-    </div>
-      {false && activeTab === 'members' && !selectedMember && (
+      {activeTab === 'members' && !selectedMember && (
         <div className="card">
-          <h3>{t('memberManagement')}</h3>
+          <h3>{t('memberManagement')}</h3>          <div className="table-container">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>{t('member_id')}</th>
+                  <th>{t('name')}</th>
+                  <th>{t('membership')}</th>
+                  <th>{t('actions')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {members.map(member => (
+                  <tr key={member._id}>
+                    <td>{member.memberId}</td>
+                    <td>{member.name}</td>
+                    <td>
+                      <span style={{
+                        padding: '4px 10px',
+                        background: member.membershipStatus === '協會會員' ? '#4dabf7' : '#868e96',
+                        color: 'white',
+                        borderRadius: '6px',
+                        fontSize: '13px',
+                        fontWeight: 'bold'
+                      }}>
+                        {member.membershipStatus || '會友'}
+                      </span>
+                    </td>
+                    <td>
+                      <button
+                        className="btn btn-small btn-primary"
+                        onClick={async () => {
+                          try {
+                            const res = await axios.get(`/api/members?id=${member._id}`);
+                            setSelectedMember(res.data.member);
+                          } catch (error) {
+                            console.error('Error fetching member:', error);
+                            setSelectedMember(member);
+                          }
+                        }}
+                      >
+                        {t('view_details')}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
@@ -2913,7 +2227,7 @@ function AdminDashboard() {
         </div>
       )}
 
-      {activeTab === 'classes' && !selectedItem && !selectedClassInfo && (showAddClassInfoForm || hostingClassInfoId) && (
+      {activeTab === 'classes' && !selectedItem && !selectedClassInfo && (
         <div className="card">
           <h3>{t('class_management')}</h3>
           <div className="items-section" style={{ marginTop: '30px' }}>
@@ -3342,7 +2656,7 @@ function AdminDashboard() {
         </div>
       )}
 
-      {activeTab === 'activities' && !selectedItem && showAddActivityForm && (
+      {activeTab === 'activities' && !selectedItem && (
         <div className="card">
           <h3>{t('activity_management')}</h3>
           <div className="items-section" style={{ marginTop: '40px' }}>
@@ -4146,7 +3460,7 @@ function AdminDashboard() {
         </div>
       )}
 
-      {activeTab === 'teachers' && !selectedTeacher && showAddTeacherForm && (
+      {activeTab === 'teachers' && !selectedTeacher && (
         <div className="card">
           <div className="section-header">
             <h3>{t('host_management')}</h3>
@@ -4494,7 +3808,7 @@ function AdminDashboard() {
         </div>
       )}
 
-      {activeTab === 'coupons' && !selectedCouponProfile && (showAddProfileForm || showAddForSaleForm) && (
+      {activeTab === 'coupons' && !selectedCouponProfile && (
         <div className="card">
           <div className="section-header">
             <h3>{t('coupon_management')}</h3>
@@ -5027,7 +4341,7 @@ function AdminDashboard() {
         </div>
       )}
 
-      {activeTab === 'association' && !selectedMeeting && showAddMeetingForm && (
+      {activeTab === 'association' && !selectedMeeting && (
         <div className="card">
           <div className="section-header">
             <h3>{t('association_meeting_management')}</h3>
@@ -5609,7 +4923,8 @@ function AdminDashboard() {
           </form>
         </div>
       )}
-    </>
+
+    </div>
   );
 }
 
