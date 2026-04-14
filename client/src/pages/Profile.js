@@ -29,6 +29,7 @@ function Profile() {
   const sessionFromUrl = searchParams.get('session');
   const classIdFromUrl = searchParams.get('classId');
   const activityIdFromUrl = searchParams.get('activityId');
+  const activityNameFromUrl = searchParams.get('activityName');
   const [activeTab, setActiveTab] = useState(
     tabFromUrl === 'courses' || tabFromUrl === 'classes' ? 'classes' :
     tabFromUrl === 'activities' ? 'activities' :
@@ -598,14 +599,18 @@ function Profile() {
   }, [classIdFromUrl, classes]);
 
   useEffect(() => {
-    if (activityIdFromUrl && activities.length > 0) {
-      const activityToOpen = activities.find(a => a._id === activityIdFromUrl);
+    if ((activityIdFromUrl || activityNameFromUrl) && activities.length > 0) {
+      const normalizedActivityName = activityNameFromUrl?.trim().toLowerCase();
+      const activityToOpen = activities.find((activity) => (
+        (activityIdFromUrl && activity._id === activityIdFromUrl)
+        || (normalizedActivityName && activity.name?.trim().toLowerCase() === normalizedActivityName)
+      ));
       if (activityToOpen) {
         setSelectedActivity(activityToOpen);
         setActiveTab('activities');
       }
     }
-  }, [activityIdFromUrl, activities]);
+  }, [activityIdFromUrl, activityNameFromUrl, activities]);
 
   useEffect(() => {
     if (activeTab === 'coupons') {

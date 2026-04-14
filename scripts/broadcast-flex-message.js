@@ -11,22 +11,25 @@ const axios = require('axios');
 // 4. buttonLabel: Text on the button
 // 5. buttonUrl: URL to open when button is clicked
 const CONFIG = {
-  imageUrl: 'https://i.imgur.com/Wr73Jxo.jpeg',
-  altText: '📣 4月活動公告',
-  bodyText: `📣 4月活動公告
+  imageUrl: 'https://i.imgur.com/bS7AomI.jpeg',
+  altText: '📢 4/25 地球日淨灘活動通知',
+  bodyText: `📢 4/25 地球日淨灘活動通知
 
-📚 小主播訓練課程
-4/4 (Sat) 13:30–16:00｜Gabe
-4/11 (Sat) 13:30–16:00｜Gabe
+🗓 4/25（六）
+⏰ 09:00–11:00
+📍 台中大安 南莊海堤（439號附近）
 
-⚽ 足球比賽現場拍攝
-4/5 (Sun) 13:00–15:00｜西屯足球場
-4/12 (Sun) 11:30–13:00｜逢甲大學
+一起來為地球出一分力 🌍💚
+我們會提供手套、垃圾袋等基本工具，現場也有四輪車協助清運。
 
-✨ 報名方式
-請至 LINE@ 會員中心完成登記`,
-  buttonLabel: '前往會員中心',
-  buttonUrl: 'https://www.sunriseyouth.org/profile?tab=classes'
+☀️ 請自備：水、防曬、防風用品
+
+🔗 詳情參考FB：
+https://www.facebook.com/share/p/1BAL9wbtJ9/?mibextid=wwXIfr
+
+🌦 天氣與最新資訊將持續更新`,
+  buttonLabel: '查看活動詳情',
+  buttonUrl: 'https://www.sunriseyouth.org/profile/?tab=activities&activityName=%E5%9C%B0%E7%90%83%E6%97%A5%E6%B7%A8%E7%81%98%E6%B4%BB%E5%8B%95'
 };
 // ===================================
 
