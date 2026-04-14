@@ -26,6 +26,7 @@ const getStartTime = (timeStr) => {
 };
 
 const lineOfficialUrl = 'https://line.me/R/ti/p/@907xmpck';
+const lineOfficialDeepLink = 'line://ti/p/@907xmpck';
 
 const getGoogleMapsSearchUrl = (location) => {
   if (!location) return null;
@@ -63,6 +64,7 @@ function Profile() {
   const tabFromUrl = searchParams.get('tab');
   const classIdFromUrl = searchParams.get('classId');
   const activityIdFromUrl = searchParams.get('activityId');
+  const activityNameFromUrl = searchParams.get('activityName');
 
   const [member, setMember] = useState(null);
   const [classes, setClasses] = useState([]);
@@ -143,7 +145,28 @@ function Profile() {
   });
 
   const initRef = useRef(false);
+  const messageTimeoutRef = useRef(null);
   const liffId = process.env.REACT_APP_LIFF_ID_PROFILE || process.env.REACT_APP_LIFF_ID;
+
+  useEffect(() => {
+    if (!message.text) return undefined;
+
+    if (messageTimeoutRef.current) {
+      window.clearTimeout(messageTimeoutRef.current);
+    }
+
+    messageTimeoutRef.current = window.setTimeout(() => {
+      setMessage({ type: '', text: '' });
+      messageTimeoutRef.current = null;
+    }, 4000);
+
+    return () => {
+      if (messageTimeoutRef.current) {
+        window.clearTimeout(messageTimeoutRef.current);
+        messageTimeoutRef.current = null;
+      }
+    };
+  }, [message]);
 
   const getImageSrc = (imagePath) => {
     if (!imagePath) return null;
@@ -359,14 +382,18 @@ function Profile() {
   }, [classIdFromUrl, classes]);
 
   useEffect(() => {
-    if (activityIdFromUrl && activities.length > 0) {
-      const found = activities.find((entry) => entry._id === activityIdFromUrl);
+    if ((activityIdFromUrl || activityNameFromUrl) && activities.length > 0) {
+      const normalizedActivityName = activityNameFromUrl?.trim().toLowerCase();
+      const found = activities.find((entry) => (
+        (activityIdFromUrl && entry._id === activityIdFromUrl)
+        || (normalizedActivityName && entry.name?.trim().toLowerCase() === normalizedActivityName)
+      ));
       if (found) {
         setSelectedActivity(found);
         setActiveTab('activities');
       }
     }
-  }, [activityIdFromUrl, activities]);
+  }, [activityIdFromUrl, activityNameFromUrl, activities]);
 
   const refreshMember = async (memberCode = member?.memberId || urlMemberId) => {
     if (!memberCode) return null;
@@ -407,9 +434,21 @@ function Profile() {
     window.open(url, '_blank', 'noopener,noreferrer');
   };
 
+  const openLineOfficial = () => {
+    window.location.href = lineOfficialDeepLink;
+    window.setTimeout(() => {
+      window.location.href = lineOfficialUrl;
+    }, 800);
+  };
+
   const showComingSoonMessage = (label) => {
     setDrawerOpen(false);
     setMessage({ type: 'success', text: `${label} is under construction.` });
+  };
+
+  const openAdminPortal = () => {
+    setDrawerOpen(false);
+    navigate('/admin');
   };
 
   const startEdit = () => {
@@ -898,27 +937,30 @@ function Profile() {
           </button>
         </div>
         <nav className="stitch-drawer-links">
-          <button type="button" className="primary" onClick={() => showComingSoonMessage('Landing page')}>
+          <button type="button" onClick={() => showComingSoonMessage('Landing page')}>
             <span className="material-symbols-outlined">home</span>
-            <span>Landing Page</span>
-            <span className="material-symbols-outlined">arrow_forward</span>
+            <span>
+              Landing Page
+              <small>Under Construction</small>
+            </span>
+            <span className="material-symbols-outlined">construction</span>
           </button>
-          <button type="button" onClick={() => setDrawerOpen(false)}>
+          <button type="button" className="primary" onClick={() => setDrawerOpen(false)}>
             <span className="material-symbols-outlined">dashboard</span>
             <span>Member Portal</span>
             <span className="material-symbols-outlined">arrow_forward_ios</span>
           </button>
-          <button type="button" onClick={() => openExternalLink(lineOfficialUrl)}>
+          <button type="button" onClick={openLineOfficial}>
             <span className="material-symbols-outlined">campaign</span>
             <span>Announcements</span>
             <span className="material-symbols-outlined">arrow_forward_ios</span>
           </button>
-          <button type="button" onClick={() => showComingSoonMessage('Admin panel')}>
+          <button type="button" onClick={openAdminPortal}>
             <span className="material-symbols-outlined">admin_panel_settings</span>
             <span>Admin Panel</span>
             <span className="material-symbols-outlined">arrow_forward_ios</span>
           </button>
-          <button type="button" onClick={() => openExternalLink(lineOfficialUrl)}>
+          <button type="button" onClick={openLineOfficial}>
             <span className="material-symbols-outlined">support_agent</span>
             <span>Contact Support</span>
             <span className="material-symbols-outlined">arrow_forward_ios</span>
@@ -936,7 +978,13 @@ function Profile() {
                 <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
               </svg>
             </a>
-            <a href={lineOfficialUrl} target="_blank" rel="noreferrer">
+            <a
+              href={lineOfficialUrl}
+              onClick={(event) => {
+                event.preventDefault();
+                openLineOfficial();
+              }}
+            >
               <span className="stitch-line-social">LINE</span>
             </a>
             <a href="https://www.youtube.com/@SunriseYouthInternational" target="_blank" rel="noreferrer">
