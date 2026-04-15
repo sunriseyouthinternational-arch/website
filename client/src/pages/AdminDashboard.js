@@ -413,6 +413,15 @@ function AdminDashboard() {
     }
   };
 
+  const startNewCurriculumTemplate = () => {
+    setSelectedClassInfo(null);
+    setShowAddClassInfoForm((prev) => !prev);
+    setHostingClassInfoId(null);
+    setShowExpandedHostForm(false);
+    setHostingClassDraft(createEmptyClassDraft());
+    setHostingClassNameManuallyEdited(false);
+  };
+
   const validateAndFormatClassTime = (timeValue) => {
     const timeParts = timeValue.split(/[:\s-]+/);
     if (timeParts.length !== 4) {
@@ -484,9 +493,24 @@ function AdminDashboard() {
     }
 
     setHostingClassInfoId(classInfo._id);
+    setSelectedClassInfo(null);
+    setShowAddClassInfoForm(false);
     setHostingClassDraft(createClassDraftFromInfo(classInfo));
     setShowExpandedHostForm(false);
     setHostingClassNameManuallyEdited(false);
+  };
+
+  const openCurriculumTemplateEditor = (classInfo) => {
+    setSelectedClassInfo({ ...classInfo });
+    setShowAddClassInfoForm(false);
+    setHostingClassInfoId(null);
+    setShowExpandedHostForm(false);
+    setHostingClassDraft(createEmptyClassDraft());
+    setHostingClassNameManuallyEdited(false);
+  };
+
+  const closeCurriculumTemplateEditor = () => {
+    setSelectedClassInfo(null);
   };
 
   const handleHostingClassDateChange = (classInfo, dateValue) => {
@@ -1758,9 +1782,9 @@ function AdminDashboard() {
               </div>
               <div className="admin-header-actions">
                 <button type="button" className="admin-soft-action">Export Logs</button>
-                <button type="button" className="admin-dark-action large" onClick={() => setShowAddClassInfoForm((prev) => !prev)}>
+                <button type="button" className="admin-dark-action large" onClick={startNewCurriculumTemplate}>
                   <span className="material-symbols-outlined">add</span>
-                  New Template
+                  New Curriculum Template
                 </button>
               </div>
             </section>
@@ -1770,7 +1794,7 @@ function AdminDashboard() {
                 <h3>Curriculum Templates</h3>
                 <label className="admin-search narrow">
                   <span className="material-symbols-outlined">search</span>
-                  <input value={classSearch} onChange={(e) => setClassSearch(e.target.value)} placeholder="Search sessions..." />
+                  <input value={classSearch} onChange={(e) => setClassSearch(e.target.value)} placeholder="Search curriculum templates..." />
                 </label>
               </div>
               <div className="admin-template-grid">
@@ -1788,10 +1812,10 @@ function AdminDashboard() {
                         <div><span>Level</span><strong>{Array.isArray(classInfo.ageRange) ? classInfo.ageRange.join(', ') : (classInfo.ageRange || 'all')}</strong></div>
                       </div>
                       <div className="admin-icon-actions">
-                        <button type="button" onClick={() => setSelectedClassInfo(classInfo)} title="Edit">
+                        <button type="button" onClick={() => openCurriculumTemplateEditor(classInfo)} title="Edit Curriculum Template">
                           <span className="material-symbols-outlined">edit</span>
                         </button>
-                        <button type="button" className="dark" onClick={() => openHostClassPanel(classInfo)} title="Host Class">
+                        <button type="button" className="dark" onClick={() => openHostClassPanel(classInfo)} title="Live Hosted Session">
                           <span className="material-symbols-outlined">present_to_all</span>
                         </button>
                       </div>
@@ -2794,167 +2818,17 @@ function AdminDashboard() {
         </div>
       )}
 
-      {activeTab === 'classes' && selectedClassInfo && (
-        <div className="card">
-          <div className="detail-header">
-            <button
-              className="btn btn-secondary"
-              onClick={() => setSelectedClassInfo(null)}
-            >
-              ← {t('back_to_list')}
-            </button>
-            <h3>{t('edit_class_information')}</h3>
-          </div>
-
-          <form onSubmit={handleUpdateClassInfo} className="add-form">
-            <div className="form-group">
-              <label>{t('banner')}</label>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleClassInfoBannerUpload}
-                style={{
-                  padding: '10px',
-                  border: '2px solid #e0e0e0',
-                  borderRadius: '8px',
-                  width: '100%',
-                  cursor: 'pointer'
-                }}
-              />
-              <small style={{ color: '#666', display: 'block', marginTop: '5px' }}>
-                {t('upload_banner_image_recommended_size_1000x600')}
-              </small>
-              {selectedClassInfo.banner && (
-                <div style={{ marginTop: '15px' }}>
-                  <p style={{ fontWeight: 'bold', marginBottom: '10px' }}>
-                    {t('preview')}
-                  </p>
-                  <img
-                    src={selectedClassInfo.banner}
-                    alt={selectedClassInfo.name}
-                    style={{
-                      width: '1000px',
-                      height: '600px',
-                      maxWidth: '100%',
-                      objectFit: 'cover',
-                      borderRadius: '8px',
-                      border: '2px solid #e0e0e0'
-                    }}
-                  />
-                  <button
-                    type="button"
-                    className="btn btn-secondary btn-small"
-                    onClick={() => setSelectedClassInfo({ ...selectedClassInfo, banner: '' })}
-                    style={{ marginTop: '10px', display: 'block' }}
-                  >
-                    {t('remove_image')}
-                  </button>
-                </div>
-              )}
-            </div>
-
-            <div className="form-group">
-              <label>{t('name')} *</label>
-              <input
-                type="text"
-                value={selectedClassInfo.name}
-                onChange={(e) => setSelectedClassInfo({ ...selectedClassInfo, name: e.target.value })}
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label>{t('description')} *</label>
-              <textarea
-                value={selectedClassInfo.description}
-                onChange={(e) => setSelectedClassInfo({ ...selectedClassInfo, description: e.target.value })}
-                required
-                rows="3"
-              />
-            </div>
-
-            <div className="form-row">
-              <div className="form-group">
-                <label>{t('cost')} (NT$) *</label>
-                <input
-                  type="number"
-                  value={selectedClassInfo.cost}
-                  onChange={(e) => setSelectedClassInfo({ ...selectedClassInfo, cost: e.target.value })}
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label>{t('maxParticipants')} *</label>
-                <input
-                  type="number"
-                  value={selectedClassInfo.maxParticipants}
-                  onChange={(e) => setSelectedClassInfo({ ...selectedClassInfo, maxParticipants: e.target.value })}
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label>{t('recommendedAge')} *</label>
-                <select
-                  multiple
-                  value={selectedClassInfo.ageRange || []}
-                  onChange={(e) => {
-                    const selected = Array.from(e.target.selectedOptions, option => option.value);
-                    setSelectedClassInfo({ ...selectedClassInfo, ageRange: selected });
-                  }}
-                  style={{ minHeight: '120px' }}
-                  required
-                >
-                  <option value="all">{t('all')}</option>
-                  <option value="children">{t('children')}</option>
-                  <option value="teen">{t('teen')}</option>
-                  <option value="adult">{t('adult')}</option>
-                  <option value="elderly">{t('elderly')}</option>
-                </select>
-                <small style={{ color: '#666', marginTop: '5px', display: 'block' }}>
-                  Hold Ctrl/Cmd to select multiple
-                </small>
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', gap: '15px', marginTop: '20px' }}>
-              <button type="submit" className="btn btn-primary">
-                {t('save_changes')}
-              </button>
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={() => setSelectedClassInfo(null)}
-              >
-                {t('cancel')}
-              </button>
-              <button
-                type="button"
-                className="btn btn-danger"
-                onClick={() => {
-                  if (window.confirm(t('are_you_sure_you_want_to_delete_this_class_informa'))) {
-                    handleDeleteClassInfo(selectedClassInfo._id);
-                  }
-                }}
-                style={{ marginLeft: 'auto' }}
-              >
-                {t('delete')}
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
-
-      {activeTab === 'classes' && !selectedItem && !selectedClassInfo && (showAddClassInfoForm || hostingClassInfoId) && (
+      {activeTab === 'classes' && !selectedItem && (showAddClassInfoForm || hostingClassInfoId || selectedClassInfo) && (
         <div className="card">
           <h3>{t('class_management')}</h3>
           <div className="items-section" style={{ marginTop: '30px' }}>
             <div className="section-header">
               <h4 style={{ color: '#667eea' }}>
-                {t('classInformation')} ({classInfos.length})
+                Curriculum Templates ({classInfos.length})
               </h4>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
                 <div className="filter-inline-group">
-                  <label>{t('classInformation')}</label>
+                  <label>Curriculum Templates</label>
                   <select
                     value={classInfoFilter}
                     onChange={(e) => setClassInfoFilter(e.target.value)}
@@ -2968,18 +2842,156 @@ function AdminDashboard() {
                   </select>
                 </div>
                 <button
-                  onClick={() => setShowAddClassInfoForm(!showAddClassInfoForm)}
+                  onClick={startNewCurriculumTemplate}
                   className="btn btn-primary"
                 >
-                  {showAddClassInfoForm ? t('cancel') : t('addNew')}
+                  {showAddClassInfoForm ? t('cancel') : 'New Curriculum Template'}
                 </button>
               </div>
             </div>
 
+            {selectedClassInfo && (
+              <form onSubmit={handleUpdateClassInfo} className="add-form" style={{ marginTop: '20px' }}>
+                <div className="form-group">
+                  <label>Template Banner</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleClassInfoBannerUpload}
+                    style={{
+                      padding: '10px',
+                      border: '2px solid #e0e0e0',
+                      borderRadius: '8px',
+                      width: '100%',
+                      cursor: 'pointer'
+                    }}
+                  />
+                  <small style={{ color: '#666', display: 'block', marginTop: '5px' }}>
+                    {t('upload_banner_image_recommended_size_1000x600')}
+                  </small>
+                  {selectedClassInfo.banner && (
+                    <div style={{ marginTop: '15px' }}>
+                      <p style={{ fontWeight: 'bold', marginBottom: '10px' }}>
+                        {t('preview')}
+                      </p>
+                      <img
+                        src={selectedClassInfo.banner}
+                        alt={selectedClassInfo.name}
+                        style={{
+                          width: '1000px',
+                          height: '600px',
+                          maxWidth: '100%',
+                          objectFit: 'cover',
+                          borderRadius: '8px',
+                          border: '2px solid #e0e0e0'
+                        }}
+                      />
+                      <button
+                        type="button"
+                        className="btn btn-secondary btn-small"
+                        onClick={() => setSelectedClassInfo({ ...selectedClassInfo, banner: '' })}
+                        style={{ marginTop: '10px', display: 'block' }}
+                      >
+                        {t('remove_image')}
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                <div className="form-group">
+                  <label>Curriculum Template Name *</label>
+                  <input
+                    type="text"
+                    value={selectedClassInfo.name}
+                    onChange={(e) => setSelectedClassInfo({ ...selectedClassInfo, name: e.target.value })}
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>{t('description')} *</label>
+                  <textarea
+                    value={selectedClassInfo.description}
+                    onChange={(e) => setSelectedClassInfo({ ...selectedClassInfo, description: e.target.value })}
+                    required
+                    rows="3"
+                  />
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>{t('cost')} (NT$) *</label>
+                    <input
+                      type="number"
+                      value={selectedClassInfo.cost}
+                      onChange={(e) => setSelectedClassInfo({ ...selectedClassInfo, cost: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>{t('maxParticipants')} *</label>
+                    <input
+                      type="number"
+                      value={selectedClassInfo.maxParticipants}
+                      onChange={(e) => setSelectedClassInfo({ ...selectedClassInfo, maxParticipants: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>{t('recommendedAge')} *</label>
+                    <select
+                      multiple
+                      value={selectedClassInfo.ageRange || []}
+                      onChange={(e) => {
+                        const selected = Array.from(e.target.selectedOptions, option => option.value);
+                        setSelectedClassInfo({ ...selectedClassInfo, ageRange: selected });
+                      }}
+                      style={{ minHeight: '120px' }}
+                      required
+                    >
+                      <option value="all">{t('all')}</option>
+                      <option value="children">{t('children')}</option>
+                      <option value="teen">{t('teen')}</option>
+                      <option value="adult">{t('adult')}</option>
+                      <option value="elderly">{t('elderly')}</option>
+                    </select>
+                    <small style={{ color: '#666', marginTop: '5px', display: 'block' }}>
+                      Hold Ctrl/Cmd to select multiple
+                    </small>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '15px', marginTop: '20px' }}>
+                  <button type="submit" className="btn btn-primary">
+                    Save Curriculum Template
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={closeCurriculumTemplateEditor}
+                  >
+                    {t('cancel')}
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-danger"
+                    onClick={() => {
+                      if (window.confirm(t('are_you_sure_you_want_to_delete_this_class_informa'))) {
+                        handleDeleteClassInfo(selectedClassInfo._id);
+                      }
+                    }}
+                    style={{ marginLeft: 'auto' }}
+                  >
+                    {t('delete')}
+                  </button>
+                </div>
+              </form>
+            )}
+
             {showAddClassInfoForm && (
               <form onSubmit={handleAddClassInfo} className="add-form" style={{ marginTop: '20px' }}>
                 <div className="form-group">
-                  <label>{t('name')} *</label>
+                  <label>Curriculum Template Name *</label>
                   <input
                     type="text"
                     value={newClassInfo.name}
@@ -3042,7 +3054,7 @@ function AdminDashboard() {
                 </div>
 
                 <div className="form-group">
-                  <label>{t('banner_image_optional')}</label>
+                  <label>Template Banner</label>
                   <input
                     type="file"
                     accept="image/*"
@@ -3088,7 +3100,7 @@ function AdminDashboard() {
                 </div>
 
                 <button type="submit" className="btn btn-primary">
-                  {t('addClassInfo')}
+                  Save Curriculum Template
                 </button>
               </form>
             )}
@@ -3117,13 +3129,13 @@ function AdminDashboard() {
                           className="btn btn-small btn-secondary"
                           onClick={() => openHostClassPanel(classInfo)}
                         >
-                          {isHostingThisClass ? t('cancel') : t('hostClass')}
+                          {isHostingThisClass ? t('cancel') : 'Live Hosted Session'}
                         </button>
                         <button
                           className="btn btn-small btn-primary"
-                          onClick={() => setSelectedClassInfo(classInfo)}
+                          onClick={() => openCurriculumTemplateEditor(classInfo)}
                         >
-                          {t('edit')}
+                          Edit Curriculum Template
                         </button>
                       </div>
                     </div>
@@ -3132,7 +3144,7 @@ function AdminDashboard() {
                       <form onSubmit={handleHostClass} className="class-host-panel">
                         <div className="class-host-panel-header">
                           <div>
-                            <h5 style={{ margin: 0 }}>{t('hostClass')}</h5>
+                            <h5 style={{ margin: 0 }}>Live Hosted Session</h5>
                             <p style={{ margin: '6px 0 0', color: '#64748B', fontSize: '14px' }}>
                               {classInfo.name}
                             </p>

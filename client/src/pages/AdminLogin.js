@@ -43,6 +43,14 @@ function AdminLogin() {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="admin-login-loading-screen">
+        <div className="admin-login-spinner" />
+      </div>
+    );
+  }
+
   return (
     <div className="admin-login-shell">
       {drawerOpen ? <div className="admin-login-drawer-overlay" onClick={() => setDrawerOpen(false)} /> : null}

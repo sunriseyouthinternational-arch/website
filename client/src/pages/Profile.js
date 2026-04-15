@@ -951,14 +951,14 @@ function Profile() {
             <span>Announcements</span>
             <span className="material-symbols-outlined">arrow_forward_ios</span>
           </button>
-          <button type="button" onClick={openAdminPortal}>
-            <span className="material-symbols-outlined">admin_panel_settings</span>
-            <span>Admin Panel</span>
-            <span className="material-symbols-outlined">arrow_forward_ios</span>
-          </button>
           <button type="button" onClick={openLineOfficial}>
             <span className="material-symbols-outlined">support_agent</span>
             <span>Contact Support</span>
+            <span className="material-symbols-outlined">arrow_forward_ios</span>
+          </button>
+          <button type="button" onClick={openAdminPortal}>
+            <span className="material-symbols-outlined">admin_panel_settings</span>
+            <span>Admin Panel</span>
             <span className="material-symbols-outlined">arrow_forward_ios</span>
           </button>
         </nav>
