@@ -27,18 +27,12 @@ function AdminLogin() {
     try {
       const response = await axios.post('/api/auth', credentials);
       localStorage.setItem('adminToken', response.data.token);
-      setMessage({ type: 'success', text: response.data.message });
-
-      // Redirect to dashboard
-      setTimeout(() => {
-        navigate('/admin/dashboard');
-      }, 1000);
+      navigate('/admin/dashboard');
     } catch (error) {
       setMessage({
         type: 'error',
         text: error.response?.data?.message || t('invalidCredentials')
       });
-    } finally {
       setLoading(false);
     }
   };

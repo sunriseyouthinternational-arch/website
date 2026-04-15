@@ -167,9 +167,9 @@ function AdminDashboard() {
   });
 
   // Filter states for status
-  const [classInfoFilter, setClassInfoFilter] = useState('all');
+  const [classInfoFilter] = useState('all');
   const [classStatusFilter, setClassStatusFilter] = useState('all');
-  const [hostedClassTemplateFilter, setHostedClassTemplateFilter] = useState('all');
+  const [hostedClassTemplateFilter] = useState('all');
   const [activityStatusFilter, setActivityStatusFilter] = useState('all');
   const [meetingStatusFilter, setMeetingStatusFilter] = useState('all');
   const [memberTypeFilter, setMemberTypeFilter] = useState('all');
@@ -1509,7 +1509,11 @@ function AdminDashboard() {
     + couponsForSale.filter((coupon) => coupon.active === false || (coupon.stock !== -1 && coupon.stock <= 10)).length;
 
   if (loading && members.length === 0) {
-    return <div className="container"><div className="loading">{t('loading')}</div></div>;
+    return (
+      <div className="admin-dashboard-loading-screen">
+        <div className="admin-dashboard-spinner" />
+      </div>
+    );
   }
 
   return (
@@ -1772,7 +1776,7 @@ function AdminDashboard() {
           </div>
         )}
 
-        {activeTab === 'classes' && !selectedItem && !selectedClassInfo && (
+        {activeTab === 'classes' && !selectedItem && (
           <div className="admin-classes-page">
             <section className="admin-section-header with-actions">
               <div>
@@ -1788,6 +1792,277 @@ function AdminDashboard() {
                 </button>
               </div>
             </section>
+
+            {selectedClassInfo ? (
+              <section className="admin-table-shell">
+                <div className="admin-panel-head">
+                  <h3>Edit Curriculum Template</h3>
+                  <button type="button" className="admin-soft-action" onClick={closeCurriculumTemplateEditor}>
+                    {t('cancel')}
+                  </button>
+                </div>
+                <form onSubmit={handleUpdateClassInfo} className="add-form" style={{ marginTop: '20px' }}>
+                  <div className="form-group">
+                    <label>Template Banner</label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleClassInfoBannerUpload}
+                      style={{
+                        padding: '10px',
+                        border: '2px solid #e0e0e0',
+                        borderRadius: '8px',
+                        width: '100%',
+                        cursor: 'pointer'
+                      }}
+                    />
+                    <small style={{ color: '#666', display: 'block', marginTop: '5px' }}>
+                      {t('upload_banner_image_recommended_size_1000x600')}
+                    </small>
+                    {selectedClassInfo.banner && (
+                      <div style={{ marginTop: '15px' }}>
+                        <p style={{ fontWeight: 'bold', marginBottom: '10px' }}>
+                          {t('preview')}
+                        </p>
+                        <img
+                          src={selectedClassInfo.banner}
+                          alt={selectedClassInfo.name}
+                          style={{
+                            width: '1000px',
+                            height: '600px',
+                            maxWidth: '100%',
+                            objectFit: 'cover',
+                            borderRadius: '8px',
+                            border: '2px solid #e0e0e0'
+                          }}
+                        />
+                        <button
+                          type="button"
+                          className="btn btn-secondary btn-small"
+                          onClick={() => setSelectedClassInfo({ ...selectedClassInfo, banner: '' })}
+                          style={{ marginTop: '10px', display: 'block' }}
+                        >
+                          {t('remove_image')}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="form-group">
+                    <label>Curriculum Template Name *</label>
+                    <input
+                      type="text"
+                      value={selectedClassInfo.name}
+                      onChange={(e) => setSelectedClassInfo({ ...selectedClassInfo, name: e.target.value })}
+                      required
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>{t('description')} *</label>
+                    <textarea
+                      value={selectedClassInfo.description}
+                      onChange={(e) => setSelectedClassInfo({ ...selectedClassInfo, description: e.target.value })}
+                      required
+                      rows="3"
+                    />
+                  </div>
+
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label>{t('cost')} (NT$) *</label>
+                      <input
+                        type="number"
+                        value={selectedClassInfo.cost}
+                        onChange={(e) => setSelectedClassInfo({ ...selectedClassInfo, cost: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>{t('maxParticipants')} *</label>
+                      <input
+                        type="number"
+                        value={selectedClassInfo.maxParticipants}
+                        onChange={(e) => setSelectedClassInfo({ ...selectedClassInfo, maxParticipants: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>{t('recommendedAge')} *</label>
+                      <select
+                        multiple
+                        value={selectedClassInfo.ageRange || []}
+                        onChange={(e) => {
+                          const selected = Array.from(e.target.selectedOptions, option => option.value);
+                          setSelectedClassInfo({ ...selectedClassInfo, ageRange: selected });
+                        }}
+                        style={{ minHeight: '120px' }}
+                        required
+                      >
+                        <option value="all">{t('all')}</option>
+                        <option value="children">{t('children')}</option>
+                        <option value="teen">{t('teen')}</option>
+                        <option value="adult">{t('adult')}</option>
+                        <option value="elderly">{t('elderly')}</option>
+                      </select>
+                      <small style={{ color: '#666', marginTop: '5px', display: 'block' }}>
+                        Hold Ctrl/Cmd to select multiple
+                      </small>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '15px', marginTop: '20px' }}>
+                    <button type="submit" className="btn btn-primary">
+                      Save Curriculum Template
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      onClick={closeCurriculumTemplateEditor}
+                    >
+                      {t('cancel')}
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-danger"
+                      onClick={() => {
+                        if (window.confirm(t('are_you_sure_you_want_to_delete_this_class_informa'))) {
+                          handleDeleteClassInfo(selectedClassInfo._id);
+                        }
+                      }}
+                      style={{ marginLeft: 'auto' }}
+                    >
+                      {t('delete')}
+                    </button>
+                  </div>
+                </form>
+              </section>
+            ) : null}
+
+            {showAddClassInfoForm ? (
+              <section className="admin-table-shell">
+                <div className="admin-panel-head">
+                  <h3>New Curriculum Template</h3>
+                  <button type="button" className="admin-soft-action" onClick={startNewCurriculumTemplate}>
+                    {t('cancel')}
+                  </button>
+                </div>
+                <form onSubmit={handleAddClassInfo} className="add-form" style={{ marginTop: '20px' }}>
+                  <div className="form-group">
+                    <label>Curriculum Template Name *</label>
+                    <input
+                      type="text"
+                      value={newClassInfo.name}
+                      onChange={(e) => setNewClassInfo({ ...newClassInfo, name: e.target.value })}
+                      required
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>{t('description')} *</label>
+                    <textarea
+                      value={newClassInfo.description}
+                      onChange={(e) => setNewClassInfo({ ...newClassInfo, description: e.target.value })}
+                      required
+                      rows="3"
+                    />
+                  </div>
+
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label>{t('cost')} (NT$) *</label>
+                      <input
+                        type="number"
+                        value={newClassInfo.cost}
+                        onChange={(e) => setNewClassInfo({ ...newClassInfo, cost: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>{t('maxParticipants')} *</label>
+                      <input
+                        type="number"
+                        value={newClassInfo.maxParticipants}
+                        onChange={(e) => setNewClassInfo({ ...newClassInfo, maxParticipants: e.target.value })}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-group">
+                    <label>{t('language') === 'zh' ? '建議年齡範圍' : 'Recommended Age Range'}</label>
+                    <select
+                      multiple
+                      value={newClassInfo.ageRange || []}
+                      onChange={(e) => {
+                        const selected = Array.from(e.target.selectedOptions, option => option.value);
+                        setNewClassInfo({ ...newClassInfo, ageRange: selected });
+                      }}
+                      style={{ minHeight: '120px' }}
+                    >
+                      <option value="all">{t('language') === 'zh' ? '所有年齡' : 'All Ages'}</option>
+                      <option value="children">{t('language') === 'zh' ? '兒童 (6-12歲)' : 'Children (6-12)'}</option>
+                      <option value="teen">{t('language') === 'zh' ? '青少年 (13-17歲)' : 'Teen (13-17)'}</option>
+                      <option value="adult">{t('language') === 'zh' ? '成人 (18-64歲)' : 'Adult (18-64)'}</option>
+                      <option value="elderly">{t('language') === 'zh' ? '長者 (65歲以上)' : 'Elderly (65+)'}</option>
+                    </select>
+                    <small style={{ color: '#666', marginTop: '5px', display: 'block' }}>
+                      {t('language') === 'zh' ? '按住 Ctrl/Cmd 選擇多個' : 'Hold Ctrl/Cmd to select multiple'}
+                    </small>
+                  </div>
+
+                  <div className="form-group">
+                    <label>Template Banner</label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleNewClassInfoBannerUpload}
+                      style={{
+                        padding: '10px',
+                        border: '2px dashed #667eea',
+                        borderRadius: '8px',
+                        width: '100%',
+                        cursor: 'pointer'
+                      }}
+                    />
+                    <small style={{ color: '#666', display: 'block', marginTop: '5px' }}>
+                      {t('upload_image_recommended_size_1000x600px')}
+                    </small>
+                    {newClassInfo.banner && (
+                      <div style={{ marginTop: '15px' }}>
+                        <p style={{ fontWeight: 'bold', marginBottom: '10px' }}>
+                          {t('preview')}
+                        </p>
+                        <img
+                          src={newClassInfo.banner}
+                          alt={t('bannerPreview')}
+                          style={{
+                            width: '1000px',
+                            height: '600px',
+                            maxWidth: '100%',
+                            objectFit: 'cover',
+                            borderRadius: '8px',
+                            border: '2px solid #e0e0e0'
+                          }}
+                        />
+                        <button
+                          type="button"
+                          className="btn btn-secondary btn-small"
+                          onClick={() => setNewClassInfo({ ...newClassInfo, banner: '' })}
+                          style={{ marginTop: '10px' }}
+                        >
+                          {t('remove_image')}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  <button type="submit" className="btn btn-primary">
+                    Save Curriculum Template
+                  </button>
+                </form>
+              </section>
+            ) : null}
 
             <section className="admin-template-section">
               <div className="admin-panel-head">
@@ -1824,6 +2099,189 @@ function AdminDashboard() {
                 ))}
               </div>
             </section>
+
+            {hostingClassInfoId ? (
+              <section className="admin-table-shell">
+                <div className="admin-panel-head">
+                  <h3>Live Hosted Session</h3>
+                  <button type="button" className="admin-soft-action" onClick={() => openHostClassPanel({ _id: hostingClassInfoId })}>
+                    {t('cancel')}
+                  </button>
+                </div>
+                {filteredClassInfos
+                  .filter((classInfo) => classInfo._id === hostingClassInfoId)
+                  .map((classInfo) => (
+                    <form key={classInfo._id} onSubmit={handleHostClass} className="add-form" style={{ marginTop: '20px' }}>
+                      <div className="form-group">
+                        <label>Curriculum Template</label>
+                        <input type="text" value={classInfo.name} disabled />
+                      </div>
+
+                      <div className="class-host-panel-header">
+                        <div>
+                          <h5 style={{ margin: 0 }}>Session Setup</h5>
+                          <p style={{ margin: '6px 0 0', color: '#64748B', fontSize: '14px' }}>
+                            {classInfo.name}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          className="btn btn-small btn-primary"
+                          onClick={() => setShowExpandedHostForm((prev) => !prev)}
+                        >
+                          {showExpandedHostForm ? t('cancel') : t('edit')}
+                        </button>
+                      </div>
+
+                      {showExpandedHostForm ? (
+                        <>
+                          <div className="form-group">
+                            <label>{t('name')} *</label>
+                            <input
+                              type="text"
+                              value={hostingClassDraft.name}
+                              onChange={(e) => {
+                                setHostingClassNameManuallyEdited(true);
+                                setHostingClassDraft({ ...hostingClassDraft, name: e.target.value });
+                              }}
+                              required
+                            />
+                          </div>
+
+                          <div className="form-group">
+                            <label>{t('description')} *</label>
+                            <textarea
+                              value={hostingClassDraft.description}
+                              onChange={(e) => setHostingClassDraft({ ...hostingClassDraft, description: e.target.value })}
+                              required
+                              rows="3"
+                            />
+                          </div>
+
+                          <div className="form-group">
+                            <label>{t('host')} *</label>
+                            <select
+                              multiple
+                              value={hostingClassDraft.teacherId}
+                              onChange={(e) => {
+                                const selectedIds = Array.from(e.target.selectedOptions, option => option.value);
+                                const selectedNames = selectedIds.map(id => teachers.find(ti => ti._id === id)?.name).filter(Boolean).join(', ');
+                                setHostingClassDraft({
+                                  ...hostingClassDraft,
+                                  teacherId: selectedIds,
+                                  teacher: selectedNames
+                                });
+                              }}
+                              required
+                              style={{ minHeight: '80px' }}
+                            >
+                              {teachers.map((teacher) => (
+                                <option key={teacher._id} value={teacher._id}>
+                                  {teacher.name}
+                                </option>
+                              ))}
+                            </select>
+                            <small style={{ color: '#666', fontSize: '12px' }}>Hold Ctrl/Cmd to select multiple hosts</small>
+                          </div>
+                        </>
+                      ) : null}
+
+                      <div className="form-row">
+                        <div className="form-group">
+                          <label>{t('classDate')} *</label>
+                          <input
+                            type="date"
+                            value={hostingClassDraft.date}
+                            onChange={(e) => handleHostingClassDateChange(classInfo, e.target.value)}
+                            min={new Date().toISOString().split('T')[0]}
+                            required
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label>{t('time')} *</label>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                            <input
+                              type="number"
+                              min="0"
+                              max="23"
+                              placeholder="HH"
+                              value={hostingClassDraft.time.split(/[:\s-]+/)[0] || ''}
+                              onChange={(e) => updateDraftTimePart(hostingClassDraft, setHostingClassDraft, 0, e.target.value)}
+                              style={{ width: '60px', textAlign: 'center' }}
+                              required
+                            />
+                            <span style={{ fontWeight: 'bold' }}>:</span>
+                            <input
+                              type="number"
+                              min="0"
+                              max="59"
+                              placeholder="MM"
+                              value={hostingClassDraft.time.split(/[:\s-]+/)[1] || ''}
+                              onChange={(e) => updateDraftTimePart(hostingClassDraft, setHostingClassDraft, 1, e.target.value)}
+                              style={{ width: '60px', textAlign: 'center' }}
+                              required
+                            />
+                            <span style={{ fontWeight: 'bold', margin: '0 8px' }}>-</span>
+                            <input
+                              type="number"
+                              min="0"
+                              max="23"
+                              placeholder="HH"
+                              value={hostingClassDraft.time.split(/[:\s-]+/)[2] || ''}
+                              onChange={(e) => updateDraftTimePart(hostingClassDraft, setHostingClassDraft, 2, e.target.value)}
+                              style={{ width: '60px', textAlign: 'center' }}
+                              required
+                            />
+                            <span style={{ fontWeight: 'bold' }}>:</span>
+                            <input
+                              type="number"
+                              min="0"
+                              max="59"
+                              placeholder="MM"
+                              value={hostingClassDraft.time.split(/[:\s-]+/)[3] || ''}
+                              onChange={(e) => updateDraftTimePart(hostingClassDraft, setHostingClassDraft, 3, e.target.value)}
+                              style={{ width: '60px', textAlign: 'center' }}
+                              required
+                            />
+                          </div>
+                          <small style={{ color: '#666', display: 'block', marginTop: '5px' }}>
+                            {t('start_time_end_time')}
+                          </small>
+                        </div>
+                      </div>
+
+                      <div className="form-group">
+                        <label>{t('location')}</label>
+                        <input
+                          type="text"
+                          value={hostingClassDraft.location}
+                          onChange={(e) => setHostingClassDraft({ ...hostingClassDraft, location: e.target.value })}
+                          placeholder={t('example_address_taipei')}
+                        />
+                      </div>
+
+                      <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <input
+                          type="checkbox"
+                          id={`sendLineAnnouncementClass-${classInfo._id}`}
+                          checked={hostingClassDraft.sendLineAnnouncement}
+                          onChange={(e) => setHostingClassDraft({ ...hostingClassDraft, sendLineAnnouncement: e.target.checked })}
+                          style={{ width: 'auto' }}
+                        />
+                        <label htmlFor={`sendLineAnnouncementClass-${classInfo._id}`} style={{ margin: 0 }}>
+                          {t('send_line_announcement_to_all_line_followers')}
+                        </label>
+                      </div>
+
+                      <div className="class-host-panel-actions">
+                        <button type="submit" className="btn btn-primary">
+                          Create Live Hosted Session
+                        </button>
+                      </div>
+                    </form>
+                  ))}
+              </section>
+            ) : null}
 
             <section className="admin-filter-row">
               <div className="admin-pill-group">
@@ -2813,573 +3271,6 @@ function AdminDashboard() {
                   {t('no_coupons_for_this_member')}
                 </p>
               )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {activeTab === 'classes' && !selectedItem && (showAddClassInfoForm || hostingClassInfoId || selectedClassInfo) && (
-        <div className="card">
-          <h3>{t('class_management')}</h3>
-          <div className="items-section" style={{ marginTop: '30px' }}>
-            <div className="section-header">
-              <h4 style={{ color: '#667eea' }}>
-                Curriculum Templates ({classInfos.length})
-              </h4>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-                <div className="filter-inline-group">
-                  <label>Curriculum Templates</label>
-                  <select
-                    value={classInfoFilter}
-                    onChange={(e) => setClassInfoFilter(e.target.value)}
-                  >
-                    <option value="all">{t('all')}</option>
-                    {classInfos.map((classInfo) => (
-                      <option key={classInfo._id} value={classInfo._id}>
-                        {classInfo.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <button
-                  onClick={startNewCurriculumTemplate}
-                  className="btn btn-primary"
-                >
-                  {showAddClassInfoForm ? t('cancel') : 'New Curriculum Template'}
-                </button>
-              </div>
-            </div>
-
-            {selectedClassInfo && (
-              <form onSubmit={handleUpdateClassInfo} className="add-form" style={{ marginTop: '20px' }}>
-                <div className="form-group">
-                  <label>Template Banner</label>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleClassInfoBannerUpload}
-                    style={{
-                      padding: '10px',
-                      border: '2px solid #e0e0e0',
-                      borderRadius: '8px',
-                      width: '100%',
-                      cursor: 'pointer'
-                    }}
-                  />
-                  <small style={{ color: '#666', display: 'block', marginTop: '5px' }}>
-                    {t('upload_banner_image_recommended_size_1000x600')}
-                  </small>
-                  {selectedClassInfo.banner && (
-                    <div style={{ marginTop: '15px' }}>
-                      <p style={{ fontWeight: 'bold', marginBottom: '10px' }}>
-                        {t('preview')}
-                      </p>
-                      <img
-                        src={selectedClassInfo.banner}
-                        alt={selectedClassInfo.name}
-                        style={{
-                          width: '1000px',
-                          height: '600px',
-                          maxWidth: '100%',
-                          objectFit: 'cover',
-                          borderRadius: '8px',
-                          border: '2px solid #e0e0e0'
-                        }}
-                      />
-                      <button
-                        type="button"
-                        className="btn btn-secondary btn-small"
-                        onClick={() => setSelectedClassInfo({ ...selectedClassInfo, banner: '' })}
-                        style={{ marginTop: '10px', display: 'block' }}
-                      >
-                        {t('remove_image')}
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-                <div className="form-group">
-                  <label>Curriculum Template Name *</label>
-                  <input
-                    type="text"
-                    value={selectedClassInfo.name}
-                    onChange={(e) => setSelectedClassInfo({ ...selectedClassInfo, name: e.target.value })}
-                    required
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>{t('description')} *</label>
-                  <textarea
-                    value={selectedClassInfo.description}
-                    onChange={(e) => setSelectedClassInfo({ ...selectedClassInfo, description: e.target.value })}
-                    required
-                    rows="3"
-                  />
-                </div>
-
-                <div className="form-row">
-                  <div className="form-group">
-                    <label>{t('cost')} (NT$) *</label>
-                    <input
-                      type="number"
-                      value={selectedClassInfo.cost}
-                      onChange={(e) => setSelectedClassInfo({ ...selectedClassInfo, cost: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>{t('maxParticipants')} *</label>
-                    <input
-                      type="number"
-                      value={selectedClassInfo.maxParticipants}
-                      onChange={(e) => setSelectedClassInfo({ ...selectedClassInfo, maxParticipants: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>{t('recommendedAge')} *</label>
-                    <select
-                      multiple
-                      value={selectedClassInfo.ageRange || []}
-                      onChange={(e) => {
-                        const selected = Array.from(e.target.selectedOptions, option => option.value);
-                        setSelectedClassInfo({ ...selectedClassInfo, ageRange: selected });
-                      }}
-                      style={{ minHeight: '120px' }}
-                      required
-                    >
-                      <option value="all">{t('all')}</option>
-                      <option value="children">{t('children')}</option>
-                      <option value="teen">{t('teen')}</option>
-                      <option value="adult">{t('adult')}</option>
-                      <option value="elderly">{t('elderly')}</option>
-                    </select>
-                    <small style={{ color: '#666', marginTop: '5px', display: 'block' }}>
-                      Hold Ctrl/Cmd to select multiple
-                    </small>
-                  </div>
-                </div>
-
-                <div style={{ display: 'flex', gap: '15px', marginTop: '20px' }}>
-                  <button type="submit" className="btn btn-primary">
-                    Save Curriculum Template
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-secondary"
-                    onClick={closeCurriculumTemplateEditor}
-                  >
-                    {t('cancel')}
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-danger"
-                    onClick={() => {
-                      if (window.confirm(t('are_you_sure_you_want_to_delete_this_class_informa'))) {
-                        handleDeleteClassInfo(selectedClassInfo._id);
-                      }
-                    }}
-                    style={{ marginLeft: 'auto' }}
-                  >
-                    {t('delete')}
-                  </button>
-                </div>
-              </form>
-            )}
-
-            {showAddClassInfoForm && (
-              <form onSubmit={handleAddClassInfo} className="add-form" style={{ marginTop: '20px' }}>
-                <div className="form-group">
-                  <label>Curriculum Template Name *</label>
-                  <input
-                    type="text"
-                    value={newClassInfo.name}
-                    onChange={(e) => setNewClassInfo({ ...newClassInfo, name: e.target.value })}
-                    required
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>{t('description')} *</label>
-                  <textarea
-                    value={newClassInfo.description}
-                    onChange={(e) => setNewClassInfo({ ...newClassInfo, description: e.target.value })}
-                    required
-                    rows="3"
-                  />
-                </div>
-
-                <div className="form-row">
-                  <div className="form-group">
-                    <label>{t('cost')} (NT$) *</label>
-                    <input
-                      type="number"
-                      value={newClassInfo.cost}
-                      onChange={(e) => setNewClassInfo({ ...newClassInfo, cost: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>{t('maxParticipants')} *</label>
-                    <input
-                      type="number"
-                      value={newClassInfo.maxParticipants}
-                      onChange={(e) => setNewClassInfo({ ...newClassInfo, maxParticipants: e.target.value })}
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="form-group">
-                  <label>{t('language') === 'zh' ? '建議年齡範圍' : 'Recommended Age Range'}</label>
-                  <select
-                    multiple
-                    value={newClassInfo.ageRange || []}
-                    onChange={(e) => {
-                      const selected = Array.from(e.target.selectedOptions, option => option.value);
-                      setNewClassInfo({ ...newClassInfo, ageRange: selected });
-                    }}
-                    style={{ minHeight: '120px' }}
-                  >
-                    <option value="all">{t('language') === 'zh' ? '所有年齡' : 'All Ages'}</option>
-                    <option value="children">{t('language') === 'zh' ? '兒童 (6-12歲)' : 'Children (6-12)'}</option>
-                    <option value="teen">{t('language') === 'zh' ? '青少年 (13-17歲)' : 'Teen (13-17)'}</option>
-                    <option value="adult">{t('language') === 'zh' ? '成人 (18-64歲)' : 'Adult (18-64)'}</option>
-                    <option value="elderly">{t('language') === 'zh' ? '長者 (65歲以上)' : 'Elderly (65+)'}</option>
-                  </select>
-                  <small style={{ color: '#666', marginTop: '5px', display: 'block' }}>
-                    {t('language') === 'zh' ? '按住 Ctrl/Cmd 選擇多個' : 'Hold Ctrl/Cmd to select multiple'}
-                  </small>
-                </div>
-
-                <div className="form-group">
-                  <label>Template Banner</label>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleNewClassInfoBannerUpload}
-                    style={{
-                      padding: '10px',
-                      border: '2px dashed #667eea',
-                      borderRadius: '8px',
-                      width: '100%',
-                      cursor: 'pointer'
-                    }}
-                  />
-                  <small style={{ color: '#666', display: 'block', marginTop: '5px' }}>
-                    {t('upload_image_recommended_size_1000x600px')}
-                  </small>
-                  {newClassInfo.banner && (
-                    <div style={{ marginTop: '15px' }}>
-                      <p style={{ fontWeight: 'bold', marginBottom: '10px' }}>
-                        {t('preview')}
-                      </p>
-                      <img
-                        src={newClassInfo.banner}
-                        alt={t('bannerPreview')}
-                        style={{
-                          width: '1000px',
-                          height: '600px',
-                          maxWidth: '100%',
-                          objectFit: 'cover',
-                          borderRadius: '8px',
-                          border: '2px solid #e0e0e0'
-                        }}
-                      />
-                      <button
-                        type="button"
-                        className="btn btn-secondary btn-small"
-                        onClick={() => setNewClassInfo({ ...newClassInfo, banner: '' })}
-                        style={{ marginTop: '10px' }}
-                      >
-                        {t('remove_image')}
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-                <button type="submit" className="btn btn-primary">
-                  Save Curriculum Template
-                </button>
-              </form>
-            )}
-
-            <div className="items-list" style={{ marginTop: '20px' }}>
-              {filteredClassInfos.map((classInfo) => {
-                const isHostingThisClass = hostingClassInfoId === classInfo._id;
-
-                return (
-                  <div
-                    key={classInfo._id}
-                    className={`item-summary-card class-template-card ${isHostingThisClass ? 'class-template-card-active' : ''}`}
-                  >
-                    <div className="class-template-card-main">
-                      {classInfo.banner && (
-                        <img src={classInfo.banner} alt={classInfo.name} className="item-summary-banner" />
-                      )}
-                      <div className="item-summary-content">
-                        <h5>{classInfo.name}</h5>
-                        <p className="item-summary-meta">
-                          NT$ {classInfo.cost} | {t('max')} {classInfo.maxParticipants} {t('participants')}
-                        </p>
-                      </div>
-                      <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                        <button
-                          className="btn btn-small btn-secondary"
-                          onClick={() => openHostClassPanel(classInfo)}
-                        >
-                          {isHostingThisClass ? t('cancel') : 'Live Hosted Session'}
-                        </button>
-                        <button
-                          className="btn btn-small btn-primary"
-                          onClick={() => openCurriculumTemplateEditor(classInfo)}
-                        >
-                          Edit Curriculum Template
-                        </button>
-                      </div>
-                    </div>
-
-                    {isHostingThisClass && (
-                      <form onSubmit={handleHostClass} className="class-host-panel">
-                        <div className="class-host-panel-header">
-                          <div>
-                            <h5 style={{ margin: 0 }}>Live Hosted Session</h5>
-                            <p style={{ margin: '6px 0 0', color: '#64748B', fontSize: '14px' }}>
-                              {classInfo.name}
-                            </p>
-                          </div>
-                          <button
-                            type="button"
-                            className="btn btn-small btn-primary"
-                            onClick={() => setShowExpandedHostForm((prev) => !prev)}
-                          >
-                            {showExpandedHostForm ? t('cancel') : t('edit')}
-                          </button>
-                        </div>
-
-                        {showExpandedHostForm && (
-                          <>
-                            <div className="form-group">
-                              <label>{t('name')} *</label>
-                              <input
-                                type="text"
-                                value={hostingClassDraft.name}
-                                onChange={(e) => {
-                                  setHostingClassNameManuallyEdited(true);
-                                  setHostingClassDraft({ ...hostingClassDraft, name: e.target.value });
-                                }}
-                                required
-                              />
-                            </div>
-
-                            <div className="form-group">
-                              <label>{t('description')} *</label>
-                              <textarea
-                                value={hostingClassDraft.description}
-                                onChange={(e) => setHostingClassDraft({ ...hostingClassDraft, description: e.target.value })}
-                                required
-                                rows="3"
-                              />
-                            </div>
-
-                            <div className="form-group">
-                              <label>{t('host')} *</label>
-                              <select
-                                multiple
-                                value={hostingClassDraft.teacherId}
-                                onChange={(e) => {
-                                  const selectedIds = Array.from(e.target.selectedOptions, option => option.value);
-                                  const selectedNames = selectedIds.map(id => teachers.find(ti => ti._id === id)?.name).filter(Boolean).join(', ');
-                                  setHostingClassDraft({
-                                    ...hostingClassDraft,
-                                    teacherId: selectedIds,
-                                    teacher: selectedNames
-                                  });
-                                }}
-                                required
-                                style={{ minHeight: '80px' }}
-                              >
-                                {teachers.map((teacher) => (
-                                  <option key={teacher._id} value={teacher._id}>
-                                    {teacher.name}
-                                  </option>
-                                ))}
-                              </select>
-                              <small style={{ color: '#666', fontSize: '12px' }}>Hold Ctrl/Cmd to select multiple hosts</small>
-                            </div>
-                          </>
-                        )}
-
-                        <div className="form-row">
-                          <div className="form-group">
-                            <label>{t('classDate')} *</label>
-                            <input
-                              type="date"
-                              value={hostingClassDraft.date}
-                              onChange={(e) => handleHostingClassDateChange(classInfo, e.target.value)}
-                              min={new Date().toISOString().split('T')[0]}
-                              required
-                            />
-                          </div>
-                          <div className="form-group">
-                            <label>{t('time')} *</label>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                              <input
-                                type="number"
-                                min="0"
-                                max="23"
-                                placeholder="HH"
-                                value={hostingClassDraft.time.split(/[:\s-]+/)[0] || ''}
-                                onChange={(e) => updateDraftTimePart(hostingClassDraft, setHostingClassDraft, 0, e.target.value)}
-                                style={{ width: '60px', textAlign: 'center' }}
-                                required
-                              />
-                              <span style={{ fontWeight: 'bold' }}>:</span>
-                              <input
-                                type="number"
-                                min="0"
-                                max="59"
-                                placeholder="MM"
-                                value={hostingClassDraft.time.split(/[:\s-]+/)[1] || ''}
-                                onChange={(e) => updateDraftTimePart(hostingClassDraft, setHostingClassDraft, 1, e.target.value)}
-                                style={{ width: '60px', textAlign: 'center' }}
-                                required
-                              />
-                              <span style={{ fontWeight: 'bold', margin: '0 8px' }}>-</span>
-                              <input
-                                type="number"
-                                min="0"
-                                max="23"
-                                placeholder="HH"
-                                value={hostingClassDraft.time.split(/[:\s-]+/)[2] || ''}
-                                onChange={(e) => updateDraftTimePart(hostingClassDraft, setHostingClassDraft, 2, e.target.value)}
-                                style={{ width: '60px', textAlign: 'center' }}
-                                required
-                              />
-                              <span style={{ fontWeight: 'bold' }}>:</span>
-                              <input
-                                type="number"
-                                min="0"
-                                max="59"
-                                placeholder="MM"
-                                value={hostingClassDraft.time.split(/[:\s-]+/)[3] || ''}
-                                onChange={(e) => updateDraftTimePart(hostingClassDraft, setHostingClassDraft, 3, e.target.value)}
-                                style={{ width: '60px', textAlign: 'center' }}
-                                required
-                              />
-                            </div>
-                            <small style={{ color: '#666', display: 'block', marginTop: '5px' }}>
-                              {t('start_time_end_time')}
-                            </small>
-                          </div>
-                        </div>
-
-                        <div className="form-group">
-                          <label>{t('location')}</label>
-                          <input
-                            type="text"
-                            value={hostingClassDraft.location}
-                            onChange={(e) => setHostingClassDraft({ ...hostingClassDraft, location: e.target.value })}
-                            placeholder={t('example_address_taipei')}
-                          />
-                        </div>
-
-                        <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                          <input
-                            type="checkbox"
-                            id={`sendLineAnnouncementClass-${classInfo._id}`}
-                            checked={hostingClassDraft.sendLineAnnouncement}
-                            onChange={(e) => setHostingClassDraft({ ...hostingClassDraft, sendLineAnnouncement: e.target.checked })}
-                            style={{ width: 'auto' }}
-                          />
-                          <label htmlFor={`sendLineAnnouncementClass-${classInfo._id}`} style={{ margin: 0 }}>
-                            {t('send_line_announcement_to_all_line_followers')}
-                          </label>
-                        </div>
-
-                        <div className="class-host-panel-actions">
-                          <button type="submit" className="btn btn-primary">
-                            {t('hostClass')}
-                          </button>
-                        </div>
-                      </form>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="items-section" style={{ marginTop: '40px' }}>
-            <div className="section-header">
-              <h4 style={{ color: '#667eea' }}>
-                {t('hostClass')} ({classes.length})
-              </h4>
-            </div>
-
-            <div className="class-filters-row" style={{ marginTop: '20px' }}>
-              <div className="form-group" style={{ maxWidth: '300px', marginBottom: 0 }}>
-                <label>{t('filter_by_status')}</label>
-                <select
-                  value={classStatusFilter}
-                  onChange={(e) => setClassStatusFilter(e.target.value)}
-                  style={{ width: '100%' }}
-                >
-                  <option value="all">{t('all')}</option>
-                  <option value="upcoming">{t('upcoming')}</option>
-                  <option value="completed">{t('completed')}</option>
-                  <option value="cancelled">{t('cancelled')}</option>
-                </select>
-              </div>
-
-              <div className="form-group" style={{ maxWidth: '320px', marginBottom: 0 }}>
-                <label>{t('classInformation')}</label>
-                <select
-                  value={hostedClassTemplateFilter}
-                  onChange={(e) => setHostedClassTemplateFilter(e.target.value)}
-                  style={{ width: '100%' }}
-                >
-                  <option value="all">{t('all')}</option>
-                  {classInfos.map((classInfo) => (
-                    <option key={classInfo._id} value={classInfo._id}>
-                      {classInfo.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div className="items-list" style={{ marginTop: '20px' }}>
-              {filteredHostedClasses.map((classItem) => (
-                <div key={classItem._id} className="item-summary-card">
-                  {classItem.classInfoId?.banner && (
-                    <img src={classItem.classInfoId.banner} alt={classItem.name || classItem.classInfoId?.name} className="item-summary-banner" />
-                  )}
-                  <div className="item-summary-content">
-                    <h5>{classItem.name || classItem.classInfoId?.name || 'N/A'}</h5>
-                    <p className="item-summary-meta">
-                      {formatDate(classItem.date)} | {classItem.time} | {t('host')}: {classItem.teacher}
-                    </p>
-                    {classItem.location && (
-                      <p className="item-summary-meta" style={{ fontSize: '0.9em', color: '#666' }}>
-                        📍 {classItem.location}
-                      </p>
-                    )}
-                    <p className="item-summary-participants">
-                      {classItem.currentParticipants}/{classItem.classInfoId?.maxParticipants || 0} {t('participants')}
-                    </p>
-                  </div>
-                  <div style={{ display: 'flex', gap: '10px' }}>
-                    <button
-                      className="btn btn-small btn-primary"
-                      onClick={() => setSelectedItem({ ...classItem, type: 'class' })}
-                    >
-                      {t('view_details')}
-                    </button>
-                  </div>
-                </div>
-              ))}
             </div>
           </div>
         </div>
