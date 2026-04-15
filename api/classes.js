@@ -16,6 +16,50 @@ module.exports = async (req, res) => {
   try {
     await connectDB();
 
+    if (action === 'cancel-enrollment' && req.method === 'POST') {
+      const { memberId } = req.body;
+
+      const classItem = await Class.findById(id).populate('classInfoId').populate('teacherId');
+      const member = await Member.findOne({ memberId });
+
+      if (!classItem) {
+        return res.status(404).json({ message: '找不到課程 / Class not found' });
+      }
+
+      if (!member) {
+        return res.status(404).json({ message: '找不到團員 / Member not found' });
+      }
+
+      const enrollment = member.enrollments.find(
+        (entry) => entry.type === 'class' && entry.itemId.toString() === classItem._id.toString() && entry.status === 'active'
+      );
+
+      if (!enrollment) {
+        return res.status(400).json({ message: '尚未報名此課程 / You are not enrolled in this class' });
+      }
+
+      const originalCount = classItem.participants.length;
+      classItem.participants = classItem.participants.filter(
+        (participant) => participant.memberId.toString() !== member._id.toString()
+      );
+
+      if (classItem.participants.length === originalCount) {
+        return res.status(400).json({ message: '找不到可取消的報名資料 / No enrollment found to cancel' });
+      }
+
+      updateEnrollmentStatus(member, 'class', classItem._id, 'cancelled');
+
+      await Promise.all([
+        classItem.save(),
+        member.save()
+      ]);
+
+      return res.status(200).json({
+        message: '已取消課程報名 / Class enrollment cancelled',
+        class: classItem
+      });
+    }
+
     // Enroll in class
     if (action === 'enroll' && req.method === 'POST') {
       const { memberId, paymentMethod, familyMembers = [], familyMemberCoupons = {}, pointsToUse = 0 } = req.body;

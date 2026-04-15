@@ -68,6 +68,7 @@ function Profile() {
   // eslint-disable-next-line no-unused-vars
   const [enrollingActivity, setEnrollingActivity] = useState(null);
   const [completingEnrollment, setCompletingEnrollment] = useState(false);
+  const [cancellingEnrollment, setCancellingEnrollment] = useState(null);
   const [showPaymentConfirmation, setShowPaymentConfirmation] = useState(false);
   const [paymentConfirmationData, setPaymentConfirmationData] = useState(null);
 
@@ -242,8 +243,10 @@ function Profile() {
 
       setClasses(activeClasses);
       setActivities(activeActivities);
+      return { activeClasses, activeActivities };
     } catch (error) {
       console.error('Error fetching classes/activities:', error);
+      return { activeClasses: [], activeActivities: [] };
     } finally {
       setLoadingClassesAndActivities(false);
     }
@@ -611,6 +614,26 @@ function Profile() {
       }
     }
   }, [activityIdFromUrl, activityNameFromUrl, activities]);
+
+  useEffect(() => {
+    if (!selectedClass) return;
+    const nextSelectedClass = classes.find((entry) => entry._id === selectedClass._id);
+    if (nextSelectedClass) {
+      setSelectedClass(nextSelectedClass);
+    } else if (!loadingClassesAndActivities) {
+      setSelectedClass(null);
+    }
+  }, [classes, loadingClassesAndActivities, selectedClass]);
+
+  useEffect(() => {
+    if (!selectedActivity) return;
+    const nextSelectedActivity = activities.find((entry) => entry._id === selectedActivity._id);
+    if (nextSelectedActivity) {
+      setSelectedActivity(nextSelectedActivity);
+    } else if (!loadingClassesAndActivities) {
+      setSelectedActivity(null);
+    }
+  }, [activities, loadingClassesAndActivities, selectedActivity]);
 
   useEffect(() => {
     if (activeTab === 'coupons') {
@@ -1216,6 +1239,7 @@ function Profile() {
 
       const memberResponse = await axios.get(`/api/members?memberId=${member.memberId}`);
       setMember(memberResponse.data.member);
+      await fetchClassesAndActivities();
 
       setShowCheckout(false);
       setCheckoutData(null);
@@ -1308,12 +1332,49 @@ function Profile() {
 
   const isEnrolled = (type, id) => {
     if (!member || !member.enrollments) return false;
-    return member.enrollments.some(e => e.type === type && e.itemId === id);
+    return member.enrollments.some((e) => e.type === type && String(e.itemId) === String(id) && e.status === 'active');
   };
 
   const getEnrolledItems = (type) => {
     if (!member || !member.enrollments) return [];
     return member.enrollments.filter(e => e.type === type && e.status === 'active');
+  };
+
+  const refreshMemberEnrollmentData = async () => {
+    const [memberResponse] = await Promise.all([
+      axios.get(`/api/members?memberId=${member.memberId}`),
+      fetchClassesAndActivities()
+    ]);
+    setMember(memberResponse.data.member);
+  };
+
+  const handleCancelEnrollment = async (type, itemId) => {
+    if (!member) return;
+
+    setCancellingEnrollment(`${type}:${itemId}`);
+
+    try {
+      const endpoint = type === 'class'
+        ? `/api/classes?id=${itemId}&action=cancel-enrollment`
+        : `/api/activities?id=${itemId}&action=cancel-enrollment`;
+
+      const response = await axios.post(endpoint, {
+        memberId: member.memberId
+      });
+
+      await refreshMemberEnrollmentData();
+      setMessage({
+        type: 'success',
+        text: response.data.message || (type === 'class' ? 'Class enrollment cancelled.' : 'Activity enrollment cancelled.')
+      });
+    } catch (error) {
+      setMessage({
+        type: 'error',
+        text: error.response?.data?.message || (type === 'class' ? 'Failed to cancel class enrollment.' : 'Failed to cancel activity enrollment.')
+      });
+    } finally {
+      setCancellingEnrollment(null);
+    }
   };
 
   const formatDate = (dateString) => {
@@ -2221,7 +2282,16 @@ function Profile() {
 
               <div style={{ display: 'flex', gap: '15px', justifyContent: 'center' }}>
                 {isEnrolled('class', selectedClass._id) ? (
-                  <button className="btn btn-secondary" disabled>{t('enrolled')}</button>
+                  <>
+                    <button className="btn btn-secondary" disabled>{t('enrolled')}</button>
+                    <button
+                      className="btn btn-danger"
+                      disabled={cancellingEnrollment === `class:${selectedClass._id}`}
+                      onClick={() => handleCancelEnrollment('class', selectedClass._id)}
+                    >
+                      {cancellingEnrollment === `class:${selectedClass._id}` ? `${t('cancel')}...` : t('cancel')}
+                    </button>
+                  </>
                 ) : (
                   <button
                     onClick={() => {
@@ -2299,7 +2369,7 @@ function Profile() {
                             <span className={`status-badge ${itemCost === 0 ? 'paid' : (myParticipants.every(p => p.paid) ? 'paid' : 'unpaid')}`}>
                               {itemCost === 0 ? t('free') : (myParticipants.every(p => p.paid) ? t('paid') : t('unpaid'))}
                             </span>
-                            {classItem && (
+                          {classItem && (
                               <button
                                 onClick={() => setSelectedClass(classItem)}
                                 className="btn btn-small"
@@ -2308,6 +2378,14 @@ function Profile() {
                                 {t('view_details')}
                               </button>
                             )}
+                            <button
+                              onClick={() => handleCancelEnrollment('class', enrollment.itemId)}
+                              className="btn btn-danger btn-small"
+                              disabled={cancellingEnrollment === `class:${enrollment.itemId}`}
+                              style={{ padding: '6px 12px', fontSize: '14px' }}
+                            >
+                              {cancellingEnrollment === `class:${enrollment.itemId}` ? `${t('cancel')}...` : t('cancel')}
+                            </button>
                           </div>
                         </div>
                       );
@@ -2582,7 +2660,16 @@ function Profile() {
               )}
 
               {isEnrolled('activity', selectedActivity._id) ? (
-                <button className="btn btn-secondary" disabled>{t('enrolled')}</button>
+                <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                  <button className="btn btn-secondary" disabled>{t('enrolled')}</button>
+                  <button
+                    className="btn btn-danger"
+                    disabled={cancellingEnrollment === `activity:${selectedActivity._id}`}
+                    onClick={() => handleCancelEnrollment('activity', selectedActivity._id)}
+                  >
+                    {cancellingEnrollment === `activity:${selectedActivity._id}` ? `${t('cancel')}...` : t('cancel')}
+                  </button>
+                </div>
               ) : selectedActivity.currentParticipants >= selectedActivity.maxParticipants ? (
                 <button className="btn btn-secondary" disabled>{t('full')}</button>
               ) : (
@@ -2655,6 +2742,14 @@ function Profile() {
                               {t('view_details')}
                             </button>
                           )}
+                          <button
+                            onClick={() => handleCancelEnrollment('activity', enrollment.itemId)}
+                            className="btn btn-danger btn-small"
+                            disabled={cancellingEnrollment === `activity:${enrollment.itemId}`}
+                            style={{ padding: '6px 12px', fontSize: '14px' }}
+                          >
+                            {cancellingEnrollment === `activity:${enrollment.itemId}` ? `${t('cancel')}...` : t('cancel')}
+                          </button>
                         </div>
                       </div>
                       );

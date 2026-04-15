@@ -15,6 +15,50 @@ module.exports = async (req, res) => {
   try {
     await connectDB();
 
+    if (action === 'cancel-enrollment' && req.method === 'POST') {
+      const { memberId } = req.body;
+
+      const activity = await Activity.findById(id).populate('teacherId');
+      const member = await Member.findOne({ memberId });
+
+      if (!activity) {
+        return res.status(404).json({ message: '找不到活動 / Activity not found' });
+      }
+
+      if (!member) {
+        return res.status(404).json({ message: '找不到團員 / Member not found' });
+      }
+
+      const enrollment = member.enrollments.find(
+        (entry) => entry.type === 'activity' && entry.itemId.toString() === activity._id.toString() && entry.status === 'active'
+      );
+
+      if (!enrollment) {
+        return res.status(400).json({ message: '尚未報名此活動 / You are not enrolled in this activity' });
+      }
+
+      const originalCount = activity.participants.length;
+      activity.participants = activity.participants.filter(
+        (participant) => participant.memberId.toString() !== member._id.toString()
+      );
+
+      if (activity.participants.length === originalCount) {
+        return res.status(400).json({ message: '找不到可取消的報名資料 / No enrollment found to cancel' });
+      }
+
+      updateEnrollmentStatus(member, 'activity', activity._id, 'cancelled');
+
+      await Promise.all([
+        activity.save(),
+        member.save()
+      ]);
+
+      return res.status(200).json({
+        message: '已取消活動報名 / Activity enrollment cancelled',
+        activity
+      });
+    }
+
     // Enroll in activity
     if (action === 'enroll' && req.method === 'POST') {
       const { memberId, paymentMethod, familyMembers = [], familyMemberCoupons = {}, pointsToUse = 0 } = req.body;
