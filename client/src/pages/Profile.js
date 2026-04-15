@@ -1351,6 +1351,16 @@ function Profile() {
   const handleCancelEnrollment = async (type, itemId) => {
     if (!member) return;
 
+    const confirmed = window.confirm(
+      type === 'class'
+        ? 'Are you sure you want to cancel this class enrollment?'
+        : 'Are you sure you want to cancel this activity enrollment?'
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
     setCancellingEnrollment(`${type}:${itemId}`);
 
     try {
