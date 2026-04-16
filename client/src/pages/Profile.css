@@ -1229,18 +1229,21 @@
   align-items: center;
   gap: 8px;
   margin-bottom: 20px;
+  flex-wrap: wrap;
 }
 
 .stitch-checkbox-label {
   display: flex;
   align-items: center;
   gap: 16px;
+  min-width: 0;
 }
 
 .stitch-checkbox-wrap {
   position: relative;
   width: 24px;
   height: 24px;
+  flex-shrink: 0;
 }
 
 .stitch-checkbox-wrap input {
@@ -1250,6 +1253,8 @@
   border-radius: 8px;
   border: 2px solid var(--portal-ink);
   margin: 0;
+  background: var(--portal-white);
+  cursor: pointer;
 }
 
 .stitch-checkbox-wrap span {
@@ -1257,13 +1262,14 @@
   inset: 0;
   display: grid;
   place-items: center;
-  color: #fff;
+  color: var(--portal-ink);
   opacity: 0;
   font-size: 16px;
+  pointer-events: none;
 }
 
 .stitch-checkbox-wrap input:checked {
-  background: var(--portal-ink);
+  background: var(--portal-yellow-soft);
 }
 
 .stitch-checkbox-wrap input:checked + span,
@@ -1290,6 +1296,7 @@
 .stitch-select-wrap {
   position: relative;
   margin-top: 12px;
+  min-width: 0;
 }
 
 .stitch-select-wrap select {
@@ -1299,6 +1306,7 @@
   border-radius: 999px;
   background: var(--portal-white);
   padding: 14px 48px 14px 20px;
+  min-width: 0;
 }
 
 .stitch-select-wrap .material-symbols-outlined {
@@ -1338,8 +1346,9 @@
   width: 100%;
   height: 100%;
   border-radius: 999px;
-  background: #ffea59;
+  background: #dc2626;
   position: relative;
+  transition: background 0.2s ease;
 }
 
 .stitch-switch span::after {
@@ -1355,7 +1364,7 @@
 }
 
 .stitch-switch input:checked + span {
-  background: var(--portal-ink);
+  background: #16a34a;
 }
 
 .stitch-switch input:checked + span::after {
@@ -1479,6 +1488,8 @@
   padding: 32px;
   display: grid;
   gap: 18px;
+  width: min(100%, 100%);
+  overflow-x: hidden;
 }
 
 .stitch-share-box {
@@ -1827,6 +1838,38 @@
   .stitch-meeting-card {
     grid-template-columns: auto 1fr auto;
     align-items: flex-start;
+  }
+}
+
+@media (max-width: 720px) {
+  .stitch-enroll-person-card {
+    padding: 20px;
+  }
+
+  .stitch-checkbox-label {
+    align-items: flex-start;
+  }
+
+  .stitch-checkbox-label > div:last-child {
+    min-width: 0;
+  }
+
+  .stitch-checkbox-label span {
+    overflow-wrap: anywhere;
+  }
+
+  .stitch-points-toggle,
+  .stitch-summary-panel .total {
+    align-items: flex-start;
+  }
+
+  .stitch-disabled-payments {
+    grid-template-columns: 1fr;
+  }
+
+  .stitch-simple-modal {
+    padding: 24px;
+    border-radius: 1.5rem;
   }
 }
 
