@@ -20,6 +20,13 @@ const formatDateLabel = (value, locale, options = {}) => {
   return date.toLocaleDateString(locale, options);
 };
 
+const parseDateKey = (value) => {
+  if (!value) return null;
+  const [year, month, day] = value.split('-').map(Number);
+  if (!year || !month || !day) return null;
+  return new Date(year, month - 1, day);
+};
+
 const getStartTime = (timeStr) => {
   if (!timeStr) return '00:00';
   return timeStr.split('-')[0]?.trim() || '00:00';
@@ -82,11 +89,13 @@ function Profile() {
   );
 
   const [selectedClassInfo, setSelectedClassInfo] = useState('all');
-  const [selectedDate, setSelectedDate] = useState('all');
+  const [selectedDate, setSelectedDate] = useState('');
   const [selectedClass, setSelectedClass] = useState(null);
   const [selectedActivity, setSelectedActivity] = useState(null);
   const [selectedCoupon, setSelectedCoupon] = useState(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [showDateCalendar, setShowDateCalendar] = useState(false);
+  const [calendarMonth, setCalendarMonth] = useState('');
 
   const [loading, setLoading] = useState(true);
   const [liffInitializing, setLiffInitializing] = useState(true);
@@ -147,6 +156,8 @@ function Profile() {
 
   const initRef = useRef(false);
   const messageTimeoutRef = useRef(null);
+  const dateStripRef = useRef(null);
+  const datePickerRef = useRef(null);
   const liffId = process.env.REACT_APP_LIFF_ID_PROFILE || process.env.REACT_APP_LIFF_ID;
 
   useEffect(() => {
@@ -395,6 +406,19 @@ function Profile() {
       }
     }
   }, [activityIdFromUrl, activityNameFromUrl, activities]);
+
+  useEffect(() => {
+    if (!showDateCalendar) return undefined;
+
+    const handleClickOutside = (event) => {
+      if (!datePickerRef.current?.contains(event.target)) {
+        setShowDateCalendar(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showDateCalendar]);
 
   const refreshMember = async (memberCode = member?.memberId || urlMemberId) => {
     if (!memberCode) return null;
@@ -703,6 +727,7 @@ function Profile() {
   const classDateKeys = [...new Set(filteredClassesBase.map((entry) => formatDateKey(entry.date)).filter(Boolean))].sort();
   const activityDateKeys = [...new Set(activities.map((entry) => formatDateKey(entry.date)).filter(Boolean))].sort();
   const activeDateKeys = activeTab === 'activities' ? activityDateKeys : classDateKeys;
+  const activeDateSet = useMemo(() => new Set(activeDateKeys), [activeDateKeys]);
 
   const filteredClasses = filteredClassesBase.filter((entry) => selectedDate === 'all' || formatDateKey(entry.date) === selectedDate);
   const filteredActivities = activities.filter((entry) => selectedDate === 'all' || formatDateKey(entry.date) === selectedDate);
@@ -731,23 +756,180 @@ function Profile() {
     association: 'MEETINGS & SYNC'
   }[activeTab];
 
+  useEffect(() => {
+    if (activeTab !== 'classes' && activeTab !== 'activities') {
+      setShowDateCalendar(false);
+      return;
+    }
+
+    if (activeDateKeys.length === 0) {
+      setSelectedDate('all');
+      setCalendarMonth('');
+      setShowDateCalendar(false);
+      return;
+    }
+
+    if (selectedDate === 'all' || activeDateKeys.includes(selectedDate)) {
+      return;
+    }
+
+    setSelectedDate(activeDateKeys[0]);
+  }, [activeDateKeys, activeTab, selectedDate]);
+
+  useEffect(() => {
+    const nextMonthKey = selectedDate !== 'all' && selectedDate ? selectedDate : activeDateKeys[0];
+    if (nextMonthKey) {
+      setCalendarMonth(nextMonthKey);
+    }
+  }, [activeDateKeys, selectedDate]);
+
+  useEffect(() => {
+    if (!selectedDate || selectedDate === 'all') return;
+    const activeButton = dateStripRef.current?.querySelector(`[data-date-key="${selectedDate}"]`);
+    activeButton?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+  }, [selectedDate]);
+
+  const handleDateSelect = (dateKey) => {
+    setSelectedDate(dateKey);
+    setShowDateCalendar(false);
+  };
+
+  const handleDateArrow = (direction) => {
+    if (activeDateKeys.length === 0) return;
+    if (selectedDate === 'all') {
+      handleDateSelect(activeDateKeys[0]);
+      return;
+    }
+
+    const currentIndex = activeDateKeys.indexOf(selectedDate);
+    if (currentIndex === -1) {
+      handleDateSelect(activeDateKeys[0]);
+      return;
+    }
+
+    const nextIndex = Math.min(activeDateKeys.length - 1, Math.max(0, currentIndex + direction));
+    handleDateSelect(activeDateKeys[nextIndex]);
+  };
+
+  const calendarMonthDate = useMemo(() => {
+    const calendarBaseDate = parseDateKey(calendarMonth) || parseDateKey(activeDateKeys[0]);
+    return calendarBaseDate ? new Date(calendarBaseDate.getFullYear(), calendarBaseDate.getMonth(), 1) : null;
+  }, [activeDateKeys, calendarMonth]);
+  const calendarGridDays = useMemo(() => {
+    if (!calendarMonthDate) return [];
+
+    const startWeekday = calendarMonthDate.getDay();
+    const startDate = new Date(calendarMonthDate);
+    startDate.setDate(startDate.getDate() - startWeekday);
+
+    return Array.from({ length: 42 }, (_, index) => {
+      const day = new Date(startDate);
+      day.setDate(startDate.getDate() + index);
+      const key = formatDateKey(day);
+      return {
+        date: day,
+        key,
+        isCurrentMonth: day.getMonth() === calendarMonthDate.getMonth(),
+        isAvailable: activeDateSet.has(key)
+      };
+    });
+  }, [activeDateSet, calendarMonthDate]);
+
+  const changeCalendarMonth = (direction) => {
+    if (!calendarMonthDate) return;
+    const nextMonth = new Date(calendarMonthDate);
+    nextMonth.setMonth(nextMonth.getMonth() + direction);
+    setCalendarMonth(formatDateKey(nextMonth));
+  };
+
   const renderDateSelector = () => (
-    <div className="stitch-date-strip">
-      {activeDateKeys.map((dateKey, index) => {
-        const date = new Date(dateKey);
-        const active = selectedDate === dateKey || (selectedDate === 'all' && index === 0);
-        return (
+    <div className="stitch-date-picker" ref={datePickerRef}>
+      <div className="stitch-date-picker-bar">
+        <button type="button" className="stitch-date-nav" onClick={() => handleDateArrow(-1)} aria-label="Previous date">
+          <span className="material-symbols-outlined">chevron_left</span>
+        </button>
+        <div className="stitch-date-strip" ref={dateStripRef}>
           <button
-            key={dateKey}
             type="button"
-            className={`stitch-date-pill ${active ? 'active' : ''}`}
-            onClick={() => setSelectedDate(dateKey)}
+            className={`stitch-date-pill stitch-date-pill-all ${selectedDate === 'all' ? 'active' : ''}`}
+            onClick={() => {
+              setSelectedDate('all');
+              setShowDateCalendar(false);
+            }}
           >
-            <span>{formatDateLabel(date, locale, { weekday: 'short' })}</span>
-            <strong>{formatDateLabel(date, locale, { day: 'numeric' })}</strong>
+            <span>{isZh ? '全部' : 'All'}</span>
+            <strong>{isZh ? '全部' : 'All'}</strong>
           </button>
-        );
-      })}
+          {activeDateKeys.map((dateKey) => {
+            const date = parseDateKey(dateKey);
+            const active = selectedDate === dateKey;
+            return (
+              <button
+                key={dateKey}
+                type="button"
+                className={`stitch-date-pill ${active ? 'active' : ''}`}
+                onClick={() => handleDateSelect(dateKey)}
+                data-date-key={dateKey}
+              >
+                <span>{formatDateLabel(date, locale, { weekday: 'short' })}</span>
+                <strong>{formatDateLabel(date, locale, { day: 'numeric' })}</strong>
+              </button>
+            );
+          })}
+        </div>
+        <button type="button" className="stitch-date-nav" onClick={() => handleDateArrow(1)} aria-label="Next date">
+          <span className="material-symbols-outlined">chevron_right</span>
+        </button>
+        <button
+          type="button"
+          className={`stitch-date-calendar-toggle ${showDateCalendar ? 'active' : ''}`}
+          onClick={() => setShowDateCalendar((prev) => !prev)}
+          aria-label="Open date calendar"
+        >
+          <span className="material-symbols-outlined">calendar_month</span>
+        </button>
+      </div>
+
+      {showDateCalendar && calendarMonthDate ? (
+        <div className="stitch-date-calendar">
+          <div className="stitch-date-calendar-header">
+            <button type="button" className="stitch-date-calendar-nav" onClick={() => changeCalendarMonth(-1)} aria-label="Previous month">
+              <span className="material-symbols-outlined">chevron_left</span>
+            </button>
+            <strong>{formatDateLabel(calendarMonthDate, locale, { month: 'long', year: 'numeric' })}</strong>
+            <button type="button" className="stitch-date-calendar-nav" onClick={() => changeCalendarMonth(1)} aria-label="Next month">
+              <span className="material-symbols-outlined">chevron_right</span>
+            </button>
+          </div>
+          <div className="stitch-date-calendar-weekdays">
+            {Array.from({ length: 7 }, (_, index) => {
+              const weekday = new Date(2024, 0, index + 7);
+              return <span key={weekday.toISOString()}>{formatDateLabel(weekday, locale, { weekday: 'short' })}</span>;
+            })}
+          </div>
+          <div className="stitch-date-calendar-grid">
+            {calendarGridDays.map((day) => {
+              const selected = selectedDate === day.key;
+              return (
+                <button
+                  key={`${day.key}-${day.isCurrentMonth ? 'current' : 'outside'}`}
+                  type="button"
+                  className={[
+                    'stitch-date-calendar-day',
+                    day.isCurrentMonth ? '' : 'outside',
+                    day.isAvailable ? 'available' : 'disabled',
+                    selected ? 'selected' : ''
+                  ].filter(Boolean).join(' ')}
+                  disabled={!day.isAvailable}
+                  onClick={() => handleDateSelect(day.key)}
+                >
+                  {day.date.getDate()}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 
@@ -1182,8 +1364,12 @@ function Profile() {
               </div>
               {activeTab === 'classes' && (
                 <div className="stitch-filter-select">
-                  <select value={selectedClassInfo} onChange={(event) => setSelectedClassInfo(event.target.value)}>
-                    <option value="all">All Classes</option>
+                  <select
+                    value={selectedClassInfo}
+                    onChange={(event) => setSelectedClassInfo(event.target.value)}
+                    aria-label="Curriculum template selector"
+                  >
+                    <option value="all">All Curriculum Templates</option>
                     {uniqueClassInfos.map((info) => <option key={info._id} value={info._id}>{info.name}</option>)}
                   </select>
                 </div>

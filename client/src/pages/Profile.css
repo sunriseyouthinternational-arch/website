@@ -119,12 +119,49 @@
   box-shadow: var(--portal-shadow);
 }
 
+.stitch-date-picker {
+  position: relative;
+  margin-bottom: 28px;
+}
+
+.stitch-date-picker-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.stitch-date-nav,
+.stitch-date-calendar-toggle,
+.stitch-date-calendar-nav {
+  flex: none;
+  width: 48px;
+  height: 48px;
+  border: 0;
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.58);
+  color: var(--portal-ink);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--portal-shadow);
+}
+
+.stitch-date-calendar-toggle {
+  background: var(--portal-ink);
+  color: var(--portal-white);
+}
+
+.stitch-date-calendar-toggle.active {
+  background: #4a4200;
+}
+
 .stitch-date-strip {
   display: flex;
   gap: 16px;
   overflow-x: auto;
-  padding: 0 0 16px;
-  margin-bottom: 28px;
+  flex: 1;
+  padding: 0 2px 16px;
+  scroll-behavior: smooth;
 }
 
 .stitch-date-pill {
@@ -137,7 +174,13 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 4px;
+  box-shadow: var(--portal-shadow);
+}
+
+.stitch-date-pill-all {
+  min-width: 94px;
 }
 
 .stitch-date-pill span {
@@ -153,6 +196,12 @@
   font-weight: 800;
 }
 
+.stitch-date-pill-all strong {
+  font-size: 1rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .stitch-date-pill.active {
   background: var(--portal-ink);
   color: var(--portal-white);
@@ -160,6 +209,86 @@
 
 .stitch-date-pill.active span {
   color: rgba(255, 255, 255, 0.65);
+}
+
+.stitch-date-calendar {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 10;
+  width: min(100%, 360px);
+  padding: 20px;
+  border-radius: 1.75rem;
+  background: var(--portal-white);
+  box-shadow: var(--portal-shadow);
+}
+
+.stitch-date-calendar-header,
+.stitch-date-calendar-weekdays {
+  display: grid;
+  grid-template-columns: 44px 1fr 44px;
+  align-items: center;
+  gap: 8px;
+}
+
+.stitch-date-calendar-header {
+  margin-bottom: 14px;
+}
+
+.stitch-date-calendar-header strong {
+  text-align: center;
+  font-size: 1rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.stitch-date-calendar-weekdays {
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  margin-bottom: 10px;
+}
+
+.stitch-date-calendar-weekdays span {
+  text-align: center;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(32, 28, 0, 0.5);
+}
+
+.stitch-date-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.stitch-date-calendar-day {
+  border: 0;
+  border-radius: 1rem;
+  min-height: 42px;
+  background: #f7f1d9;
+  color: var(--portal-ink);
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
+.stitch-date-calendar-day.outside {
+  opacity: 0.45;
+}
+
+.stitch-date-calendar-day.disabled {
+  background: #e2dfde;
+  color: rgba(32, 28, 0, 0.35);
+}
+
+.stitch-date-calendar-day.available {
+  background: var(--portal-yellow);
+}
+
+.stitch-date-calendar-day.selected {
+  background: var(--portal-ink);
+  color: var(--portal-white);
 }
 
 .stitch-white-panel,
@@ -1842,6 +1971,34 @@
   .stitch-meeting-card {
     grid-template-columns: auto 1fr auto;
     align-items: flex-start;
+  }
+}
+
+@media (max-width: 720px) {
+  .stitch-date-picker-bar {
+    gap: 8px;
+  }
+
+  .stitch-date-nav,
+  .stitch-date-calendar-toggle,
+  .stitch-date-calendar-nav {
+    width: 44px;
+    height: 44px;
+  }
+
+  .stitch-date-strip {
+    gap: 12px;
+  }
+
+  .stitch-date-pill {
+    min-width: 68px;
+    padding: 14px 16px;
+  }
+
+  .stitch-date-calendar {
+    left: 0;
+    right: 0;
+    width: auto;
   }
 }
 
