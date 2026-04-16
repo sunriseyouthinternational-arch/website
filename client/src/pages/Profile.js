@@ -112,6 +112,7 @@ function Profile() {
   const [showMembershipUpgrade, setShowMembershipUpgrade] = useState(false);
   const [processingUpgrade, setProcessingUpgrade] = useState(false);
   const [showMembershipConfirmation, setShowMembershipConfirmation] = useState(false);
+  const [showVolunteerHistoryModal, setShowVolunteerHistoryModal] = useState(false);
 
   const [registeringMeeting, setRegisteringMeeting] = useState(null);
   const [showAbsenceModal, setShowAbsenceModal] = useState(false);
@@ -715,7 +716,11 @@ function Profile() {
   ];
 
   const activeEnrollments = member?.enrollments?.filter((entry) => entry.status === 'active') || [];
-  const activeClassEnrollments = activeEnrollments.filter((entry) => entry.type === 'class');
+  const currentEnrollments = activeEnrollments.slice().sort((a, b) => new Date(b.enrolledAt || 0) - new Date(a.enrolledAt || 0));
+  const volunteeringHistory = (member?.volunteeringHistory || [])
+    .slice()
+    .sort((a, b) => new Date(b.completedAt || b.date || 0) - new Date(a.completedAt || a.date || 0));
+  const volunteeringHistoryPreview = volunteeringHistory.slice(0, 3);
   const ownedCoupons = (member?.coupons || []).slice().sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
 
   const topTitle = {
@@ -1019,7 +1024,7 @@ function Profile() {
                 <div className="stitch-profile-orb" />
                 <div className="stitch-profile-content">
                   <div className="stitch-profile-copy">
-                    <div className="stitch-pill-row">
+                    <div className="stitch-pill-row stitch-profile-top-row">
                       <div className="stitch-status-pill">{member.membershipStatus === '協會會員' ? 'ASSOCIATION MEMBER' : 'ASSOCIATION FRIEND'}</div>
                       <button type="button" className="stitch-outline-pill" onClick={editMode ? () => setEditMode(false) : startEdit}>
                         <span className="material-symbols-outlined">edit</span>
@@ -1080,7 +1085,7 @@ function Profile() {
                       <input value={editFormData.contact.lineId} onChange={(event) => setEditFormData((prev) => ({ ...prev, contact: { ...prev.contact, lineId: event.target.value } }))} />
                     </div>
                   </div>
-                  <div className="stitch-inline-buttons">
+                  <div className="stitch-inline-buttons stitch-edit-actions">
                     <button type="button" className="btn btn-secondary" onClick={() => setEditMode(false)}>{t('cancel')}</button>
                     <button type="button" className="stitch-black-button compact" onClick={saveEdit}>SAVE PROFILE</button>
                   </div>
@@ -1089,22 +1094,24 @@ function Profile() {
 
               <section className="stitch-white-panel">
                 <div className="stitch-section-top">
-                  <h3>Current Classes</h3>
-                  <span className="material-symbols-outlined">calendar_today</span>
+                  <div className="stitch-section-heading">
+                    <span className="material-symbols-outlined">calendar_today</span>
+                    <h3>Current Enrollments</h3>
+                  </div>
                 </div>
                 <div className="stitch-card-stack">
-                  {activeClassEnrollments.length > 0 ? activeClassEnrollments.map((entry) => (
+                  {currentEnrollments.length > 0 ? currentEnrollments.map((entry) => (
                     <div className="stitch-profile-class-card" key={entry.itemId}>
                       <div>
                         <p>{entry.itemName}</p>
-                        <span>{formatDateLabel(entry.enrolledAt, locale, { month: 'short', day: 'numeric' })}</span>
+                        <span>{entry.type === 'activity' ? 'ACTIVITY' : 'CLASS'} • {formatDateLabel(entry.enrolledAt, locale, { month: 'short', day: 'numeric' })}</span>
                       </div>
                       <div className="stitch-check-badge">
                         <span className="material-symbols-outlined">check</span>
                       </div>
                     </div>
                   )) : (
-                    <div className="stitch-empty-card">No active classes</div>
+                    <div className="stitch-empty-card">No current enrollments</div>
                   )}
                 </div>
               </section>
@@ -1112,15 +1119,15 @@ function Profile() {
               <section className="stitch-profile-grid">
                 <div className="stitch-reward-panel">
                   <h3>Rewards & Referrals</h3>
-                  <div className="stitch-referral-card">
+                  <button type="button" className="stitch-referral-card" onClick={() => handleCopyToClipboard(member.referralCode || '')}>
                     <p>Your Referral Code</p>
                     <div>
                       <strong>{member.referralCode || 'N/A'}</strong>
-                      <button type="button" onClick={() => handleCopyToClipboard(member.referralCode || '')}>
+                      <span className="stitch-referral-copy-icon">
                         <span className="material-symbols-outlined">content_copy</span>
-                      </button>
+                      </span>
                     </div>
-                  </div>
+                  </button>
                   <div className="stitch-reward-stats">
                     <div><p>Total Referred Members</p><strong>{member.referralCount || 0}</strong></div>
                     <div><p>Accumulated Points</p><strong>{member.points || 0}</strong></div>
@@ -1142,11 +1149,13 @@ function Profile() {
                 </div>
                 <div className="stitch-white-panel">
                   <div className="stitch-section-top">
-                    <h3>Volunteering History</h3>
-                    <span className="material-symbols-outlined">volunteer_activism</span>
+                    <div className="stitch-section-heading">
+                      <span className="material-symbols-outlined">volunteer_activism</span>
+                      <h3>Volunteering History</h3>
+                    </div>
                   </div>
                   <div className="stitch-card-stack">
-                    {(member.volunteeringHistory || []).length > 0 ? member.volunteeringHistory.map((entry) => (
+                    {volunteeringHistoryPreview.length > 0 ? volunteeringHistoryPreview.map((entry) => (
                       <div className="stitch-volunteer-card" key={`${entry.itemId}-${entry.completedAt || entry.date}`}>
                         <div>
                           <p>{entry.itemName}</p>
@@ -1156,7 +1165,7 @@ function Profile() {
                       </div>
                     )) : <div className="stitch-empty-card">{t('no_volunteering_history')}</div>}
                   </div>
-                  <button type="button" className="stitch-outline-wide">View All History</button>
+                  <button type="button" className="stitch-outline-wide" onClick={() => setShowVolunteerHistoryModal(true)}>View All History</button>
                 </div>
               </section>
             </>
@@ -1754,6 +1763,23 @@ function Profile() {
               </div>
             </>
           ) : null}
+        </div>
+      </Modal>
+
+      <Modal open={showVolunteerHistoryModal} onClose={() => setShowVolunteerHistoryModal(false)}>
+        <div className="stitch-simple-modal">
+          <h3>Volunteering History</h3>
+          <div className="stitch-card-stack">
+            {volunteeringHistory.length > 0 ? volunteeringHistory.map((entry) => (
+              <div className="stitch-volunteer-card" key={`modal-${entry.itemId}-${entry.completedAt || entry.date}`}>
+                <div>
+                  <p>{entry.itemName}</p>
+                  <span>{formatDateLabel(entry.completedAt || entry.date, locale, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                </div>
+                <span className="material-symbols-outlined">verified</span>
+              </div>
+            )) : <div className="stitch-empty-card">{t('no_volunteering_history')}</div>}
+          </div>
         </div>
       </Modal>
 

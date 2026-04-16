@@ -230,6 +230,15 @@
   align-items: center;
 }
 
+.stitch-profile-top-row {
+  justify-content: space-between;
+}
+
+.stitch-profile-top-row .stitch-outline-pill {
+  min-width: 164px;
+  justify-content: center;
+}
+
 .stitch-status-pill,
 .stitch-outline-pill,
 .stitch-soft-pill,
@@ -381,6 +390,16 @@
   align-items: center;
 }
 
+.stitch-section-heading {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.stitch-section-heading .material-symbols-outlined {
+  font-size: 1.5rem;
+}
+
 .stitch-section-top h3,
 .stitch-reward-panel h3,
 .stitch-detail-card h4,
@@ -464,6 +483,11 @@
 .stitch-referral-card {
   border: 2px solid var(--portal-ink);
   margin: 24px 0 16px;
+  width: 100%;
+  text-align: left;
+  border-radius: 2.5rem;
+  cursor: pointer;
+  border: 2px solid var(--portal-ink);
 }
 
 .stitch-referral-card strong,
@@ -475,17 +499,29 @@
   letter-spacing: -0.05em;
 }
 
-.stitch-referral-card button {
-  border: 0;
-  background: var(--portal-white);
+.stitch-referral-copy-icon {
   width: 48px;
   height: 48px;
   border-radius: 999px;
+  background: var(--portal-white);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.stitch-edit-actions {
+  margin-top: 24px;
 }
 
 .stitch-reward-stats {
   display: grid;
   gap: 16px;
+}
+
+.stitch-profile-actions {
+  display: grid;
+  gap: 16px;
+  align-content: start;
 }
 
 .stitch-reward-stats > div {
