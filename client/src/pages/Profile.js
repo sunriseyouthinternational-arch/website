@@ -1276,8 +1276,10 @@ function Profile() {
 
               <section className="stitch-white-panel">
                 <div className="stitch-section-top">
-                  <h3>Current Enrollments</h3>
-                  <span className="material-symbols-outlined stitch-section-top-icon">calendar_today</span>
+                  <div className="stitch-section-heading">
+                    <span className="material-symbols-outlined">calendar_today</span>
+                    <h3>Current Enrollments</h3>
+                  </div>
                 </div>
                 <div className="stitch-card-stack stitch-current-enrollments-list">
                   {currentEnrollments.length > 0 ? currentEnrollments.map((entry) => (
@@ -1329,8 +1331,10 @@ function Profile() {
                 </div>
                 <div className="stitch-white-panel">
                   <div className="stitch-section-top">
-                    <h3>Volunteering History</h3>
-                    <span className="material-symbols-outlined stitch-section-top-icon">volunteer_activism</span>
+                    <div className="stitch-section-heading">
+                      <span className="material-symbols-outlined">volunteer_activism</span>
+                      <h3>Volunteering History</h3>
+                    </div>
                   </div>
                   <div className="stitch-card-stack">
                     {volunteeringHistoryPreview.length > 0 ? volunteeringHistoryPreview.map((entry) => (
@@ -1353,6 +1357,10 @@ function Profile() {
             <>
               <div className="stitch-hero-header large">
                 <h2>{topTitle}</h2>
+                <div className="stitch-filter-pill">
+                  <span className="material-symbols-outlined">filter_list</span>
+                  <span>Filter</span>
+                </div>
               </div>
               {activeTab === 'classes' && (
                 <div className="stitch-filter-select">

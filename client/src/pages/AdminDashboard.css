@@ -703,7 +703,7 @@
   justify-content: space-between;
   align-items: center;
   gap: 16px;
-  padding: 20px clamp(24px, calc((100vw - 1440px) / 2 + 32px), 112px);
+  padding: 20px 32px;
   background: #fae44b;
 }
 
@@ -722,24 +722,12 @@
   border-radius: 999px;
   display: grid;
   place-items: center;
-  position: relative;
-}
-
-.admin-top-icon.has-alert::after {
-  content: '';
-  position: absolute;
-  top: 11px;
-  right: 11px;
-  width: 8px;
-  height: 8px;
-  border-radius: 999px;
-  background: #ba1a1a;
 }
 
 .admin-portal-nav {
   display: flex;
   flex-wrap: wrap;
-  gap: 28px;
+  gap: 24px;
 }
 
 .admin-portal-nav-button {
@@ -771,9 +759,9 @@
 }
 
 .admin-portal-main {
-  max-width: 1440px;
+  max-width: 1600px;
   margin: 0 auto;
-  padding: 48px 48px 96px;
+  padding: 24px 32px 80px;
 }
 
 .admin-message {
@@ -844,7 +832,7 @@
 .admin-coupons-page,
 .admin-meetings-page {
   display: grid;
-  gap: 40px;
+  gap: 32px;
 }
 
 .admin-live-pill,
@@ -902,7 +890,6 @@
   padding: 32px;
   display: grid;
   gap: 24px;
-  border-radius: 24px;
 }
 
 .admin-revenue-card p,
@@ -945,7 +932,6 @@
   padding: 28px;
   display: grid;
   gap: 16px;
-  border-radius: 24px;
 }
 
 .admin-stat-panel.dark {
@@ -969,7 +955,6 @@
 .admin-template-section,
 .admin-market-section {
   padding: 28px;
-  border-radius: 24px;
 }
 
 .admin-overview-grid {
@@ -994,7 +979,7 @@
   width: 100%;
   text-align: left;
   background: #fff;
-  border-radius: 24px;
+  border-radius: 20px;
   padding: 18px;
   display: flex;
   align-items: flex-start;
@@ -1074,7 +1059,7 @@
   background: #fff9ea;
   border-radius: 999px;
   padding: 12px 16px;
-  min-width: 320px;
+  min-width: 280px;
   box-shadow: 0 12px 40px rgba(32, 28, 0, 0.06);
 }
 
@@ -1467,12 +1452,6 @@
 
   .admin-table-shell {
     padding: 20px;
-  }
-}
-
-@media (min-width: 1101px) {
-  .admin-logout-button {
-    display: none;
   }
 }
 
