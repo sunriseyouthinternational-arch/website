@@ -422,6 +422,10 @@
   gap: 16px;
 }
 
+.stitch-current-enrollments-list {
+  margin-top: 16px;
+}
+
 .stitch-profile-class-card,
 .stitch-volunteer-card,
 .stitch-mini-card,
