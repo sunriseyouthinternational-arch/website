@@ -96,7 +96,6 @@ function Profile() {
 
   const [showCheckout, setShowCheckout] = useState(false);
   const [checkoutData, setCheckoutData] = useState(null);
-  const [openingEnrollmentKey, setOpeningEnrollmentKey] = useState(null);
   const [selectedFamilyMembers, setSelectedFamilyMembers] = useState(['self']);
   const [familyMemberCoupons, setFamilyMemberCoupons] = useState({});
   const [useAvailablePoints, setUseAvailablePoints] = useState(false);
@@ -486,22 +485,17 @@ function Profile() {
 
   const handleEnroll = (type, item) => {
     if (!member) return;
-    const nextKey = `${type}:${item._id}`;
-    setOpeningEnrollmentKey(nextKey);
-    window.setTimeout(() => {
-      setCheckoutData({
-        type,
-        id: item._id,
-        name: item.name,
-        cost: type === 'class' ? Number(item.classInfoId?.cost || 0) : Number(item.cost || 0),
-        classInfoId: type === 'class' ? item.classInfoId?._id : null
-      });
-      setSelectedFamilyMembers(['self']);
-      setFamilyMemberCoupons({});
-      setUseAvailablePoints(false);
-      setShowCheckout(true);
-      setOpeningEnrollmentKey(null);
-    }, 0);
+    setCheckoutData({
+      type,
+      id: item._id,
+      name: item.name,
+      cost: type === 'class' ? Number(item.classInfoId?.cost || 0) : Number(item.cost || 0),
+      classInfoId: type === 'class' ? item.classInfoId?._id : null
+    });
+    setSelectedFamilyMembers(['self']);
+    setFamilyMemberCoupons({});
+    setUseAvailablePoints(false);
+    setShowCheckout(true);
   };
 
   const isCouponUsable = (coupon) => {
@@ -1490,10 +1484,10 @@ function Profile() {
               <button
                 type="button"
                 className="stitch-black-button large"
-                disabled={isEnrolled('class', selectedClass._id) || openingEnrollmentKey === `class:${selectedClass._id}`}
+                disabled={isEnrolled('class', selectedClass._id)}
                 onClick={() => handleEnroll('class', selectedClass)}
               >
-                {isEnrolled('class', selectedClass._id) ? 'ENROLLED' : openingEnrollmentKey === `class:${selectedClass._id}` ? 'OPENING CHECKOUT...' : 'ENROLL NOW'}
+                {isEnrolled('class', selectedClass._id) ? 'ENROLLED' : 'ENROLL NOW'}
                 <span className="material-symbols-outlined">arrow_forward</span>
               </button>
             </div>
@@ -1586,10 +1580,10 @@ function Profile() {
               <button
                 type="button"
                 className="stitch-black-button large"
-                disabled={isEnrolled('activity', selectedActivity._id) || openingEnrollmentKey === `activity:${selectedActivity._id}`}
+                disabled={isEnrolled('activity', selectedActivity._id)}
                 onClick={() => handleEnroll('activity', selectedActivity)}
               >
-                {isEnrolled('activity', selectedActivity._id) ? 'ENROLLED' : openingEnrollmentKey === `activity:${selectedActivity._id}` ? 'OPENING CHECKOUT...' : 'JOIN ACTIVITY'}
+                {isEnrolled('activity', selectedActivity._id) ? 'ENROLLED' : 'JOIN ACTIVITY'}
                 <span className="material-symbols-outlined">arrow_forward</span>
               </button>
             </div>

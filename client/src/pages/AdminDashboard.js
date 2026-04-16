@@ -170,7 +170,7 @@ function AdminDashboard() {
   const [classInfoFilter] = useState('all');
   const [classStatusFilter, setClassStatusFilter] = useState('all');
   const [hostedClassTemplateFilter] = useState('all');
-  const [activityStatusFilter, setActivityStatusFilter] = useState('all');
+  const [activityStatusFilter] = useState('all');
   const [meetingStatusFilter, setMeetingStatusFilter] = useState('all');
   const [memberTypeFilter, setMemberTypeFilter] = useState('all');
   const [memberSearch, setMemberSearch] = useState('');
@@ -2361,6 +2361,286 @@ function AdminDashboard() {
               </button>
             </section>
 
+            {showAddActivityForm ? (
+              <section className="admin-table-shell">
+                <div className="admin-panel-head">
+                  <h3>New Activity</h3>
+                  <button type="button" className="admin-soft-action" onClick={() => setShowAddActivityForm(false)}>
+                    {t('cancel')}
+                  </button>
+                </div>
+                <form onSubmit={handleAddActivity} className="add-form" style={{ marginTop: '20px' }}>
+                  <div className="form-group">
+                    <label>{t('name')} *</label>
+                    <input
+                      type="text"
+                      value={newActivity.name}
+                      onChange={(e) => setNewActivity({ ...newActivity, name: e.target.value })}
+                      required
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>{t('description')} *</label>
+                    <textarea
+                      value={newActivity.description}
+                      onChange={(e) => setNewActivity({ ...newActivity, description: e.target.value })}
+                      required
+                      rows="3"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>{t('host')} *</label>
+                    <select
+                      multiple
+                      value={newActivity.teacherId}
+                      onChange={(e) => {
+                        const selectedIds = Array.from(e.target.selectedOptions, option => option.value);
+                        const selectedNames = selectedIds.map(id => teachers.find(t => t._id === id)?.name).filter(Boolean).join(', ');
+                        setNewActivity({
+                          ...newActivity,
+                          teacherId: selectedIds,
+                          teacher: selectedNames
+                        });
+                      }}
+                      required
+                      style={{ minHeight: '80px' }}
+                    >
+                      {teachers.map(teacher => (
+                        <option key={teacher._id} value={teacher._id}>
+                          {teacher.name}
+                        </option>
+                      ))}
+                    </select>
+                    <small style={{ color: '#666', fontSize: '12px' }}>Hold Ctrl/Cmd to select multiple hosts</small>
+                  </div>
+
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label>{t('activity_date')}</label>
+                      <input
+                        type="date"
+                        value={newActivity.date}
+                        onChange={(e) => setNewActivity({ ...newActivity, date: e.target.value })}
+                        min={new Date().toISOString().split('T')[0]}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>{t('time')} *</label>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                        <input
+                          type="number"
+                          min="0"
+                          max="23"
+                          placeholder="HH"
+                          value={newActivity.time.split(/[:\s-]+/)[0] || ''}
+                          onChange={(e) => {
+                            const val = e.target.value.padStart(2, '0');
+                            const parts = newActivity.time.split(/[:\s-]+/);
+                            setNewActivity({ ...newActivity, time: `${val}:${parts[1] || '00'} - ${parts[2] || '00'}:${parts[3] || '00'}` });
+                          }}
+                          style={{ width: '60px', textAlign: 'center' }}
+                          required
+                        />
+                        <span style={{ fontWeight: 'bold' }}>:</span>
+                        <input
+                          type="number"
+                          min="0"
+                          max="59"
+                          placeholder="MM"
+                          value={newActivity.time.split(/[:\s-]+/)[1] || ''}
+                          onChange={(e) => {
+                            const val = e.target.value.padStart(2, '0');
+                            const parts = newActivity.time.split(/[:\s-]+/);
+                            setNewActivity({ ...newActivity, time: `${parts[0] || '00'}:${val} - ${parts[2] || '00'}:${parts[3] || '00'}` });
+                          }}
+                          style={{ width: '60px', textAlign: 'center' }}
+                          required
+                        />
+                        <span style={{ fontWeight: 'bold', margin: '0 8px' }}>-</span>
+                        <input
+                          type="number"
+                          min="0"
+                          max="23"
+                          placeholder="HH"
+                          value={newActivity.time.split(/[:\s-]+/)[2] || ''}
+                          onChange={(e) => {
+                            const val = e.target.value.padStart(2, '0');
+                            const parts = newActivity.time.split(/[:\s-]+/);
+                            setNewActivity({ ...newActivity, time: `${parts[0] || '00'}:${parts[1] || '00'} - ${val}:${parts[3] || '00'}` });
+                          }}
+                          style={{ width: '60px', textAlign: 'center' }}
+                          required
+                        />
+                        <span style={{ fontWeight: 'bold' }}>:</span>
+                        <input
+                          type="number"
+                          min="0"
+                          max="59"
+                          placeholder="MM"
+                          value={newActivity.time.split(/[:\s-]+/)[3] || ''}
+                          onChange={(e) => {
+                            const val = e.target.value.padStart(2, '0');
+                            const parts = newActivity.time.split(/[:\s-]+/);
+                            setNewActivity({ ...newActivity, time: `${parts[0] || '00'}:${parts[1] || '00'} - ${parts[2] || '00'}:${val}` });
+                          }}
+                          style={{ width: '60px', textAlign: 'center' }}
+                          required
+                        />
+                      </div>
+                      <small style={{ color: '#666', display: 'block', marginTop: '5px' }}>
+                        {t('start_time_end_time')}
+                      </small>
+                    </div>
+                  </div>
+
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label>{t('cost')} (NT$) *</label>
+                      <input
+                        type="number"
+                        value={newActivity.cost}
+                        onChange={(e) => setNewActivity({ ...newActivity, cost: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>{t('maxParticipants')} *</label>
+                      <input
+                        type="number"
+                        value={newActivity.maxParticipants}
+                        onChange={(e) => setNewActivity({ ...newActivity, maxParticipants: e.target.value })}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-group">
+                    <label>{t('language') === 'zh' ? '建議年齡範圍' : 'Recommended Age Range'}</label>
+                    <select
+                      multiple
+                      value={newActivity.ageRange || []}
+                      onChange={(e) => {
+                        const selected = Array.from(e.target.selectedOptions, option => option.value);
+                        setNewActivity({ ...newActivity, ageRange: selected });
+                      }}
+                      style={{ minHeight: '120px' }}
+                    >
+                      <option value="all">{t('language') === 'zh' ? '所有年齡' : 'All Ages'}</option>
+                      <option value="children">{t('language') === 'zh' ? '兒童 (6-12歲)' : 'Children (6-12)'}</option>
+                      <option value="teen">{t('language') === 'zh' ? '青少年 (13-17歲)' : 'Teen (13-17)'}</option>
+                      <option value="adult">{t('language') === 'zh' ? '成人 (18-64歲)' : 'Adult (18-64)'}</option>
+                      <option value="elderly">{t('language') === 'zh' ? '長者 (65歲以上)' : 'Elderly (65+)'}</option>
+                    </select>
+                    <small style={{ color: '#666', marginTop: '5px', display: 'block' }}>
+                      {t('language') === 'zh' ? '按住 Ctrl/Cmd 選擇多個' : 'Hold Ctrl/Cmd to select multiple'}
+                    </small>
+                  </div>
+
+                  <div className="form-group">
+                    <label>{t('location')}</label>
+                    <input
+                      type="text"
+                      value={newActivity.location}
+                      onChange={(e) => setNewActivity({ ...newActivity, location: e.target.value })}
+                      placeholder={t('example_address_taipei')}
+                    />
+                  </div>
+
+                  {newActivity.location ? (
+                    <div className="form-group">
+                      <label>{t('map_preview')}</label>
+                      <iframe
+                        src={`https://maps.google.com/maps?q=${encodeURIComponent(newActivity.location)}&output=embed`}
+                        width="100%"
+                        height="300"
+                        style={{ border: '1px solid #ddd', borderRadius: '8px' }}
+                        allowFullScreen=""
+                        loading="lazy"
+                        referrerPolicy="no-referrer-when-downgrade"
+                        title="Location Map"
+                      />
+                    </div>
+                  ) : null}
+
+                  <div className="form-group">
+                    <label>{t('banner_image_optional')}</label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleActivityBannerUpload}
+                      style={{
+                        padding: '10px',
+                        border: '2px dashed #667eea',
+                        borderRadius: '8px',
+                        width: '100%',
+                        cursor: 'pointer'
+                      }}
+                    />
+                    <small style={{ color: '#666', display: 'block', marginTop: '5px' }}>
+                      {t('upload_image_max_2mb')}
+                    </small>
+                    {newActivity.banner ? (
+                      <div style={{ marginTop: '15px' }}>
+                        <p style={{ fontWeight: 'bold', marginBottom: '10px' }}>
+                          {t('preview')}
+                        </p>
+                        <img
+                          src={newActivity.banner}
+                          alt={t('bannerPreview')}
+                          style={{
+                            width: '100%',
+                            maxHeight: '200px',
+                            objectFit: 'cover',
+                            borderRadius: '8px',
+                            border: '2px solid #e0e0e0'
+                          }}
+                        />
+                        <button
+                          type="button"
+                          className="btn btn-secondary btn-small"
+                          onClick={() => setNewActivity({ ...newActivity, banner: '' })}
+                          style={{ marginTop: '10px' }}
+                        >
+                          {t('remove_image')}
+                        </button>
+                      </div>
+                    ) : null}
+                  </div>
+
+                  <div className="form-group">
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+                      <input
+                        type="checkbox"
+                        checked={newActivity.isVolunteeringWork || false}
+                        onChange={(e) => setNewActivity({ ...newActivity, isVolunteeringWork: e.target.checked })}
+                      />
+                      <span>{t('language') === 'zh' ? '此活動屬於志工服務' : 'This activity is volunteering work'}</span>
+                    </label>
+                  </div>
+
+                  <div className="form-group">
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+                      <input
+                        type="checkbox"
+                        checked={newActivity.sendLineAnnouncement || false}
+                        onChange={(e) => setNewActivity({ ...newActivity, sendLineAnnouncement: e.target.checked })}
+                      />
+                      <span>{t('language') === 'zh' ? '發送 LINE 廣播通知' : 'Send LINE Broadcast Announcement'}</span>
+                    </label>
+                    <small style={{ color: '#666', display: 'block', marginTop: '5px' }}>
+                      {t('language') === 'zh' ? '勾選後將向所有用戶發送此活動的 LINE 通知' : 'Check to send a LINE notification about this activity to all users'}
+                    </small>
+                  </div>
+
+                  <button type="submit" className="btn btn-primary">
+                    {t('add_activity')}
+                  </button>
+                </form>
+              </section>
+            ) : null}
+
             <section className="admin-filter-row">
               <button type="button" className="admin-filter-icon">
                 <span className="material-symbols-outlined">filter_list</span>
@@ -3276,343 +3556,6 @@ function AdminDashboard() {
         </div>
       )}
 
-      {activeTab === 'activities' && !selectedItem && showAddActivityForm && (
-        <div className="card">
-          <h3>{t('activity_management')}</h3>
-          <div className="items-section" style={{ marginTop: '40px' }}>
-            <div className="section-header">
-              <h4 style={{ color: '#667eea' }}>
-                {t('activities')} ({activities.length})
-              </h4>
-              <button
-                onClick={() => setShowAddActivityForm(!showAddActivityForm)}
-                className="btn btn-primary"
-              >
-                {showAddActivityForm ? t('cancel') : t('addNew')}
-              </button>
-            </div>
-
-            <div className="form-group" style={{ marginTop: '20px', maxWidth: '300px' }}>
-              <label>{t('filter_by_status')}</label>
-              <select
-                value={activityStatusFilter}
-                onChange={(e) => setActivityStatusFilter(e.target.value)}
-                style={{ width: '100%' }}
-              >
-                <option value="all">{t('all')}</option>
-                <option value="upcoming">{t('upcoming')}</option>
-                <option value="completed">{t('completed')}</option>
-                <option value="cancelled">{t('cancelled')}</option>
-              </select>
-            </div>
-
-            {showAddActivityForm && (
-              <form onSubmit={handleAddActivity} className="add-form" style={{ marginTop: '20px' }}>
-                <div className="form-group">
-                  <label>{t('name')} *</label>
-                  <input
-                    type="text"
-                    value={newActivity.name}
-                    onChange={(e) => setNewActivity({ ...newActivity, name: e.target.value })}
-                    required
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>{t('description')} *</label>
-                  <textarea
-                    value={newActivity.description}
-                    onChange={(e) => setNewActivity({ ...newActivity, description: e.target.value })}
-                    required
-                    rows="3"
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>{t('host')} *</label>
-                  <select
-                    multiple
-                    value={newActivity.teacherId}
-                    onChange={(e) => {
-                      const selectedIds = Array.from(e.target.selectedOptions, option => option.value);
-                      const selectedNames = selectedIds.map(id => teachers.find(t => t._id === id)?.name).filter(Boolean).join(', ');
-                      setNewActivity({
-                        ...newActivity,
-                        teacherId: selectedIds,
-                        teacher: selectedNames
-                      });
-                    }}
-                    required
-                    style={{ minHeight: '80px' }}
-                  >
-                    {teachers.map(teacher => (
-                      <option key={teacher._id} value={teacher._id}>
-                        {teacher.name}
-                      </option>
-                    ))}
-                  </select>
-                  <small style={{ color: '#666', fontSize: '12px' }}>Hold Ctrl/Cmd to select multiple hosts</small>
-                </div>
-
-                <div className="form-row">
-                  <div className="form-group">
-                    <label>{t('activity_date')}</label>
-                    <input
-                      type="date"
-                      value={newActivity.date}
-                      onChange={(e) => setNewActivity({ ...newActivity, date: e.target.value })}
-                      min={new Date().toISOString().split('T')[0]}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>{t('time')} *</label>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <input
-                        type="number"
-                        min="0"
-                        max="23"
-                        placeholder="HH"
-                        value={newActivity.time.split(':')[0] || ''}
-                        onChange={(e) => {
-                          const val = e.target.value.padStart(2, '0');
-                          const parts = newActivity.time.split(/[:\s-]+/);
-                          setNewActivity({ ...newActivity, time: `${val}:${parts[1] || '00'} - ${parts[2] || '00'}:${parts[3] || '00'}` });
-                        }}
-                        style={{ width: '60px', textAlign: 'center' }}
-                        required
-                      />
-                      <span style={{ fontWeight: 'bold' }}>:</span>
-                      <input
-                        type="number"
-                        min="0"
-                        max="59"
-                        placeholder="MM"
-                        value={newActivity.time.split(/[:\s-]+/)[1] || ''}
-                        onChange={(e) => {
-                          const val = e.target.value.padStart(2, '0');
-                          const parts = newActivity.time.split(/[:\s-]+/);
-                          const newTime = `${parts[0] || '00'}:${val} - ${parts[2] || '00'}:${parts[3] || '00'}`;
-                          setNewActivity({ ...newActivity, time: newTime });
-                        }}
-                        style={{ width: '60px', textAlign: 'center' }}
-                        required
-                      />
-                      <span style={{ fontWeight: 'bold', margin: '0 8px' }}>-</span>
-                      <input
-                        type="number"
-                        min="0"
-                        max="23"
-                        placeholder="HH"
-                        value={newActivity.time.split(/[:\s-]+/)[2] || ''}
-                        onChange={(e) => {
-                          const val = e.target.value.padStart(2, '0');
-                          const parts = newActivity.time.split(/[:\s-]+/);
-                          const newTime = `${parts[0] || '00'}:${parts[1] || '00'} - ${val}:${parts[3] || '00'}`;
-                          setNewActivity({ ...newActivity, time: newTime });
-                        }}
-                        style={{ width: '60px', textAlign: 'center' }}
-                        required
-                      />
-                      <span style={{ fontWeight: 'bold' }}>:</span>
-                      <input
-                        type="number"
-                        min="0"
-                        max="59"
-                        placeholder="MM"
-                        value={newActivity.time.split(/[:\s-]+/)[3] || ''}
-                        onChange={(e) => {
-                          const val = e.target.value.padStart(2, '0');
-                          const parts = newActivity.time.split(/[:\s-]+/);
-                          const newTime = `${parts[0] || '00'}:${parts[1] || '00'} - ${parts[2] || '00'}:${val}`;
-                          setNewActivity({ ...newActivity, time: newTime });
-                        }}
-                        style={{ width: '60px', textAlign: 'center' }}
-                        required
-                      />
-                    </div>
-                    <small style={{ color: '#666', display: 'block', marginTop: '5px' }}>
-                      {t('start_time_end_time')}
-                    </small>
-                  </div>
-                </div>
-
-                <div className="form-row">
-                  <div className="form-group">
-                    <label>{t('cost')} (NT$) *</label>
-                    <input
-                      type="number"
-                      value={newActivity.cost}
-                      onChange={(e) => setNewActivity({ ...newActivity, cost: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>{t('maxParticipants')} *</label>
-                    <input
-                      type="number"
-                      value={newActivity.maxParticipants}
-                      onChange={(e) => setNewActivity({ ...newActivity, maxParticipants: e.target.value })}
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="form-group">
-                  <label>{t('language') === 'zh' ? '建議年齡範圍' : 'Recommended Age Range'}</label>
-                  <select
-                    multiple
-                    value={newActivity.ageRange || []}
-                    onChange={(e) => {
-                      const selected = Array.from(e.target.selectedOptions, option => option.value);
-                      setNewActivity({ ...newActivity, ageRange: selected });
-                    }}
-                    style={{ minHeight: '120px' }}
-                  >
-                    <option value="all">{t('language') === 'zh' ? '所有年齡' : 'All Ages'}</option>
-                    <option value="children">{t('language') === 'zh' ? '兒童 (6-12歲)' : 'Children (6-12)'}</option>
-                    <option value="teen">{t('language') === 'zh' ? '青少年 (13-17歲)' : 'Teen (13-17)'}</option>
-                    <option value="adult">{t('language') === 'zh' ? '成人 (18-64歲)' : 'Adult (18-64)'}</option>
-                    <option value="elderly">{t('language') === 'zh' ? '長者 (65歲以上)' : 'Elderly (65+)'}</option>
-                  </select>
-                  <small style={{ color: '#666', marginTop: '5px', display: 'block' }}>
-                    {t('language') === 'zh' ? '按住 Ctrl/Cmd 選擇多個' : 'Hold Ctrl/Cmd to select multiple'}
-                  </small>
-                </div>
-
-                <div className="form-group">
-                  <label>{t('location')}</label>
-                  <input
-                    type="text"
-                    value={newActivity.location}
-                    onChange={(e) => setNewActivity({ ...newActivity, location: e.target.value })}
-                    placeholder={t('example_address_taipei')}
-                  />
-                </div>
-
-                {newActivity.location && (
-                  <div className="form-group">
-                    <label>{t('map_preview')}</label>
-                    <iframe
-                      src={`https://maps.google.com/maps?q=${encodeURIComponent(newActivity.location)}&output=embed`}
-                      width="100%"
-                      height="300"
-                      style={{ border: '1px solid #ddd', borderRadius: '8px' }}
-                      allowFullScreen=""
-                      loading="lazy"
-                      referrerPolicy="no-referrer-when-downgrade"
-                      title="Location Map"
-                    />
-                  </div>
-                )}                <div className="form-group">
-                  <label>{t('banner_image_optional')}</label>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleActivityBannerUpload}
-                    style={{
-                      padding: '10px',
-                      border: '2px dashed #667eea',
-                      borderRadius: '8px',
-                      width: '100%',
-                      cursor: 'pointer'
-                    }}
-                  />
-                  <small style={{ color: '#666', display: 'block', marginTop: '5px' }}>
-                    {t('upload_image_max_2mb')}
-                  </small>
-                  {newActivity.banner && (
-                    <div style={{ marginTop: '15px' }}>
-                      <p style={{ fontWeight: 'bold', marginBottom: '10px' }}>
-                        {t('preview')}
-                      </p>
-                      <img
-                        src={newActivity.banner}
-                        alt={t('bannerPreview')}
-                        style={{
-                          width: '100%',
-                          maxHeight: '200px',
-                          objectFit: 'cover',
-                          borderRadius: '8px',
-                          border: '2px solid #e0e0e0'
-                        }}
-                      />
-                      <button
-                        type="button"
-                        className="btn btn-secondary btn-small"
-                        onClick={() => setNewActivity({ ...newActivity, banner: '' })}
-                        style={{ marginTop: '10px' }}
-                      >
-                        {t('remove_image')}
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-                <div className="form-group">
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
-                    <input
-                      type="checkbox"
-                      checked={newActivity.isVolunteeringWork || false}
-                      onChange={(e) => setNewActivity({ ...newActivity, isVolunteeringWork: e.target.checked })}
-                    />
-                    <span>{t('language') === 'zh' ? '此活動屬於志工服務' : 'This activity is volunteering work'}</span>
-                  </label>
-                </div>
-
-                <div className="form-group">
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
-                    <input
-                      type="checkbox"
-                      checked={newActivity.sendLineAnnouncement || false}
-                      onChange={(e) => setNewActivity({ ...newActivity, sendLineAnnouncement: e.target.checked })}
-                    />
-                    <span>{t('language') === 'zh' ? '發送 LINE 廣播通知' : 'Send LINE Broadcast Announcement'}</span>
-                  </label>
-                  <small style={{ color: '#666', display: 'block', marginTop: '5px' }}>
-                    {t('language') === 'zh' ? '勾選後將向所有用戶發送此活動的 LINE 通知' : 'Check to send a LINE notification about this activity to all users'}
-                  </small>
-                </div>
-
-                <button type="submit" className="btn btn-primary">
-                  {t('add_activity')}
-                </button>
-              </form>
-            )}            <div className="items-list" style={{ marginTop: '20px' }}>
-              {activities
-                .filter(activity => activityStatusFilter === 'all' || activity.status === activityStatusFilter)
-                .map(activity => (
-                <div key={activity._id} className="item-summary-card">
-                  {activity.banner && (
-                    <img src={activity.banner} alt={activity.name} className="item-summary-banner" />
-                  )}
-                  <div className="item-summary-content">
-                    <h5>{activity.name}</h5>
-                    <p className="item-summary-meta">
-                      {activity.time} | {t('host')}: {activity.teacher}
-                    </p>
-                    {activity.location && (
-                      <p className="item-summary-meta" style={{ fontSize: '0.9em', color: '#666' }}>
-                        📍 {activity.location}
-                      </p>
-                    )}
-                    <p className="item-summary-participants">
-                      {activity.currentParticipants}/{activity.maxParticipants} {t('participants')}
-                    </p>
-                  </div>
-                  <div style={{ display: 'flex', gap: '10px' }}>
-                    <button
-                      className="btn btn-small btn-primary"
-                      onClick={() => setSelectedItem({ ...activity, type: 'activity' })}
-                    >
-                      {t('view_details')}
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
 
       {(activeTab === 'classes' || activeTab === 'activities') && selectedItem && (
         <div className="card">
