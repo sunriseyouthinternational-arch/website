@@ -6,7 +6,7 @@
 }
 
 .stitch-screen-shell {
-  max-width: 1280px;
+  max-width: 1024px;
   margin: 0 auto;
   padding-bottom: 120px;
 }
@@ -19,7 +19,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 24px;
+  padding: 20px 24px;
   background: var(--portal-yellow);
 }
 
@@ -33,9 +33,10 @@
 .stitch-topbar-brand h1,
 .stitch-login-brand h1 {
   margin: 0;
-  font-size: 2rem;
+  font-size: 1.45rem;
   font-weight: 800;
   letter-spacing: -0.06em;
+  text-transform: uppercase;
 }
 
 .stitch-icon-button,
@@ -53,7 +54,7 @@
 
 .stitch-screen-main,
 .stitch-login-main {
-  max-width: 1100px;
+  max-width: 896px;
   margin: 0 auto;
   padding: 24px;
 }
@@ -87,9 +88,7 @@
 }
 
 .stitch-hero-header.large {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
+  display: grid;
   gap: 20px;
 }
 
@@ -108,15 +107,21 @@
 }
 
 .stitch-filter-select {
-  margin: -12px 0 20px;
+  margin: 0 0 20px;
 }
 
 .stitch-filter-select select {
   border: 0;
   border-radius: 999px;
+  width: 100%;
+  max-width: 260px;
   padding: 14px 18px;
   background: var(--portal-white);
   box-shadow: var(--portal-shadow);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
 }
 
 .stitch-date-picker {
@@ -308,7 +313,7 @@
 .stitch-profile-hero {
   position: relative;
   overflow: hidden;
-  padding: 40px;
+  padding: 32px 24px;
   margin-bottom: 24px;
 }
 
@@ -360,11 +365,13 @@
 }
 
 .stitch-profile-top-row {
-  justify-content: space-between;
+  flex-direction: column;
+  align-items: stretch;
 }
 
 .stitch-profile-top-row .stitch-outline-pill {
-  min-width: 164px;
+  min-width: 0;
+  width: fit-content;
   justify-content: center;
 }
 
@@ -387,6 +394,8 @@
 .stitch-status-pill {
   background: #e2dfde;
   color: #636262;
+  width: 100%;
+  justify-content: flex-start;
 }
 
 .stitch-outline-pill,
@@ -499,7 +508,7 @@
 }
 
 .stitch-white-panel {
-  padding: 40px;
+  padding: 32px 24px;
   margin-bottom: 24px;
 }
 
@@ -529,6 +538,10 @@
   font-size: 1.5rem;
 }
 
+.stitch-section-top-icon {
+  color: var(--portal-muted);
+}
+
 .stitch-section-top h3,
 .stitch-reward-panel h3,
 .stitch-detail-card h4,
@@ -552,7 +565,7 @@
 }
 
 .stitch-current-enrollments-list {
-  margin-top: 16px;
+  margin-top: 24px;
 }
 
 .stitch-profile-class-card,
@@ -570,6 +583,7 @@
   justify-content: space-between;
   align-items: center;
   gap: 16px;
+  border: 2px solid rgba(32, 28, 0, 0.92);
 }
 
 .stitch-profile-class-card p,
@@ -602,6 +616,7 @@
   border-radius: 3rem;
   padding: 32px;
   border: 1px solid rgba(32, 28, 0, 0.2);
+  box-shadow: none;
 }
 
 .stitch-referral-card,
@@ -655,6 +670,7 @@
   display: grid;
   gap: 16px;
   align-content: start;
+  width: 100%;
 }
 
 .stitch-reward-stats > div {
@@ -705,14 +721,15 @@
 .stitch-explorer-grid {
   display: grid;
   grid-template-columns: repeat(1, minmax(0, 1fr));
-  gap: 32px;
+  gap: 24px;
 }
 
 .stitch-explorer-card {
   overflow: hidden;
-  padding: 32px;
+  padding: 24px;
   display: grid;
-  gap: 24px;
+  gap: 20px;
+  border-radius: 1.5rem;
 }
 
 .stitch-explorer-card.wide {
@@ -747,7 +764,7 @@
   position: relative;
   border-radius: 1.5rem;
   overflow: hidden;
-  min-height: 220px;
+  min-height: 180px;
 }
 
 .stitch-explorer-media img,
@@ -815,13 +832,13 @@
 
 .stitch-explorer-head h3 {
   margin: 0;
-  font-size: 2rem;
+  font-size: 1.7rem;
   font-weight: 800;
   letter-spacing: -0.04em;
 }
 
 .stitch-explorer-head strong {
-  font-size: 1.6rem;
+  font-size: 1.4rem;
   font-weight: 800;
 }
 
@@ -865,6 +882,10 @@
   width: 100%;
   justify-content: center;
   margin-top: 20px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
 .stitch-view-button.light {
@@ -1086,8 +1107,8 @@
   display: flex;
   justify-content: space-around;
   align-items: center;
-  gap: 8px;
-  padding: 12px 16px 24px;
+  gap: 4px;
+  padding: 14px 16px 28px;
   background: rgba(255, 255, 255, 0.88);
   backdrop-filter: blur(18px);
   border-radius: 4rem 4rem 0 0;
@@ -1098,7 +1119,7 @@
   border: 0;
   background: transparent;
   border-radius: 999px;
-  padding: 10px 16px;
+  padding: 10px 14px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1668,7 +1689,7 @@
 }
 
 .stitch-login-main {
-  max-width: 480px;
+  max-width: 420px;
   display: grid;
   gap: 24px;
 }
@@ -1770,7 +1791,7 @@
   background: var(--portal-yellow);
   transform: translateX(-100%);
   transition: transform 0.3s ease;
-  padding: 32px;
+  padding: 32px 24px 24px;
   display: grid;
   grid-template-rows: auto 1fr auto;
   gap: 24px;
@@ -1787,6 +1808,14 @@
   justify-content: space-between;
   gap: 16px;
   align-items: center;
+}
+
+.stitch-drawer-footer {
+  margin-top: 24px;
+  padding-top: 32px;
+  border-top: 1px solid rgba(32, 28, 0, 0.1);
+  flex-direction: column;
+  align-items: stretch;
 }
 
 .stitch-language-selector {
@@ -1827,8 +1856,8 @@
   border: 2px solid var(--portal-ink);
   background: transparent;
   color: var(--portal-ink);
-  border-radius: 3rem;
-  padding: 24px;
+  border-radius: 2rem;
+  padding: 22px 24px;
   display: grid;
   grid-template-columns: auto 1fr auto;
   gap: 16px;
@@ -1900,6 +1929,7 @@
   background: transparent;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 12px;
   font-size: 12px;
   font-weight: 800;
@@ -1926,6 +1956,22 @@
 }
 
 @media (min-width: 900px) {
+  .stitch-hero-header.large {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+  }
+
+  .stitch-profile-top-row {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .stitch-status-pill {
+    width: auto;
+  }
+
   .stitch-profile-grid {
     grid-template-columns: 1fr 1fr;
   }
@@ -2075,8 +2121,60 @@
     border-radius: 2rem;
   }
 
-  .stitch-hero-header.large {
-    flex-direction: column;
+  .stitch-topbar-brand,
+  .stitch-login-brand {
+    gap: 6px;
+  }
+
+  .stitch-topbar-brand h1,
+  .stitch-login-brand h1 {
+    font-size: 1.15rem;
+  }
+
+  .stitch-status-pill {
+    width: 100%;
+  }
+
+  .stitch-profile-top-row .stitch-outline-pill {
+    width: fit-content;
+  }
+
+  .stitch-profile-copy h3 {
+    font-size: 2.35rem;
+  }
+
+  .stitch-point-total strong {
+    font-size: 2.8rem;
+  }
+
+  .stitch-profile-class-card,
+  .stitch-volunteer-card {
+    padding: 20px;
+    border-radius: 2rem;
+  }
+
+  .stitch-referral-card,
+  .stitch-progress-box,
+  .stitch-coupon-stats > div,
+  .stitch-ready-strip .stitch-empty-card,
+  .stitch-reward-stats > div {
+    border-radius: 2rem;
+  }
+
+  .stitch-reward-panel {
+    padding: 24px;
+    border-radius: 2rem;
+  }
+
+  .stitch-explorer-head {
     align-items: flex-start;
+  }
+
+  .stitch-explorer-head h3 {
+    font-size: 1.45rem;
+  }
+
+  .stitch-explorer-head strong {
+    font-size: 1.15rem;
   }
 }

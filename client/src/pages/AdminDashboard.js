@@ -1562,7 +1562,7 @@ function AdminDashboard() {
           </nav>
         </div>
         <div className="admin-portal-topbar-right">
-          <button type="button" className="admin-top-icon">
+          <button type="button" className="admin-top-icon has-alert">
             <span className="material-symbols-outlined">notifications</span>
           </button>
           <button type="button" className="admin-top-icon">

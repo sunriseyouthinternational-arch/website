@@ -101,7 +101,7 @@
 
 .admin-login-topbar {
   width: 100%;
-  padding: 48px 24px 24px;
+  padding: 24px 24px 8px;
   display: flex;
   justify-content: flex-start;
   align-items: center;
@@ -109,7 +109,7 @@
 }
 
 .admin-login-brand {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 900;
   letter-spacing: -0.05em;
 }
@@ -117,16 +117,16 @@
 .admin-login-main {
   flex: 1;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  padding: 16px;
+  padding: 28px 16px 16px;
 }
 
 .admin-login-card {
-  width: min(100%, 760px);
+  width: min(100%, 432px);
   background: #fff;
-  border-radius: 28px;
-  padding: 40px;
+  border-radius: 40px;
+  padding: 44px 46px;
   box-shadow: 0 32px 64px -12px rgba(0, 0, 0, 0.1);
   display: grid;
   gap: 32px;
@@ -134,7 +134,7 @@
 
 .admin-login-copy h1 {
   margin: 0 0 12px;
-  font-size: clamp(3rem, 7vw, 4.5rem);
+  font-size: clamp(3rem, 5vw, 4rem);
   line-height: 0.95;
   letter-spacing: -0.06em;
 }
@@ -174,7 +174,7 @@
   border: 0;
   background: transparent;
   padding: 0;
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 800;
   color: #1b1b1b;
 }
@@ -216,7 +216,7 @@
   background: #1b1b1b;
   color: #fff;
   border-radius: 999px;
-  padding: 18px 28px;
+  padding: 16px 30px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -227,8 +227,8 @@
 
 .admin-login-notice {
   background: #fff9d1;
-  border-radius: 18px;
-  padding: 20px;
+  border-radius: 24px;
+  padding: 18px 20px;
   display: flex;
   align-items: flex-start;
   gap: 12px;
@@ -250,9 +250,9 @@
 }
 
 .admin-login-footer {
-  width: min(100%, 1440px);
+  width: 100%;
   margin: 0 auto;
-  padding: 32px 24px 40px;
+  padding: 24px 24px 28px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -280,7 +280,8 @@
 
 @media (max-width: 768px) {
   .admin-login-card {
-    padding: 28px;
+    width: min(100%, 520px);
+    padding: 32px 24px;
   }
 
   .admin-login-actions,
